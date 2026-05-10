@@ -412,5 +412,3 @@ async def get_current_user_token(
         "exp": payload.get("exp"),
         "jti": payload.get("jti"),
     }
- 
- 
