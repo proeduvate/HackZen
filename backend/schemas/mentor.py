@@ -5,6 +5,7 @@ from bson import ObjectId
 from pydantic import BaseModel, Field
 from schemas.user import ExpertiseArea
 
+
 class MentorStatus(str, Enum):
     AVAILABLE = "available"
     ASSIGNED = "assigned"
@@ -12,18 +13,22 @@ class MentorStatus(str, Enum):
     UNAVAILABLE = "unavailable"
     ON_LEAVE = "on_leave"
 
+
 class MentorAllocationStatus(str, Enum):
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
     COMPLETED = "completed"
 
+
 class MentorAllocationRequest(BaseModel):
     teamId: str = Field(..., alias="teamId")
     hackathonId: str = Field(..., alias="hackathonId")
     requestedBy: str = Field(..., alias="requestedBy")
     requestedAt: datetime = Field(default_factory=datetime.utcnow, alias="requestedAt")
-    requiredExpertise: List[ExpertiseArea] = Field(default=[], alias="requiredExpertise")
+    requiredExpertise: List[ExpertiseArea] = Field(
+        default=[], alias="requiredExpertise"
+    )
     preferredMentorId: Optional[str] = Field(None, alias="preferredMentorId")
     teamRequirements: Dict[str, Any] = Field(default={}, alias="teamRequirements")
     status: MentorAllocationStatus = MentorAllocationStatus.PENDING
@@ -31,6 +36,7 @@ class MentorAllocationRequest(BaseModel):
     assignedMentorId: Optional[str] = Field(None, alias="assignedMentorId")
     assignedAt: Optional[datetime] = Field(None, alias="assignedAt")
     assignedBy: Optional[str] = Field(None, alias="assignedBy")
+
 
 class MentorAllocation(BaseModel):
     id: str = Field(default_factory=lambda: str(ObjectId()), alias="_id")
@@ -53,6 +59,7 @@ class MentorAllocation(BaseModel):
     mentorFeedback: Optional[str] = Field(None, alias="mentorFeedback")
     rating: Optional[float] = Field(None, alias="rating")
 
+
 class MentorProfile(BaseModel):
     userId: str = Field(..., alias="userId")
     headline: Optional[str] = None
@@ -66,7 +73,9 @@ class MentorProfile(BaseModel):
     expertiseAreas: List[ExpertiseArea] = Field(default=[], alias="expertiseAreas")
     technologies: List[str] = []
     languages: List[str] = []
-    availabilityStatus: MentorStatus = Field(default=MentorStatus.AVAILABLE, alias="availabilityStatus")
+    availabilityStatus: MentorStatus = Field(
+        default=MentorStatus.AVAILABLE, alias="availabilityStatus"
+    )
     totalHackathonsMentored: int = Field(default=0, alias="totalHackathonsMentored")
     averageRating: float = Field(default=0.0, alias="averageRating")
     totalReviews: int = Field(default=0, alias="totalReviews")

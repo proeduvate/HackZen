@@ -3,6 +3,7 @@ from typing import List, Optional, Dict, Any
 from enum import Enum
 from pydantic import BaseModel, Field
 
+
 class HackathonStatus(str, Enum):
     DRAFT = "Draft"
     UPCOMING = "Upcoming"
@@ -11,6 +12,7 @@ class HackathonStatus(str, Enum):
     JUDGING = "Judging"
     RESULTS_ANNOUNCED = "Results Announced"
     COMPLETED = "Completed"
+
 
 class HackathonTheme(str, Enum):
     AI_ML = "AIML"
@@ -29,6 +31,7 @@ class HackathonTheme(str, Enum):
     HEALTHCARE = "Health Care"
     FINANCE = "Finance"
 
+
 class HackathonInDB(BaseModel):
     id: str = Field(..., alias="_id")
     organizerId: str = Field(..., alias="organizerId")
@@ -37,33 +40,31 @@ class HackathonInDB(BaseModel):
     location: Optional[str] = None
     problemStatement: Optional[str] = Field(None, alias="problemStatement")
     themes: List[HackathonTheme]
-    
+
     # Timeline
     registrationStart: datetime = Field(..., alias="registrationStart")
     registrationEnd: datetime = Field(..., alias="registrationEnd")
     hackathonStart: datetime = Field(..., alias="hackathonStart")
     hackathonEnd: datetime = Field(..., alias="hackathonEnd")
-    
+
     # Configuration
     maxTeamSize: int = Field(default=4, alias="maxTeamSize")
     minTeamSize: int = Field(default=1, alias="minTeamSize")
     maxTeams: Optional[int] = Field(None, alias="maxTeams")
     isPublic: bool = Field(default=True, alias="isPublic")
     status: HackathonStatus = HackathonStatus.DRAFT
-    
+
     # Resources
     rules: List[str] = []
     resources: List[Dict[str, str]] = []
     prizes: List[Dict[str, Any]] = []
-    
+
     posterUrl: Optional[str] = Field(None, alias="posterUrl")
     templateUrl: Optional[str] = Field(None, alias="templateUrl")
-    
+
     createdAt: datetime = Field(..., alias="createdAt")
     updatedAt: datetime = Field(..., alias="updatedAt")
 
     class Config:
         populate_by_name = True
-        json_encoders = {
-            datetime: lambda dt: dt.isoformat()
-        }
+        json_encoders = {datetime: lambda dt: dt.isoformat()}

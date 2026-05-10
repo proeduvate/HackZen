@@ -17,6 +17,7 @@ UPLOADS_DIR = BASE_DIR / "uploads"
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 print(f"📁 Uploads directory: {UPLOADS_DIR}")
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
@@ -25,10 +26,10 @@ async def lifespan(app: FastAPI):
     # Shutdown
     await MongoDB.disconnect()
 
+
 app = FastAPI(
     title=settings.APP_NAME,
     version="1.0.0",
-    
     contact={
         "name": "ProEduvate Team",
         "email": "support@proeduvate.com",
@@ -63,14 +64,14 @@ app.add_middleware(
 # Serve static files (uploads)
 app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 
-app.include_router(indexRoutes.router , prefix="/api")
+app.include_router(indexRoutes.router, prefix="/api")
+
 
 # Root endpoint
 @app.get("/", tags=["Root"])
 async def root():
-    return {
-        "message": "Welcome to ProEduvate Hackathon Platform"
-    }
+    return {"message": "Welcome to ProEduvate Hackathon Platform"}
+
 
 # Health check endpoint
 @app.get("/health", tags=["Health"])
@@ -79,9 +80,9 @@ async def health_check():
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
         "version": "1.0.0",
-        "dependencies": {}
+        "dependencies": {},
     }
-    
+
     # Check MongoDB connection
     try:
         await MongoDB.get_db().command("ping")
@@ -90,15 +91,16 @@ async def health_check():
         health_status["dependencies"]["mongodb"] = "disconnected"
         health_status["status"] = "degraded"
         health_status["mongodb_error"] = str(e)
-    
+
     # Check uploads directory
     if UPLOADS_DIR.exists():
         health_status["dependencies"]["uploads_dir"] = "available"
     else:
         health_status["dependencies"]["uploads_dir"] = "missing"
         health_status["status"] = "degraded"
-    
+
     return health_status
+
 
 # Error handlers
 @app.exception_handler(HTTPException)
@@ -113,11 +115,12 @@ async def http_exception_handler(request, exc):
                 "code": exc.status_code,
                 "message": exc.detail,
                 "timestamp": datetime.utcnow().isoformat(),
-                "path": request.url.path
+                "path": request.url.path,
             }
         },
-        headers=exc.headers if hasattr(exc, 'headers') else None
+        headers=exc.headers if hasattr(exc, "headers") else None,
     )
+
 
 @app.exception_handler(500)
 async def internal_server_error_handler(request, exc):
@@ -132,14 +135,15 @@ async def internal_server_error_handler(request, exc):
                 "message": "Internal server error",
                 "timestamp": datetime.utcnow().isoformat(),
                 "path": request.url.path,
-                "detail": str(exc) if settings.DEBUG else "Contact support for details"
+                "detail": str(exc) if settings.DEBUG else "Contact support for details",
             }
-        }
+        },
     )
+
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     print("\n" + "=" * 60)
     print("🎯 STARTING PROEDUVATE HACKATHON PLATFORM")
     print("=" * 60)
@@ -147,6 +151,6 @@ if __name__ == "__main__":
     print(f"🌐 Host: {settings.BACKEND_URL}")
     print(f"📊 Docs: http://{settings.BACKEND_URL}/docs")
     print("=" * 60)
-    
+
     # Run the server
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

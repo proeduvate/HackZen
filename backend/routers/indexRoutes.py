@@ -1,5 +1,19 @@
 from fastapi import APIRouter
-from routers import userRoutes, profileRoutes, hackathonRoutes, ai_chatbot, team, chat, certificate, dashboard, application, evaluation, inbox, progress, submission
+from routers import (
+    userRoutes,
+    profileRoutes,
+    hackathonRoutes,
+    ai_chatbot,
+    team,
+    chat,
+    certificate,
+    dashboard,
+    application,
+    evaluation,
+    inbox,
+    progress,
+    submission,
+)
 
 router = APIRouter()
 

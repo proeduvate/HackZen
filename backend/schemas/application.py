@@ -4,10 +4,12 @@ from datetime import datetime
 from enum import Enum
 from bson import ObjectId
 
+
 class ApplicationStatus(str, Enum):
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
+
 
 class ApplicationBase(BaseModel):
     hackathonId: str = Field(..., alias="hackathonId")
@@ -15,12 +17,15 @@ class ApplicationBase(BaseModel):
     teamId: Optional[str] = Field(None, alias="teamId")
     status: ApplicationStatus = ApplicationStatus.PENDING
 
+
 class ApplicationCreate(ApplicationBase):
     pass
+
 
 class ApplicationUpdate(BaseModel):
     status: Optional[ApplicationStatus] = None
     teamId: Optional[str] = None
+
 
 class ApplicationResponse(ApplicationBase):
     id: str = Field(..., alias="_id")

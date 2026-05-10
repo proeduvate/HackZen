@@ -10,6 +10,7 @@ from io import BytesIO
 
 from core.config import settings
 
+
 class EmailService:
     def __init__(self):
         self.smtp_host = settings.SMTP_HOST
@@ -17,66 +18,64 @@ class EmailService:
         self.smtp_user = settings.SMTP_USER
         self.smtp_password = settings.SMTP_PASSWORD
         self.email_from = settings.EMAIL_FROM
-    
+
     async def send_email(
         self,
         to_email: str,
         subject: str,
         html_content: str,
         text_content: Optional[str] = None,
-        attachments: Optional[List[dict]] = None
+        attachments: Optional[List[dict]] = None,
     ) -> bool:
         """Send email with optional attachments"""
         try:
             # Create message
-            msg = MIMEMultipart('alternative')
-            msg['Subject'] = subject
-            msg['From'] = self.email_from
-            msg['To'] = to_email
-            
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = subject
+            msg["From"] = self.email_from
+            msg["To"] = to_email
+
             # Add text/plain part
             if text_content:
-                msg.attach(MIMEText(text_content, 'plain'))
-            
+                msg.attach(MIMEText(text_content, "plain"))
+
             # Add HTML part
-            msg.attach(MIMEText(html_content, 'html'))
-            
+            msg.attach(MIMEText(html_content, "html"))
+
             # Add attachments
             if attachments:
                 for attachment in attachments:
-                    file_data = attachment.get('data')
-                    file_name = attachment.get('filename')
-                    content_type = attachment.get('content_type', 'application/octet-stream')
-                    
+                    file_data = attachment.get("data")
+                    file_name = attachment.get("filename")
+                    content_type = attachment.get(
+                        "content_type", "application/octet-stream"
+                    )
+
                     part = MIMEApplication(file_data, Name=file_name)
-                    part['Content-Disposition'] = f'attachment; filename="{file_name}"'
+                    part["Content-Disposition"] = f'attachment; filename="{file_name}"'
                     msg.attach(part)
-            
+
             # Send email
             loop = asyncio.get_event_loop()
-            await loop.run_in_executor(
-                None,
-                self._send_sync,
-                msg
-            )
-            
+            await loop.run_in_executor(None, self._send_sync, msg)
+
             return True
-            
+
         except Exception as e:
             print(f"Failed to send email: {e}")
             return False
-    
+
     def _send_sync(self, msg: MIMEMultipart):
         """Synchronous email sending"""
         with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
             server.starttls()
             server.login(self.smtp_user, self.smtp_password)
             server.send_message(msg)
-    
+
     async def send_welcome_email(self, to_email: str, user_name: str, role: str):
         """Send welcome email to new user"""
         subject = f"Welcome to ProEduvate Hackathon Platform - {role.title()}"
-        
+
         html_content = f"""
         <!DOCTYPE html>
         <html>
@@ -122,7 +121,7 @@ class EmailService:
         </body>
         </html>
         """
-        
+
         text_content = f"""
         Welcome to ProEduvate Hackathon Platform!
         
@@ -135,27 +134,27 @@ class EmailService:
         Best regards,
         The ProEduvate Team
         """
-        
+
         return await self.send_email(to_email, subject, html_content, text_content)
-    
+
     async def send_certificate_email(
         self,
         to_email: str,
         user_name: str,
         hackathon_title: str,
         certificate_data: dict,
-        certificate_pdf: bytes
+        certificate_pdf: bytes,
     ):
         """Send certificate email with PDF attachment"""
         subject = f"Congratulations! Your Hackathon Certificate - {hackathon_title}"
-        
+
         # Generate QR code for verification
         verification_url = f"{settings.BACKEND_URL}/certificates/verify/{certificate_data['certificate_id']}"
         qr = qrcode.make(verification_url)
         qr_buffer = BytesIO()
-        qr.save(qr_buffer, format='PNG')
+        qr.save(qr_buffer, format="PNG")
         qr_image = qr_buffer.getvalue()
-        
+
         html_content = f"""
         <!DOCTYPE html>
         <html>
@@ -207,7 +206,7 @@ class EmailService:
         </body>
         </html>
         """
-        
+
         text_content = f"""
         Certificate of Completion
         
@@ -230,21 +229,20 @@ class EmailService:
         Best regards,
         The ProEduvate Team
         """
-        
+
         attachments = [
             {
-                'data': certificate_pdf,
-                'filename': f'Certificate_{certificate_data["certificate_id"]}.pdf',
-                'content_type': 'application/pdf'
+                "data": certificate_pdf,
+                "filename": f'Certificate_{certificate_data["certificate_id"]}.pdf',
+                "content_type": "application/pdf",
             },
-            {
-                'data': qr_image,
-                'filename': 'qr_code.png',
-                'content_type': 'image/png'
-            }
+            {"data": qr_image, "filename": "qr_code.png", "content_type": "image/png"},
         ]
-        
-        return await self.send_email(to_email, subject, html_content, text_content, attachments)
+
+        return await self.send_email(
+            to_email, subject, html_content, text_content, attachments
+        )
+
 
 # Singleton instance
 email_service = EmailService()

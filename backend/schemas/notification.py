@@ -4,6 +4,7 @@ from datetime import datetime
 from bson import ObjectId
 from enum import Enum
 
+
 class NotificationType(str, Enum):
     TEAM_INVITE = "team_invite"
     MENTOR_ASSIGNMENT = "mentor_assignment"
@@ -15,18 +16,22 @@ class NotificationType(str, Enum):
     CERTIFICATE_ISSUED = "certificate_issued"
     SYSTEM_ALERT = "system_alert"
 
+
 class NotificationBase(BaseModel):
     userId: str = Field(..., alias="userId")
     hackathonId: Optional[str] = Field(None, alias="hackathonId")
-    type: str # team_invite | mentor_assignment | milestone_check | etc
+    type: str  # team_invite | mentor_assignment | milestone_check | etc
     message: str
     read: bool = False
+
 
 class NotificationCreate(NotificationBase):
     pass
 
+
 class NotificationUpdate(BaseModel):
     read: Optional[bool] = None
+
 
 class NotificationResponse(NotificationBase):
     id: str = Field(..., alias="_id")

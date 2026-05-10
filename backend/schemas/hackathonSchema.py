@@ -4,6 +4,7 @@ from datetime import datetime
 from models.hackathonModel import HackathonStatus, HackathonTheme
 import json
 
+
 class HackathonBase(BaseModel):
     title: str
     description: str
@@ -22,8 +23,10 @@ class HackathonBase(BaseModel):
     posterUrl: Optional[str] = Field(None, alias="posterUrl")
     templateUrl: Optional[str] = Field(None, alias="templateUrl")
 
+
 class HackathonCreate(HackathonBase):
     pass
+
 
 class HackathonUpdate(BaseModel):
     title: Optional[str] = None
@@ -42,6 +45,7 @@ class HackathonUpdate(BaseModel):
     status: Optional[HackathonStatus] = None
     posterUrl: Optional[str] = Field(None, alias="posterUrl")
     templateUrl: Optional[str] = Field(None, alias="templateUrl")
+
 
 class HackathonResponse(HackathonBase):
     organizerId: str = Field(..., alias="organizerId")
