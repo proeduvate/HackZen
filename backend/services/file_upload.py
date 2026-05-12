@@ -79,7 +79,7 @@ class FileUploadService:
         if file_size > settings.MAX_UPLOAD_SIZE:
             raise HTTPException(
                 status_code=400,
-                detail=f"File too large. Maximum size is {settings.MAX_UPLOAD_SIZE // (1024*1024)}MB",
+                detail=f"File too large. Maximum size is {settings.MAX_UPLOAD_SIZE // (1024 * 1024)}MB",
             )
 
         # Create hackathon/team specific directory

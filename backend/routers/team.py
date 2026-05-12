@@ -233,6 +233,8 @@ async def get_team(team_id: str):
     return TeamResponse(**team)
 
 
+
+
 @router.get("/{team_id}/members", response_model=List[TeamMemberResponse])
 async def get_team_members(team_id: str):
     """Get all members of a team"""

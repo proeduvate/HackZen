@@ -57,13 +57,7 @@ const StudentDashboard = () => {
         { title: 'Project Submissions', value: stats.find((item) => item.label === 'Project Submissions')?.value || '14', progress: 70, badge: 'Growing' },
     ];
 
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center min-h-[60vh]">
-                <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
-            </div>
-        );
-    }
+
 
     return (
         <div className="space-y-12 pb-20 animate-in fade-in slide-in-from-bottom-6 duration-700">
