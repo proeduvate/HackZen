@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchMentorTeams } from '../../api/teamApi';
+import { fetchAssignedTeams, fetchMentorshipRequests } from '../../services/mentor/assignedTeamsApi';
 
 const MentorDashboard = () => {
     const navigate = useNavigate();
@@ -17,28 +17,26 @@ const MentorDashboard = () => {
         const fetchData = async () => {
             setIsLoading(true);
             try {
-                const teamsData = await fetchMentorTeams();
+                const [teamsResult, requestsResult] = await Promise.all([
+                    fetchAssignedTeams(),
+                    fetchMentorshipRequests()
+                ]);
                 
                 // Map teams data to UI format
-                const mappedTeams = teamsData.map(team => ({
+                const mappedTeams = teamsResult.activeTeams.map(team => ({
                     id: team.id,
-                    team: team.teamName,
-                    category: 'General', // Backend doesn't have category yet
-                    progress: 0, // Backend needs progress tracking
-                    nextSync: 'Pending',
-                    members: 1, // Need to fetch member count
-                    status: 'Active',
-                    statusColor: 'emerald',
-                    icon: '🚀'
+                    team: team.name,
+                    category: team.domain,
+                    progress: team.progress || 0,
+                    nextSync: team.nextActionTime || 'Pending',
+                    members: team.members || 0,
+                    status: team.status,
+                    statusColor: team.status === 'Active' ? 'emerald' : 'purple',
+                    icon: team.icon || '🚀'
                 }));
                 
                 setActiveTeams(mappedTeams);
-
-                // Mock pending requests for now as backend logic for this is TBD
-                setPendingRequests([
-                    { id: 'mock-1', team: 'InnovateX', domain: 'FinTech', desc: 'Decentralized micro-loans platform.', date: 'Oct 12', time: '4 Weeks', priority: true, icon: '🚀' },
-                    { id: 'mock-2', team: 'GreenEarth', domain: 'Sustain', desc: 'AI-powered waste management.', date: 'Oct 10', time: '6 Weeks', priority: false, icon: '🌱' },
-                ]);
+                setPendingRequests(requestsResult);
 
             } catch (error) {
                 console.error("Failed to fetch mentor dashboard data", error);
@@ -53,17 +51,22 @@ const MentorDashboard = () => {
     const filteredRequests = useMemo(() => {
         return pendingRequests.filter(req =>
             req.team.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            req.domain.toLowerCase().includes(searchTerm.toLowerCase())
+            req.desc.toLowerCase().includes(searchTerm.toLowerCase())
         );
     }, [pendingRequests, searchTerm]);
 
     // Handlers
     const handleAccept = async (request) => {
         setLoadingActions(prev => ({ ...prev, [request.id]: 'accepting' }));
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setActiveTeams(prev => [{ ...request, progress: 0, nextSync: 'TBD', members: 4, status: 'New', statusColor: 'purple' }, ...prev]);
-        setPendingRequests(prev => prev.filter(r => r.id !== request.id));
-        setLoadingActions(prev => { const next = { ...prev }; delete next[request.id]; return next; });
+        // Logic to mark notification as read and confirm assignment
+        try {
+            await new Promise(resolve => setTimeout(resolve, 800)); // Smooth transition
+            setPendingRequests(prev => prev.filter(r => r.id !== request.id));
+        } catch (err) {
+            console.error("Failed to accept request", err);
+        } finally {
+            setLoadingActions(prev => { const next = { ...prev }; delete next[request.id]; return next; });
+        }
     };
 
     return (

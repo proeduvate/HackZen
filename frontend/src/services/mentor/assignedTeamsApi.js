@@ -143,8 +143,29 @@ export const createTeam = async (teamData) => {
 };
 
 /**
+ * Fetch mentorship requests (notifications of type mentor_assignment)
+ */
+export const fetchMentorshipRequests = async () => {
+    try {
+        const { data: notifications } = await apiClient.get('/inbox/?type=mentor_assignment');
+        return notifications.map(notif => ({
+            id: notif._id,
+            team: notif.message.split('assigned to ')[1] || 'New Team',
+            domain: 'Mentorship',
+            desc: notif.message,
+            date: new Date(notif.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            time: 'Pending',
+            priority: notif.read === false,
+            icon: '🚀'
+        }));
+    } catch (error) {
+        console.error('Failed to fetch mentorship requests:', error);
+        return [];
+    }
+};
+
+/**
  * Graduate a team — updates team status to completed via backend.
- * @param {string} teamId
  */
 export const graduateTeam = async (teamId) => {
     try {

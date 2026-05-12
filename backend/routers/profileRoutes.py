@@ -53,7 +53,7 @@ async def update_my_profile_details(
                 status_code=404, detail="Profile not found or role invalid"
             )
 
-        print(f"[DEBUG] Returning profile successfully")
+        print("[DEBUG] Returning profile successfully")
         return profile
     except Exception as e:
         print(f"[DEBUG] ERROR in update_my_profile_details: {str(e)}")

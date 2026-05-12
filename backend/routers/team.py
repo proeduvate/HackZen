@@ -199,7 +199,7 @@ async def get_mentor_teams(
 
 
 @router.get("/mentor/my", response_model=List[TeamResponse])
-async def get_mentor_teams(
+async def get_mentor_teams_list(
     current_user: dict = Depends(RequireRole(["mentor", "admin"]))
 ):
     """Get all teams mentored by the current mentor"""
