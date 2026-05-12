@@ -20,7 +20,7 @@ async def with_auth(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
         )
 
-    # Ensure backward compatibility with code expecting 'sub'
+    #  Ensure  backward  compatibility  with  code  expecting  'sub'
     user["sub"] = str(user["_id"])
     return user
 
