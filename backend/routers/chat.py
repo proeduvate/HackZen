@@ -32,7 +32,10 @@ class ConnectionManager:
         self.active_connections[team_id][user_id] = websocket
 
     def disconnect(self, team_id: str, user_id: str):
-        if team_id in self.active_connections and user_id in self.active_connections[team_id]:
+        if (
+            team_id in self.active_connections
+            and user_id in self.active_connections[team_id]
+        ):
             del self.active_connections[team_id][user_id]
             if not self.active_connections[team_id]:
                 del self.active_connections[team_id]
