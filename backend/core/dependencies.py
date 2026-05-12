@@ -5,7 +5,7 @@ from services.userService import UserService
 
 
 async def with_auth(
-    current_user_payload: Dict[str, Any] = Security(get_current_user)
+    current_user_payload: Dict[str, Any] = Security(get_current_user),
 ) -> Dict[str, Any]:
     user_id = current_user_payload.get("id") or current_user_payload.get("sub")
     if not user_id:

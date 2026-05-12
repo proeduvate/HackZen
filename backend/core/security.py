@@ -166,7 +166,7 @@ async def get_current_user_optional(
 
 
 async def get_current_active_user(
-    current_user: Dict[str, Any] = Security(get_current_user)
+    current_user: Dict[str, Any] = Security(get_current_user),
 ) -> Dict[str, Any]:
     """Get current active user (checks if user is active)."""
     # Add any additional active user checks here
