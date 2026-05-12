@@ -26,4 +26,4 @@ jobs:
         run: black --check .
 
       - name: Run Flake8
-        run: flake8 . --ignore=E501,F401,F841,W293,E722,F821
+        run: flake8 . --ignore=E501,F401,F841,W293,E722,F821,W503
