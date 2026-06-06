@@ -60,6 +60,29 @@ const Login = () => {
             } else {
                 navigate('/student/dashboard');
             }
+            // Fast-sync storage
+            const storageData = {
+                isLoggedIn: 'true',
+                userRole: role,
+                user: JSON.stringify(user),
+                token: token
+            };
+
+            Object.entries(storageData).forEach(([key, val]) => {
+                sessionStorage.setItem(key, val);
+                localStorage.setItem(key, val);
+            });
+
+            console.log(`[Auth] Login successful. Role: ${role}. Redirecting...`);
+
+            // Immediate Redirect
+            const targetPath = role === 'admin' ? '/admin/dashboard' : 
+                               role === 'organizer' ? '/organizer/dashboard' : 
+                               role === 'mentor' ? '/mentor/dashboard' : '/student/dashboard';
+            
+            navigate(targetPath, { replace: true });
+            
+            setTimeout(() => window.dispatchEvent(new Event('user-update')), 0);
         } catch (err) {
             setError(err.detail || 'Login failed. Please check your credentials.');
         } finally {
