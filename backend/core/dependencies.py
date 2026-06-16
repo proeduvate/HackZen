@@ -1,37 +1,28 @@
-from fastapi import Depends, Security, HTTPException, status
-from typing import List, Dict, Any
-from core.security import get_current_user
-from services.userService import UserService
+from __future__ import annotations
+
+from fastapi import Depends, Request
+
+from backend.ai.init import AIContainer
+from backend.ai.services.ai_service import AIService
+from backend.ai.services.dataset_service import DatasetService
+from backend.ai.services.memory_service import MemoryService
 
 
-async def with_auth(
-    current_user_payload: Dict[str, Any] = Security(get_current_user),
-) -> Dict[str, Any]:
-    user_id = current_user_payload.get("id") or current_user_payload.get("sub")
-    if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload"
-        )
-
-    user = await UserService.get_user_by_id(user_id)
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
-        )
-
-    #  Ensure  backward  compatibility  with  code  expecting  'sub'
-    user["sub"] = str(user["_id"])
-    return user
+def get_ai_container(request: Request) -> AIContainer:
+    container = getattr(request.app.state, "ai_container", None)
+    if container is None:
+        raise RuntimeError("AI container has not been initialized")
+    return container
 
 
-class RequireRole:
-    def __init__(self, allowed_roles: List[str]):
-        self.allowed_roles = allowed_roles
+def get_ai_service(container: AIContainer = Depends(get_ai_container)) -> AIService:
+    return container.ai_service
 
-    async def __call__(self, user: Dict[str, Any] = Security(get_current_user)):
-        if user.get("role") not in self.allowed_roles:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
-            )
-        return user
+
+def get_memory_service(container: AIContainer = Depends(get_ai_container)) -> MemoryService:
+    return container.memory_service
+
+
+def get_dataset_service(container: AIContainer = Depends(get_ai_container)) -> DatasetService:
+    return container.dataset_service
+
