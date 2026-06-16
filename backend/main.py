@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse
 
 from backend.ai.init import initialize_ai_container
 from backend.ai.routes.ai import router as ai_router
+from backend.compat.hackathon import router as legacy_hackathon_router
 from backend.ai.utils.logging import configure_logging
 from backend.core.config import settings
 from backend.core.rate_limiter import RateLimitMiddleware
@@ -57,6 +58,7 @@ app.add_middleware(
 )
 
 app.include_router(ai_router, prefix="/api/ai", tags=["AI"])
+app.include_router(legacy_hackathon_router, prefix="/api")
 
 
 @app.get("/", tags=["Root"])
