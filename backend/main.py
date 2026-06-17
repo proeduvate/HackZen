@@ -1,142 +1,115 @@
-from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import JSONResponse
+from __future__ import annotations
+
 from contextlib import asynccontextmanager
-from datetime import datetime
-from pathlib import Path
-from core.config import settings
-from database import MongoDB
-from routers import indexRoutes
+from datetime import datetime, timezone
+import logging
+from typing import Any
 
-# Get absolute path for uploads directory
-BASE_DIR = Path(__file__).parent.resolve()
-UPLOADS_DIR = BASE_DIR / "uploads"
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
-# Create uploads directory if it doesn't exist
-UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-print(f"📁 Uploads directory: {UPLOADS_DIR}")
+from backend.ai.init import initialize_ai_container
+from backend.ai.routes.ai import router as ai_router
+from backend.compat.hackathon import router as legacy_hackathon_router
+from backend.ai.utils.logging import configure_logging
+from backend.core.config import settings
+from backend.core.rate_limiter import RateLimitMiddleware
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
-    await MongoDB.connect()
-    yield
-    # Shutdown
-    await MongoDB.disconnect()
+    configure_logging(settings.log_level)
+    logger = logging.getLogger("hackathon_portal")
+    logger.info("Starting Hackathon Portal backend")
+    app.state.ai_container = await initialize_ai_container()
+    try:
+        yield
+    finally:
+        container = getattr(app.state, "ai_container", None)
+        if container is not None:
+            await container.aclose()
+        logger.info("Stopped Hackathon Portal backend")
 
 
 app = FastAPI(
-    title=settings.APP_NAME,
-    version="1.0.0",
-    contact={
-        "name": "ProEduvate Team",
-        "email": "support@proeduvate.com",
-    },
-    license_info={
-        "name": "Proprietary",
-        "url": "https://proeduvate.com/license",
-    },
+    title=settings.app_name,
+    version=settings.version,
+    description="Production-ready AI-powered hackathon portal backend.",
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
 )
 
-# CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5174",
-        "http://localhost:5173",
-        "http://127.0.0.1:5174",
-        "http://127.0.0.1:5173",
-        "http://localhost:3000",
-        "http://localhost:8080",
-    ],
-    allow_credentials=True,
+    allow_origins=settings.cors_origins,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["Content-Disposition", "X-Total-Count"],
 )
 
-# Serve static files (uploads)
-app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
+app.add_middleware(
+    RateLimitMiddleware,
+    max_requests=settings.rate_limit_requests,
+    window_seconds=settings.rate_limit_window_seconds,
+)
 
-app.include_router(indexRoutes.router, prefix="/api")
+app.include_router(ai_router, prefix="/api/ai", tags=["AI"])
+app.include_router(legacy_hackathon_router, prefix="/api")
 
 
-# Root endpoint
 @app.get("/", tags=["Root"])
-async def root():
-    return {"message": "Welcome to ProEduvate Hackathon Platform"}
-
-
-# Health check endpoint
-@app.get("/health", tags=["Health"])
-async def health_check():
-    health_status = {
-        "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat(),
-        "version": "1.0.0",
-        "dependencies": {},
+async def root() -> dict[str, Any]:
+    return {
+        "success": True,
+        "service": settings.app_name,
+        "version": settings.version,
+        "docs": "/docs",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
-    # Check MongoDB connection
-    try:
-        await MongoDB.get_db().command("ping")
-        health_status["dependencies"]["mongodb"] = "connected"
-    except Exception as e:
-        health_status["dependencies"]["mongodb"] = "disconnected"
-        health_status["status"] = "degraded"
-        health_status["mongodb_error"] = str(e)
 
-    # Check uploads directory
-    if UPLOADS_DIR.exists():
-        health_status["dependencies"]["uploads_dir"] = "available"
-    else:
-        health_status["dependencies"]["uploads_dir"] = "missing"
-        health_status["status"] = "degraded"
-
-    return health_status
-
-
-# Error handlers
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request, exc):
-    """
-    Handle HTTP exceptions with consistent error format
-    """
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(
+    _: Request, exc: RequestValidationError
+) -> JSONResponse:
     return JSONResponse(
-        status_code=exc.status_code,
+        status_code=422,
         content={
-            "error": {
-                "code": exc.status_code,
-                "message": exc.detail,
-                "timestamp": datetime.utcnow().isoformat(),
-                "path": request.url.path,
-            }
+            "success": False,
+            "error": "Validation error",
+            "details": exc.errors(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         },
-        headers=exc.headers if hasattr(exc, "headers") else None,
     )
 
 
-@app.exception_handler(500)
-async def internal_server_error_handler(request, exc):
-    """
-    Handle internal server errors
-    """
+@app.exception_handler(HTTPException)
+async def http_exception_handler(_: Request, exc: HTTPException) -> JSONResponse:
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "success": False,
+            "error": str(exc.detail),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        },
+    )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    logging.getLogger("hackathon_portal").exception(
+        "Unhandled error on %s", request.url.path
+    )
     return JSONResponse(
         status_code=500,
         content={
-            "error": {
-                "code": 500,
-                "message": "Internal server error",
-                "timestamp": datetime.utcnow().isoformat(),
-                "path": request.url.path,
-                "detail": str(exc) if settings.DEBUG else "Contact support for details",
-            }
+            "success": False,
+            "error": "Internal server error",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         },
     )
 
@@ -144,13 +117,4 @@ async def internal_server_error_handler(request, exc):
 if __name__ == "__main__":
     import uvicorn
 
-    print("\n" + "=" * 60)
-    print("🎯 STARTING PROEDUVATE HACKATHON PLATFORM")
-    print("=" * 60)
-    print(f"📱 App: {settings.APP_NAME}")
-    print(f"🌐 Host: {settings.BACKEND_URL}")
-    print(f"📊 Docs: http://{settings.BACKEND_URL}/docs")
-    print("=" * 60)
-
-    # Run the server
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=settings.debug)
