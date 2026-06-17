@@ -60,15 +60,25 @@ class Settings:
     openrouter_max_tokens: int = _env_int("OPENROUTER_MAX_TOKENS", 1000)
     openrouter_timeout_seconds: float = _env_float("OPENROUTER_TIMEOUT_SECONDS", 30.0)
     openrouter_retry_attempts: int = _env_int("OPENROUTER_RETRY_ATTEMPTS", 3)
-    openrouter_retry_backoff_seconds: float = _env_float("OPENROUTER_RETRY_BACKOFF_SECONDS", 1.25)
+    openrouter_retry_backoff_seconds: float = _env_float(
+        "OPENROUTER_RETRY_BACKOFF_SECONDS", 1.25
+    )
 
     rate_limit_requests: int = _env_int("RATE_LIMIT_REQUESTS", 60)
     rate_limit_window_seconds: int = _env_int("RATE_LIMIT_WINDOW_SECONDS", 60)
     max_upload_size_mb: int = _env_int("MAX_UPLOAD_SIZE_MB", 5)
 
-    datasets_dir: Path = Path(os.getenv("DATASETS_DIR", Path(__file__).resolve().parents[1] / "data" / "datasets"))
-    memory_dir: Path = Path(os.getenv("MEMORY_DIR", Path(__file__).resolve().parents[1] / "data" / "memory"))
-    logs_dir: Path = Path(os.getenv("LOGS_DIR", Path(__file__).resolve().parents[1] / "logs"))
+    datasets_dir: Path = Path(
+        os.getenv(
+            "DATASETS_DIR", Path(__file__).resolve().parents[1] / "data" / "datasets"
+        )
+    )
+    memory_dir: Path = Path(
+        os.getenv("MEMORY_DIR", Path(__file__).resolve().parents[1] / "data" / "memory")
+    )
+    logs_dir: Path = Path(
+        os.getenv("LOGS_DIR", Path(__file__).resolve().parents[1] / "logs")
+    )
 
     rag_chunk_size: int = _env_int("RAG_CHUNK_SIZE", 1000)
     rag_chunk_overlap: int = _env_int("RAG_CHUNK_OVERLAP", 150)

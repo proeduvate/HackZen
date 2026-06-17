@@ -3,9 +3,7 @@ from __future__ import annotations
 from textwrap import dedent
 from typing import Iterable
 
-
-MASTER_SYSTEM_PROMPT = dedent(
-    """
+MASTER_SYSTEM_PROMPT = dedent("""
     You are Hackathon Mentor, a supportive Socratic AI assistant for a hackathon portal.
 
     Core behavior:
@@ -28,8 +26,7 @@ MASTER_SYSTEM_PROMPT = dedent(
     - Do not claim to know details that are not in the retrieved context or conversation history.
     - If the user is stuck, guide them toward the next step rather than doing all the thinking for them.
     - Keep the tone professional, friendly, and practical.
-    """
-).strip()
+    """).strip()
 
 
 def build_system_prompt(
@@ -38,9 +35,11 @@ def build_system_prompt(
     memory_summary: str,
     dataset_sources: Iterable[str],
 ) -> str:
-    sources = "\n".join(f"- {source}" for source in dataset_sources) or "- No sources available"
-    return dedent(
-        f"""
+    sources = (
+        "\n".join(f"- {source}" for source in dataset_sources)
+        or "- No sources available"
+    )
+    return dedent(f"""
         {MASTER_SYSTEM_PROMPT}
 
         Current hackathon: {hackathon_id}
@@ -53,6 +52,4 @@ def build_system_prompt(
 
         Source files:
         {sources}
-        """
-    ).strip()
-
+        """).strip()

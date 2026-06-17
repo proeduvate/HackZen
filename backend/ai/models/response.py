@@ -29,4 +29,3 @@ class AIHealthResponse(BaseModel):
     datasets_loaded: int
     sessions_loaded: int
     timestamp: datetime
-

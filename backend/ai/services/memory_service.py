@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from backend.ai.config import AIConfig
 from backend.ai.memory.store import MemoryStore
-from backend.ai.models.memory import ClearMemoryResponse, ConversationHistoryResponse, SessionMemory
+from backend.ai.models.memory import (
+    ClearMemoryResponse,
+    ConversationHistoryResponse,
+    SessionMemory,
+)
 
 
 class MemoryService:
@@ -15,7 +19,9 @@ class MemoryService:
 
     async def get_history(self, session_id: str) -> ConversationHistoryResponse:
         messages = await self.store.get_history(session_id)
-        return ConversationHistoryResponse(success=True, session_id=session_id, messages=messages)
+        return ConversationHistoryResponse(
+            success=True, session_id=session_id, messages=messages
+        )
 
     async def get_session(self, session_id: str) -> SessionMemory | None:
         return await self.store.get_session(session_id)
@@ -50,7 +56,9 @@ class MemoryService:
             hackathon_id=hackathon_id,
         )
 
-    async def clear_memory(self, session_id: str, user_id: str | None = None) -> ClearMemoryResponse:
+    async def clear_memory(
+        self, session_id: str, user_id: str | None = None
+    ) -> ClearMemoryResponse:
         cleared = False
         if session_id:
             cleared = await self.store.clear_session(session_id)
@@ -61,4 +69,3 @@ class MemoryService:
 
     async def count_sessions(self) -> int:
         return await self.store.count_sessions()
-

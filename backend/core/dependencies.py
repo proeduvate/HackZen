@@ -19,10 +19,13 @@ def get_ai_service(container: AIContainer = Depends(get_ai_container)) -> AIServ
     return container.ai_service
 
 
-def get_memory_service(container: AIContainer = Depends(get_ai_container)) -> MemoryService:
+def get_memory_service(
+    container: AIContainer = Depends(get_ai_container),
+) -> MemoryService:
     return container.memory_service
 
 
-def get_dataset_service(container: AIContainer = Depends(get_ai_container)) -> DatasetService:
+def get_dataset_service(
+    container: AIContainer = Depends(get_ai_container),
+) -> DatasetService:
     return container.dataset_service
-

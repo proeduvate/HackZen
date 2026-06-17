@@ -23,5 +23,6 @@ class ContextRetriever:
         top_k: int | None = None,
     ) -> RetrievalResult:
         sources = self.index.search(query=query, hackathon_id=hackathon_id, top_k=top_k)
-        return RetrievalResult(context=self.index.build_context(sources), sources=sources)
-
+        return RetrievalResult(
+            context=self.index.build_context(sources), sources=sources
+        )

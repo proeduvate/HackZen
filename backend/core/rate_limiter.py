@@ -18,7 +18,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self._requests: dict[str, deque[float]] = defaultdict(deque)
         self._lock = asyncio.Lock()
 
-    async def dispatch(self, request: Request, call_next: Callable[[Request], Response]) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: Callable[[Request], Response]
+    ) -> Response:
         client = request.client.host if request.client else "unknown"
         key = f"{client}:{request.url.path}"
         now = datetime.now(timezone.utc).timestamp()
@@ -38,4 +40,3 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 )
             timestamps.append(now)
         return await call_next(request)
-

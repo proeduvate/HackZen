@@ -130,7 +130,9 @@ class AIService:
                 return await self.openrouter_client.chat(prompt_messages)
         except OpenRouterError as exc:
             self.logger.warning("OpenRouter fallback activated: %s", exc)
-        return self._fallback_socratic_response(request.message, retrieval_context, sources)
+        return self._fallback_socratic_response(
+            request.message, retrieval_context, sources
+        )
 
     def _fallback_socratic_response(
         self,

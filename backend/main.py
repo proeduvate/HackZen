@@ -73,7 +73,9 @@ async def root() -> dict[str, Any]:
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(_: Request, exc: RequestValidationError) -> JSONResponse:
+async def validation_exception_handler(
+    _: Request, exc: RequestValidationError
+) -> JSONResponse:
     return JSONResponse(
         status_code=422,
         content={
@@ -99,7 +101,9 @@ async def http_exception_handler(_: Request, exc: HTTPException) -> JSONResponse
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    logging.getLogger("hackathon_portal").exception("Unhandled error on %s", request.url.path)
+    logging.getLogger("hackathon_portal").exception(
+        "Unhandled error on %s", request.url.path
+    )
     return JSONResponse(
         status_code=500,
         content={
@@ -114,4 +118,3 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=settings.debug)
-

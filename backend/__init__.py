@@ -1,2 +1,1 @@
 """Hackathon Portal backend package."""
-

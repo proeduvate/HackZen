@@ -13,7 +13,8 @@ def configure_logging(level: str = "INFO") -> None:
     )
     root.setLevel(level.upper())
     has_stream_handler = any(
-        isinstance(handler, logging.StreamHandler) and not isinstance(handler, logging.FileHandler)
+        isinstance(handler, logging.StreamHandler)
+        and not isinstance(handler, logging.FileHandler)
         for handler in root.handlers
     )
     has_file_handler = any(

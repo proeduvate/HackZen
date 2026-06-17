@@ -40,4 +40,3 @@ def iter_txt_files(directory: Path) -> Iterable[Path]:
 
 def build_chunks(text: str, chunk_size: int, chunk_overlap: int) -> list[str]:
     return chunk_text(text, chunk_size, chunk_overlap)
-

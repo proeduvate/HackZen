@@ -10,7 +10,6 @@ from backend.ai.rag.loader import iter_txt_files, load_dataset
 from backend.ai.utils.text import chunk_text
 from backend.core.config import settings
 
-
 router = APIRouter(prefix="/hackathon", tags=["Legacy Hackathon"])
 
 
@@ -23,7 +22,11 @@ def _dataset_to_legacy_hackathon(path) -> dict[str, Any]:
     chunks = chunk_text(document.text, 1000, 150)
     title = document.hackathon_id.replace("_", " ").title()
     themes = []
-    description = document.text.split("\n\n", 1)[1].strip() if "\n\n" in document.text else document.text.strip()
+    description = (
+        document.text.split("\n\n", 1)[1].strip()
+        if "\n\n" in document.text
+        else document.text.strip()
+    )
     if "Sustainable" in title:
         themes = ["Sustainability", "Smart Cities", "Impact"]
     elif "Learning" in title:
@@ -88,4 +91,3 @@ async def hackathon_by_id(hackathon_id: str) -> dict[str, Any]:
         if hackathon["_id"] == hackathon_id or hackathon["id"] == hackathon_id:
             return hackathon
     raise HTTPException(status_code=404, detail="Hackathon not found")
-

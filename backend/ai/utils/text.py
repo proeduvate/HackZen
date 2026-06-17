@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 import re
 from typing import Iterable, List
 
-
 _SPACE_RE = re.compile(r"\s+")
 
 
@@ -37,4 +36,3 @@ def summarize_lines(lines: Iterable[str], limit: int = 3) -> str:
 
 def utc_timestamp() -> str:
     return datetime.now(timezone.utc).isoformat()
-
