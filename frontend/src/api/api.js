@@ -28,8 +28,16 @@ apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response && error.response.status === 401) {
+            const token = localStorage.getItem('token');
+            if (token?.startsWith('mock-token-')) {
+                return Promise.reject(error);
+            }
+
             // Handle unauthorized access (e.g., redirect to login)
             localStorage.removeItem('token');
+            localStorage.removeItem('isLoggedIn');
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('isLoggedIn');
             // window.location.href = '/login';
         }
         return Promise.reject(error);

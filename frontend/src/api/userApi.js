@@ -1,5 +1,32 @@
 import apiClient from './api';
 
+const MOCK_USERS = [
+    {
+        name: 'Ananya Rao',
+        email: 'ananya.rao@microsoft.com',
+        password: 'Ananya@MS2024',
+        role: 'mentor',
+    },
+    {
+        name: 'M. Sailesh',
+        email: 'msailesh@gmail.com',
+        password: 'sailesh2412',
+        role: 'student',
+    },
+    {
+        name: 'P. Saravanan',
+        email: 'psaravanan@gmail.com',
+        password: 'saro2802',
+        role: 'organizer',
+    },
+    {
+        name: 'Ghari Rajan',
+        email: 'ghariraajan@gmail.com',
+        password: 'hari5426',
+        role: 'admin',
+    },
+];
+
 export const setAuthToken = (token) => {
   if (token) {
     apiClient.defaults.headers.common.Authorization = `Bearer ${token}`;
@@ -9,39 +36,59 @@ export const setAuthToken = (token) => {
 };
 
 export const register = async (userData) => {
-    try {
-        console.log('Mocking Platform Registration for:', userData.email);
-        
-        // Simulating network delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
+    const existingUser = MOCK_USERS.find(
+        (user) => user.email.toLowerCase() === userData.email.toLowerCase()
+    );
 
-        /* REAL API CALL
-        const { data } = await apiClient.post('/auth/register', userData);
-        return data;
-        */
-
-        return {
-            message: "User registered successfully (Mock)",
-            user: {
-                id: "mock_user_" + Math.random().toString(36).substr(2, 9),
-                name: userData.name || "Mock Student",
-                email: userData.email,
-                role: userData.role || "student"
-            }
-        };
-    } catch (error) {
-        console.error('Registration failed:', error);
-        throw error;
+    if (existingUser) {
+        throw { detail: 'Email already registered' };
     }
+
+    const newUser = {
+        name: userData.name,
+        email: userData.email,
+        password: userData.password,
+        role: userData.role || 'student',
+    };
+
+    MOCK_USERS.push(newUser);
+
+    return {
+        message: 'User registered successfully (Mock)',
+        user: {
+            _id: `mock_${Date.now()}`,
+            name: newUser.name,
+            email: newUser.email,
+            role: newUser.role,
+        },
+    };
 };
 
 export const login = async (credentials) => {
-    const { data } = await apiClient.post('/auth/login', credentials);
-    if (data.token) {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        setAuthToken(data.token);
+    const user = MOCK_USERS.find(
+        (entry) =>
+            entry.email.toLowerCase() === credentials.email.toLowerCase() &&
+            entry.password === credentials.password
+    );
+
+    if (!user) {
+        throw { detail: 'Invalid credentials' };
     }
+
+    const data = {
+        token: `mock-token-${btoa(user.email)}`,
+        user: {
+            _id: `mock-${user.role}-${user.email}`,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+        },
+    };
+
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    setAuthToken(data.token);
+
     return data;
 };
 

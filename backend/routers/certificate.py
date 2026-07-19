@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Body, Response
+from fastapi import APIRouter, Depends, HTTPException, status, Body, Response, UploadFile, File, Form
 from typing import List, Optional
 from bson import ObjectId
 from datetime import datetime
@@ -6,12 +6,46 @@ from datetime import datetime
 from core.dependencies import with_auth, RequireRole
 from database import get_db
 from schemas.certificate import CertificateResponse
+from services.file_upload import file_upload_service
 
 router = APIRouter()
 
 
 def get_certificates_collection():
     return get_db()["certificates"]
+
+
+async def _delete_existing_certificate_file(file_path: Optional[str]) -> None:
+    if file_path:
+        file_upload_service.delete_file(file_path)
+
+
+async def _build_certificate_payload(
+    user_id: str,
+    title: str,
+    completion_date: str,
+    description: str,
+    upload_file: Optional[UploadFile],
+    existing_file_path: Optional[str] = None,
+):
+    file_path = existing_file_path
+    certificate_url = None
+
+    if upload_file:
+        file_path, certificate_url = await file_upload_service.save_certificate(upload_file)
+    elif existing_file_path:
+        certificate_url = file_upload_service.get_file_url(existing_file_path)
+
+    return {
+        "userId": user_id,
+        "title": title,
+        "completionDate": completion_date,
+        "description": description,
+        "filePath": file_path,
+        "certificateUrl": certificate_url or "",
+        "issuedAt": datetime.utcnow(),
+        "status": "Issued",
+    }
 
 
 @router.post(
@@ -75,6 +109,110 @@ async def get_certificate(certificate_id: str):
 
     cert["_id"] = str(cert["_id"])
     return CertificateResponse(**cert)
+
+
+@router.post("/student/upload", response_model=CertificateResponse, status_code=status.HTTP_201_CREATED)
+async def upload_student_certificate(
+    title: str = Form(...),
+    completion_date: str = Form(...),
+    description: str = Form(...),
+    file: UploadFile = File(...),
+    current_user: dict = Depends(with_auth),
+):
+    title = title.strip()
+    description = description.strip()
+
+    if not title:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Title is required")
+
+    collection = get_certificates_collection()
+    existing = await collection.find_one({"userId": str(current_user["_id"]), "title": title})
+    if existing:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Certificate with this title already exists")
+
+    payload = await _build_certificate_payload(
+        user_id=str(current_user["_id"]),
+        title=title,
+        completion_date=completion_date,
+        description=description,
+        upload_file=file,
+    )
+
+    result = await collection.insert_one(payload)
+    payload["_id"] = str(result.inserted_id)
+    return CertificateResponse(**payload)
+
+
+@router.put("/student/{certificate_id}", response_model=CertificateResponse)
+async def update_student_certificate(
+    certificate_id: str,
+    title: str = Form(...),
+    completion_date: str = Form(...),
+    description: str = Form(...),
+    file: Optional[UploadFile] = File(None),
+    current_user: dict = Depends(with_auth),
+):
+    title = title.strip()
+    description = description.strip()
+
+    if not title:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Title is required")
+
+    collection = get_certificates_collection()
+    existing = await collection.find_one({"_id": ObjectId(certificate_id), "userId": str(current_user["_id"])} )
+    if not existing:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Certificate not found")
+
+    duplicate = await collection.find_one(
+        {
+            "_id": {"$ne": ObjectId(certificate_id)},
+            "userId": str(current_user["_id"]),
+            "title": title,
+        }
+    )
+    if duplicate:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Certificate with this title already exists")
+
+    old_file_path = existing.get("filePath")
+    payload = await _build_certificate_payload(
+        user_id=str(current_user["_id"]),
+        title=title,
+        completion_date=completion_date,
+        description=description,
+        upload_file=file,
+        existing_file_path=old_file_path,
+    )
+
+    try:
+        await collection.update_one(
+            {"_id": ObjectId(certificate_id)},
+            {"$set": payload},
+        )
+    except Exception:
+        if file and payload.get("filePath") and payload.get("filePath") != old_file_path:
+            await _delete_existing_certificate_file(payload.get("filePath"))
+        raise
+
+    if file and old_file_path and payload.get("filePath") != old_file_path:
+        await _delete_existing_certificate_file(old_file_path)
+
+    payload["_id"] = certificate_id
+    return CertificateResponse(**payload)
+
+
+@router.delete("/student/{certificate_id}")
+async def delete_student_certificate(
+    certificate_id: str,
+    current_user: dict = Depends(with_auth),
+):
+    collection = get_certificates_collection()
+    existing = await collection.find_one({"_id": ObjectId(certificate_id), "userId": str(current_user["_id"])} )
+    if not existing:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Certificate not found")
+
+    await _delete_existing_certificate_file(existing.get("filePath"))
+    await collection.delete_one({"_id": ObjectId(certificate_id)})
+    return {"success": True, "message": "Certificate deleted"}
 
 
 # ─── Admin endpoints ───────────────────────────────────────────────────────────

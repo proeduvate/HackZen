@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from pydantic import field_validator
 from typing import List, Optional
 import os
 from dotenv import load_dotenv
@@ -16,7 +17,6 @@ class Settings(BaseSettings):
     # MongoDB
     MONGO_URI: str = os.getenv("MONGO_URI")
     LOG_LEVEL: str = "INFO"
-    DEBUG: bool = True
 
     # File Uploads
     UPLOAD_DIR: str = "uploads"
@@ -26,6 +26,7 @@ class Settings(BaseSettings):
 
     # JWT
     SECRET_KEY: str = os.getenv("SECRET_KEY")
+    ALLOW_MOCK_AUTH: bool = os.getenv("ALLOW_MOCK_AUTH", "true").lower() == "true"
     ALGORITHM: str = "HS256"
     JWT_EXPIRES_IN: str = os.getenv("JWT_EXPIRES_IN", "30")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 10080
@@ -58,6 +59,23 @@ class Settings(BaseSettings):
     # Vector Database
     VECTOR_DB_URL: Optional[str] = None
     VECTOR_DB_COLLECTION: Optional[str] = None
+
+    @field_validator("DEBUG", mode="before")
+    @classmethod
+    def parse_debug(cls, value):
+        if isinstance(value, bool):
+            return value
+        if value is None:
+            return False
+        return str(value).strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+            "debug",
+            "dev",
+            "development",
+        }
 
     class Config:
         env_file = ".env"
