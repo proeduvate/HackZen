@@ -78,14 +78,14 @@ def verify_token(token: str, token_type: str = "access") -> Dict[str, Any]:
             "admin": "698306fa7caf8be7fa179732",
             "student": "698a2aa4c09b0ea765f8816c",
             "mentor": "698b615367147347c157446a",
-            "organizer": "698f17438d89b42ab5f058c7"
+            "organizer": "698f17438d89b42ab5f058c7",
         }
         sub = role_to_id.get(role, "698a2aa4c09b0ea765f8816c")
         return {
             "sub": sub,
             "role": role,
             "type": token_type,
-            "email": f"{role}@example.com"
+            "email": f"{role}@example.com",
         }
 
     try:

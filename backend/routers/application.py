@@ -85,7 +85,7 @@ async def get_hackathon_applications(
 async def update_application_status(
     application_id: str,
     app_update: ApplicationUpdate,
-    current_user: dict = Depends(RequireRole(["organizer", "admin"]))
+    current_user: dict = Depends(RequireRole(["organizer", "admin"])),
 ):
     """Approve or Reject a student's registration application"""
     collection = get_application_collection()
@@ -93,8 +93,7 @@ async def update_application_status(
     existing = await collection.find_one({"_id": ObjectId(application_id)})
     if not existing:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Application not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Application not found"
         )
 
     update_data = {}
@@ -105,17 +104,14 @@ async def update_application_status(
 
     if not update_data:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No updates provided"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="No updates provided"
         )
 
     await collection.update_one(
-        {"_id": ObjectId(application_id)},
-        {"$set": update_data}
+        {"_id": ObjectId(application_id)}, {"$set": update_data}
     )
 
     updated_app = await collection.find_one({"_id": ObjectId(application_id)})
     updated_app["_id"] = str(updated_app["_id"])
 
     return ApplicationResponse(**updated_app)
-
