@@ -15,7 +15,7 @@ const DEFAULT_PROFILE = {
     college: 'PSG College of Technology',
     registerNumber: '',
     bio: '',
-    avatarGradient: 'from-purple-600 to-blue-600',
+    avatarGradient: 'from-blue-600 to-blue-600',
     skills: [],
     techStack: {
         frontend: '',

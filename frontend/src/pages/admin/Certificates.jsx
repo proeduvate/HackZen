@@ -55,7 +55,7 @@ const AdminCertificates = () => {
     const typeColors = {
         'Winner': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
         'Participation': 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-        'Mentor': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+        'Mentor': 'bg-blue-500/10 text-blue-400 border-blue-500/20',
         'Top Performer': 'bg-amber-500/10 text-amber-400 border-amber-500/20'
     };
 

@@ -36,7 +36,7 @@ export const fetchStudents = async () => {
                     team: team.teamName,
                     status: 'online', // Simulation
                     hasNewActivity: Math.random() > 0.7,
-                    avatarColor: ['from-blue-500 to-cyan-500', 'from-purple-500 to-pink-500', 'from-orange-500 to-red-500', 'from-teal-500 to-green-500'][allStudents.length % 4],
+                    avatarColor: ['from-blue-500 to-cyan-500', 'from-blue-500 to-pink-500', 'from-orange-500 to-red-500', 'from-teal-500 to-green-500'][allStudents.length % 4],
                     recentFeedback: [] // To be fetched or stored locally
                 });
             }

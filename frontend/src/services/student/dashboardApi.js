@@ -14,7 +14,7 @@ export const fetchDashboardData = async () => {
         return {
             stats: [
                 { label: 'Engagements', value: String(data.user_stats.total_hackathons).padStart(2, '0'), icon: '⚡', color: 'blue' },
-                { label: 'Collaborations', value: String(data.my_teams.length).padStart(2, '0'), icon: '👥', color: 'purple' },
+                { label: 'Collaborations', value: String(data.my_teams.length).padStart(2, '0'), icon: '👥', color: 'blue' },
                 { label: 'Badges', value: String(data.user_stats.badges_earned).padStart(2, '0'), icon: '💎', color: 'amber' }
             ],
             featured: featuredHackathon ? {
@@ -26,7 +26,7 @@ export const fetchDashboardData = async () => {
                     ? new Date(featuredHackathon.hackathonStart).toLocaleDateString()
                     : '',
                 status: featuredHackathon.status || 'Open',
-                image: featuredHackathon.posterUrl || 'bg-gradient-to-r from-purple-600 to-indigo-600',
+                image: featuredHackathon.posterUrl || 'bg-gradient-to-r from-blue-600 to-indigo-600',
                 tags: featuredHackathon.themes || []
             } : {},
             tracked: data.my_teams.map(team => {

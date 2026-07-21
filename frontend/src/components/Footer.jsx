@@ -58,7 +58,7 @@ const Footer = () => {
                                 <a
                                     key={index}
                                     href={social.href}
-                                    className="w-10 h-10 glass rounded-lg flex items-center justify-center text-xl hover:bg-purple-600/20 transition-colors"
+                                    className="w-10 h-10 glass rounded-lg flex items-center justify-center text-xl hover:bg-blue-600/20 transition-colors"
                                     aria-label={social.name}
                                 >
                                     {social.icon}

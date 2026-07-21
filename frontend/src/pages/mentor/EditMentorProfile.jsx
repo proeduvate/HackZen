@@ -111,7 +111,7 @@ const EditMentorProfile = () => {
 
     if (loading) return (
         <div className="flex items-center justify-center h-64">
-            <div className="w-8 h-8 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
         </div>
     );
 
@@ -135,7 +135,7 @@ const EditMentorProfile = () => {
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className={`px-8 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl text-white text-sm font-bold shadow-lg shadow-purple-600/20 hover:scale-105 active:scale-95 transition-all ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`px-8 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl text-white text-sm font-bold shadow-lg shadow-blue-600/20 hover:scale-105 active:scale-95 transition-all ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         {saving ? 'Syncing...' : 'Save Changes'}
                     </button>
@@ -146,7 +146,7 @@ const EditMentorProfile = () => {
             <div className="glass-strong border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
                 <div className="p-8 border-b border-white/5 bg-white/[0.02]">
                     <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-3">
-                        <span className="w-1 h-6 bg-purple-500 rounded-full"></span>
+                        <span className="w-1 h-6 bg-blue-500 rounded-full"></span>
                         Professional Profile
                     </h2>
                 </div>
@@ -157,7 +157,7 @@ const EditMentorProfile = () => {
                             type="text"
                             value={profileData.name}
                             onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                            className="w-full bg-black/20 border border-white/5 text-white px-5 py-4 rounded-2xl focus:ring-2 focus:ring-purple-500/30 outline-none transition-all font-medium italic"
+                            className="w-full bg-black/20 border border-white/5 text-white px-5 py-4 rounded-2xl focus:ring-2 focus:ring-blue-500/30 outline-none transition-all font-medium italic"
                         />
                     </div>
                     <div className="space-y-3">
@@ -166,7 +166,7 @@ const EditMentorProfile = () => {
                             type="text"
                             value={profileData.companyName}
                             onChange={(e) => setProfileData({ ...profileData, companyName: e.target.value })}
-                            className="w-full bg-black/20 border border-white/5 text-white px-5 py-4 rounded-2xl focus:ring-2 focus:ring-purple-500/30 outline-none transition-all font-medium italic"
+                            className="w-full bg-black/20 border border-white/5 text-white px-5 py-4 rounded-2xl focus:ring-2 focus:ring-blue-500/30 outline-none transition-all font-medium italic"
                         />
                     </div>
                     <div className="space-y-3">
@@ -175,7 +175,7 @@ const EditMentorProfile = () => {
                             type="number"
                             value={profileData.experienceYears}
                             onChange={(e) => setProfileData({ ...profileData, experienceYears: e.target.value })}
-                            className="w-full bg-black/20 border border-white/5 text-white px-5 py-4 rounded-2xl focus:ring-2 focus:ring-purple-500/30 outline-none transition-all font-medium italic"
+                            className="w-full bg-black/20 border border-white/5 text-white px-5 py-4 rounded-2xl focus:ring-2 focus:ring-blue-500/30 outline-none transition-all font-medium italic"
                         />
                     </div>
                     <div className="space-y-3">
@@ -183,7 +183,7 @@ const EditMentorProfile = () => {
                         <select
                             value={profileData.availability}
                             onChange={(e) => setProfileData({ ...profileData, availability: e.target.value })}
-                            className="w-full bg-black/20 border border-white/10 text-white px-5 py-4 rounded-2xl focus:ring-2 focus:ring-purple-500/30 outline-none transition-all font-medium italic"
+                            className="w-full bg-black/20 border border-white/10 text-white px-5 py-4 rounded-2xl focus:ring-2 focus:ring-blue-500/30 outline-none transition-all font-medium italic"
                         >
                             <option value="Available">Available</option>
                             <option value="Busy">Busy</option>
@@ -202,7 +202,7 @@ const EditMentorProfile = () => {
                             value={profileData.linkedinUrl}
                             onChange={(e) => setProfileData({ ...profileData, linkedinUrl: e.target.value })}
                             placeholder="linkedin.com/in/username"
-                            className="w-full bg-black/20 border border-white/5 text-white px-5 py-4 rounded-2xl focus:ring-2 focus:ring-purple-500/30 outline-none transition-all font-medium italic"
+                            className="w-full bg-black/20 border border-white/5 text-white px-5 py-4 rounded-2xl focus:ring-2 focus:ring-blue-500/30 outline-none transition-all font-medium italic"
                         />
                     </div>
                     <div className="space-y-3">
@@ -211,7 +211,7 @@ const EditMentorProfile = () => {
                             type="text"
                             value={profileData.phoneNumber}
                             onChange={(e) => setProfileData({ ...profileData, phoneNumber: e.target.value })}
-                            className="w-full bg-black/20 border border-white/5 text-white px-5 py-4 rounded-2xl focus:ring-2 focus:ring-purple-500/30 outline-none transition-all font-medium italic"
+                            className="w-full bg-black/20 border border-white/5 text-white px-5 py-4 rounded-2xl focus:ring-2 focus:ring-blue-500/30 outline-none transition-all font-medium italic"
                         />
                     </div>
                 </div>
@@ -222,7 +222,7 @@ const EditMentorProfile = () => {
                         value={profileData.expertise}
                         onChange={(e) => setProfileData({ ...profileData, expertise: e.target.value })}
                         placeholder="e.g. AI, Cloud, Cybersecurity"
-                        className="w-full bg-black/20 border border-white/5 text-white px-5 py-4 rounded-2xl focus:ring-2 focus:ring-purple-500/30 outline-none transition-all font-medium italic"
+                        className="w-full bg-black/20 border border-white/5 text-white px-5 py-4 rounded-2xl focus:ring-2 focus:ring-blue-500/30 outline-none transition-all font-medium italic"
                     />
                 </div>
                 <div className="space-y-3">
@@ -232,7 +232,7 @@ const EditMentorProfile = () => {
                         onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
                         rows="5"
                         maxLength="500"
-                        className="w-full bg-black/20 border border-white/5 text-white p-6 rounded-[2rem] focus:ring-2 focus:ring-purple-500/30 outline-none transition-all resize-none font-medium italic"
+                        className="w-full bg-black/20 border border-white/5 text-white p-6 rounded-[2rem] focus:ring-2 focus:ring-blue-500/30 outline-none transition-all resize-none font-medium italic"
                     />
                 </div>
             </div>

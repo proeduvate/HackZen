@@ -63,10 +63,10 @@ const Analytics = () => {
             ]);
 
             setRegistrations([
-                { id: 101, name: 'John Doe', role: 'Student', time: '2 mins ago', status: 'verified', theme: 'purple' },
+                { id: 101, name: 'John Doe', role: 'Student', time: '2 mins ago', status: 'verified', theme: 'blue' },
                 { id: 102, name: 'Jane Smith', role: 'Mentor', time: '15 mins ago', status: 'pending', theme: 'amber' },
                 { id: 103, name: 'Robert Brown', role: 'Dev', time: '1 hour ago', status: 'verified', theme: 'blue' },
-                { id: 104, name: 'Emily White', role: 'Student', time: '3 hours ago', status: 'verified', theme: 'purple' }
+                { id: 104, name: 'Emily White', role: 'Student', time: '3 hours ago', status: 'verified', theme: 'blue' }
             ]);
 
             setIsLoading(false);
@@ -75,21 +75,21 @@ const Analytics = () => {
     }, [timeRange, growthPeriod]);
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
+        <div className="h-[calc(100vh-140px)] flex flex-col font-sans text-white">
             {/* Header Section */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 mb-4 flex-none animate-in fade-in duration-500">
                 <div>
-                    <h1 className="text-3xl font-bold text-white mb-2">Analytics</h1>
-                    <p className="text-sm text-gray-400">Track key metrics and platform growth</p>
+                    <h1 className="text-xl sm:text-2xl font-bold text-white mb-0.5">Analytics</h1>
+                    <p className="text-[10px] text-gray-400">Track key metrics and platform growth</p>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <div className="flex bg-white/5 p-1 rounded-lg border border-white/10">
+                    <div className="flex bg-white/5 p-0.5 rounded-md border border-white/10">
                         {['7days', '30days', '90days'].map(range => (
                             <button
                                 key={range}
                                 onClick={() => setTimeRange(range)}
-                                className={`px-4 py-2 text-xs font-semibold rounded-md transition-all ${
+                                className={`px-2.5 py-1 text-[10px] font-semibold rounded transition-all ${
                                     timeRange === range
                                         ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30'
                                         : 'text-gray-400 hover:text-gray-200'
@@ -102,164 +102,167 @@ const Analytics = () => {
                 </div>
             </div>
 
-            {/* Stat Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {isLoading ? (
-                    [...Array(4)].map((_, i) => (
-                        <div key={i} className="glass h-32 rounded-xl border border-white/5 animate-pulse"></div>
-                    ))
-                ) : (
-                    stats.map((stat, idx) => (
-                        <div key={idx} className="glass p-6 rounded-xl border border-white/5 hover:border-white/10 transition-all">
-                            <div className="flex items-center justify-between mb-4">
-                                <span className="text-2xl">{stat.icon}</span>
-                                <span className={`text-xs font-medium px-2 py-1 rounded-lg ${
-                                    stat.isPositive
-                                        ? 'bg-emerald-500/10 text-emerald-400'
-                                        : 'bg-rose-500/10 text-rose-400'
-                                }`}>
-                                    {stat.change}
-                                </span>
+            {/* Scrollable content area */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 pb-4 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                {/* Stat Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                    {isLoading ? (
+                        [...Array(4)].map((_, i) => (
+                            <div key={i} className="glass h-24 rounded-lg border border-white/5 animate-pulse bg-navy-950/10"></div>
+                        ))
+                    ) : (
+                        stats.map((stat, idx) => (
+                            <div key={idx} className="glass p-3 rounded-lg border border-white/5 hover:border-white/10 transition-all bg-navy-950/10">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-lg">{stat.icon}</span>
+                                    <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded ${
+                                        stat.isPositive
+                                            ? 'bg-emerald-500/10 text-emerald-400'
+                                            : 'bg-rose-500/10 text-rose-400'
+                                    }`}>
+                                        {stat.change}
+                                    </span>
+                                </div>
+                                <p className="text-[10px] text-gray-400 mb-0.5">{stat.title}</p>
+                                <p className="text-lg font-bold text-white">
+                                    <StatValue value={stat.value} decimals={stat.decimals || 0} />
+                                </p>
                             </div>
-                            <p className="text-xs text-gray-400 mb-1">{stat.title}</p>
-                            <p className="text-2xl font-bold text-white">
-                                <StatValue value={stat.value} decimals={stat.decimals || 0} />
-                            </p>
-                        </div>
-                    ))
-                )}
-            </div>
+                        ))
+                    )}
+                </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Growth Chart */}
-                <div className="lg:col-span-2 glass rounded-xl border border-white/5 flex flex-col">
-                    <div className="p-6 border-b border-white/5 flex items-center justify-between">
-                        <div>
-                            <h2 className="text-lg font-bold text-white mb-1">Growth Trend</h2>
-                            <p className="text-sm text-gray-400">User acquisition over time</p>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    {/* Growth Chart */}
+                    <div className="lg:col-span-2 glass rounded-lg border border-white/5 flex flex-col bg-navy-950/10">
+                        <div className="p-4 border-b border-white/5 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-sm font-bold text-white mb-0.5">Growth Trend</h2>
+                                <p className="text-[10px] text-gray-400">User acquisition over time</p>
+                            </div>
+                            <div className="flex bg-white/5 p-0.5 rounded-md border border-white/10">
+                                {['daily', 'weekly'].map(p => (
+                                    <button
+                                        key={p}
+                                        onClick={() => setGrowthPeriod(p)}
+                                        className={`px-2.5 py-1 text-[10px] font-semibold rounded transition-all ${
+                                            growthPeriod === p
+                                                ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30'
+                                                : 'text-gray-400 hover:text-gray-200'
+                                        }`}
+                                    >
+                                        {p}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                        <div className="flex bg-white/5 p-1 rounded-lg border border-white/10">
-                            {['daily', 'weekly'].map(p => (
-                                <button
-                                    key={p}
-                                    onClick={() => setGrowthPeriod(p)}
-                                    className={`px-4 py-2 text-xs font-semibold rounded-md transition-all ${
-                                        growthPeriod === p
-                                            ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30'
-                                            : 'text-gray-400 hover:text-gray-200'
-                                    }`}
-                                >
-                                    {p}
-                                </button>
+
+                        <div className="p-6 flex-1 flex items-end justify-between gap-2 h-48">
+                            {growthData.map((v, i) => (
+                                <div key={i} className="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
+                                    <div className="relative w-full flex justify-center items-end h-full">
+                                        <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-white text-gray-900 text-[9px] font-semibold px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-all duration-200 z-10 shadow-lg">
+                                            {v}
+                                        </div>
+                                        <div
+                                            className="w-full max-w-4 rounded-t transition-all duration-500 cursor-pointer bg-cyan-600/40 hover:bg-cyan-600/60"
+                                            style={{ height: `${(v / Math.max(...growthData)) * 100}%` }}
+                                        ></div>
+                                    </div>
+                                    <span className="text-[10px] text-gray-500 font-medium">
+                                        {growthPeriod === 'daily' ? ['M', 'T', 'W', 'T', 'F', 'S', 'S'][i % 7] : `W${i + 1}`}
+                                    </span>
+                                </div>
                             ))}
                         </div>
                     </div>
 
-                    <div className="p-8 flex-1 flex items-end justify-between gap-3 h-64">
-                        {growthData.map((v, i) => (
-                            <div key={i} className="flex-1 flex flex-col items-center gap-3 group h-full justify-end">
-                                <div className="relative w-full flex justify-center items-end h-full">
-                                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-white text-gray-900 text-xs font-semibold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-all duration-200 z-10 shadow-lg">
-                                        {v}
-                                    </div>
-                                    <div
-                                        className="w-full max-w-6 rounded-t-lg transition-all duration-500 cursor-pointer bg-cyan-600/40 hover:bg-cyan-600/60"
-                                        style={{ height: `${(v / Math.max(...growthData)) * 100}%` }}
-                                    ></div>
-                                </div>
-                                <span className="text-xs text-gray-500 font-medium">
-                                    {growthPeriod === 'daily' ? ['M', 'T', 'W', 'T', 'F', 'S', 'S'][i % 7] : `W${i + 1}`}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Reviews Section */}
-                <div className="glass rounded-xl border border-white/5 flex flex-col">
-                    <div className="p-6 border-b border-white/5">
-                        <h2 className="text-lg font-bold text-white mb-1">Feedback</h2>
-                        <p className="text-sm text-gray-400">Recent user reviews</p>
-                    </div>
-                    <div className="p-6 space-y-4 flex-1 overflow-y-auto custom-scrollbar">
-                        {reviews.map(review => (
-                            <div key={review.id} className="p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-all border border-white/5 space-y-2 group">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-8 h-8 rounded-lg bg-cyan-600/10 border border-cyan-500/20 flex items-center justify-center text-xs font-semibold text-cyan-400">
-                                            {review.name.charAt(0)}
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-semibold text-white">{review.name}</p>
-                                            <p className="text-xs text-gray-500">{review.role}</p>
-                                        </div>
-                                    </div>
-                                    <span className="text-xs text-amber-400 font-semibold">★ {review.rating}</span>
-                                </div>
-                                <p className="text-xs text-gray-400 leading-relaxed">"{review.feedback}"</p>
-                                <p className="text-xs text-gray-600 pt-2 border-t border-white/5">{review.time}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-            {/* Recent Registrations */}
-            <div className="glass rounded-xl border border-white/5">
-                <div className="p-6 border-b border-white/5 flex items-center justify-between">
-                    <div>
-                        <h2 className="text-lg font-bold text-white mb-1">Recent Registrations</h2>
-                        <p className="text-sm text-gray-400">Latest platform access</p>
-                    </div>
-                    <button className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white text-sm font-medium border border-white/5 transition-all active:scale-95">
-                        View All
-                    </button>
-                </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead>
-                            <tr className="bg-white/5 label-protocol uppercase">
-                                <th className="px-6 py-4">User</th>
-                                <th className="px-6 py-4">Role</th>
-                                <th className="px-6 py-4">Time</th>
-                                <th className="px-6 py-4 text-right">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-white/5">
-                            {registrations.map(user => (
-                                <tr key={user.id} className="hover:bg-white/5 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-xs font-semibold text-gray-400">
-                                                {user.name.split(' ').map(n => n[0]).join('')}
+                    {/* Reviews Section */}
+                    <div className="glass rounded-lg border border-white/5 flex flex-col max-h-72 bg-navy-950/10">
+                        <div className="p-4 border-b border-white/5">
+                            <h2 className="text-sm font-bold text-white mb-0.5">Feedback</h2>
+                            <p className="text-[10px] text-gray-400">Recent user reviews</p>
+                        </div>
+                        <div className="p-4 space-y-3 flex-1 overflow-y-auto custom-scrollbar">
+                            {reviews.map(review => (
+                                <div key={review.id} className="p-3 rounded bg-white/5 hover:bg-white/10 transition-all border border-white/5 space-y-1 group">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-6 h-6 rounded bg-cyan-600/10 border border-cyan-500/20 flex items-center justify-center text-[10px] font-semibold text-cyan-400">
+                                                {review.name.charAt(0)}
                                             </div>
                                             <div>
-                                                <p className="text-sm font-semibold text-white">{user.name}</p>
+                                                <p className="text-xs font-semibold text-white leading-none">{review.name}</p>
+                                                <p className="text-[9px] text-gray-500">{review.role}</p>
                                             </div>
                                         </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className="text-xs font-medium text-gray-400">{user.role}</span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <p className="text-xs text-gray-500">{user.time}</p>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-                                            user.status === 'verified'
-                                                ? 'bg-emerald-500/10 text-emerald-400'
-                                                : 'bg-amber-500/10 text-amber-400 animate-pulse'
-                                        }`}>
-                                            <div className={`w-1.5 h-1.5 rounded-full ${
-                                                user.status === 'verified' ? 'bg-emerald-500' : 'bg-amber-500'
-                                            }`}></div>
-                                            {user.status === 'verified' ? 'Verified' : 'Pending'}
-                                        </span>
-                                    </td>
-                                </tr>
+                                        <span className="text-[10px] text-amber-400 font-semibold">★ {review.rating}</span>
+                                    </div>
+                                    <p className="text-[11px] text-gray-400 leading-snug">"{review.feedback}"</p>
+                                    <p className="text-[9px] text-gray-600 pt-1 border-t border-white/5">{review.time}</p>
+                                </div>
                             ))}
-                        </tbody>
-                    </table>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Recent Registrations */}
+                <div className="glass rounded-lg border border-white/5 bg-navy-950/10">
+                    <div className="p-4 border-b border-white/5 flex items-center justify-between">
+                        <div>
+                            <h2 className="text-sm font-bold text-white mb-0.5">Recent Registrations</h2>
+                            <p className="text-[10px] text-gray-400">Latest platform access</p>
+                        </div>
+                        <button className="px-3 py-1.5 rounded bg-white/5 hover:bg-white/10 text-white text-xs font-medium border border-white/5 transition-all active:scale-95">
+                            View All
+                        </button>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead>
+                                <tr className="bg-white/5 label-protocol uppercase">
+                                    <th className="px-4 py-2.5 text-xs text-gray-400">User</th>
+                                    <th className="px-4 py-2.5 text-xs text-gray-400">Role</th>
+                                    <th className="px-4 py-2.5 text-xs text-gray-400">Time</th>
+                                    <th className="px-4 py-2.5 text-xs text-gray-400 text-right">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-white/5">
+                                {registrations.map(user => (
+                                    <tr key={user.id} className="hover:bg-white/5 transition-colors">
+                                        <td className="px-4 py-2.5">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-6 h-6 rounded bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-semibold text-gray-400">
+                                                    {user.name.split(' ').map(n => n[0]).join('')}
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-semibold text-white">{user.name}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-2.5">
+                                            <span className="text-xs font-medium text-gray-400">{user.role}</span>
+                                        </td>
+                                        <td className="px-4 py-2.5">
+                                            <p className="text-[10px] text-gray-500">{user.time}</p>
+                                        </td>
+                                        <td className="px-4 py-2.5 text-right">
+                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                                                user.status === 'verified'
+                                                    ? 'bg-emerald-500/10 text-emerald-400'
+                                                    : 'bg-amber-500/10 text-amber-400 animate-pulse'
+                                            }`}>
+                                                <div className={`w-1 h-1 rounded-full ${
+                                                    user.status === 'verified' ? 'bg-emerald-500' : 'bg-amber-500'
+                                                }`}></div>
+                                                {user.status === 'verified' ? 'Verified' : 'Pending'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

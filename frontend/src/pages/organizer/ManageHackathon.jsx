@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { fetchApplicationsForHackathon, updateApplicationStatus } from '../../services/organizer/applicationsApi';
 
 // --- Stat Card Helper Component (Lifted outside for performance and clarity) ---
 const StatCard = ({ stat }) => (
@@ -30,17 +31,12 @@ const ManageHackathon = () => {
     const [isActionLoading, setIsActionLoading] = useState({});
     const [pageError, setPageError] = useState(null);
 
-    // --- Mock Data ---
-    const [teams, setTeams] = useState([
-        { id: 1, name: "Cyber Knights", members: 4, leader: "John Doe", status: "Approved", registrationDate: "Feb 10, 2026", submissionStatus: "Submitted" },
-        { id: 2, name: "Eco Innovators", members: 3, leader: "Jane Smith", status: "Pending", registrationDate: "Feb 12, 2026", submissionStatus: "Pending" },
-        { id: 3, name: "Pixel Perfect", members: 2, leader: "Mike Ross", status: "Approved", registrationDate: "Feb 14, 2026", submissionStatus: "In Progress" },
-        { id: 4, name: "Dev Dynamos", members: 4, leader: "Sarah Parker", status: "Rejected", registrationDate: "Feb 11, 2026", submissionStatus: "None" },
-    ]);
+    // --- Data Management ---
+    const [teams, setTeams] = useState([]);
 
     const stats = useMemo(() => [
         { label: "Total Registrations", value: "450", icon: "👥", trend: "+12%", color: "cyan" },
-        { label: "Active Teams", value: "112", icon: "🚀", trend: "+5", color: "purple" },
+        { label: "Active Teams", value: "112", icon: "🚀", trend: "+5", color: "blue" },
         { label: "Submissions", value: "85", icon: "📁", trend: "76%", color: "blue" },
         { label: "Avg. Team Size", value: "3.2", icon: "📊", trend: "Stable", color: "green" },
     ], []);
@@ -85,6 +81,28 @@ const ManageHackathon = () => {
         fetchHackathonDetails();
     }, [hackathonId]);
 
+    useEffect(() => {
+        const loadApplications = async () => {
+            try {
+                const apps = await fetchApplicationsForHackathon(hackathonId);
+                setTeams(apps.map(app => ({
+                    id: app.id || app._id,
+                    name: app.teamName || `Participant ${app.userId.slice(-6)}`,
+                    members: app.teamSize || 1,
+                    leader: app.userId,
+                    status: app.status.charAt(0).toUpperCase() + app.status.slice(1),
+                    registrationDate: new Date(app.appliedAt).toLocaleDateString(),
+                    submissionStatus: "None"
+                })));
+            } catch (error) {
+                console.error("Failed to load applications:", error);
+            }
+        };
+        if (hackathonId) {
+            loadApplications();
+        }
+    }, [hackathonId]);
+
     // --- Filter Logic ---
     const filteredTeams = useMemo(() => {
         return teams.filter(team =>
@@ -95,14 +113,15 @@ const ManageHackathon = () => {
 
     // --- Action Handlers ---
     const handleAction = async (id, action) => {
+        const statusMapping = action === 'approve' ? 'approved' : 'rejected';
         setIsActionLoading(prev => ({ ...prev, [`${id}-${action}`]: true }));
         try {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            if (action === 'approve') {
-                setTeams(prev => prev.map(t => t.id === id ? { ...t, status: 'Approved' } : t));
-            } else if (action === 'reject') {
-                setTeams(prev => prev.map(t => t.id === id ? { ...t, status: 'Rejected' } : t));
-            }
+            await updateApplicationStatus(id, statusMapping);
+            setTeams(prev => prev.map(t =>
+                t.id === id ? { ...t, status: action === 'approve' ? 'Approved' : 'Rejected' } : t
+            ));
+        } catch (error) {
+            console.error(`Failed to ${action} application:`, error);
         } finally {
             setIsActionLoading(prev => ({ ...prev, [`${id}-${action}`]: false }));
         }
@@ -404,7 +423,7 @@ const ManageHackathon = () => {
                             <div className="glass p-8 md:p-12 rounded-3xl border border-white/10 max-w-3xl mx-auto shadow-2xl">
                                 <div className="space-y-8">
                                     <div className="flex items-center gap-5 border-b border-white/10 pb-6">
-                                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white flex items-center justify-center text-3xl shadow-lg italic">
+                                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center text-3xl shadow-lg italic">
                                             📢
                                         </div>
                                         <div>
@@ -419,7 +438,7 @@ const ManageHackathon = () => {
                                             <input
                                                 type="text"
                                                 placeholder="PHASE 1 DEADLINE EXTENSION"
-                                                className="w-full px-6 py-4 bg-navy-900/50 border border-white/10 rounded-2xl text-white focus:outline-none focus:border-purple-500/50 transition-all font-bold placeholder-gray-800"
+                                                className="w-full px-6 py-4 bg-navy-900/50 border border-white/10 rounded-2xl text-white focus:outline-none focus:border-blue-500/50 transition-all font-bold placeholder-gray-800"
                                             />
                                         </div>
                                         <div className="space-y-3">
@@ -427,20 +446,20 @@ const ManageHackathon = () => {
                                             <textarea
                                                 rows="6"
                                                 placeholder="Write your mission objective here..."
-                                                className="w-full px-6 py-4 bg-navy-900/50 border border-white/10 rounded-2xl text-white focus:outline-none focus:border-purple-500/50 transition-all font-medium placeholder-gray-800 resize-none"
+                                                className="w-full px-6 py-4 bg-navy-900/50 border border-white/10 rounded-2xl text-white focus:outline-none focus:border-blue-500/50 transition-all font-medium placeholder-gray-800 resize-none"
                                             ></textarea>
                                         </div>
                                         <div className="grid grid-cols-2 gap-6 p-6 bg-white/5 rounded-2xl border border-white/5">
                                             <div className="flex items-center gap-3">
-                                                <input type="checkbox" id="sendEmail" className="w-5 h-5 rounded bg-navy-950 border-white/10 text-purple-600 focus:ring-purple-500" />
+                                                <input type="checkbox" id="sendEmail" className="w-5 h-5 rounded bg-navy-950 border-white/10 text-blue-600 focus:ring-blue-500" />
                                                 <label htmlFor="sendEmail" className="text-[10px] text-gray-400 font-black uppercase tracking-widest cursor-pointer">Email Uplink</label>
                                             </div>
                                             <div className="flex items-center gap-3">
-                                                <input type="checkbox" id="sendPush" className="w-5 h-5 rounded bg-navy-950 border-white/10 text-purple-600 focus:ring-purple-500" defaultChecked />
+                                                <input type="checkbox" id="sendPush" className="w-5 h-5 rounded bg-navy-950 border-white/10 text-blue-600 focus:ring-blue-500" defaultChecked />
                                                 <label htmlFor="sendPush" className="text-[10px] text-gray-400 font-black uppercase tracking-widest cursor-pointer">Mobile Alert</label>
                                             </div>
                                         </div>
-                                        <button className="w-full py-5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:shadow-xl hover:shadow-purple-500/40 text-white rounded-2xl font-black italic uppercase tracking-[0.2em] transition-all active:scale-95 shadow-lg">
+                                        <button className="w-full py-5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-xl hover:shadow-blue-500/40 text-white rounded-2xl font-black italic uppercase tracking-[0.2em] transition-all active:scale-95 shadow-lg">
                                             Execute Broadcast
                                         </button>
                                     </div>
@@ -451,17 +470,17 @@ const ManageHackathon = () => {
                         {activeTab === 'Mentors' && (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {[1, 2, 3].map(i => (
-                                    <div key={i} className="glass p-6 rounded-3xl border border-white/10 hover:border-purple-500/30 transition-all group relative overflow-hidden shadow-xl">
-                                        <div className="absolute top-0 right-0 w-24 h-24 bg-purple-600/10 rounded-full blur-[40px] pointer-events-none"></div>
+                                    <div key={i} className="glass p-6 rounded-3xl border border-white/10 hover:border-blue-500/30 transition-all group relative overflow-hidden shadow-xl">
+                                        <div className="absolute top-0 right-0 w-24 h-24 bg-blue-600/10 rounded-full blur-[40px] pointer-events-none"></div>
                                         <div className="flex items-center gap-4 mb-6">
-                                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 p-0.5 shadow-lg">
+                                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 p-0.5 shadow-lg">
                                                 <div className="w-full h-full bg-navy-950 rounded-[14px] flex items-center justify-center text-white font-black text-xl italic shadow-inner">
                                                     {i === 1 ? 'M' : i === 2 ? 'L' : 'K'}
                                                 </div>
                                             </div>
                                             <div>
-                                                <h4 className="font-bold text-white text-lg tracking-tight group-hover:text-purple-400 transition-colors">{i === 1 ? 'Marcus Thorne' : i === 2 ? 'Lila Vance' : 'Kobe Bryant'}</h4>
-                                                <p className="text-[10px] text-purple-400 font-black uppercase tracking-widest">{i === 1 ? 'AI/ML Expert' : 'UI/UX Lead'}</p>
+                                                <h4 className="font-bold text-white text-lg tracking-tight group-hover:text-blue-400 transition-colors">{i === 1 ? 'Marcus Thorne' : i === 2 ? 'Lila Vance' : 'Kobe Bryant'}</h4>
+                                                <p className="text-[10px] text-blue-400 font-black uppercase tracking-widest">{i === 1 ? 'AI/ML Expert' : 'UI/UX Lead'}</p>
                                             </div>
                                         </div>
                                         <div className="space-y-4 mb-8">
@@ -479,7 +498,7 @@ const ManageHackathon = () => {
                                         </button>
                                     </div>
                                 ))}
-                                <button className="border-3 border-dashed border-white/10 rounded-3xl p-8 flex flex-col items-center justify-center text-gray-500 hover:text-purple-400 hover:border-purple-500/50 transition-all group bg-white/5 hover:bg-purple-500/5">
+                                <button className="border-3 border-dashed border-white/10 rounded-3xl p-8 flex flex-col items-center justify-center text-gray-500 hover:text-blue-400 hover:border-blue-500/50 transition-all group bg-white/5 hover:bg-blue-500/5">
                                     <div className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform text-3xl font-bold border border-white/10">
                                         +
                                     </div>
@@ -508,7 +527,7 @@ const ManageHackathon = () => {
 
                     {/* Time Counter */}
                     <div className="glass-strong p-8 rounded-3xl border border-white/10 text-center relative overflow-hidden shadow-2xl">
-                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 shadow-[0_0_15px_rgba(6,182,212,0.8)] animate-pulse"></div>
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-500 shadow-[0_0_15px_rgba(6,182,212,0.8)] animate-pulse"></div>
                         <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-6 italic opacity-70">Operation Remaining</p>
                         <div className="flex justify-center gap-5">
                             <div className="space-y-1">
@@ -558,8 +577,8 @@ const ManageHackathon = () => {
                                 <span className="text-[11px] font-black text-gray-400 group-hover:text-blue-400 uppercase tracking-widest transition-colors">Official Assets</span>
                                 <span className="text-lg group-hover:scale-125 transition-transform duration-300">🎓</span>
                             </Link>
-                            <Link to="/organizer/evaluation" className="p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-purple-500/10 hover:border-purple-500/30 transition-all flex items-center justify-between group">
-                                <span className="text-[11px] font-black text-gray-400 group-hover:text-purple-400 uppercase tracking-widest transition-colors">Review Center</span>
+                            <Link to="/organizer/evaluation" className="p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-blue-500/10 hover:border-blue-500/30 transition-all flex items-center justify-between group">
+                                <span className="text-[11px] font-black text-gray-400 group-hover:text-blue-400 uppercase tracking-widest transition-colors">Review Center</span>
                                 <span className="text-lg group-hover:scale-125 transition-transform duration-300">⚖️</span>
                             </Link>
                         </div>

@@ -8,7 +8,7 @@ const statusMeta = (status = '') => {
     const s = status.toLowerCase();
     if (s === 'resolved') return { color: 'emerald', label: 'Resolved' };
     if (s === 'investigating') return { color: 'blue', label: 'Investigating' };
-    return { color: 'purple', label: 'Open' };
+    return { color: 'blue', label: 'Open' };
 };
 
 const matchesFilter = (dispute, filter) => {
@@ -409,7 +409,7 @@ const AdminDisputes = () => {
                                                     Reported Team
                                                 </p>
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-600 to-pink-600 flex items-center justify-center font-bold text-sm">
+                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-pink-600 flex items-center justify-center font-bold text-sm">
                                                         {currentDispute.reportedTeam?.initials || '?'}
                                                     </div>
                                                     <div>

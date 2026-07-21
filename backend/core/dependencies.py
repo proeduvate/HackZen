@@ -20,8 +20,9 @@ async def with_auth(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
         )
 
-    #  Ensure  backward  compatibility  with  code  expecting  'sub'
+    #  Ensure  backward  compatibility  with  code  expecting  'sub' or 'id'
     user["sub"] = str(user["_id"])
+    user["id"] = str(user["_id"])
     return user
 
 
@@ -29,7 +30,7 @@ class RequireRole:
     def __init__(self, allowed_roles: List[str]):
         self.allowed_roles = allowed_roles
 
-    async def __call__(self, user: Dict[str, Any] = Security(get_current_user)):
+    async def __call__(self, user: Dict[str, Any] = Depends(with_auth)):
         if user.get("role") not in self.allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"

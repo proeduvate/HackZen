@@ -10,25 +10,8 @@ export const setAuthToken = (token) => {
 
 export const register = async (userData) => {
     try {
-        console.log('Mocking Platform Registration for:', userData.email);
-        
-        // Simulating network delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        /* REAL API CALL
         const { data } = await apiClient.post('/auth/register', userData);
         return data;
-        */
-
-        return {
-            message: "User registered successfully (Mock)",
-            user: {
-                id: "mock_user_" + Math.random().toString(36).substr(2, 9),
-                name: userData.name || "Mock Student",
-                email: userData.email,
-                role: userData.role || "student"
-            }
-        };
     } catch (error) {
         console.error('Registration failed:', error);
         throw error;
@@ -36,6 +19,7 @@ export const register = async (userData) => {
 };
 
 export const login = async (credentials) => {
+    /*
     const { data } = await apiClient.post('/auth/login', credentials);
     if (data.token) {
         localStorage.setItem('token', data.token);
@@ -43,6 +27,66 @@ export const login = async (credentials) => {
         setAuthToken(data.token);
     }
     return data;
+    */
+
+    const mockUsers = {
+        "ananya.rao@microsoft.com": {
+            password: "Ananya@MS2024",
+            user: {
+                id: "698b615367147347c157446a",
+                _id: "698b615367147347c157446a",
+                name: "Ananya Rao",
+                email: "ananya.rao@microsoft.com",
+                role: "mentor"
+            }
+        },
+        "msailesh@gmail.com": {
+            password: "sailesh2412",
+            user: {
+                id: "698a2aa4c09b0ea765f8816c",
+                _id: "698a2aa4c09b0ea765f8816c",
+                name: "M Sailesh",
+                email: "msailesh@gmail.com",
+                role: "student"
+            }
+        },
+        "psaravanan@gmail.com": {
+            password: "saro2802",
+            user: {
+                id: "698f17438d89b42ab5f058c7",
+                _id: "698f17438d89b42ab5f058c7",
+                name: "P Saravanan",
+                email: "psaravanan@gmail.com",
+                role: "organizer"
+            }
+        },
+        "ghariraajan@gmail.com": {
+            password: "hari5426",
+            user: {
+                id: "698306fa7caf8be7fa179732",
+                _id: "698306fa7caf8be7fa179732",
+                name: "G Hari Raajan",
+                email: "ghariraajan@gmail.com",
+                role: "admin"
+            }
+        }
+    };
+
+    const email = credentials.email?.toLowerCase();
+    const matched = mockUsers[email];
+
+    if (matched && matched.password === credentials.password) {
+        const mockToken = `mock-token-jwt-for-${matched.user.role}`;
+        localStorage.setItem('token', mockToken);
+        localStorage.setItem('user', JSON.stringify(matched.user));
+        setAuthToken(mockToken);
+        return {
+            token: mockToken,
+            user: matched.user
+        };
+    } else {
+        throw new Error("Invalid email or password");
+    }
 };
 
 export const forgotPassword = async (payload) => {

@@ -112,9 +112,9 @@ const StudentHackathonRegistration = () => {
                                          onClick={() => navigate(`/student/hackathons/${hackathonId}/register/${step.key}`)}>
                                         <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold transition-all duration-500 ${
                                             isActive 
-                                                ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-[0_0_20px_rgba(147,51,234,0.5)] scale-110' 
+                                                ? 'bg-gradient-to-r from-blue-600 to-blue-600 text-white shadow-[0_0_20px_rgba(147,51,234,0.5)] scale-110' 
                                                 : isCompleted
-                                                    ? 'bg-purple-600/20 text-purple-400 border-2 border-purple-500/50'
+                                                    ? 'bg-blue-600/20 text-blue-400 border-2 border-blue-500/50'
                                                     : 'bg-navy-800 text-gray-500 border border-white/10'
                                         }`}>
                                             {isCompleted ? (
@@ -137,7 +137,7 @@ const StudentHackathonRegistration = () => {
                                     {index < steps.length - 1 && (
                                         <div className="flex-1 h-[2px] mt-6 mx-4 relative overflow-hidden bg-white/5">
                                             <div 
-                                                className="absolute top-0 left-0 h-full bg-gradient-to-r from-purple-600 to-blue-600 transition-all duration-700 ease-in-out shadow-[0_0_10px_rgba(147,51,234,0.3)]"
+                                                className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-600 to-blue-600 transition-all duration-700 ease-in-out shadow-[0_0_10px_rgba(147,51,234,0.3)]"
                                                 style={{ width: isCompleted ? '100%' : '0%' }}
                                             ></div>
                                         </div>

@@ -16,7 +16,7 @@ const Unauthorized = () => {
             <div className="flex gap-4">
                 <Link
                     to="/login"
-                    className="px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl font-semibold hover:scale-105 transition-transform shadow-lg shadow-purple-500/25"
+                    className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-600 rounded-xl font-semibold hover:scale-105 transition-transform shadow-lg shadow-blue-500/25"
                 >
                     Login as Admin
                 </Link>

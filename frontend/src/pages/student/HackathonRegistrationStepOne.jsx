@@ -68,7 +68,7 @@ const HackathonRegistrationStepOne = () => {
                                 setErrors((prev) => ({ ...prev, teamName: '' }));
                             }}
                             placeholder="Enter team name"
-                            className={`w-full bg-navy-900/50 border ${errors.teamName ? 'border-red-500/50' : 'border-white/10'} text-white p-3 rounded-xl focus:outline-none focus:border-purple-500/50 transition-colors`}
+                            className={`w-full bg-navy-900/50 border ${errors.teamName ? 'border-red-500/50' : 'border-white/10'} text-white p-3 rounded-xl focus:outline-none focus:border-blue-500/50 transition-colors`}
                         />
                         {errors.teamName ? <p className="text-xs text-red-400">{errors.teamName}</p> : null}
                     </div>
@@ -107,7 +107,7 @@ const HackathonRegistrationStepOne = () => {
                                 setErrors((prev) => ({ ...prev, leaderEmail: '' }));
                             }}
                             placeholder="Enter leader email"
-                            className={`w-full bg-navy-900/50 border ${errors.leaderEmail ? 'border-red-500/50' : 'border-white/10'} text-white p-3 rounded-xl focus:outline-none focus:border-purple-500/50 transition-colors`}
+                            className={`w-full bg-navy-900/50 border ${errors.leaderEmail ? 'border-red-500/50' : 'border-white/10'} text-white p-3 rounded-xl focus:outline-none focus:border-blue-500/50 transition-colors`}
                         />
                         {errors.leaderEmail ? <p className="text-xs text-red-400">{errors.leaderEmail}</p> : null}
                     </div>
@@ -136,7 +136,7 @@ const HackathonRegistrationStepOne = () => {
                 <button
                     onClick={handleContinue}
                     disabled={isSaving}
-                    className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl font-bold text-white shadow-lg shadow-purple-600/20 hover:shadow-purple-600/40 transition-all"
+                    className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-600 rounded-xl font-bold text-white shadow-lg shadow-blue-600/20 hover:shadow-blue-600/40 transition-all"
                 >
                     {isSaving ? 'Saving...' : 'Continue to Step 2'}
                 </button>

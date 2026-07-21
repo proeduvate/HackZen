@@ -57,7 +57,7 @@ const RoleSelection = () => {
             {/* Header */}
             <div className="max-w-3xl mx-auto mb-12 text-center">
                 <h1 className="mb-4 text-3xl font-black text-white sm:text-4xl md:text-5xl tracking-tight">
-                    Define Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">Identity</span>
+                    Define Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-400">Identity</span>
                 </h1>
                 <p className="text-gray-400 text-lg max-w-xl mx-auto">
                     Select a path below to customize your ProEduvate experience. You can't change this later without a new account.
@@ -72,7 +72,7 @@ const RoleSelection = () => {
                         className={`
                             relative flex-1 p-8 rounded-3xl transition-all duration-500 cursor-pointer group
                             ${selectedRole === role.id
-                                ? 'bg-gradient-to-b from-purple-600/20 to-blue-600/20 border-2 border-purple-500 shadow-[0_0_30px_rgba(168,85,247,0.2)] scale-[1.02]'
+                                ? 'bg-gradient-to-b from-blue-600/20 to-blue-600/20 border-2 border-blue-500 shadow-[0_0_30px_rgba(168,85,247,0.2)] scale-[1.02]'
                                 : 'bg-navy-800/50 border border-white/10 hover:border-white/20 hover:scale-[1.01] grayscale-[0.5] hover:grayscale-0'
                             }
                         `}
@@ -80,7 +80,7 @@ const RoleSelection = () => {
                     >
                         {/* Selection Indicator */}
                         {selectedRole === role.id && (
-                            <div className="absolute top-4 right-4 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center animate-bounce-in">
+                            <div className="absolute top-4 right-4 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center animate-bounce-in">
                                 <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                                 </svg>
@@ -90,7 +90,7 @@ const RoleSelection = () => {
                         {/* Icon Container */}
                         <div className={`
                             w-16 h-16 rounded-2xl mb-6 flex items-center justify-center text-4xl shadow-2xl transition-transform group-hover:scale-110 duration-500
-                            ${selectedRole === role.id ? 'bg-purple-500 text-white' : 'bg-navy-900 border border-white/10 text-gray-400'}
+                            ${selectedRole === role.id ? 'bg-blue-500 text-white' : 'bg-navy-900 border border-white/10 text-gray-400'}
                         `}>
                             {role.icon}
                         </div>
@@ -104,7 +104,7 @@ const RoleSelection = () => {
                         </p>
 
                         <div className={`
-                            h-1 w-0 bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-500
+                            h-1 w-0 bg-gradient-to-r from-blue-500 to-blue-500 transition-all duration-500
                             ${selectedRole === role.id ? 'w-full' : 'group-hover:w-1/3'}
                         `}></div>
                     </div>
@@ -119,7 +119,7 @@ const RoleSelection = () => {
                     className={`
                         w-full sm:w-80 py-4 px-8 rounded-2xl font-black uppercase tracking-widest transition-all duration-300 transform
                         ${selectedRole
-                            ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-xl hover:shadow-purple-500/40 hover:-translate-y-1 active:scale-95'
+                            ? 'bg-gradient-to-r from-blue-600 to-blue-600 text-white shadow-xl hover:shadow-blue-500/40 hover:-translate-y-1 active:scale-95'
                             : 'bg-white/5 text-gray-500 cursor-not-allowed border border-white/5 opacity-50'
                         }
                     `}
@@ -139,7 +139,7 @@ const RoleSelection = () => {
 
             {/* Background Aesthetics */}
             <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-600/10 rounded-full blur-[120px] animate-pulse"></div>
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px] animate-pulse"></div>
                 <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-600/10 rounded-full blur-[120px] animate-pulse [animation-delay:2s]"></div>
             </div>
         </div>

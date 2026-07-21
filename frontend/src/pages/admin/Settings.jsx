@@ -257,7 +257,7 @@ const AdminSettings = () => {
                                             <span className="text-gray-400 text-sm font-medium">{admin.email}</span>
                                         </td>
                                         <td className="px-8 py-5 text-center">
-                                            <span className={`px-4 py-1.5 rounded-full text-xs font-bold border ${admin.role === 'Super Admin' ? 'bg-purple-500/10 text-purple-400 border-purple-500/30' :
+                                            <span className={`px-4 py-1.5 rounded-full text-xs font-bold border ${admin.role === 'Super Admin' ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' :
                                                     admin.role === 'Moderator' ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' :
                                                         'bg-gray-500/10 text-gray-400 border-gray-500/30'
                                                 }`}>

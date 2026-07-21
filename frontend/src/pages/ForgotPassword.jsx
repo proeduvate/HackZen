@@ -41,7 +41,7 @@ const ForgotPassword = () => {
                 </div>
 
                 {/* Forgot Password Form - Glass Effect */}
-                <div className="p-6 glass-strong rounded-xl sm:p-8 glow-purple-hover">
+                <div className="p-6 glass-strong rounded-xl sm:p-8 glow-blue-hover">
                     {!isSubmitted ? (
                         <form onSubmit={handleSubmit} className="space-y-6">
                             {/* Email Field */}
@@ -56,7 +56,7 @@ const ForgotPassword = () => {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
-                                    className="w-full px-4 py-3 text-white placeholder-gray-500 transition border border-gray-600 rounded-lg bg-navy-900/50 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                                    className="w-full px-4 py-3 text-white placeholder-gray-500 transition border border-gray-600 rounded-lg bg-navy-900/50 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                                     placeholder="you@example.com"
                                 />
                             </div>
@@ -64,7 +64,7 @@ const ForgotPassword = () => {
                             {/* Submit Button */}
                             <button
                                 type="submit"
-                                className="w-full py-3 font-semibold text-white rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 btn-hover animate-gradient"
+                                className="w-full py-3 font-semibold text-white rounded-lg bg-gradient-to-r from-blue-600 to-blue-600 btn-hover animate-gradient"
                             >
                                 Send Reset Link
                             </button>
@@ -79,7 +79,7 @@ const ForgotPassword = () => {
                             <p className="text-gray-300 mb-6 font-medium">Reset link has been sent to your email!</p>
                             <button
                                 onClick={() => setIsSubmitted(false)}
-                                className="text-sm text-purple-400 hover:text-purple-300 underline underline-offset-4"
+                                className="text-sm text-blue-400 hover:text-blue-300 underline underline-offset-4"
                             >
                                 Didn't receive it? Try again
                             </button>

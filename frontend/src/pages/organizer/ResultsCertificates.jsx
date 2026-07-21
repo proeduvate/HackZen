@@ -278,7 +278,7 @@ const ResultsCertificates = () => {
                                             <span className={`px-2 py-1 rounded-md text-xs font-medium border whitespace-nowrap
                                                 ${item.tier === 'Grand Winner' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' :
                                                     item.tier.includes('Runner Up') ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                                                        'bg-purple-500/10 text-purple-400 border-purple-500/20'}
+                                                        'bg-blue-500/10 text-blue-400 border-blue-500/20'}
                                             `}>
                                                 {item.tier}
                                             </span>
@@ -322,7 +322,7 @@ const ResultsCertificates = () => {
                                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center border border-white/10
                                         ${template.iconColor === 'yellow'
                                             ? 'bg-gradient-to-br from-yellow-600/20 to-orange-600/20 text-yellow-400'
-                                            : 'bg-gradient-to-br from-blue-600/20 to-purple-600/20 text-blue-400'
+                                            : 'bg-gradient-to-br from-blue-600/20 to-blue-600/20 text-blue-400'
                                         }`}>
                                         <Icon name="Award" className="w-6 h-6" />
                                     </div>

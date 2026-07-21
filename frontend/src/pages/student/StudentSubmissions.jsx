@@ -30,76 +30,78 @@ const StudentSubmissions = () => {
     );
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500 pb-20">
+        <div className="h-[calc(100vh-140px)] flex flex-col animate-in fade-in slide-in-from-bottom-5 duration-500 max-w-5xl mx-auto w-full">
             {/* Header */}
-            <div className="mb-10">
-                <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+            <div className="mb-4 flex-none">
+                <h1 className="text-xl sm:text-2xl font-bold text-white mb-1">
                     My <span className="gradient-text">Submissions</span>
                 </h1>
-                <p className="text-gray-400">Track and manage your hackathon projects and evaluations.</p>
+                <p className="text-[10px] text-gray-400">Track and manage your hackathon projects and evaluations.</p>
             </div>
 
-            {isLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {[1, 2].map(i => (
-                        <div key={i} className="glass p-6 rounded-2xl border border-white/5 animate-pulse h-64"></div>
-                    ))}
-                </div>
-            ) : submissions.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 text-center glass rounded-2xl border border-dashed border-white/10">
-                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 border border-white/10">
-                        <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 pb-4 space-y-4">
+                {isLoading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {[1, 2].map(i => (
+                            <div key={i} className="glass p-4 sm:p-5 rounded-xl border border-white/5 animate-pulse h-40"></div>
+                        ))}
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-2">No Submissions Yet</h3>
-                    <p className="text-gray-400 text-sm max-w-sm mx-auto">You haven't submitted any projects yet. Start participating in hackathons to build your portfolio.</p>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {submissions.map((sub) => (
-                        <div key={sub.id} className="glass p-6 rounded-2xl border border-white/5 hover:border-purple-500/30 transition-all duration-300 flex flex-col justify-between h-full group">
-                            <div>
-                                <div className="flex justify-between items-start mb-6">
-                                    <div>
-                                        <h3 className="text-xl font-bold text-white group-hover:text-purple-400 transition-colors w-11/12 leading-tight">{sub.project}</h3>
-                                        <p className="text-sm text-gray-400 mt-2">{sub.hackathon}</p>
+                ) : submissions.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-10 text-center glass rounded-xl border border-dashed border-white/10 shadow-sm">
+                        <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3 border border-white/10">
+                            <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        </div>
+                        <h3 className="text-sm sm:text-base font-bold text-white mb-1">No Submissions Yet</h3>
+                        <p className="text-[10px] text-gray-400 max-w-sm mx-auto">You haven't submitted any projects yet. Start participating in hackathons to build your portfolio.</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {submissions.map((sub) => (
+                            <div key={sub.id} className="glass p-4 sm:p-5 rounded-xl border border-white/5 hover:border-blue-500/30 transition-all duration-300 flex flex-col justify-between h-full group shadow-sm">
+                                <div>
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div>
+                                            <h3 className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors w-11/12 leading-tight">{sub.project}</h3>
+                                            <p className="text-[10px] text-gray-400 mt-1">{sub.hackathon}</p>
+                                        </div>
+                                        <StatusBadge status={sub.status} />
                                     </div>
-                                    <StatusBadge status={sub.status} />
+
+                                    <div className="space-y-4 mb-4">
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {sub.resources.map((res, i) => (
+                                                <span key={i} className="px-2 py-0.5 bg-white/5 border border-white/5 rounded text-[9px] font-medium text-gray-400 transition-colors">
+                                                    {res}
+                                                </span>
+                                            ))}
+                                        </div>
+
+                                        {sub.feedback && (
+                                            <div className="p-3 rounded-lg bg-black/20 border border-white/5 shadow-inner">
+                                                <p className="text-[9px] font-semibold text-gray-500 mb-0.5">Mentor Feedback</p>
+                                                <p className="text-[10px] text-white leading-relaxed">"{sub.feedback}"</p>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
 
-                                <div className="space-y-6 mb-8">
-                                    <div className="flex flex-wrap gap-2">
-                                        {sub.resources.map((res, i) => (
-                                            <span key={i} className="px-3 py-1 bg-white/5 border border-white/5 rounded-lg text-xs font-medium text-gray-400 transition-colors">
-                                                {res}
-                                            </span>
-                                        ))}
+                                <div className="pt-3 border-t border-white/5 flex items-center justify-between mt-auto">
+                                    <div className="flex items-center gap-1.5">
+                                        <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                        <span className="text-[9px] text-gray-400">{sub.submittedAt}</span>
                                     </div>
-
-                                    {sub.feedback && (
-                                        <div className="p-4 rounded-xl bg-black/20 border border-white/5">
-                                            <p className="text-xs font-semibold text-gray-500 mb-1">Mentor Feedback</p>
-                                            <p className="text-sm text-white leading-relaxed">"{sub.feedback}"</p>
+                                    {sub.score && (
+                                        <div className="text-right">
+                                            <p className="text-[8px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Score</p>
+                                            <p className="text-sm font-bold text-blue-400">{sub.score}</p>
                                         </div>
                                     )}
                                 </div>
                             </div>
-
-                            <div className="pt-4 border-t border-white/5 flex items-center justify-between mt-auto">
-                                <div className="flex items-center gap-2">
-                                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                    <span className="text-xs text-gray-400">{sub.submittedAt}</span>
-                                </div>
-                                {sub.score && (
-                                    <div className="text-right">
-                                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Score</p>
-                                        <p className="text-lg font-bold text-purple-400">{sub.score}</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
