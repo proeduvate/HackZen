@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { fetchTimeline, updateTimeline } from '../../services/organizer/timelineApi';
 
 const EditTimeline = () => {
     const { hackathonId } = useParams();
@@ -40,36 +41,29 @@ const EditTimeline = () => {
         const fetchData = async () => {
             setIsLoading(true);
             try {
-                // In a real app: fetch(`/api/organizer/hackathons/${hackathonId}/timeline`)
-                await new Promise(resolve => setTimeout(resolve, 800));
+                const data = await fetchTimeline(hackathonId);
+                
+                setHackathon({
+                    id: data.hackathon._id,
+                    title: data.hackathon.title,
+                    mode: data.hackathon.mode || 'Remote',
+                    registrations: data.hackathon.participantCount || 0,
+                    status: data.hackathon.status,
+                    startDate: data.hackathon.startDate,
+                    endDate: data.hackathon.endDate,
+                    banner: data.hackathon.bannerImage || "https://images.unsplash.com/photo-1504384308090-c54be3852f33?auto=format&fit=crop&q=80&w=1000"
+                });
 
-                // Mock Hackathon Data
-                const mockHackathon = {
-                    id: hackathonId,
-                    title: "Future Tech Challenge 2026",
-                    mode: "Hybrid",
-                    registrations: 450,
-                    status: "Active",
-                    startDate: "2026-02-15T09:00",
-                    endDate: "2026-02-17T18:00",
-                    banner: "https://images.unsplash.com/photo-1504384308090-c54be3852f33?auto=format&fit=crop&q=80&w=1000"
-                };
-
-                // Mock Timeline Data (empty to trigger default phases if needed)
-                let mockPhases = [];
-
-                // If no timeline exists, auto-generate default phases
-                if (mockPhases.length === 0) {
-                    mockPhases = [
-                        { id: 'p1', name: 'Registration Period', startDate: '2026-02-01T00:00', endDate: '2026-02-14T23:59', isDefault: true },
-                        { id: 'p2', name: 'Submission Period', startDate: '2026-02-15T09:00', endDate: '2026-02-17T18:00', isDefault: true },
-                        { id: 'p3', name: 'Evaluation Period', startDate: '2026-02-18T09:00', endDate: '2026-02-22T23:59', isDefault: true },
-                        { id: 'p4', name: 'Result Announcement', startDate: '2026-02-25T10:00', endDate: '2026-02-25T12:00', isDefault: true }
-                    ];
+                // If no timeline exists, auto-generate default phases as fallbacks
+                if (!data.phases || data.phases.length === 0) {
+                    setPhases([
+                        { id: 'p1', name: 'Registration Period', startDate: data.hackathon.startDate, endDate: data.hackathon.endDate, isDefault: true },
+                        { id: 'p2', name: 'Submission Period', startDate: data.hackathon.startDate, endDate: data.hackathon.endDate, isDefault: true }
+                    ]);
+                } else {
+                    setPhases(data.phases.map(p => ({ ...p, id: p._id || p.id })));
                 }
 
-                setHackathon(mockHackathon);
-                setPhases(mockPhases);
             } catch (err) {
                 console.error("Failed to fetch timeline data", err);
                 setError("Failed to load timeline data. Please try again.");
@@ -87,6 +81,11 @@ const EditTimeline = () => {
         let hasErrors = false;
 
         currentPhases.forEach((phase, index) => {
+            if (!phase.startDate || !phase.endDate) {
+                errors[phase.id] = "Dates are required";
+                hasErrors = true;
+                return;
+            }
             const start = new Date(phase.startDate);
             const end = new Date(phase.endDate);
 
@@ -100,6 +99,7 @@ const EditTimeline = () => {
             for (let i = 0; i < currentPhases.length; i++) {
                 if (i === index) continue;
                 const otherPhase = currentPhases[i];
+                if (!otherPhase.startDate || !otherPhase.endDate) continue;
                 const otherStart = new Date(otherPhase.startDate);
                 const otherEnd = new Date(otherPhase.endDate);
 
@@ -152,10 +152,7 @@ const EditTimeline = () => {
 
         setIsSaving(true);
         try {
-            // In a real app: await axios.put(`/api/organizer/hackathons/${hackathonId}/timeline`, { phases })
-            await new Promise(resolve => setTimeout(resolve, 1500));
-
-            // Success feedback
+            await updateTimeline(hackathonId, phases);
             alert("Timeline updated successfully!");
         } catch (err) {
             console.error("Failed to save timeline", err);
@@ -393,7 +390,7 @@ const EditTimeline = () => {
                     disabled={isSaving}
                     className={`px-8 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 shadow-lg ${isSaving
                             ? 'bg-gray-600 cursor-not-allowed opacity-70'
-                            : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-blue-500/30'
+                            : 'bg-gradient-to-r from-blue-600 to-blue-600 hover:shadow-blue-500/30'
                         }`}
                 >
                     {isSaving ? 'Processing...' : 'Confirm All Changes'}

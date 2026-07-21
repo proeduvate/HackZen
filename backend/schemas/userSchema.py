@@ -16,6 +16,12 @@ class UserBase(BaseModel):
     email: EmailStr
     role: UserRole
 
+    @validator("role", pre=True)
+    def sanitize_role(cls, v):
+        if isinstance(v, str):
+            return v.strip().lower()
+        return v
+
 
 class UserCreate(UserBase):
     password: str
@@ -35,7 +41,7 @@ class UserUpdate(BaseModel):
 
 class UserResponse(UserBase):
     id: str = Field(..., alias="_id")
-    createdAt: datetime = Field(..., alias="createdAt")
+    createdAt: Optional[datetime] = Field(None, alias="createdAt")
 
     model_config = {"populate_by_name": True, "from_attributes": True}
 

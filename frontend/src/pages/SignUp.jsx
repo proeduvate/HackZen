@@ -102,7 +102,7 @@ const Signup = () => {
                     <img src="/proeduvatee-removebg-preview.png" alt="ProEduvate" className="h-20 mx-auto mb-4" />
                     <h2 className="mb-2 text-3xl font-bold text-white">Create Account</h2>
                     <p className="text-gray-400">
-                        Join ProEduvate as a <span className="font-semibold text-purple-400 capitalize">{formData.role}</span>
+                        Join ProEduvate as a <span className="font-semibold text-blue-400 capitalize">{formData.role}</span>
                     </p>
                 </div>
 
@@ -124,7 +124,7 @@ const Signup = () => {
                                 value={formData.fullName}
                                 onChange={handleChange}
                                 required
-                                className="w-full px-4 py-3 text-white placeholder-gray-500 transition border border-gray-600 rounded-lg bg-navy-900 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                                className="w-full px-4 py-3 text-white placeholder-gray-500 transition border border-gray-600 rounded-lg bg-navy-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                                 placeholder="John Doe"
                             />
                         </div>
@@ -140,7 +140,7 @@ const Signup = () => {
                                 value={formData.email}
                                 onChange={handleChange}
                                 required
-                                className="w-full px-4 py-3 text-white placeholder-gray-500 transition border border-gray-600 rounded-lg bg-navy-900 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                                className="w-full px-4 py-3 text-white placeholder-gray-500 transition border border-gray-600 rounded-lg bg-navy-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                                 placeholder="you@example.com"
                             />
                         </div>
@@ -154,7 +154,7 @@ const Signup = () => {
                                 name="role"
                                 value={formData.role}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 text-white transition border border-gray-600 rounded-lg bg-navy-900 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                                className="w-full px-4 py-3 text-white transition border border-gray-600 rounded-lg bg-navy-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                             >
                                 <option value="student">Student</option>
                                 <option value="mentor">Mentor</option>
@@ -174,13 +174,13 @@ const Signup = () => {
                                     value={formData.password}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-3 text-white placeholder-gray-500 transition border border-gray-600 rounded-lg bg-navy-900 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 pr-12"
+                                    className="w-full px-4 py-3 text-white placeholder-gray-500 transition border border-gray-600 rounded-lg bg-navy-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 pr-12"
                                     placeholder="••••••••"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute inset-y-0 right-0 px-4 flex items-center text-gray-400 hover:text-purple-400"
+                                    className="absolute inset-y-0 right-0 px-4 flex items-center text-gray-400 hover:text-blue-400"
                                 >
                                     {showPassword ? (
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" /></svg>
@@ -203,13 +203,13 @@ const Signup = () => {
                                     value={formData.confirmPassword}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-3 text-white placeholder-gray-500 transition border border-gray-600 rounded-lg bg-navy-900 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 pr-12"
+                                    className="w-full px-4 py-3 text-white placeholder-gray-500 transition border border-gray-600 rounded-lg bg-navy-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 pr-12"
                                     placeholder="••••••••"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    className="absolute inset-y-0 right-0 px-4 flex items-center text-gray-400 hover:text-purple-400"
+                                    className="absolute inset-y-0 right-0 px-4 flex items-center text-gray-400 hover:text-blue-400"
                                 >
                                     {showConfirmPassword ? (
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" /></svg>
@@ -225,15 +225,15 @@ const Signup = () => {
                                 type="checkbox"
                                 id="terms"
                                 required
-                                className="w-4 h-4 mt-1 text-purple-600 border-gray-600 rounded bg-navy-900"
+                                className="w-4 h-4 mt-1 text-blue-600 border-gray-600 rounded bg-navy-900"
                             />
                             <label htmlFor="terms" className="ml-2 text-sm text-gray-400">
                                 I agree to the{' '}
-                                <Link to="/terms" className="text-purple-400 hover:text-purple-300">
+                                <Link to="/terms" className="text-blue-400 hover:text-blue-300">
                                     Terms of Service
                                 </Link>{' '}
                                 and{' '}
-                                <Link to="/privacy" className="text-purple-400 hover:text-purple-300">
+                                <Link to="/privacy" className="text-blue-400 hover:text-blue-300">
                                     Privacy Policy
                                 </Link>
                             </label>
@@ -242,7 +242,7 @@ const Signup = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`w-full py-3 font-semibold text-white transition-all duration-300 rounded-lg shadow-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 hover:shadow-xl flex items-center justify-center gap-2 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                            className={`w-full py-3 font-semibold text-white transition-all duration-300 rounded-lg shadow-lg bg-gradient-to-r from-blue-600 to-blue-600 hover:from-blue-700 hover:to-blue-700 hover:shadow-xl flex items-center justify-center gap-2 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >
                             {loading ? (
                                 <>
@@ -268,13 +268,13 @@ const Signup = () => {
                     </div>
 
                     <div className="grid grid-cols-3 gap-3">
-                        <button className="flex items-center justify-center px-4 py-3 transition border border-gray-600 rounded-lg bg-navy-900 hover:border-purple-500">
+                        <button className="flex items-center justify-center px-4 py-3 transition border border-gray-600 rounded-lg bg-navy-900 hover:border-blue-500">
                             <span className="text-xl">🐙</span>
                         </button>
-                        <button className="flex items-center justify-center px-4 py-3 transition border border-gray-600 rounded-lg bg-navy-900 hover:border-purple-500">
+                        <button className="flex items-center justify-center px-4 py-3 transition border border-gray-600 rounded-lg bg-navy-900 hover:border-blue-500">
                             <span className="text-xl">G</span>
                         </button>
-                        <button className="flex items-center justify-center px-4 py-3 transition border border-gray-600 rounded-lg bg-navy-900 hover:border-purple-500">
+                        <button className="flex items-center justify-center px-4 py-3 transition border border-gray-600 rounded-lg bg-navy-900 hover:border-blue-500">
                             <span className="text-xl">in</span>
                         </button>
                     </div>
@@ -282,7 +282,7 @@ const Signup = () => {
 
                 <p className="mt-6 text-center text-gray-400">
                     Already have an account?{' '}
-                    <Link to="/login" className="font-semibold text-purple-400 transition hover:text-purple-300">
+                    <Link to="/login" className="font-semibold text-blue-400 transition hover:text-blue-300">
                         Sign in
                     </Link>
                 </p>

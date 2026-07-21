@@ -41,6 +41,16 @@ const Login = () => {
             const { token, user } = response;
             const role = user.role;
 
+            // Comprehensive storage sync for session persistence
+            sessionStorage.setItem('isLoggedIn', 'true');
+            sessionStorage.setItem('userRole', role);
+            sessionStorage.setItem('user', JSON.stringify(user));
+            sessionStorage.setItem('token', token);
+
+            // Notify app of state change
+            window.dispatchEvent(new Event('user-update'));
+
+
             // Fast-sync storage
             const storageData = {
                 isLoggedIn: 'true',
@@ -65,7 +75,8 @@ const Login = () => {
             
             setTimeout(() => window.dispatchEvent(new Event('user-update')), 0);
         } catch (err) {
-            setError(err.detail || 'Login failed. Please check your credentials.');
+            const msg = err?.response?.data?.error?.message || err?.response?.data?.detail || err?.message || 'Login failed. Please check your credentials.';
+            setError(msg);
         } finally {
             setLoading(false);
         }
@@ -75,12 +86,12 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
 
     return (
-        <div className="flex items-center justify-center min-h-screen px-4 py-8 bg-navy-900 bg-radial">
-            <div className="w-full max-w-md">
+        <div className="flex flex-col items-center justify-center min-h-screen w-full overflow-x-hidden px-4 py-8 bg-navy-900">
+            <div className="w-full max-w-sm">
                 {/* Back Button */}
                 <Link
                     to="/"
-                    className="flex items-center gap-2 mb-6 text-gray-300 transition hover:text-white group"
+                    className="flex items-center gap-2 mb-4 text-gray-300 transition hover:text-white group"
                 >
                     <svg
                         className="w-4 h-4 transition transform group-hover:-translate-x-1"
@@ -94,23 +105,23 @@ const Login = () => {
                 </Link>
 
                 {/* Logo & Title */}
-                <div className="mb-8 text-center">
-                    <img src="/proeduvatee-removebg-preview.png" alt="ProEduvate" className="h-20 mx-auto mb-4" />
-                    <h2 className="mb-2 text-3xl font-bold sm:text-4xl gradient-text">Welcome Back</h2>
-                    <p className="text-gray-400">Sign in to continue to ProEduvate</p>
+                <div className="mb-5 text-center">
+                    <img src="/proeduvatee-removebg-preview.png" alt="ProEduvate" className="h-12 mx-auto mb-2" />
+                    <h2 className="mb-1 text-xl font-bold sm:text-2xl text-white">Welcome Back</h2>
+                    <p className="text-xs text-gray-400">Sign in to continue to ProEduvate</p>
                 </div>
 
                 {/* Login Form - Glass Effect */}
-                <div className="p-6 glass-strong rounded-xl sm:p-8 glow-purple-hover">
+                <div className="p-4 glass-strong rounded-xl sm:p-5 glow-blue-hover">
                     {error && (
-                        <div className="p-3 mb-4 text-sm text-center text-red-400 border border-red-500/30 rounded-lg bg-red-500/10">
+                        <div className="p-2 mb-3 text-xs text-center text-red-400 border border-red-500/30 rounded-lg bg-red-500/10">
                             {error}
                         </div>
                     )}
-                    <form onSubmit={handleSubmit} className="space-y-5">
+                    <form onSubmit={handleSubmit} className="space-y-3">
                         {/* Email Field */}
                         <div>
-                            <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-300">
+                            <label htmlFor="email" className="block mb-1 text-xs font-medium text-gray-300">
                                 Email Address
                             </label>
                             <input
@@ -120,18 +131,18 @@ const Login = () => {
                                 value={formData.email}
                                 onChange={handleChange}
                                 required
-                                className="w-full px-4 py-3 text-white placeholder-gray-500 transition border border-gray-600 rounded-lg bg-navy-900/50 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                                className="w-full px-3 py-2 text-sm text-white placeholder-gray-500 transition border border-gray-600 rounded-lg bg-navy-900/50 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                                 placeholder="you@example.com"
                             />
                         </div>
 
                         {/* Password Field */}
                         <div>
-                            <div className="flex items-center justify-between mb-2">
-                                <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+                            <div className="flex items-center justify-between mb-1">
+                                <label htmlFor="password" className="block text-xs font-medium text-gray-300">
                                     Password
                                 </label>
-                                <Link to="/forgot-password" className="text-sm text-purple-400 transition hover:text-purple-300">
+                                <Link to="/forgot-password" className="text-xs text-blue-400 transition hover:text-blue-300">
                                     Forgot?
                                 </Link>
                             </div>
@@ -143,13 +154,13 @@ const Login = () => {
                                     value={formData.password}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-3 text-white placeholder-gray-500 transition border border-gray-600 rounded-lg bg-navy-900/50 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 pr-12"
+                                    className="w-full px-3 py-2 text-sm text-white placeholder-gray-500 transition border border-gray-600 rounded-lg bg-navy-900/50 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 pr-10"
                                     placeholder="••••••••"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute inset-y-0 right-0 px-4 flex items-center text-gray-400 hover:text-purple-400 transition-colors"
+                                    className="absolute inset-y-0 right-0 px-4 flex items-center text-gray-400 hover:text-blue-400 transition-colors"
                                 >
                                     {showPassword ? (
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -172,9 +183,9 @@ const Login = () => {
                                 id="remember"
                                 checked={rememberMe}
                                 onChange={(e) => setRememberMe(e.target.checked)}
-                                className="w-4 h-4 text-purple-600 border-gray-600 rounded bg-navy-900 focus:ring-purple-500"
+                                className="w-4 h-4 text-blue-600 border-gray-600 rounded bg-navy-900 focus:ring-blue-500"
                             />
-                            <label htmlFor="remember" className="ml-2 text-sm text-gray-400">
+                            <label htmlFor="remember" className="ml-2 text-xs text-gray-400">
                                 Remember me
                             </label>
                         </div>
@@ -182,7 +193,7 @@ const Login = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`w-full py-3 font-semibold text-white rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 btn-hover animate-gradient flex items-center justify-center gap-2 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                            className={`w-full py-2 text-sm font-semibold text-white rounded-lg bg-blue-600 hover:bg-blue-700 btn-hover flex items-center justify-center gap-2 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >
                             {loading ? (
                                 <>
@@ -198,34 +209,34 @@ const Login = () => {
                         </button>
 
                         {/* Divider */}
-                        <div className="relative my-6">
+                        <div className="relative my-4">
                             <div className="absolute inset-0 flex items-center">
                                 <div className="w-full border-t border-gray-700"></div>
                             </div>
-                            <div className="relative flex justify-center text-sm">
-                                <span className="px-4 text-gray-400 bg-transparent">Or continue with</span>
+                            <div className="relative flex justify-center text-xs">
+                                <span className="px-3 text-gray-400 bg-transparent">Or continue with</span>
                             </div>
                         </div>
 
                         {/* Social Login */}
-                        <div className="grid grid-cols-3 gap-3">
-                            <button className="flex items-center justify-center px-4 py-3 transition rounded-lg glass hover:border-purple-500 card-hover">
-                                <span className="text-xl">🐙</span>
+                        <div className="grid grid-cols-3 gap-2">
+                            <button className="flex items-center justify-center px-3 py-1.5 transition rounded-lg glass hover:border-blue-500 card-hover">
+                                <span className="text-lg">🐙</span>
                             </button>
-                            <button className="flex items-center justify-center px-4 py-3 transition rounded-lg glass hover:border-purple-500 card-hover">
-                                <span className="text-xl">G</span>
+                            <button className="flex items-center justify-center px-3 py-1.5 transition rounded-lg glass hover:border-blue-500 card-hover">
+                                <span className="text-lg">G</span>
                             </button>
-                            <button className="flex items-center justify-center px-4 py-3 transition rounded-lg glass hover:border-purple-500 card-hover">
-                                <span className="text-xl">in</span>
+                            <button className="flex items-center justify-center px-3 py-1.5 transition rounded-lg glass hover:border-blue-500 card-hover">
+                                <span className="text-lg">in</span>
                             </button>
                         </div>
                     </form>
                 </div>
 
                 {/* Sign Up Link */}
-                <p className="mt-6 text-center text-gray-400">
+                <p className="mt-4 text-xs text-center text-gray-400">
                     Don't have an account?{' '}
-                    <Link to="/signup" className="font-semibold text-purple-400 transition hover:text-purple-300">
+                    <Link to="/signup" className="font-semibold text-blue-400 transition hover:text-blue-300">
                         Sign up
                     </Link>
                 </p>

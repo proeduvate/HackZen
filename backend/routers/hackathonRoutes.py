@@ -9,6 +9,7 @@ from fastapi import (
     Request,
 )
 from typing import List, Optional, Dict, Any
+from bson import ObjectId
 from database import get_db
 from core.dependencies import with_auth
 from core.security import get_current_user_optional

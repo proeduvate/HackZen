@@ -101,6 +101,7 @@ async def create_team(
 
     team_dict = team_data.model_dump(by_alias=True)
     team_dict["createdBy"] = user_name
+    team_dict["leaderId"] = user_id
     team_dict["createdAt"] = datetime.utcnow()
 
     # Generate unique team code with retry (in case of collision)
@@ -158,6 +159,7 @@ async def create_team(
 
 
 @router.get("/my-teams", response_model=List[TeamResponse])
+@router.get("/my", response_model=List[TeamResponse])
 async def get_my_teams(current_user: dict = Depends(with_auth)):
     """Get all teams where the current user is a member"""
     user_id = current_user.get("id") or current_user.get("sub")

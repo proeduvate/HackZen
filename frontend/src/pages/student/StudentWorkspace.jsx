@@ -27,7 +27,7 @@ const StudentWorkspace = () => {
                 const mappedTeams = data.map((team, idx) => ({
                     id: team.id || team._id,
                     name: team.teamName,
-                    avatarColor: idx % 2 === 0 ? 'from-blue-500 to-indigo-600' : 'from-purple-500 to-pink-600',
+                    avatarColor: idx % 2 === 0 ? 'from-blue-500 to-indigo-600' : 'from-blue-500 to-pink-600',
                     isOnline: true, // System status
                     status: 'Active Workspace'
                 }));
@@ -198,40 +198,41 @@ const StudentWorkspace = () => {
     const messages = selectedTeam ? (teamMessages[selectedTeam] || []) : [];
 
     return (
-        <div className="h-[calc(100vh-140px)] flex gap-6 animate-fade-in">
+    return (
+        <div className="h-[calc(100vh-140px)] flex gap-3 animate-fade-in">
             {/* Sidebar: Teams List */}
-            <div className="w-80 flex-none glass border border-white/5 rounded-2xl flex flex-col overflow-hidden shadow-xl">
-                <div className="p-6 border-b border-white/5 bg-white/5">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-2xl font-bold text-white">Your Teams</h2>
-                        <span className="bg-blue-600/20 text-blue-400 text-xs font-semibold px-2.5 py-1 rounded-md border border-blue-500/20">
+            <div className="w-64 flex-none glass border border-white/5 rounded-xl flex flex-col overflow-hidden shadow-md">
+                <div className="p-3 border-b border-white/5 bg-white/5">
+                    <div className="flex items-center justify-between mb-2">
+                        <h2 className="text-base font-bold text-white">Your Teams</h2>
+                        <span className="bg-blue-600/20 text-blue-400 text-[10px] font-semibold px-1.5 py-0.5 rounded border border-blue-500/20">
                             {teams.length} Active
                         </span>
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
                     {teams.map(team => (
                         <button
                             key={team.id}
                             onClick={() => setSelectedTeam(team.id)}
-                            className={`w-full group relative p-3 rounded-2xl flex items-center gap-4 transition-all duration-300 ${selectedTeam === team.id
+                            className={`w-full group relative p-2 rounded-lg flex items-center gap-2 transition-all duration-300 ${selectedTeam === team.id
                                     ? 'bg-gradient-to-r from-blue-600/20 to-indigo-600/10 border border-blue-500/30'
                                     : 'hover:bg-white/5 border border-transparent grayscale hover:grayscale-0'
                                 }`}
                         >
-                            <div className={`relative shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br ${team.avatarColor} flex items-center justify-center text-white font-bold text-lg shadow-md transform group-hover:scale-105 transition-transform`}>
+                            <div className={`relative shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br ${team.avatarColor} flex items-center justify-center text-white font-bold text-xs shadow-sm transform group-hover:scale-105 transition-transform`}>
                                 {team.name.charAt(0)}
                                 {team.isOnline && (
-                                    <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-green-500 border-2 border-black rounded-full shadow-[0_0_8px_rgba(34,197,94,0.4)]"></span>
+                                    <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 border border-black rounded-full shadow-[0_0_8px_rgba(34,197,94,0.4)]"></span>
                                 )}
                             </div>
 
                             <div className="flex-1 min-w-0 text-left">
-                                <h3 className={`text-sm font-bold truncate transition-colors ${selectedTeam === team.id ? 'text-white' : 'text-gray-400 group-hover:text-white'}`}>
+                                <h3 className={`text-xs font-bold truncate transition-colors ${selectedTeam === team.id ? 'text-white' : 'text-gray-400 group-hover:text-white'}`}>
                                     {team.name}
                                 </h3>
-                                <p className="text-xs text-gray-500 truncate w-full group-hover:text-gray-400 transition-colors mt-0.5">
+                                <p className="text-[9px] text-gray-500 truncate w-full group-hover:text-gray-400 transition-colors">
                                     {teamMessages[team.id]?.slice(-1)[0]?.text || 'No messages yet'}
                                 </p>
                             </div>
@@ -241,38 +242,38 @@ const StudentWorkspace = () => {
             </div>
 
             {/* Main Workspace */}
-            <div className="flex-1 glass border border-white/5 rounded-2xl flex flex-col overflow-hidden shadow-xl relative bg-black/10">
+            <div className="flex-1 glass border border-white/5 rounded-xl flex flex-col overflow-hidden shadow-md relative bg-black/10">
                 {!selectedTeam ? (
-                    <div className="flex-1 flex flex-col items-center justify-center text-gray-500 space-y-4">
-                        <div className="text-6xl">🏢</div>
-                        <p className="text-xl font-medium">Select a team to start collaborating</p>
+                    <div className="flex-1 flex flex-col items-center justify-center text-gray-500 space-y-2">
+                        <div className="text-4xl">🏢</div>
+                        <p className="text-sm font-medium">Select a team to start collaborating</p>
                     </div>
                 ) : (
                     <>
                         {/* Workspace Header */}
-                        <div className="h-20 px-8 flex items-center justify-between flex-none bg-white/5 border-b border-white/5 backdrop-blur-md">
-                            <div className="flex items-center gap-4">
-                                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${currentTeam?.avatarColor} flex items-center justify-center text-white font-bold text-xl shadow-md ring-1 ring-white/10`}>
+                        <div className="h-12 px-4 flex items-center justify-between flex-none bg-white/5 border-b border-white/5 backdrop-blur-md">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${currentTeam?.avatarColor} flex items-center justify-center text-white font-bold text-sm shadow-sm ring-1 ring-white/10`}>
                                     {currentTeam?.name.charAt(0)}
                                 </div>
                                 <div>
-                                    <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight">{currentTeam?.name} Workspace</h2>
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <span className={`w-2 h-2 rounded-full ${currentTeam?.isOnline ? 'bg-green-500' : 'bg-gray-500'}`}></span>
-                                        <span className="text-sm text-gray-400 font-medium">
+                                    <h2 className="text-sm md:text-base font-bold text-white tracking-tight leading-tight">{currentTeam?.name} Workspace</h2>
+                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                        <span className={`w-1.5 h-1.5 rounded-full ${currentTeam?.isOnline ? 'bg-green-500' : 'bg-gray-500'}`}></span>
+                                        <span className="text-[9px] text-gray-400 font-medium">
                                             {currentTeam?.isOnline ? `Online • ${currentTeam?.status}` : 'Offline'}
                                         </span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="hidden lg:flex p-1 bg-black/20 rounded-xl border border-white/10 shadow-inner">
+                            <div className="hidden lg:flex p-1 bg-black/20 rounded-lg border border-white/10 shadow-inner">
                                 {['Chat', 'Files', 'Tasks'].map(tab => (
                                     <button
                                         key={tab}
                                         onClick={() => setActiveTab(tab)}
-                                        className={`px-5 py-2 text-sm font-semibold rounded-lg transition-all ${activeTab === tab
-                                                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md ring-1 ring-white/10'
+                                        className={`px-3 py-1 text-[10px] font-semibold rounded transition-all ${activeTab === tab
+                                                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm ring-1 ring-white/10'
                                                 : 'text-gray-400 hover:text-white hover:bg-white/5'
                                             }`}
                                     >
@@ -286,12 +287,12 @@ const StudentWorkspace = () => {
                         <div className="flex-1 overflow-hidden flex flex-col">
                             {activeTab === 'Chat' && (
                                 <>
-                                    <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar scroll-smooth">
+                                    <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar scroll-smooth">
                                         {messages.map((msg) => (
                                             <div key={msg.id} className={`flex w-full group ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
-                                                <div className={`flex gap-4 max-w-[75%] ${msg.sender === 'me' ? 'flex-row-reverse' : ''}`}>
+                                                <div className={`flex gap-2 max-w-[75%] ${msg.sender === 'me' ? 'flex-row-reverse' : ''}`}>
                                                     <div className="mt-auto">
-                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 shadow-md border border-white/10 ${msg.sender === 'me'
+                                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 shadow-sm border border-white/10 ${msg.sender === 'me'
                                                                 ? 'bg-gradient-to-br from-blue-700 to-indigo-800 text-white'
                                                                 : 'bg-gradient-to-br from-gray-800 to-gray-900 text-gray-400'
                                                             }`}>
@@ -300,12 +301,12 @@ const StudentWorkspace = () => {
                                                     </div>
 
                                                     <div className={`flex flex-col ${msg.sender === 'me' ? 'items-end' : 'items-start'}`}>
-                                                        <div className="flex items-center gap-2 mb-1 px-1">
-                                                            <span className="text-xs font-medium text-gray-400">{msg.user}</span>
-                                                            <span className="text-xs text-gray-500">{msg.time}</span>
+                                                        <div className="flex items-center gap-1.5 mb-0.5 px-1">
+                                                            <span className="text-[10px] font-medium text-gray-400">{msg.user}</span>
+                                                            <span className="text-[9px] text-gray-500">{msg.time}</span>
                                                         </div>
                                                         <div className={`
-                                                            relative p-3.5 rounded-2xl text-sm leading-relaxed shadow-sm break-words
+                                                            relative p-2 rounded-xl text-[10px] leading-relaxed shadow-sm break-words
                                                             ${msg.sender === 'me'
                                                                 ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-tr-none border border-white/10'
                                                                 : 'glass bg-white/5 text-gray-200 rounded-tl-none border border-white/5 hover:bg-white/10 transition-colors'}
@@ -320,7 +321,7 @@ const StudentWorkspace = () => {
                                     </div>
 
                                     {/* Input Bar */}
-                                    <div className="p-6 bg-white/5 border-t border-white/5 backdrop-blur-xl">
+                                    <div className="p-2 bg-white/5 border-t border-white/5 backdrop-blur-xl">
                                         <div className="max-w-4xl mx-auto">
                                             <form onSubmit={handleSendMessage} className="relative group">
                                                 <input
@@ -328,15 +329,15 @@ const StudentWorkspace = () => {
                                                     value={messageInput}
                                                     onChange={(e) => setMessageInput(e.target.value)}
                                                     placeholder="Type your message to the team..."
-                                                    className="w-full pl-6 pr-16 py-4 bg-navy-950/80 border border-white/10 rounded-2xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 focus:bg-navy-950 transition-all font-medium placeholder-gray-600 shadow-inner"
+                                                    className="w-full pl-3 pr-10 py-1.5 bg-navy-950/80 border border-white/10 rounded-lg text-[10px] text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 focus:bg-navy-950 transition-all font-medium placeholder-gray-600 shadow-inner"
                                                 />
-                                                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                                <div className="absolute inset-y-0 right-0 pr-1.5 flex items-center">
                                                     <button
                                                         type="submit"
                                                         disabled={!messageInput.trim()}
-                                                        className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-xl shadow-lg transition-all transform hover:scale-110 active:scale-95 flex items-center justify-center"
+                                                        className="w-6 h-6 bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded shadow transition-all transform hover:scale-110 active:scale-95 flex items-center justify-center"
                                                     >
-                                                        <svg className="w-5 h-5 translate-x-0.5 -translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <svg className="w-3.5 h-3.5 translate-x-0.5 -translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                                                         </svg>
                                                     </button>
@@ -348,40 +349,40 @@ const StudentWorkspace = () => {
                             )}
 
                             {activeTab === 'Tasks' && (
-                                <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                                    <div className="max-w-4xl mx-auto space-y-6">
+                                <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                                    <div className="max-w-4xl mx-auto space-y-4">
                                         <div className="flex items-center justify-between">
-                                            <h3 className="text-xl font-bold text-white">Project Milestones</h3>
-                                            <button className="px-4 py-2 bg-blue-600/20 text-blue-400 text-sm font-semibold rounded-xl border border-blue-500/20 hover:bg-blue-600/30 transition-colors">
+                                            <h3 className="text-sm font-bold text-white">Project Milestones</h3>
+                                            <button className="px-3 py-1 bg-blue-600/20 text-blue-400 text-[10px] font-semibold rounded border border-blue-500/20 hover:bg-blue-600/30 transition-colors">
                                                 + New Task
                                             </button>
                                         </div>
                                         
-                                        <div className="grid gap-4">
+                                        <div className="grid gap-2">
                                             {tasks.length > 0 ? tasks.map(task => (
-                                                <div key={task.id} className="glass p-5 rounded-2xl border border-white/5 flex items-center justify-between group hover:bg-white/5 transition-all">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className={`w-3 h-3 rounded-full ${task.status === 'Done' ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                                                <div key={task.id} className="glass p-3 rounded-lg border border-white/5 flex items-center justify-between group hover:bg-white/5 transition-all">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`w-2 h-2 rounded-full ${task.status === 'Done' ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
                                                         <div>
-                                                            <h4 className="text-white font-bold">{task.title}</h4>
-                                                            <p className="text-xs text-gray-500 mt-1">Assigned to: {task.assignee}</p>
+                                                            <h4 className="text-xs text-white font-bold">{task.title}</h4>
+                                                            <p className="text-[9px] text-gray-500 mt-0.5">Assigned to: {task.assignee}</p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center gap-3">
-                                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${
                                                             task.status === 'Done' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
                                                         }`}>
                                                             {task.status}
                                                         </span>
-                                                        <button className="opacity-0 group-hover:opacity-100 p-2 text-gray-500 hover:text-white transition-all">
-                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path></svg>
+                                                        <button className="opacity-0 group-hover:opacity-100 p-1 text-gray-500 hover:text-white transition-all">
+                                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path></svg>
                                                         </button>
                                                     </div>
                                                 </div>
                                             )) : (
-                                                <div className="text-center py-12">
-                                                    <div className="text-4xl mb-4">📋</div>
-                                                    <p className="text-gray-500">No milestones tracked for this team yet.</p>
+                                                <div className="text-center py-6">
+                                                    <div className="text-2xl mb-2">📋</div>
+                                                    <p className="text-[10px] text-gray-500">No milestones tracked for this team yet.</p>
                                                 </div>
                                             )}
                                         </div>
@@ -390,10 +391,10 @@ const StudentWorkspace = () => {
                             )}
 
                             {activeTab === 'Files' && (
-                                <div className="flex-1 flex flex-col items-center justify-center text-gray-500 space-y-4">
-                                    <div className="text-6xl">📁</div>
-                                    <p className="text-xl font-medium">Team files will appear here</p>
-                                    <button className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl border border-white/10 transition-colors">
+                                <div className="flex-1 flex flex-col items-center justify-center text-gray-500 space-y-2">
+                                    <div className="text-4xl">📁</div>
+                                    <p className="text-sm font-medium">Team files will appear here</p>
+                                    <button className="px-4 py-1.5 bg-white/5 hover:bg-white/10 text-white text-[10px] rounded border border-white/10 transition-colors">
                                         Upload Document
                                     </button>
                                 </div>

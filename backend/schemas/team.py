@@ -31,6 +31,8 @@ class TeamMemberResponse(TeamMemberBase):
 class TeamBase(BaseModel):
     hackathonId: str = Field(..., alias="hackathonId")
     teamName: str = Field(..., alias="teamName")
+    domain: Optional[str] = Field(None, alias="domain")
+    leaderId: Optional[str] = Field(None, alias="leaderId")
 
 
 class TeamCreate(TeamBase):

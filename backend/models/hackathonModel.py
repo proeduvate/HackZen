@@ -6,6 +6,9 @@ from pydantic import BaseModel, Field
 
 class HackathonStatus(str, Enum):
     DRAFT = "Draft"
+    PENDING = "Pending"
+    CHANGES_REQUESTED = "Changes Requested"
+    LIVE = "Live"
     UPCOMING = "Upcoming"
     REGISTRATION_OPEN = "Registration Open"
     ONGOING = "Ongoing"

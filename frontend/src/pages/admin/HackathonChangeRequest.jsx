@@ -39,11 +39,11 @@ const HackathonChangeRequest = () => {
     const handleAction = async (actionFn, actionName) => {
         setActionLoading(actionName);
         try {
-            await actionFn();
+            await actionFn(requestData.id);
             const newData = await fetchHackathonChangeRequest();
             setRequestData(newData);
-            if (actionName === 'reject') {
-                navigate('/admin/dashboard');
+            if (actionName === 'reject' || actionName === 'resolve') {
+                navigate('/admin/hackathon-approvals');
             }
         } catch (error) {
             console.error(error);
@@ -85,7 +85,7 @@ const HackathonChangeRequest = () => {
 
         setMessageSending(true);
         try {
-            const result = await sendMessageToOrganizer(messageContent);
+            const result = await sendMessageToOrganizer(requestData.id, messageContent);
             if (result.success) {
                 setShowMessageModal(false);
                 setMessageContent('');
@@ -252,7 +252,7 @@ const HackathonChangeRequest = () => {
                     <div className="glass-strong rounded-3xl border border-white/10 overflow-hidden shadow-2xl">
                         <div className="p-6 border-b border-white/10 bg-white/[0.02]">
                             <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                                <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                                 Admin Actions
                             </h2>
                         </div>

@@ -60,6 +60,7 @@ import EditAdminProfile from './pages/admin/EditAdminProfile';
 import EvaluationCriteria from './pages/organizer/EvaluationCriteria';
 import InitializeEvent from './pages/organizer/InitializeEvent';
 import InviteMentors from './pages/organizer/InviteMentors';
+import HackathonApprovals from './pages/admin/HackathonApprovals';
 
 
 import './App.css';
@@ -226,16 +227,7 @@ function AppContent() {
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="organizer-approvals" element={<OrganizerApprovals />} />
           <Route path="hackathon-approvals">
-            <Route index element={<div className="p-10 space-y-4">
-              <h2 className="text-2xl font-bold">Hackathon Approvals</h2>
-              <div className="glass p-6 rounded-2xl border border-white/10 flex justify-between items-center group cursor-pointer hover:border-blue-500/50 transition-all" onClick={() => window.location.href = '/admin/hackathon-approvals/detail'}>
-                <div>
-                  <h3 className="font-bold text-lg group-hover:text-blue-400 transition-colors">Global Hackathon 2025</h3>
-                  <p className="text-sm text-gray-400">Status: Changes Requested</p>
-                </div>
-                <button className="px-4 py-2 bg-blue-600/10 text-blue-400 rounded-xl text-sm font-bold border border-blue-500/20 group-hover:bg-blue-600 group-hover:text-white transition-all">Review Changes</button>
-              </div>
-            </div>} />
+            <Route index element={<HackathonApprovals />} />
             <Route path="detail" element={<HackathonChangeRequest />} />
           </Route>
           <Route path="users" element={<UsersManagement />} />

@@ -62,10 +62,10 @@ const DashboardLayout = () => {
             fullName: storedUser?.name || 'Student User',
             roleName: 'Student',
             email: storedUser?.email || '',
-            theme: 'purple',
+            theme: 'blue',
             path: 'student',
-            logoGradient: 'from-purple-600 to-blue-600',
-            avatarGradient: 'from-purple-500 to-indigo-500',
+            logoGradient: 'from-blue-600 to-blue-600',
+            avatarGradient: 'from-blue-500 to-indigo-500',
         },
         organizer: {
             name: storedUser?.name?.split(' ')[0] || 'Organizer',
@@ -82,10 +82,10 @@ const DashboardLayout = () => {
             fullName: storedUser?.name || 'Mentor User',
             roleName: 'Mentor',
             email: storedUser?.email || '',
-            theme: 'purple',
+            theme: 'blue',
             path: 'mentor',
-            logoGradient: 'from-purple-600 to-blue-600',
-            avatarGradient: 'from-purple-500 to-indigo-500',
+            logoGradient: 'from-blue-600 to-blue-600',
+            avatarGradient: 'from-blue-500 to-indigo-500',
         },
         admin: {
             name: storedUser?.name?.split(' ')[0] || 'Admin',
@@ -101,19 +101,16 @@ const DashboardLayout = () => {
 
     // Style configurations
     const indicatorStyles = {
-        purple: "bg-purple-400 shadow-[0_0_10px_rgba(192,132,252,0.5)]",
         cyan: "bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]",
         blue: "bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.5)]"
     };
 
     const iconStyles = {
-        purple: "group-hover:text-purple-400 group-hover:drop-shadow-[0_0_8px_rgba(192,132,252,0.5)]",
         cyan: "group-hover:text-cyan-400 group-hover:drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]",
         blue: "group-hover:text-blue-400 group-hover:drop-shadow-[0_0_8px_rgba(96,165,250,0.5)]"
     };
 
     const activeStyles = {
-        purple: "bg-purple-500/10 text-white border-purple-500/30",
         cyan: "bg-cyan-500/10 text-white border-cyan-500/30",
         blue: "bg-blue-500/10 text-white border-blue-500/30"
     };
@@ -318,16 +315,16 @@ const DashboardLayout = () => {
                 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
             `}>
                 {/* Logo Area */}
-                <Link to="/" className="py-6 w-full flex items-center justify-center border-b border-white/10 group">
+                <Link to="/" className="py-4 w-full flex items-center justify-center border-b border-white/10 group">
                     <img
                         src="/proeduvatee-removebg-preview.png"
                         alt="ProEduvate"
-                        className="mx-auto h-14 w-auto transition-transform duration-300 group-hover:scale-110 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]"
+                        className="mx-auto h-12 w-auto transition-transform duration-300 group-hover:scale-110 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]"
                     />
                 </Link>
 
                 {/* Navigation Menu */}
-                <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-2">
+                <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 scrollbar-hide">
                     {navItems.map((item) => {
                         // For the main dashboard path, use exact match to avoid highlighting it for every sub-route
                         // For other routes, use startsWith to keep the parent nav item highlighted
@@ -341,18 +338,18 @@ const DashboardLayout = () => {
                                 to={item.path}
                                 onClick={() => setSidebarOpen(false)}
                                 className={`
-                                    flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group
+                                    flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-300 group
                                     ${isActive
-                                        ? `${activeStyles[themeColor] || activeStyles.purple} border`
+                                        ? `${activeStyles[themeColor] || activeStyles.blue} border`
                                         : 'text-gray-400 hover:text-white hover:bg-white/5'}
                                 `}
                             >
-                                <span className={`transition-transform duration-300 ${iconStyles[themeColor] || iconStyles.purple}`}>
+                                <span className={`transition-transform duration-300 ${iconStyles[themeColor] || iconStyles.blue}`}>
                                     {item.icon}
                                 </span>
-                                <span className="font-bold tracking-wide uppercase text-[12px]">{item.name}</span>
+                                <span className="font-bold tracking-wide uppercase text-[11px]">{item.name}</span>
                                 {isActive && (
-                                    <div className={`ml-auto w-1.5 h-1.5 rounded-full ${indicatorStyles[themeColor] || indicatorStyles.purple}`} />
+                                    <div className={`ml-auto w-1.5 h-1.5 rounded-full ${indicatorStyles[themeColor] || indicatorStyles.blue}`} />
                                 )}
                             </Link>
                         );
@@ -361,14 +358,14 @@ const DashboardLayout = () => {
 
 
                 {/* Bottom Badge */}
-                <div className="p-4 mt-auto">
-                    <div className="glass p-4 rounded-xl flex items-center gap-3 border border-white/5">
-                        <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${currentRole.avatarGradient} flex items-center justify-center`}>
-                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                <div className="p-3 mt-auto">
+                    <div className="glass p-3 rounded-xl flex items-center gap-3 border border-white/5">
+                        <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${currentRole.avatarGradient} flex items-center justify-center`}>
+                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                         </div>
                         <div>
-                            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-0.5">Deployment Role</p>
-                            <p className="text-sm font-bold text-white tracking-tight uppercase">{currentRole.roleName}</p>
+                            <p className="text-[9px] font-semibold text-gray-500 uppercase tracking-wider mb-0.5">Deployment Role</p>
+                            <p className="text-xs font-bold text-white tracking-tight uppercase">{currentRole.roleName}</p>
                         </div>
                     </div>
                 </div>
@@ -460,7 +457,7 @@ const DashboardLayout = () => {
                                 onClick={() => setShowProfileMenu(!showProfileMenu)}
                                 className="flex items-center gap-3 hover:bg-white/5 py-1.5 px-3 rounded-full transition-all border border-transparent hover:border-white/10"
                             >
-                                <div className={`w-9 h-9 rounded-full bg-gradient-to-r ${currentRole.avatarGradient} flex items-center justify-center text-white font-black shadow-lg shadow-purple-500/20 ring-2 ring-white/10 italic`}>
+                                <div className={`w-9 h-9 rounded-full bg-gradient-to-r ${currentRole.avatarGradient} flex items-center justify-center text-white font-black shadow-lg shadow-blue-500/20 ring-2 ring-white/10 italic`}>
                                     {currentRole.name.charAt(0)}
                                 </div>
                                 <span className="hidden md:block text-[12px] font-bold text-white uppercase tracking-wider">

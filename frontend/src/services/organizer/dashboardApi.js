@@ -14,7 +14,7 @@ export const fetchOrganizerDashboardData = async (dateFilter = '30days') => {
         return {
             stats: [
                 { id: 'active_h', title: 'Live Events', value: data.totalHackathons, change: 'Sync', isPositive: true, icon: '🚀', color: 'cyan' },
-                { id: 'total_p', title: 'Participants', value: data.totalParticipants, change: '+10%', isPositive: true, icon: '👥', color: 'purple' },
+                { id: 'total_p', title: 'Participants', value: data.totalParticipants, change: '+10%', isPositive: true, icon: '👥', color: 'blue' },
                 { id: 'total_t', title: 'Total Teams', value: data.totalTeams, change: '+5%', isPositive: true, icon: '📥', color: 'emerald' },
                 { id: 'pending_e', title: 'Need Review', value: 0, change: 'Stable', isPositive: true, icon: '⚖️', color: 'amber' },
             ],

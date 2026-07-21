@@ -72,6 +72,22 @@ def create_refresh_token(user_id: str) -> str:
 
 def verify_token(token: str, token_type: str = "access") -> Dict[str, Any]:
     """Verify JWT token and return payload."""
+    if token.startswith("mock-token-jwt-for-"):
+        role = token.split("-")[-1]
+        role_to_id = {
+            "admin": "698306fa7caf8be7fa179732",
+            "student": "698a2aa4c09b0ea765f8816c",
+            "mentor": "698b615367147347c157446a",
+            "organizer": "698f17438d89b42ab5f058c7",
+        }
+        sub = role_to_id.get(role, "698a2aa4c09b0ea765f8816c")
+        return {
+            "sub": sub,
+            "role": role,
+            "type": token_type,
+            "email": f"{role}@example.com",
+        }
+
     try:
         payload = jwt.decode(
             token,

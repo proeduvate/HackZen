@@ -7,9 +7,9 @@ import { fetchHomeHackathons } from '../services/homeApi';
 const Button = ({ children, variant = 'primary', onClick, className = '', to, ...props }) => {
     const baseStyles = 'px-6 py-3 rounded-lg font-semibold transition-all duration-300 btn-hover relative z-10';
     const variants = {
-        primary: 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700',
-        secondary: 'glass text-white border-2 border-purple-600 hover:bg-purple-600/20',
-        outline: 'border-2 border-white/20 text-white hover:border-purple-600 hover:bg-purple-600/10',
+        primary: 'bg-blue-600 text-white hover:bg-blue-700',
+        secondary: 'glass text-white border-2 border-blue-600 hover:bg-blue-600/20',
+        outline: 'border-2 border-white/20 text-white hover:border-blue-600 hover:bg-blue-600/10',
     };
     const buttonClasses = `${baseStyles} ${variants[variant]} ${className}`;
 
@@ -60,7 +60,7 @@ const HackathonCard = ({ id, domain, title, date, participants, venue }) => {
     return (
         <Card>
             <div className="mb-4">
-                <span className="inline-block px-3 py-1 bg-purple-600/20 text-purple-400 rounded-full text-sm font-semibold border border-purple-600/30">
+                <span className="inline-block px-3 py-1 bg-blue-600/20 text-blue-400 rounded-full text-sm font-semibold border border-blue-600/30">
                     {domain}
                 </span>
             </div>
@@ -101,7 +101,7 @@ const Navbar = () => {
 
     return (
         <nav className="fixed top-0 z-50 w-full border-b border-gray-800 bg-navy-900/80 backdrop-blur-md">
-            <div className="container flex items-center justify-between px-6 py-4 mx-auto">
+            <div className="flex items-center justify-between w-full px-6 py-4">
                 <Link to="/" className="flex items-center gap-2">
                     <img src="/proeduvatee-removebg-preview.png" alt="ProEduvate" className="h-12" />
                 </Link>
@@ -112,12 +112,26 @@ const Navbar = () => {
                     <a href="#roles" onClick={(e) => handleScroll(e, 'roles')} className="text-gray-300 transition hover:text-white">Roles</a>
                 </div>
                 <div className="flex items-center gap-4">
+                    <button 
+                        onClick={() => {
+                            if (document.documentElement.classList.contains('light-mode')) {
+                                document.documentElement.classList.remove('light-mode');
+                                localStorage.setItem('theme', 'dark');
+                            } else {
+                                document.documentElement.classList.add('light-mode');
+                                localStorage.setItem('theme', 'light');
+                            }
+                        }} 
+                        className="p-2 text-gray-300 transition rounded-full hover:text-white hover:bg-white/10"
+                        title="Toggle Theme" 
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                        </svg>
+                    </button>
                     <button onClick={() => navigate('/login')} className="text-gray-300 transition hover:text-white">
                         Sign In
                     </button>
-                    <Button variant="primary" onClick={() => navigate('/get-started')}>
-                        Get Started
-                    </Button>
                 </div>
             </div>
         </nav>
@@ -129,8 +143,8 @@ const Hero = () => {
     return (
         <section className="px-6 pt-32 pb-20">
             <div className="container mx-auto text-center">
-                <p className="mb-4 text-purple-400">The Ultimate Hackathon Platform</p>
-                <h1 className="mb-6 text-5xl font-bold text-transparent md:text-6xl bg-gradient-to-r from-white to-gray-400 bg-clip-text">
+                <p className="mb-4 text-blue-400">The Ultimate Hackathon Platform</p>
+                <h1 className="mb-6 text-5xl font-bold text-white md:text-6xl">
                     Build. Compete. Innovate.
                 </h1>
                 <p className="max-w-3xl mx-auto mb-12 text-xl text-gray-400">
@@ -177,7 +191,7 @@ const HackathonsSection = () => {
             <div className="max-w-7xl mx-auto">
                 <div className="text-center mb-16">
                     <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-                        Upcoming <span className="gradient-text">Hackathons</span>
+                        Upcoming <span className="text-blue-400">Hackathons</span>
                     </h2>
                     <p className="text-xl text-gray-400 max-w-2xl mx-auto">
                         Join exciting hackathons and showcase your skills to the world
@@ -185,7 +199,7 @@ const HackathonsSection = () => {
                 </div>
                 {loading ? (
                     <div className="flex justify-center py-10">
-                        <div className="w-12 h-12 border-4 border-purple-500 rounded-full border-t-transparent animate-spin"></div>
+                        <div className="w-12 h-12 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -214,7 +228,7 @@ const HowItWorksSection = () => {
             <div className="max-w-7xl mx-auto">
                 <div className="text-center mb-16">
                     <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-                        How It <span className="gradient-text">Works</span>
+                        How It <span className="text-blue-400">Works</span>
                     </h2>
                     <p className="text-xl text-gray-400 max-w-2xl mx-auto">
                         Four simple steps to transform your ideas into reality
@@ -225,7 +239,7 @@ const HowItWorksSection = () => {
                         <div key={index} className="relative">
                             <Card hover={false} className="text-center h-full">
                                 <div className="text-6xl mb-4">{step.icon}</div>
-                                <div className="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center font-bold text-white text-xl glow-purple">
+                                <div className="absolute -top-4 -left-4 w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center font-bold text-white text-xl glow-blue">
                                     {index + 1}
                                 </div>
                                 <h3 className="text-xl font-bold text-white mb-3">{step.title}</h3>
@@ -255,7 +269,7 @@ const FeaturesSection = () => {
             <div className="max-w-7xl mx-auto">
                 <div className="text-center mb-16">
                     <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-                        Premium <span className="gradient-text">Features</span>
+                        Premium <span className="text-blue-400">Features</span>
                     </h2>
                     <p className="text-xl text-gray-400 max-w-2xl mx-auto">
                         Everything you need to run successful hackathons, all in one place
@@ -294,7 +308,7 @@ const RolesSection = () => {
             <div className="max-w-7xl mx-auto">
                 <div className="text-center mb-16">
                     <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-                        Built for <span className="gradient-text">Everyone</span>
+                        Built for <span className="text-blue-400">Everyone</span>
                     </h2>
                     <p className="text-xl text-gray-400 max-w-2xl mx-auto">
                         Tailored experiences for organizers, mentors, and students
@@ -309,7 +323,7 @@ const RolesSection = () => {
                             <div className="space-y-2 mb-6">
                                 {role.features.map((feature, idx) => (
                                     <div key={idx} className="flex items-center text-gray-300">
-                                        <span className="mr-2 text-purple-400">✓</span>
+                                        <span className="mr-2 text-blue-400">✓</span>
                                         <span>{feature}</span>
                                     </div>
                                 ))}

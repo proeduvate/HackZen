@@ -50,9 +50,9 @@ const CreateHackathon = () => {
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
+        <div className="h-[calc(100vh-140px)] flex flex-col font-sans text-white">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 flex-none mb-4 animate-in fade-in duration-500">
                 <div>
                     <h1 className="text-3xl font-bold text-white mb-2">Create Hackathon</h1>
                     <p className="text-sm text-gray-400">Set up your event in three simple steps</p>
@@ -60,7 +60,7 @@ const CreateHackathon = () => {
             </div>
 
             {/* Step Progress */}
-            <div className="glass p-6 rounded-2xl border border-white/5">
+            <div className="glass p-6 rounded-2xl border border-white/5 flex-none mb-6 animate-in fade-in duration-500">
                 <div className="flex items-center justify-between mb-6">
                     {steps.map((step, index) => (
                         <React.Fragment key={step.id}>
@@ -93,7 +93,7 @@ const CreateHackathon = () => {
             </div>
 
             {/* Step Content */}
-            <div className="min-h-[600px]">
+            <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1 pb-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <Outlet context={contextValue} />
             </div>
         </div>

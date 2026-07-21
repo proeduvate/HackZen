@@ -9,7 +9,7 @@ const DEFAULT_PROFILE = {
     role: 'Senior Mentor',
     institution: 'Stanford AI Lab',
     bio: '',
-    avatarGradient: 'from-purple-600 to-indigo-600',
+    avatarGradient: 'from-blue-600 to-indigo-600',
     expertise: [],
     links: {
         scholar: '',

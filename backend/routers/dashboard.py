@@ -52,23 +52,24 @@ async def get_my_hackathons_dashboard(current_user: dict = Depends(with_auth)):
 
         team_info = {
             "id": team_id_str,
-            "name": team["teamName"],
-            "hackathonId": team["hackathonId"],
-            "hackathonTitle": hackathon["title"],
+            "name": team.get("teamName", "Unknown Team"),
+            "hackathonId": team.get("hackathonId"),
+            "hackathonTitle": hackathon.get("title", "Untitled"),
             "role": role,
-            "createdAt": team["createdAt"],
+            "createdAt": team.get("createdAt"),
         }
         result["my_teams"].append(team_info)
 
         hackathon_info = {
             "id": str(hackathon["_id"]),
-            "title": hackathon["title"],
-            "status": hackathon["status"],
-            "startDate": hackathon["startDate"],
-            "endDate": hackathon["endDate"],
+            "title": hackathon.get("title", "Untitled"),
+            "status": hackathon.get("status", "Draft"),
+            "startDate": hackathon.get("startDate"),
+            "endDate": hackathon.get("endDate"),
         }
 
-        if hackathon["endDate"] > now:
+        end_date = hackathon.get("endDate")
+        if end_date and end_date > now:
             result["ongoing_hackathons"].append(hackathon_info)
         else:
             result["past_hackathons"].append(hackathon_info)
@@ -108,8 +109,8 @@ async def get_organizer_stats(
         stats["hackathonBreakdown"].append(
             {
                 "id": h_id,
-                "title": h["title"],
-                "status": h["status"],
+                "title": h.get("title", "Untitled"),
+                "status": h.get("status", "Draft"),
                 "teamCount": await teams_collection.count_documents(
                     {"hackathonId": h_id}
                 ),
