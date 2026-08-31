@@ -2,6 +2,41 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { getStepThreeReview, submitStepThreeHackathon } from '../../services/organizer/createHackathonStepThreeApi';
 
+const getSubmitErrorMessage = (error) => {
+    const responseData = error?.response?.data;
+
+    if (typeof responseData?.detail === 'string') return responseData.detail;
+    if (Array.isArray(responseData?.detail)) {
+        return responseData.detail
+            .map((item) => item?.msg || item?.message)
+            .filter(Boolean)
+            .join(', ') || 'Invalid hackathon details.';
+    }
+    if (responseData?.error?.detail) return responseData.error.detail;
+    if (responseData?.error?.message) return responseData.error.message;
+    if (error?.message) return error.message;
+
+    return 'Hackathon creation failed. Please try again.';
+};
+
+const validateDraft = (draft) => {
+    const errors = [];
+
+    if (!draft.title?.trim()) errors.push('Hackathon title is required.');
+    if (!draft.description?.trim()) errors.push('Description is required.');
+    if (!draft.location?.trim()) errors.push('Location or mode is required.');
+    if (!draft.startDate) errors.push('Start date is required.');
+    if (!draft.endDate) errors.push('End date is required.');
+    if (draft.startDate && draft.endDate && new Date(draft.startDate) >= new Date(draft.endDate)) {
+        errors.push('End date must be after start date.');
+    }
+    if (!draft.posterFile) errors.push('Poster or banner image is required. Go back to Step 1 and select it again.');
+    if (!draft.tracks?.length) errors.push('At least one challenge track is required.');
+    if (draft.minTeamSize > draft.maxTeamSize) errors.push('Minimum team size cannot be greater than maximum team size.');
+
+    return errors;
+};
+
 const CreateHackathonStepThree = () => {
     const navigate = useNavigate();
     const { draft } = useOutletContext();
@@ -15,6 +50,12 @@ const CreateHackathonStepThree = () => {
     }, [draft]);
 
     const handleSubmit = async () => {
+        const validationErrors = validateDraft(draft);
+        if (validationErrors.length > 0) {
+            setError(validationErrors.join(' '));
+            return;
+        }
+
         if (!acceptedTerms) {
             setError('Please accept the publication terms before submitting.');
             return;
@@ -33,7 +74,7 @@ const CreateHackathonStepThree = () => {
             });
         } catch (submitError) {
             console.error('Failed to create hackathon:', submitError);
-            setError('Hackathon creation failed. Please try again.');
+            setError(getSubmitErrorMessage(submitError));
         } finally {
             setIsSubmitting(false);
         }
@@ -67,6 +108,11 @@ const CreateHackathonStepThree = () => {
                     {/* Event Overview */}
                     <div className="glass p-6 rounded-xl border border-white/5 space-y-4">
                         <h3 className="text-lg font-bold text-white">Event Overview</h3>
+                        {draft.posterPreview && (
+                            <div className="h-48 rounded-xl overflow-hidden border border-white/10 bg-white/5">
+                                <img src={draft.posterPreview} alt="Hackathon poster preview" className="w-full h-full object-cover" />
+                            </div>
+                        )}
                         <div className="space-y-3">
                             <div className="flex justify-between items-center py-2 border-b border-white/5">
                                 <span className="text-sm text-gray-400">Title</span>
@@ -84,6 +130,14 @@ const CreateHackathonStepThree = () => {
                                         'Not set'
                                     }
                                 </span>
+                            </div>
+                            <div className="flex justify-between items-center py-2 border-b border-white/5">
+                                <span className="text-sm text-gray-400">Location / Mode</span>
+                                <span className="text-white font-semibold text-right">{draft.location || 'Not set'}</span>
+                            </div>
+                            <div className="flex justify-between items-center py-2 border-b border-white/5">
+                                <span className="text-sm text-gray-400">Poster</span>
+                                <span className="text-white font-semibold text-right">{draft.posterFile?.name || 'Not set'}</span>
                             </div>
                             <div className="flex justify-between items-center py-2">
                                 <span className="text-sm text-gray-400">Description</span>
@@ -171,6 +225,10 @@ const CreateHackathonStepThree = () => {
                         <div className="flex justify-between gap-4">
                             <span className="text-sm text-gray-400">Visibility</span>
                             <span className="text-white font-semibold">{draft.isPublic ? 'Public' : 'Private'}</span>
+                        </div>
+                        <div className="flex justify-between gap-4">
+                            <span className="text-sm text-gray-400">Poster</span>
+                            <span className="text-white font-semibold text-right">{draft.posterFile?.name || 'Missing'}</span>
                         </div>
                     </div>
 

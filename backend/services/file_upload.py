@@ -19,10 +19,12 @@ class FileUploadService:
         self.base_dir = backend_dir / "uploads"
         self.posters_dir = self.base_dir / "posters"
         self.templates_dir = self.base_dir / "templates"
+        self.certificates_dir = self.base_dir / "certificates"
 
         # Create directories
         self.posters_dir.mkdir(parents=True, exist_ok=True)
         self.templates_dir.mkdir(parents=True, exist_ok=True)
+        self.certificates_dir.mkdir(parents=True, exist_ok=True)
 
     async def save_poster(self, file: UploadFile) -> tuple:
         """Save hackathon poster image"""
@@ -35,6 +37,13 @@ class FileUploadService:
         """Save hackathon presentation template"""
         allowed_types = [".zip", ".ppt", ".pptx", ".pdf", ".doc", ".docx"]
         path = await self._save_file(file, self.templates_dir, allowed_types)
+        url = self.get_file_url(path)
+        return (path, url)
+
+    async def save_certificate(self, file: UploadFile) -> tuple:
+        """Save a student certificate upload"""
+        allowed_types = [".jpg", ".jpeg", ".png", ".webp", ".pdf"]
+        path = await self._save_file(file, self.certificates_dir, allowed_types)
         url = self.get_file_url(path)
         return (path, url)
 
@@ -105,13 +114,25 @@ class FileUploadService:
         filename = file.filename or ""
         file_ext = os.path.splitext(filename)[1].lower()
 
+        if file_ext not in allowed_types:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid file type. Allowed: {', '.join(allowed_types)}",
+            )
+
+        content = await file.read()
+        if len(content) > settings.MAX_UPLOAD_SIZE:
+            raise HTTPException(
+                status_code=400,
+                detail=f"File too large. Maximum size is {settings.MAX_UPLOAD_SIZE // (1024 * 1024)}MB",
+            )
+
         # Generate unique filename
         unique_filename = f"{uuid.uuid4().hex}{file_ext}"
         file_path = directory / unique_filename
         print(f"DEBUG (UPLOAD): Saving file to: {file_path}")
 
         # Save file
-        content = await file.read()
         print(f"DEBUG (UPLOAD): Read {len(content)} bytes")
         with open(file_path, "wb") as buffer:
             buffer.write(content)

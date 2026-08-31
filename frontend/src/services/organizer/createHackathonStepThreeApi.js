@@ -10,12 +10,24 @@ export const getStepThreeReview = async (draft) => {
         startDate: draft.startDate,
         endDate: draft.endDate,
         description: draft.description,
+        location: draft.location,
+        posterPreview: draft.posterPreview,
+        posterName: draft.posterFile?.name || '',
         tracks: draft.tracks || [],
         minTeamSize: draft.minTeamSize,
         maxTeamSize: draft.maxTeamSize,
         isPublic: draft.isPublic,
         autoApprove: draft.autoApprove,
-        isComplete: !!(draft.title && draft.startDate && draft.endDate && draft.tracks?.length > 0),
+        isComplete: !!(
+            draft.title &&
+            draft.description &&
+            draft.location &&
+            draft.startDate &&
+            draft.endDate &&
+            draft.posterFile &&
+            draft.tracks?.length > 0 &&
+            draft.minTeamSize <= draft.maxTeamSize
+        ),
     };
 };
 

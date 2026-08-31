@@ -36,38 +36,30 @@ class HackathonService:
             else:
                 hackathon_dict["status"] = str(status_val)
 
+        saved_paths = []
+        if poster and hasattr(poster, "filename") and poster.filename:
+            poster_path, poster_url = await file_upload_service.save_poster(poster)
+            saved_paths.append(poster_path)
+            hackathon_dict["posterUrl"] = poster_url
+
+        if template and hasattr(template, "filename") and template.filename:
+            template_path, template_url = await file_upload_service.save_template(template)
+            saved_paths.append(template_path)
+            hackathon_dict["templateUrl"] = template_url
+
         # Add metadata
         hackathon_dict.update(
             {"organizerId": organizer_id, "createdAt": now, "updatedAt": now}
         )
 
-        # 1. Insert FIRST to get the ID
-        result = await coll.insert_one(hackathon_dict)
-        hackathon_id = str(result.inserted_id)
-        hackathon_dict["_id"] = hackathon_id
+        try:
+            result = await coll.insert_one(hackathon_dict)
+        except Exception:
+            for path in saved_paths:
+                file_upload_service.delete_file(path)
+            raise
 
-        # 2. Save files using the real ID if provided
-        updates = {}
-        if poster and hasattr(poster, "filename") and poster.filename:
-            try:
-                _, poster_url = await file_upload_service.save_poster(poster)
-                print(f"DEBUG: Poster saved at: {poster_url}")
-                updates["posterUrl"] = poster_url
-            except Exception as e:
-                print(f"DEBUG: Poster save failed: {str(e)}")
-
-        if template and hasattr(template, "filename") and template.filename:
-            try:
-                _, template_url = await file_upload_service.save_template(template)
-                print(f"DEBUG: Template saved at: {template_url}")
-                updates["templateUrl"] = template_url
-            except Exception as e:
-                print(f"DEBUG: Template save failed: {str(e)}")
-
-        # 3. Update the document if files were saved
-        if updates:
-            await coll.update_one({"_id": result.inserted_id}, {"$set": updates})
-            hackathon_dict.update(updates)
+        hackathon_dict["_id"] = str(result.inserted_id)
 
         print(f"DEBUG: Hackathon created successfully with ID: {hackathon_dict['_id']}")
         return hackathon_dict
@@ -150,18 +142,12 @@ class HackathonService:
 
         # Save files if provided
         if poster and hasattr(poster, "filename") and poster.filename:
-            try:
-                _, poster_url = await file_upload_service.save_poster(poster)
-                update_data["posterUrl"] = poster_url
-            except Exception as e:
-                print(f"DEBUG (SERVICE ERROR): Poster save failed: {str(e)}")
+            _, poster_url = await file_upload_service.save_poster(poster)
+            update_data["posterUrl"] = poster_url
 
         if template and hasattr(template, "filename") and template.filename:
-            try:
-                _, template_url = await file_upload_service.save_template(template)
-                update_data["templateUrl"] = template_url
-            except Exception as e:
-                print(f"DEBUG (SERVICE ERROR): Template save failed: {str(e)}")
+            _, template_url = await file_upload_service.save_template(template)
+            update_data["templateUrl"] = template_url
 
         update_data["updatedAt"] = datetime.utcnow()
 

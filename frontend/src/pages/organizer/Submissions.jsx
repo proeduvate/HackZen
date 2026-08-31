@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchSubmissions } from '../../services/organizer/submissionsApi';
+import {
+    fetchSubmissions,
+    updateSubmissionStatus,
+    exportSubmissionsToCsv,
+    SUBMISSION_STATUSES
+} from '../../services/organizer/submissionsApi';
 
 const Submissions = () => {
     const navigate = useNavigate();
@@ -10,6 +15,7 @@ const Submissions = () => {
             Eye: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />,
             Download: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />,
             Sort: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />,
+            File: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />,
         };
         return (
             <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -24,6 +30,8 @@ const Submissions = () => {
     const [submissions, setSubmissions] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState({});
+    const [selectedSubmission, setSelectedSubmission] = useState(null);
+    const [errorMessage, setErrorMessage] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 8;
 
@@ -34,8 +42,10 @@ const Submissions = () => {
             try {
                 const data = await fetchSubmissions();
                 setSubmissions(data);
+                setErrorMessage('');
             } catch (error) {
                 console.error("Failed to load submissions:", error);
+                setErrorMessage(error.response?.data?.detail || 'Failed to load submissions.');
             } finally {
                 setIsLoading(false);
             }
@@ -54,14 +64,22 @@ const Submissions = () => {
     const filteredData = useMemo(() => {
         return submissions.filter(s => {
             const matchesSearch = s.team.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                s.title.toLowerCase().includes(searchTerm.toLowerCase());
+                s.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                s.hackathon.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesStatus = statusFilter === 'all' ||
-                (statusFilter === 'evaluated' && s.status === 'Evaluated') ||
-                (statusFilter === 'pending' && s.status === 'Pending Review');
+                s.status.toLowerCase() === statusFilter.toLowerCase();
             const matchesTrack = trackFilter === 'all' || s.track === trackFilter;
             return matchesSearch && matchesStatus && matchesTrack;
         });
     }, [submissions, searchTerm, statusFilter, trackFilter]);
+
+    const tracks = useMemo(() => (
+        [...new Set(submissions.map(item => item.track).filter(Boolean))]
+    ), [submissions]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, statusFilter, trackFilter]);
 
     const paginatedItems = useMemo(() => {
         const start = (currentPage - 1) * itemsPerPage;
@@ -77,9 +95,37 @@ const Submissions = () => {
         navigate('/organizer/evaluation');
     };
 
+    const handleStatusChange = async (submissionId, nextStatus) => {
+        setActionLoading(prev => ({ ...prev, [submissionId]: true }));
+        setErrorMessage('');
+
+        try {
+            await updateSubmissionStatus(submissionId, nextStatus);
+            setSubmissions(prev => prev.map(item => (
+                item.id === submissionId ? { ...item, status: nextStatus } : item
+            )));
+            setSelectedSubmission(prev => (
+                prev?.id === submissionId ? { ...prev, status: nextStatus } : prev
+            ));
+        } catch (error) {
+            console.error('Failed to update submission status:', error);
+            setErrorMessage(error.response?.data?.detail || 'Failed to update submission status.');
+        } finally {
+            setActionLoading(prev => ({ ...prev, [submissionId]: false }));
+        }
+    };
+
+    const handleOpenFile = (fileUrl) => {
+        if (!fileUrl) return;
+        window.open(fileUrl, '_blank', 'noopener,noreferrer');
+    };
+
     const getStatusStyle = (status) => {
         switch (status) {
             case 'Pending Review': return 'bg-amber-500/10 text-amber-400 border-amber-500/20 shadow-amber-500/5 shadow-lg';
+            case 'Reviewed': return 'bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-blue-500/5 shadow-lg';
+            case 'Shortlisted': return 'bg-purple-500/10 text-purple-400 border-purple-500/20 shadow-purple-500/5 shadow-lg';
+            case 'Rejected': return 'bg-red-500/10 text-red-400 border-red-500/20 shadow-red-500/5 shadow-lg';
             case 'Evaluated': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-emerald-500/5 shadow-lg';
             default: return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
         }
@@ -96,6 +142,7 @@ const Submissions = () => {
 
                 <div className="flex items-center gap-3">
                     <button
+                        onClick={() => exportSubmissionsToCsv(filteredData)}
                         className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white border border-white/10 rounded-xl text-sm font-semibold transition-all active:scale-95"
                     >
                         <Icon name="Download" className="w-4 h-4" />
@@ -105,6 +152,11 @@ const Submissions = () => {
             </div>
 
             {/* Filters and Sorting */}
+            {errorMessage && (
+                <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-5 py-3 text-sm text-red-200">
+                    {errorMessage}
+                </div>
+            )}
 
             {/* Submissions Table */}
             <div className="glass-strong rounded-2xl border border-white/10 shadow-2xl overflow-hidden bg-navy-950/20">
@@ -132,10 +184,9 @@ const Submissions = () => {
                             onChange={(e) => setTrackFilter(e.target.value)}
                         >
                             <option value="all">All Tracks</option>
-                            <option value="AI & Health">AI & Health</option>
-                            <option value="Sustainability">Sustainability</option>
-                            <option value="FinTech">FinTech</option>
-                            <option value="Cybersecurity">Cybersecurity</option>
+                            {tracks.map(track => (
+                                <option key={track} value={track}>{track}</option>
+                            ))}
                         </select>
                         <select
                             className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-gray-300 cursor-pointer outline-none hover:bg-white/10 transition-colors"
@@ -143,8 +194,9 @@ const Submissions = () => {
                             onChange={(e) => setStatusFilter(e.target.value)}
                         >
                             <option value="all">All Status</option>
-                            <option value="pending">Pending Review</option>
-                            <option value="evaluated">Evaluated</option>
+                            {SUBMISSION_STATUSES.map(status => (
+                                <option key={status} value={status}>{status}</option>
+                            ))}
                         </select>
                     </div>
                 </div>
@@ -168,6 +220,7 @@ const Submissions = () => {
                                 <tr className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
                                     <th className="px-6 py-4">Team</th>
                                     <th className="px-6 py-4">Project</th>
+                                    <th className="px-6 py-4">Hackathon</th>
                                     <th className="px-6 py-4">Track</th>
                                     <th className="px-6 py-4">Status</th>
                                     <th className="px-6 py-4 text-right">Action</th>
@@ -183,13 +236,18 @@ const Submissions = () => {
                                                 </div>
                                                 <div>
                                                     <p className="text-sm font-semibold text-white group-hover:text-cyan-400 transition-colors">{item.team}</p>
-                                                    <p className="text-xs text-gray-500 mt-0.5">T-{item.id}092</p>
+                                                    <p className="text-xs text-gray-500 mt-0.5">Code: {item.teamCode}</p>
                                                 </div>
                                             </div>
                                         </td>
 
                                         <td className="px-6 py-4">
                                             <p className="text-sm font-semibold text-gray-200">{item.title}</p>
+                                            <p className="text-xs text-gray-500 mt-1">Submitted {item.time}</p>
+                                        </td>
+
+                                        <td className="px-6 py-4">
+                                            <p className="text-sm text-gray-300">{item.hackathon}</p>
                                         </td>
 
                                         <td className="px-6 py-4">
@@ -203,9 +261,23 @@ const Submissions = () => {
                                         </td>
 
                                         <td className="px-6 py-4 text-right">
-                                            {item.score ? (
-                                                <span className="text-sm font-semibold text-emerald-400">{item.score}</span>
-                                            ) : (
+                                            <div className="flex justify-end items-center gap-2">
+                                                <button
+                                                    onClick={() => setSelectedSubmission(item)}
+                                                    className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                                                    title="View details"
+                                                >
+                                                    <Icon name="Eye" className="w-4 h-4" />
+                                                </button>
+                                                {item.fileUrl && (
+                                                    <button
+                                                        onClick={() => handleOpenFile(item.fileUrl)}
+                                                        className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                                                        title="Open submission file"
+                                                    >
+                                                        <Icon name="File" className="w-4 h-4" />
+                                                    </button>
+                                                )}
                                                 <button
                                                     onClick={() => handleEvaluate(item.id)}
                                                     disabled={actionLoading[item.id]}
@@ -213,7 +285,7 @@ const Submissions = () => {
                                                 >
                                                     {actionLoading[item.id] ? 'Evaluating...' : 'Evaluate'}
                                                 </button>
-                                            )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -255,6 +327,79 @@ const Submissions = () => {
                     >
                         Next
                     </button>
+                </div>
+            )}
+
+            {selectedSubmission && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+                    <div className="glass-strong border border-white/10 rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden">
+                        <div className="p-6 border-b border-white/10 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-2xl font-bold text-white">{selectedSubmission.title}</h2>
+                                <p className="text-sm text-gray-400 mt-1">{selectedSubmission.team} • {selectedSubmission.hackathon}</p>
+                            </div>
+                            <button
+                                onClick={() => setSelectedSubmission(null)}
+                                className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all"
+                            >
+                                X
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-5">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                                    <p className="text-xs text-gray-500 uppercase font-bold">Track</p>
+                                    <p className="text-sm text-white mt-1">{selectedSubmission.track}</p>
+                                </div>
+                                <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                                    <p className="text-xs text-gray-500 uppercase font-bold">Version</p>
+                                    <p className="text-sm text-white mt-1">v{selectedSubmission.version}</p>
+                                </div>
+                                <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                                    <p className="text-xs text-gray-500 uppercase font-bold">Evaluations</p>
+                                    <p className="text-sm text-white mt-1">{selectedSubmission.evaluationCount}</p>
+                                </div>
+                            </div>
+
+                            <div className="rounded-2xl bg-white/5 border border-white/10 p-5">
+                                <p className="text-xs text-gray-500 uppercase font-bold mb-2">Description</p>
+                                <p className="text-sm text-gray-300 leading-relaxed">
+                                    {selectedSubmission.description || 'No project description provided.'}
+                                </p>
+                            </div>
+
+                            <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+                                <select
+                                    value={selectedSubmission.status}
+                                    onChange={(e) => handleStatusChange(selectedSubmission.id, e.target.value)}
+                                    disabled={actionLoading[selectedSubmission.id]}
+                                    className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-gray-300 cursor-pointer outline-none hover:bg-white/10 transition-colors disabled:opacity-50"
+                                >
+                                    {SUBMISSION_STATUSES.map(status => (
+                                        <option key={status} value={status}>{status}</option>
+                                    ))}
+                                </select>
+
+                                <div className="flex gap-3">
+                                    {selectedSubmission.fileUrl && (
+                                        <button
+                                            onClick={() => handleOpenFile(selectedSubmission.fileUrl)}
+                                            className="px-4 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/10 rounded-xl text-sm font-semibold transition-all"
+                                        >
+                                            Open File
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => handleEvaluate(selectedSubmission.id)}
+                                        className="px-4 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-sm font-semibold transition-all"
+                                    >
+                                        Evaluate Submission
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

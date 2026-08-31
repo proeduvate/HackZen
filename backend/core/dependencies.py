@@ -13,6 +13,15 @@ async def with_auth(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload"
         )
 
+    if current_user_payload.get("is_mock"):
+        return {
+            "_id": user_id,
+            "sub": user_id,
+            "email": current_user_payload.get("email"),
+            "role": current_user_payload.get("role", "student"),
+            "name": current_user_payload.get("email", "Mock User"),
+        }
+
     user = await UserService.get_user_by_id(user_id)
 
     if not user:

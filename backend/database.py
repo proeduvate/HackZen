@@ -13,13 +13,15 @@ class MongoDB:
     @classmethod
     async def connect(cls):
         try:
-            cls.client = AsyncIOMotorClient(
-                settings.MONGO_URI,
-                maxPoolSize=100,
-                minPoolSize=10,
-                serverSelectionTimeoutMS=5000,
-                tlsCAFile=certifi.where(),
-            )
+            client_kwargs = {
+                "maxPoolSize": 100,
+                "minPoolSize": 10,
+                "serverSelectionTimeoutMS": 5000,
+            }
+            if any(k in settings.MONGO_URI for k in ["mongodb+srv", "ssl=true", "tls=true"]):
+                client_kwargs["tlsCAFile"] = certifi.where()
+
+            cls.client = AsyncIOMotorClient(settings.MONGO_URI, **client_kwargs)
             await cls.client.admin.command("ping")
             cls.db = cls.client[settings.DB_NAME]
             print("✅ Connected to MongoDB")

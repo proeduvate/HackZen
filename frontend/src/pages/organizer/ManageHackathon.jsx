@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import {
+    broadcastHackathonUpdate,
+    contactHackathonAdmin,
+    fetchManageHackathonData,
+    updateManageHackathonVisibility,
+    updateManageHackathonRegistration,
+} from '../../services/organizer/manageHackathonApi';
 
 // --- Stat Card Helper Component (Lifted outside for performance and clarity) ---
 const StatCard = ({ stat }) => (
@@ -22,28 +29,22 @@ const ManageHackathon = () => {
     const { hackathonId } = useParams();
     const navigate = useNavigate();
 
-    // --- State Management ---
+// --- State Management ---
     const [hackathon, setHackathon] = useState(null);
+    const [teams, setTeams] = useState([]);
+    const [applications, setApplications] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('Overview');
     const [searchQuery, setSearchQuery] = useState('');
-    const [isActionLoading, setIsActionLoading] = useState({});
     const [pageError, setPageError] = useState(null);
-
-    // --- Mock Data ---
-    const [teams, setTeams] = useState([
-        { id: 1, name: "Cyber Knights", members: 4, leader: "John Doe", status: "Approved", registrationDate: "Feb 10, 2026", submissionStatus: "Submitted" },
-        { id: 2, name: "Eco Innovators", members: 3, leader: "Jane Smith", status: "Pending", registrationDate: "Feb 12, 2026", submissionStatus: "Pending" },
-        { id: 3, name: "Pixel Perfect", members: 2, leader: "Mike Ross", status: "Approved", registrationDate: "Feb 14, 2026", submissionStatus: "In Progress" },
-        { id: 4, name: "Dev Dynamos", members: 4, leader: "Sarah Parker", status: "Rejected", registrationDate: "Feb 11, 2026", submissionStatus: "None" },
-    ]);
-
-    const stats = useMemo(() => [
-        { label: "Total Registrations", value: "450", icon: "👥", trend: "+12%", color: "cyan" },
-        { label: "Active Teams", value: "112", icon: "🚀", trend: "+5", color: "purple" },
-        { label: "Submissions", value: "85", icon: "📁", trend: "76%", color: "blue" },
-        { label: "Avg. Team Size", value: "3.2", icon: "📊", trend: "Stable", color: "green" },
-    ], []);
+    const [showLogsModal, setShowLogsModal] = useState(false);
+    const [showContactModal, setShowContactModal] = useState(false);
+    const [contactForm, setContactForm] = useState({ subject: '', message: '' });
+    const [contactStatus, setContactStatus] = useState('');
+    const [isContactSending, setIsContactSending] = useState(false);
+    const [broadcastForm, setBroadcastForm] = useState({ subject: '', message: '' });
+    const [broadcastStatus, setBroadcastStatus] = useState('');
+    const [isBroadcastSending, setIsBroadcastSending] = useState(false);
 
     const tabs = ['Overview', 'Participants', 'Submissions', 'Mentors', 'Broadcast'];
 
@@ -53,27 +54,14 @@ const ManageHackathon = () => {
             setIsLoading(true);
             setPageError(null);
             try {
-                // Mimic API latency
-                await new Promise(resolve => setTimeout(resolve, 800));
-
-                // If it's a valid ID, set mock data
-                if (hackathonId) {
-                    setHackathon({
-                        id: hackathonId,
-                        title: "Future Tech Challenge 2026",
-                        banner: "https://images.unsplash.com/photo-1504384308090-c54be3852f33?auto=format&fit=crop&q=80&w=1000",
-                        status: "Active",
-                        category: "Emerging Tech",
-                        mode: "Hybrid",
-                        location: "San Francisco, CA / Online",
-                        visibility: true,
-                        registrationOpen: true,
-                        daysLeft: 14,
-                        progress: 65
-                    });
-                } else {
+                if (!hackathonId) {
                     setPageError("Hackathon ID not found.");
+                    return;
                 }
+                const data = await fetchManageHackathonData(hackathonId);
+                setHackathon(data.hackathon);
+                setTeams(data.teams);
+                setApplications(data.applications);
             } catch (error) {
                 console.error("Error fetching hackathon details:", error);
                 setPageError("Failed to load hackathon details. Please refresh the page.");
@@ -85,6 +73,40 @@ const ManageHackathon = () => {
         fetchHackathonDetails();
     }, [hackathonId]);
 
+    // --- Derived Stats ---
+    const stats = useMemo(() => {
+        const totalRegistrations = applications.length;
+        const activeTeams = teams.filter(team => team.status !== 'Rejected').length;
+        const submissions = teams.reduce((total, team) => total + (team.submissions || 0), 0);
+        const members = teams.reduce((total, team) => total + (Number(team.members) || 0), 0);
+        const averageTeamSize = activeTeams ? (members / activeTeams).toFixed(1) : '0';
+
+        return [
+            { label: "Total Registrations", value: String(totalRegistrations), icon: "👥", trend: "+0", color: "cyan" },
+            { label: "Active Teams", value: String(activeTeams), icon: "🚀", trend: "+0", color: "purple" },
+            { label: "Submissions", value: String(submissions), icon: "📁", trend: "—", color: "blue" },
+            { label: "Avg. Team Size", value: averageTeamSize, icon: "Avg", trend: "Live", color: "green" },
+        ];
+    }, [applications, teams]);
+
+    const recentActivity = useMemo(() => {
+        const teamActivities = teams.slice(0, 3).map(team => ({
+            id: `team-${team.id}`,
+            title: team.name,
+            message: team.submissionStatus === 'Pending' ? 'registered for the hackathon.' : 'has a project submission update.',
+            time: team.registrationDate,
+        }));
+
+        if (teamActivities.length > 0) return teamActivities;
+
+        return applications.slice(0, 3).map(application => ({
+            id: application.id || application._id,
+            title: application.userId || 'Participant',
+            message: 'submitted a registration request.',
+            time: application.appliedAt ? new Date(application.appliedAt).toLocaleDateString() : 'Recently',
+        }));
+    }, [applications, teams]);
+
     // --- Filter Logic ---
     const filteredTeams = useMemo(() => {
         return teams.filter(team =>
@@ -93,24 +115,178 @@ const ManageHackathon = () => {
         );
     }, [teams, searchQuery]);
 
-    // --- Action Handlers ---
-    const handleAction = async (id, action) => {
-        setIsActionLoading(prev => ({ ...prev, [`${id}-${action}`]: true }));
+    const systemLogs = useMemo(() => {
+        const baseLogs = [
+            {
+                id: 'event-loaded',
+                type: 'Event',
+                title: `${hackathon?.title || 'Hackathon'} loaded in control room`,
+                detail: `Status: ${hackathon?.status || 'Unknown'}, visibility: ${hackathon?.visibility ? 'Public' : 'Private'}`,
+                time: 'Now',
+            },
+            {
+                id: 'registration-state',
+                type: 'Registration',
+                title: hackathon?.registrationOpen ? 'Registrations are open' : 'Registrations are closed',
+                detail: `Registration window: ${hackathon?.registrationStart || 'TBD'} to ${hackathon?.registrationEnd || 'TBD'}`,
+                time: 'Live',
+            },
+            {
+                id: 'team-summary',
+                type: 'Teams',
+                title: `${teams.length} team(s) registered`,
+                detail: `${applications.length} total registration request(s), ${teams.reduce((total, team) => total + (team.submissions || 0), 0)} submission update(s).`,
+                time: 'Live',
+            },
+        ];
+
+        const teamLogs = teams.map(team => ({
+            id: `team-log-${team.id}`,
+            type: 'Team',
+            title: `${team.name} registration tracked`,
+            detail: `Leader: ${team.leader}. Members: ${team.members || 0}. Submission: ${team.submissionStatus || 'Pending'}.`,
+            time: team.registrationDate || 'Recently',
+        }));
+
+        return [...baseLogs, ...teamLogs];
+    }, [applications.length, hackathon, teams]);
+
+    const operationalAlerts = useMemo(() => {
+        const alerts = [];
+        const teamsWithoutMentors = teams.filter(team => !team.mentorId).length;
+        const pendingSubmissions = teams.filter(team => team.submissionStatus === 'Pending').length;
+
+        if (teamsWithoutMentors > 0) {
+            alerts.push({
+                id: 'mentor-coverage',
+                level: 'warning',
+                title: 'Mentor Coverage Needed',
+                detail: `${teamsWithoutMentors} team(s) do not have assigned mentors yet.`,
+            });
+        }
+
+        if (pendingSubmissions > 0) {
+            alerts.push({
+                id: 'submission-pending',
+                level: 'warning',
+                title: 'Pending Submissions',
+                detail: `${pendingSubmissions} team(s) have not submitted project updates yet.`,
+            });
+        }
+
+        if (!hackathon?.registrationOpen && applications.length === 0) {
+            alerts.push({
+                id: 'registration-closed-empty',
+                level: 'info',
+                title: 'No Active Registrations',
+                detail: 'Registrations are closed and no participant requests are recorded.',
+            });
+        }
+
+        if (alerts.length === 0) {
+            alerts.push({
+                id: 'healthy',
+                level: 'healthy',
+                title: 'Event Running Smoothly',
+                detail: 'No immediate action is required for this hackathon.',
+            });
+        }
+
+        return alerts;
+    }, [applications.length, hackathon?.registrationOpen, teams]);
+
+    const toggleRegistration = async () => {
+        if (!hackathon) return;
+        const previous = hackathon;
+        setHackathon(prev => ({ ...prev, registrationOpen: !prev.registrationOpen }));
         try {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            if (action === 'approve') {
-                setTeams(prev => prev.map(t => t.id === id ? { ...t, status: 'Approved' } : t));
-            } else if (action === 'reject') {
-                setTeams(prev => prev.map(t => t.id === id ? { ...t, status: 'Rejected' } : t));
-            }
-        } finally {
-            setIsActionLoading(prev => ({ ...prev, [`${id}-${action}`]: false }));
+            const updated = await updateManageHackathonRegistration(hackathonId, !previous.registrationOpen);
+            setHackathon(prev => ({ ...prev, ...updated }));
+        } catch (error) {
+            console.error("Failed to update registration status:", error);
+            setHackathon(previous);
+            alert("Failed to update registration. Please try again.");
         }
     };
 
-    const toggleStatus = (field) => {
+    const toggleVisibility = async () => {
         if (!hackathon) return;
-        setHackathon(prev => ({ ...prev, [field]: !prev[field] }));
+        const previous = hackathon;
+        setHackathon(prev => ({ ...prev, visibility: !prev.visibility }));
+        try {
+            const updated = await updateManageHackathonVisibility(hackathonId, !previous.visibility);
+            setHackathon(prev => ({ ...prev, ...updated }));
+        } catch (error) {
+            console.error("Failed to update visibility:", error);
+            setHackathon(previous);
+            alert("Failed to update visibility. Please try again.");
+        }
+    };
+
+    const handleEmergencyStop = async () => {
+        if (!hackathon) return;
+        const confirmed = window.confirm('Emergency Stop will close registrations and hide this hackathon from public discovery. Continue?');
+        if (!confirmed) return;
+
+        const previous = hackathon;
+        setHackathon(prev => ({ ...prev, registrationOpen: false, visibility: false }));
+
+        try {
+            const closed = await updateManageHackathonRegistration(hackathonId, false);
+            const hidden = await updateManageHackathonVisibility(hackathonId, false);
+            setHackathon(prev => ({ ...prev, ...closed, ...hidden, registrationOpen: false, visibility: false }));
+            setContactStatus('Emergency Stop completed. Registrations are closed and event visibility is private.');
+        } catch (error) {
+            console.error('Emergency Stop failed:', error);
+            setHackathon(previous);
+            alert('Emergency Stop failed. Please try again.');
+        }
+    };
+
+    const handleContactAdmin = async (event) => {
+        event.preventDefault();
+        if (!contactForm.message.trim()) {
+            setContactStatus('Please enter a message before sending.');
+            return;
+        }
+
+        setIsContactSending(true);
+        setContactStatus('');
+        try {
+            const result = await contactHackathonAdmin(hackathonId, {
+                subject: contactForm.subject || 'Organizer Support Request',
+                message: contactForm.message,
+            });
+            setContactStatus(result.message || 'Message sent to admin.');
+            setContactForm({ subject: '', message: '' });
+        } catch (error) {
+            console.error('Failed to contact admin:', error);
+            setContactStatus(error.response?.data?.detail || 'Failed to contact admin. Please try again.');
+        } finally {
+            setIsContactSending(false);
+        }
+    };
+
+    const handleBroadcast = async () => {
+        if (!broadcastForm.subject.trim() || !broadcastForm.message.trim()) {
+            setBroadcastStatus('Please add both a broadcast subject and message.');
+            return;
+        }
+
+        setIsBroadcastSending(true);
+        setBroadcastStatus('');
+        try {
+            const result = await broadcastHackathonUpdate(hackathonId, applications, broadcastForm);
+            setBroadcastStatus(result.message);
+            if (result.success) {
+                setBroadcastForm({ subject: '', message: '' });
+            }
+        } catch (error) {
+            console.error('Failed to send broadcast:', error);
+            setBroadcastStatus(error.response?.data?.detail || 'Failed to send broadcast. Please try again.');
+        } finally {
+            setIsBroadcastSending(false);
+        }
     };
 
     // --- Render States ---
@@ -193,7 +369,10 @@ const ManageHackathon = () => {
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             Timeline
                         </Link>
-                        <button className="px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-xl text-sm font-semibold shadow-2xl shadow-cyan-500/20 transition-all active:scale-95 flex items-center gap-2">
+                        <button
+                            onClick={() => setActiveTab('Broadcast')}
+                            className="px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-xl text-sm font-semibold shadow-2xl shadow-cyan-500/20 transition-all active:scale-95 flex items-center gap-2"
+                        >
                             Launch Hub
                         </button>
                     </div>
@@ -238,22 +417,28 @@ const ManageHackathon = () => {
                                         Recent Activity
                                     </h3>
                                     <div className="space-y-4">
-                                        {[1, 2, 3, 4].map(i => (
-                                            <div key={i} className="flex gap-4 group cursor-pointer">
+                                        {recentActivity.length > 0 ? recentActivity.map(activity => (
+                                            <div key={activity.id} className="flex gap-4 group cursor-pointer">
                                                 <div className="w-10 h-10 rounded-full bg-navy-900 border border-white/5 flex items-center justify-center text-lg flex-shrink-0 group-hover:border-cyan-500/50 transition-colors">
-                                                    {i % 2 === 0 ? "🆕" : "📁"}
+                                                    +
                                                 </div>
                                                 <div className="pb-4 border-b border-white/5 flex-1">
                                                     <p className="text-sm text-gray-300">
-                                                        <span className="font-bold text-white">Team Pixel Perfect</span>
-                                                        {i % 2 === 0 ? " just registered." : " submitted their Phase 1 project."}
+                                                        <span className="font-bold text-white">{activity.title}</span> {activity.message}
                                                     </p>
-                                                    <span className="text-xs text-gray-500 mt-1 block font-medium uppercase tracking-tighter">{i * 12} mins ago</span>
+                                                    <span className="text-xs text-gray-500 mt-1 block font-medium uppercase tracking-tighter">{activity.time}</span>
                                                 </div>
                                             </div>
-                                        ))}
+                                        )) : (
+                                            <div className="p-5 rounded-xl bg-white/5 border border-white/10 text-sm text-gray-400">
+                                                No team or registration activity yet.
+                                            </div>
+                                        )}
                                     </div>
-                                    <button className="w-full py-3 bg-white/10 hover:bg-white/20 text-white border border-white/10 rounded-xl text-sm font-semibold transition-all active:scale-95">
+                                    <button
+                                        onClick={() => setShowLogsModal(true)}
+                                        className="w-full py-3 bg-white/10 hover:bg-white/20 text-white border border-white/10 rounded-xl text-sm font-semibold transition-all active:scale-95"
+                                    >
                                         View All System Logs
                                     </button>
                                 </div>
@@ -267,8 +452,8 @@ const ManageHackathon = () => {
                                                     <p className="font-semibold text-white text-sm">Registrations</p>
                                                     <p className="text-xs text-gray-400">Toggle new signups</p>
                                                 </div>
-                                                <button
-                                                    onClick={() => toggleStatus('registrationOpen')}
+<button
+                                                    onClick={() => toggleRegistration()}
                                                     className={`w-12 h-6 rounded-full relative transition-colors ${hackathon.registrationOpen ? 'bg-cyan-600 shadow-[0_0_10px_rgba(6,182,212,0.5)]' : 'bg-gray-700'}`}
                                                 >
                                                     <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${hackathon.registrationOpen ? 'right-1' : 'left-1'}`}></div>
@@ -279,14 +464,17 @@ const ManageHackathon = () => {
                                                     <p className="font-semibold text-white text-sm">Make Public</p>
                                                     <p className="text-xs text-gray-400">Event search visibility</p>
                                                 </div>
-                                                <button
-                                                    onClick={() => toggleStatus('visibility')}
+<button
+                                                    onClick={() => toggleVisibility()}
                                                     className={`w-12 h-6 rounded-full relative transition-colors ${hackathon.visibility ? 'bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.5)]' : 'bg-gray-700'}`}
                                                 >
                                                     <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${hackathon.visibility ? 'right-1' : 'left-1'}`}></div>
                                                 </button>
                                             </div>
-                                            <button className="w-full py-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl text-sm font-semibold hover:bg-red-500 transition-all hover:text-white active:scale-95">
+                                            <button
+                                                onClick={handleEmergencyStop}
+                                                className="w-full py-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl text-sm font-semibold hover:bg-red-500 transition-all hover:text-white active:scale-95"
+                                            >
                                                 Emergency Stop
                                             </button>
                                         </div>
@@ -338,7 +526,7 @@ const ManageHackathon = () => {
                                                 <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase text-center">Members</th>
                                                 <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase text-center">Reg. Date</th>
                                                 <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase text-center">Status</th>
-                                                <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase text-right">Actions</th>
+                                                <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase text-right">Submission</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-white/5">
@@ -355,8 +543,8 @@ const ManageHackathon = () => {
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-5 text-center text-sm text-gray-300 font-semibold">
-                                                        {team.members} / 4
+<td className="px-6 py-5 text-center text-sm text-gray-300 font-semibold">
+                                                        {team.members || 1} / {hackathon.maxTeamSize || 4}
                                                     </td>
                                                     <td className="px-6 py-5 text-center text-xs text-gray-400">
                                                         {team.registrationDate}
@@ -369,33 +557,30 @@ const ManageHackathon = () => {
                                                             {team.status}
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-5">
-                                                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <button
-                                                                onClick={() => handleAction(team.id, 'approve')}
-                                                                disabled={isActionLoading[`${team.id}-approve`] || team.status === 'Approved'}
-                                                                className="p-2.5 bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white rounded-xl transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                                                                title="Approve Team"
-                                                            >
-                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleAction(team.id, 'reject')}
-                                                                disabled={isActionLoading[`${team.id}-reject`] || team.status === 'Rejected'}
-                                                                className="p-2.5 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                                                                title="Reject Team"
-                                                            >
-                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                                            </button>
-                                                        </div>
+                                                    <td className="px-6 py-5 text-right">
+                                                        <span className="text-xs text-gray-300 font-semibold">
+                                                            {team.submissionStatus || 'Pending'}
+                                                        </span>
                                                     </td>
                                                 </tr>
                                             ))}
+                                            {filteredTeams.length === 0 && (
+                                                <tr>
+                                                    <td colSpan="5" className="px-6 py-10 text-center text-sm text-gray-400">
+                                                        No teams registered for this hackathon yet.
+                                                    </td>
+                                                </tr>
+                                            )}
                                         </tbody>
                                     </table>
                                 </div>
                                 <div className="p-4 bg-white/5 text-center border-t border-white/5">
-                                    <button className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-white transition-all">Show More Teams</button>
+                                    <button
+                                        onClick={() => navigate('/organizer/teams-mentors')}
+                                        className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-white transition-all"
+                                    >
+                                        Open Teams & Mentors
+                                    </button>
                                 </div>
                             </div>
                         )}
@@ -419,6 +604,8 @@ const ManageHackathon = () => {
                                             <input
                                                 type="text"
                                                 placeholder="PHASE 1 DEADLINE EXTENSION"
+                                                value={broadcastForm.subject}
+                                                onChange={(e) => setBroadcastForm(prev => ({ ...prev, subject: e.target.value }))}
                                                 className="w-full px-6 py-4 bg-navy-900/50 border border-white/10 rounded-2xl text-white focus:outline-none focus:border-purple-500/50 transition-all font-bold placeholder-gray-800"
                                             />
                                         </div>
@@ -427,21 +614,27 @@ const ManageHackathon = () => {
                                             <textarea
                                                 rows="6"
                                                 placeholder="Write your mission objective here..."
+                                                value={broadcastForm.message}
+                                                onChange={(e) => setBroadcastForm(prev => ({ ...prev, message: e.target.value }))}
                                                 className="w-full px-6 py-4 bg-navy-900/50 border border-white/10 rounded-2xl text-white focus:outline-none focus:border-purple-500/50 transition-all font-medium placeholder-gray-800 resize-none"
                                             ></textarea>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-6 p-6 bg-white/5 rounded-2xl border border-white/5">
-                                            <div className="flex items-center gap-3">
-                                                <input type="checkbox" id="sendEmail" className="w-5 h-5 rounded bg-navy-950 border-white/10 text-purple-600 focus:ring-purple-500" />
-                                                <label htmlFor="sendEmail" className="text-[10px] text-gray-400 font-black uppercase tracking-widest cursor-pointer">Email Uplink</label>
-                                            </div>
-                                            <div className="flex items-center gap-3">
-                                                <input type="checkbox" id="sendPush" className="w-5 h-5 rounded bg-navy-950 border-white/10 text-purple-600 focus:ring-purple-500" defaultChecked />
-                                                <label htmlFor="sendPush" className="text-[10px] text-gray-400 font-black uppercase tracking-widest cursor-pointer">Mobile Alert</label>
-                                            </div>
+                                        <div className="p-6 bg-white/5 rounded-2xl border border-white/5">
+                                            <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Delivery Method</p>
+                                            <p className="text-sm text-white font-semibold mt-2">Platform notification to registered participants</p>
+                                            <p className="text-xs text-gray-500 mt-1">Email delivery can be added later when the email service is connected.</p>
                                         </div>
-                                        <button className="w-full py-5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:shadow-xl hover:shadow-purple-500/40 text-white rounded-2xl font-black italic uppercase tracking-[0.2em] transition-all active:scale-95 shadow-lg">
-                                            Execute Broadcast
+                                        {broadcastStatus && (
+                                            <p className="text-sm text-purple-200 bg-purple-500/10 border border-purple-500/20 rounded-xl px-4 py-3">
+                                                {broadcastStatus}
+                                            </p>
+                                        )}
+                                        <button
+                                            onClick={handleBroadcast}
+                                            disabled={isBroadcastSending}
+                                            className="w-full py-5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:shadow-xl hover:shadow-purple-500/40 text-white rounded-2xl font-black italic uppercase tracking-[0.2em] transition-all active:scale-95 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                                        >
+                                            {isBroadcastSending ? 'Sending...' : 'Execute Broadcast'}
                                         </button>
                                     </div>
                                 </div>
@@ -449,37 +642,34 @@ const ManageHackathon = () => {
                         )}
 
                         {activeTab === 'Mentors' && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {[1, 2, 3].map(i => (
-                                    <div key={i} className="glass p-6 rounded-3xl border border-white/10 hover:border-purple-500/30 transition-all group relative overflow-hidden shadow-xl">
-                                        <div className="absolute top-0 right-0 w-24 h-24 bg-purple-600/10 rounded-full blur-[40px] pointer-events-none"></div>
-                                        <div className="flex items-center gap-4 mb-6">
-                                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 p-0.5 shadow-lg">
-                                                <div className="w-full h-full bg-navy-950 rounded-[14px] flex items-center justify-center text-white font-black text-xl italic shadow-inner">
-                                                    {i === 1 ? 'M' : i === 2 ? 'L' : 'K'}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="glass p-8 rounded-3xl border border-white/10 space-y-5">
+                                    <h3 className="text-xl font-bold text-white">Mentor Coverage</h3>
+                                    <p className="text-sm text-gray-400">
+                                        {teams.filter(team => team.mentorId).length} of {teams.length} team(s) currently have an assigned mentor.
+                                    </p>
+                                    <div className="space-y-3">
+                                        {teams.length > 0 ? teams.map(team => (
+                                            <div key={team.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl">
+                                                <div>
+                                                    <p className="text-sm font-bold text-white">{team.name}</p>
+                                                    <p className="text-xs text-gray-400">Leader: {team.leader}</p>
                                                 </div>
+                                                <span className={`text-xs font-bold px-3 py-1 rounded-full ${team.mentorId ? 'bg-green-500/10 text-green-400' : 'bg-yellow-500/10 text-yellow-400'}`}>
+                                                    {team.mentorId ? 'Assigned' : 'Needs Mentor'}
+                                                </span>
                                             </div>
-                                            <div>
-                                                <h4 className="font-bold text-white text-lg tracking-tight group-hover:text-purple-400 transition-colors">{i === 1 ? 'Marcus Thorne' : i === 2 ? 'Lila Vance' : 'Kobe Bryant'}</h4>
-                                                <p className="text-[10px] text-purple-400 font-black uppercase tracking-widest">{i === 1 ? 'AI/ML Expert' : 'UI/UX Lead'}</p>
+                                        )) : (
+                                            <div className="p-5 bg-white/5 border border-white/10 rounded-2xl text-sm text-gray-400">
+                                                No teams are available for mentor assignment yet.
                                             </div>
-                                        </div>
-                                        <div className="space-y-4 mb-8">
-                                            <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
-                                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Teams</span>
-                                                <span className="text-white font-black italic text-lg">{i * 2 + 1}</span>
-                                            </div>
-                                            <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
-                                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Res. Time</span>
-                                                <span className="text-green-400 font-black italic text-lg">~12m</span>
-                                            </div>
-                                        </div>
-                                        <button className="w-full py-3 bg-white/5 border border-white/10 text-white rounded-xl font-black text-[10px] hover:bg-white/10 transition-all uppercase tracking-widest active:scale-95">
-                                            Inspect Logs
-                                        </button>
+                                        )}
                                     </div>
-                                ))}
-                                <button className="border-3 border-dashed border-white/10 rounded-3xl p-8 flex flex-col items-center justify-center text-gray-500 hover:text-purple-400 hover:border-purple-500/50 transition-all group bg-white/5 hover:bg-purple-500/5">
+                                </div>
+                                <button
+                                    onClick={() => navigate('/organizer/invite-mentors')}
+                                    className="border-3 border-dashed border-white/10 rounded-3xl p-8 flex flex-col items-center justify-center text-gray-500 hover:text-purple-400 hover:border-purple-500/50 transition-all group bg-white/5 hover:bg-purple-500/5"
+                                >
                                     <div className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform text-3xl font-bold border border-white/10">
                                         +
                                     </div>
@@ -512,17 +702,17 @@ const ManageHackathon = () => {
                         <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-6 italic opacity-70">Operation Remaining</p>
                         <div className="flex justify-center gap-5">
                             <div className="space-y-1">
-                                <p className="text-4xl font-black text-white italic tracking-tighter shadow-cyan-500/10">14</p>
+                                <p className="text-4xl font-black text-white italic tracking-tighter shadow-cyan-500/10">{hackathon.timeRemaining?.days ?? 0}</p>
                                 <p className="text-[9px] text-gray-500 uppercase font-black tracking-widest">Days</p>
                             </div>
                             <div className="text-3xl font-black text-cyan-500 mt-0.5 animate-pulse">:</div>
                             <div className="space-y-1">
-                                <p className="text-4xl font-black text-white italic tracking-tighter">08</p>
+                                <p className="text-4xl font-black text-white italic tracking-tighter">{String(hackathon.timeRemaining?.hours ?? 0).padStart(2, '0')}</p>
                                 <p className="text-[9px] text-gray-500 uppercase font-black tracking-widest">Hrs</p>
                             </div>
                             <div className="text-3xl font-black text-cyan-500 mt-0.5 animate-pulse">:</div>
                             <div className="space-y-1">
-                                <p className="text-4xl font-black text-white italic tracking-tighter">45</p>
+                                <p className="text-4xl font-black text-white italic tracking-tighter">{String(hackathon.timeRemaining?.minutes ?? 0).padStart(2, '0')}</p>
                                 <p className="text-[9px] text-gray-500 uppercase font-black tracking-widest">Mins</p>
                             </div>
                         </div>
@@ -535,14 +725,29 @@ const ManageHackathon = () => {
                             System Alerts
                         </h4>
                         <div className="space-y-3">
-                            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl group hover:bg-red-500/20 transition-all cursor-crosshair">
-                                <p className="text-xs font-black text-red-500 uppercase tracking-tight italic">Low Expert Coverage</p>
-                                <p className="text-[9px] text-red-300/60 mt-1 uppercase font-bold leading-relaxed">CyberSec vector has 0 active mentors. immediate recruitment required.</p>
-                            </div>
-                            <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-2xl group hover:bg-yellow-500/20 transition-all cursor-help">
-                                <p className="text-xs font-black text-yellow-500 uppercase tracking-tight italic">Delayed Transfers</p>
-                                <p className="text-[9px] text-yellow-300/60 mt-1 uppercase font-bold leading-relaxed">12 fleet units missed internal transmission synchronization.</p>
-                            </div>
+                            {operationalAlerts.map(alert => (
+                                <div
+                                    key={alert.id}
+                                    className={`p-4 border rounded-2xl transition-all ${
+                                        alert.level === 'healthy'
+                                            ? 'bg-green-500/10 border-green-500/20'
+                                            : alert.level === 'info'
+                                                ? 'bg-cyan-500/10 border-cyan-500/20'
+                                                : 'bg-yellow-500/10 border-yellow-500/20'
+                                    }`}
+                                >
+                                    <p className={`text-xs font-black uppercase tracking-tight italic ${
+                                        alert.level === 'healthy'
+                                            ? 'text-green-400'
+                                            : alert.level === 'info'
+                                                ? 'text-cyan-400'
+                                                : 'text-yellow-500'
+                                    }`}>
+                                        {alert.title}
+                                    </p>
+                                    <p className="text-[9px] text-gray-300/70 mt-1 uppercase font-bold leading-relaxed">{alert.detail}</p>
+                                </div>
+                            ))}
                         </div>
                     </div>
 
@@ -568,7 +773,10 @@ const ManageHackathon = () => {
                     {/* HQ Uplink */}
                     <div className="glass-strong p-8 rounded-3xl border border-white/10 text-center space-y-4 shadow-2xl bg-navy-950/40">
                         <p className="text-[10px] font-black text-gray-600 uppercase tracking-[0.25em]">HQ Connectivity</p>
-                        <button className="w-full py-4 bg-white text-navy-950 rounded-2xl font-black italic uppercase tracking-[0.25em] text-[10px] hover:bg-cyan-500 hover:text-white transition-all shadow-lg active:scale-95">
+                        <button
+                            onClick={() => setShowContactModal(true)}
+                            className="w-full py-4 bg-white text-navy-950 rounded-2xl font-black italic uppercase tracking-[0.25em] text-[10px] hover:bg-cyan-500 hover:text-white transition-all shadow-lg active:scale-95"
+                        >
                             Contact Admin
                         </button>
                     </div>
@@ -576,6 +784,105 @@ const ManageHackathon = () => {
                 </div>
 
             </div>
+
+            {showLogsModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+                    <div className="glass-strong border border-white/10 rounded-3xl w-full max-w-3xl max-h-[85vh] overflow-hidden shadow-2xl">
+                        <div className="p-6 border-b border-white/10 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-2xl font-bold text-white">System Logs</h2>
+                                <p className="text-sm text-gray-400 mt-1">{hackathon.title}</p>
+                            </div>
+                            <button
+                                onClick={() => setShowLogsModal(false)}
+                                className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all"
+                            >
+                                X
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4 overflow-y-auto max-h-[65vh] custom-scrollbar">
+                            {systemLogs.map(log => (
+                                <div key={log.id} className="p-4 bg-white/5 border border-white/10 rounded-2xl">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div>
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-cyan-400">{log.type}</span>
+                                            <h3 className="text-sm font-bold text-white mt-1">{log.title}</h3>
+                                            <p className="text-xs text-gray-400 mt-1">{log.detail}</p>
+                                        </div>
+                                        <span className="text-[10px] text-gray-500 uppercase whitespace-nowrap">{log.time}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showContactModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+                    <form
+                        onSubmit={handleContactAdmin}
+                        className="glass-strong border border-white/10 rounded-3xl w-full max-w-xl shadow-2xl overflow-hidden"
+                    >
+                        <div className="p-6 border-b border-white/10 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-2xl font-bold text-white">Contact Admin</h2>
+                                <p className="text-sm text-gray-400 mt-1">Send a support request for {hackathon.title}</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowContactModal(false)}
+                                className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all"
+                            >
+                                X
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-5">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Subject</label>
+                                <input
+                                    type="text"
+                                    value={contactForm.subject}
+                                    onChange={(e) => setContactForm(prev => ({ ...prev, subject: e.target.value }))}
+                                    placeholder="Approval issue, event support, technical help..."
+                                    className="w-full px-4 py-3 bg-navy-900/50 border border-white/10 rounded-xl text-white focus:outline-none focus:border-cyan-500/50"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Message</label>
+                                <textarea
+                                    rows="5"
+                                    value={contactForm.message}
+                                    onChange={(e) => setContactForm(prev => ({ ...prev, message: e.target.value }))}
+                                    placeholder="Explain what you need help with..."
+                                    className="w-full px-4 py-3 bg-navy-900/50 border border-white/10 rounded-xl text-white focus:outline-none focus:border-cyan-500/50 resize-none"
+                                />
+                            </div>
+                            {contactStatus && (
+                                <p className="text-sm text-cyan-200 bg-cyan-500/10 border border-cyan-500/20 rounded-xl px-4 py-3">
+                                    {contactStatus}
+                                </p>
+                            )}
+                            <div className="flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowContactModal(false)}
+                                    className="px-5 py-3 rounded-xl bg-white/5 text-gray-300 hover:bg-white/10 transition-all"
+                                >
+                                    Close
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isContactSending}
+                                    className="px-5 py-3 rounded-xl bg-cyan-600 text-white font-bold hover:bg-cyan-500 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                                >
+                                    {isContactSending ? 'Sending...' : 'Send Message'}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            )}
 
         </div>
     );

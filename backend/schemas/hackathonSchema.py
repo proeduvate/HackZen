@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from models.hackathonModel import HackathonStatus, HackathonTheme
@@ -6,8 +6,8 @@ import json
 
 
 class HackathonBase(BaseModel):
-    title: str
-    description: str
+    title: str = Field(..., min_length=3, max_length=120)
+    description: str = Field(..., min_length=20, max_length=2000)
     location: Optional[str] = None
     problemStatement: Optional[str] = Field(None, alias="problemStatement")
     themes: List[HackathonTheme]
@@ -15,13 +15,25 @@ class HackathonBase(BaseModel):
     registrationEnd: datetime = Field(..., alias="registrationEnd")
     hackathonStart: datetime = Field(..., alias="hackathonStart")
     hackathonEnd: datetime = Field(..., alias="hackathonEnd")
-    maxTeamSize: int = Field(default=4, alias="maxTeamSize")
-    minTeamSize: int = Field(default=1, alias="minTeamSize")
+    maxTeamSize: int = Field(default=4, ge=2, le=10, alias="maxTeamSize")
+    minTeamSize: int = Field(default=1, ge=1, le=10, alias="minTeamSize")
     isPublic: bool = Field(default=True, alias="isPublic")
     rules: List[str] = []
     status: HackathonStatus = HackathonStatus.DRAFT
     posterUrl: Optional[str] = Field(None, alias="posterUrl")
     templateUrl: Optional[str] = Field(None, alias="templateUrl")
+
+    @model_validator(mode="after")
+    def validate_hackathon_details(self):
+        if self.registrationStart > self.registrationEnd:
+            raise ValueError("Registration start must be before registration end")
+        if self.hackathonStart >= self.hackathonEnd:
+            raise ValueError("Hackathon start must be before hackathon end")
+        if self.minTeamSize > self.maxTeamSize:
+            raise ValueError("Minimum team size cannot be greater than maximum team size")
+        if not self.themes:
+            raise ValueError("At least one theme is required")
+        return self
 
 
 class HackathonCreate(HackathonBase):
@@ -48,6 +60,7 @@ class HackathonUpdate(BaseModel):
 
 
 class HackathonResponse(HackathonBase):
+    id: str = Field(None, alias="_id")
     organizerId: str = Field(..., alias="organizerId")
     createdAt: datetime = Field(..., alias="createdAt")
     updatedAt: datetime = Field(..., alias="updatedAt")

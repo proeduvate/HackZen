@@ -37,7 +37,7 @@ const HackathonRegistrationStepThree = () => {
             });
         } catch (submitError) {
             console.error('Failed to submit registration:', submitError);
-            setError('Registration could not be completed. Please try again.');
+            setError(submitError.message || 'Registration could not be completed. Please try again.');
         } finally {
             setIsSubmitting(false);
         }

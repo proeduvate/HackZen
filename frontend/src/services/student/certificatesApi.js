@@ -1,5 +1,28 @@
 import apiClient from '../../api/api';
 
+const DEFAULT_CERTIFICATE_IMAGE = 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?q=80&w=2070&auto=format&fit=crop';
+
+const getCertificatePreview = (url) => (
+    url && !url.toLowerCase().endsWith('.pdf') ? url : DEFAULT_CERTIFICATE_IMAGE
+);
+
+export const normalizeCertificate = (certificate) => {
+    const certificateUrl = certificate.certificateUrl || '';
+
+    return {
+        id: certificate._id || certificate.id,
+        title: certificate.title || 'Hackathon Award',
+        issuer: 'ProEduvate Platform',
+        date: certificate.completionDate || new Date(certificate.issuedAt).toISOString().slice(0, 10),
+        description: certificate.description || '',
+        category: 'Participant',
+        image: getCertificatePreview(certificateUrl),
+        status: 'Verified',
+        isDownloading: false,
+        url: certificateUrl,
+    };
+};
+
 /**
  * Student Certificates API
  * Provides service functions for certificate management and verification using the real backend.
@@ -11,22 +34,31 @@ import apiClient from '../../api/api';
 export const fetchCertificates = async () => {
     try {
         const { data } = await apiClient.get('/certificates/me');
-        
-        return data.map(c => ({
-            id: c._id,
-            title: 'Hackathon Award', // Placeholder until hackathon title join
-            issuer: 'ProEduvate Platform',
-            date: new Date(c.issuedAt).toLocaleDateString(),
-            category: 'Participant',
-            image: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?q=80&w=2070&auto=format&fit=crop',
-            status: 'Verified',
-            isDownloading: false,
-            url: c.certificateUrl
-        }));
+
+        return data.map(normalizeCertificate);
     } catch (error) {
         console.error('Failed to fetch certificates:', error);
         return [];
     }
+};
+
+export const uploadCertificate = async (formData) => {
+    const { data } = await apiClient.post('/certificates/student/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return data;
+};
+
+export const updateCertificate = async (certificateId, formData) => {
+    const { data } = await apiClient.put(`/certificates/student/${certificateId}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return data;
+};
+
+export const deleteCertificate = async (certificateId) => {
+    const { data } = await apiClient.delete(`/certificates/student/${certificateId}`);
+    return data;
 };
 
 /**
@@ -55,12 +87,24 @@ export const verifyCertificate = async (certId) => {
     }
 };
 
-/**
- * Simulates downloading a certificate.
- */
-export const downloadCertificate = async (certId) => {
-    // In a real app, this would open a PDF link
-    return { success: true, message: `Redirecting to certificate view...` };
+export const downloadCertificate = async (certificate) => {
+    if (!certificate?.url) {
+        throw new Error('No uploaded certificate file found');
+    }
+
+    const extension = certificate.url.split('.').pop()?.split('?')[0] || 'file';
+    const safeTitle = (certificate.title || 'certificate').replace(/[^a-z0-9_-]+/gi, '-');
+    const link = document.createElement('a');
+
+    link.href = certificate.url;
+    link.download = `${safeTitle}.${extension}`;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    return { success: true };
 };
 
 /**

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchAssignedTeams, fetchMentorshipRequests } from '../../services/mentor/assignedTeamsApi';
+import { fetchAssignedTeams, fetchMentorshipRequests, markMentorshipRequestRead } from '../../services/mentor/assignedTeamsApi';
 
 const MentorDashboard = () => {
     const navigate = useNavigate();
@@ -58,9 +58,20 @@ const MentorDashboard = () => {
     // Handlers
     const handleAccept = async (request) => {
         setLoadingActions(prev => ({ ...prev, [request.id]: 'accepting' }));
-        // Logic to mark notification as read and confirm assignment
         try {
-            await new Promise(resolve => setTimeout(resolve, 800)); // Smooth transition
+            await markMentorshipRequestRead(request.id);
+            const teamsResult = await fetchAssignedTeams();
+            setActiveTeams(teamsResult.activeTeams.map(team => ({
+                id: team.id,
+                team: team.name,
+                category: team.domain,
+                progress: team.progress || 0,
+                nextSync: team.nextActionTime || 'Pending',
+                members: team.members || 0,
+                status: team.status,
+                statusColor: team.status === 'Active' ? 'emerald' : 'purple',
+                icon: team.icon || 'T'
+            })));
             setPendingRequests(prev => prev.filter(r => r.id !== request.id));
         } catch (err) {
             console.error("Failed to accept request", err);

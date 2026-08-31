@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchTeamsMentorsJudges, assignMentorToTeam } from '../../services/organizer/teamsMentorsApi';
+import { fetchTeamsMentorsJudges, assignMentorToTeam, exportRowsToCsv } from '../../services/organizer/teamsMentorsApi';
 
 const TeamsMentors = () => {
     const navigate = useNavigate();
@@ -8,7 +8,10 @@ const TeamsMentors = () => {
     const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('tm_activeTab') || 'teams');
     const [searchTerm, setSearchTerm] = useState(() => sessionStorage.getItem('tm_searchTerm') || '');
     const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
-    const [statusFilter, setStatusFilter] = useState(() => sessionStorage.getItem('tm_statusFilter') || 'all');
+    const [statusFilter, setStatusFilter] = useState(() => {
+        const saved = sessionStorage.getItem('tm_statusFilter') || 'all';
+        return ['all', 'approved', 'pending', 'rejected'].includes(saved.toLowerCase()) ? saved : 'all';
+    });
     const [sortOption, setSortOption] = useState(() => sessionStorage.getItem('tm_sortOption') || 'newest');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
@@ -19,6 +22,7 @@ const TeamsMentors = () => {
     const [judges, setJudges] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState({});
+    const [selectedRecord, setSelectedRecord] = useState(null);
 
     // Assignment UI State
     const [assigningTeamId, setAssigningTeamId] = useState(null);
@@ -73,7 +77,8 @@ const TeamsMentors = () => {
             data = data.filter(item => {
                 if (activeTab === 'teams') {
                     return item.name.toLowerCase().includes(query) ||
-                        item.domain.toLowerCase().includes(query) ||
+                        (item.domain || '').toLowerCase().includes(query) ||
+                        (item.hackathonTitle || '').toLowerCase().includes(query) ||
                         item.members.some(m => m.name.toLowerCase().includes(query));
                 }
                 return item.name.toLowerCase().includes(query) ||
@@ -125,8 +130,39 @@ const TeamsMentors = () => {
     };
 
     const handleExport = () => {
-        console.log(`Exporting ${activeTab} data...`);
-        // Implementation for CSV/JSON export
+        const rows = [];
+
+        if (activeTab === 'teams') {
+            rows.push(['Team Name', 'Hackathon', 'Domain', 'Members', 'Status', 'Mentor', 'Submission Status']);
+            filteredContent.forEach(team => rows.push([
+                team.name,
+                team.hackathonTitle,
+                team.domain,
+                team.memberCount,
+                team.status,
+                team.mentor?.name || 'Unassigned',
+                team.submissionStatus
+            ]));
+        } else if (activeTab === 'mentors') {
+            rows.push(['Mentor Name', 'Domain', 'Expertise', 'Assigned Teams']);
+            filteredContent.forEach(mentor => rows.push([
+                mentor.name,
+                mentor.domain,
+                mentor.expertise.join('; '),
+                mentor.assignedTeams
+            ]));
+        } else {
+            rows.push(['Judge Name', 'Affiliation', 'Domain', 'Reviews', 'Status']);
+            filteredContent.forEach(judge => rows.push([
+                judge.name,
+                judge.affiliation,
+                judge.domain,
+                judge.reviews || 0,
+                judge.eligible ? 'Eligible Evaluator' : 'Review Activity'
+            ]));
+        }
+
+        exportRowsToCsv(rows, `${activeTab}-export.csv`);
     };
 
     // --- Icons Component ---
@@ -233,9 +269,9 @@ const TeamsMentors = () => {
                                 className="w-full appearance-none pl-9 pr-8 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-gray-300 focus:outline-none focus:text-white cursor-pointer hover:bg-white/10 transition-colors"
                             >
                                 <option value="all">All Status</option>
-                                <option value="qualified">Qualified</option>
+                                <option value="approved">Approved</option>
                                 <option value="pending">Pending</option>
-                                <option value="waitlisted">Waitlisted</option>
+                                <option value="rejected">Rejected</option>
                             </select>
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <Icon name="Filter" className="w-4 h-4 text-gray-400" />
@@ -299,7 +335,7 @@ const TeamsMentors = () => {
                                             <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase">Judge Name</th>
                                             <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase">Affiliation</th>
                                             <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase">Domain</th>
-                                            <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase">Bio</th>
+                                            <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase">Activity</th>
                                         </>
                                     )}
                                     <th className="px-6 py-4 text-right">Actions</th>
@@ -317,7 +353,7 @@ const TeamsMentors = () => {
                                                         </div>
                                                         <div>
                                                             <p className="text-sm font-semibold text-white group-hover:text-cyan-400 transition-colors">{item.name}</p>
-                                                            <p className="text-xs text-gray-400">{item.domain}</p>
+                                                            <p className="text-xs text-gray-400">{item.hackathonTitle} • {item.domain}</p>
                                                         </div>
                                                     </div>
                                                 </td>
@@ -328,17 +364,20 @@ const TeamsMentors = () => {
                                                                 {member.avatar}
                                                             </div>
                                                         ))}
-                                                        {item.members.length > 3 && (
+                                                        {item.memberCount > 3 && (
                                                             <div className="w-8 h-8 rounded-full bg-navy-700 border-2 border-navy-900 flex items-center justify-center text-xs font-semibold text-gray-400 shadow-sm">
-                                                                +{item.members.length - 3}
+                                                                +{item.memberCount - 3}
                                                             </div>
+                                                        )}
+                                                        {item.memberCount === 0 && (
+                                                            <span className="text-xs text-gray-500">No members tracked</span>
                                                         )}
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <span className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-[0.12em]
-                                                        ${item.status === 'Qualified' ? 'bg-green-500/20 text-green-400' :
-                                                            item.status === 'Waitlisted' ? 'bg-orange-500/20 text-orange-400' :
+                                                        ${item.status === 'Approved' ? 'bg-green-500/20 text-green-400' :
+                                                            item.status === 'Rejected' ? 'bg-red-500/20 text-red-400' :
                                                                 'bg-blue-500/20 text-blue-400'}`}>
                                                         {item.status}
                                                     </span>
@@ -453,12 +492,24 @@ const TeamsMentors = () => {
                                                     <span className="px-2 py-0.5 bg-cyan-500/10 text-cyan-400 rounded text-xs font-semibold uppercase border border-cyan-500/20">{item.domain}</span>
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <p className="text-xs text-gray-500 line-clamp-1 max-w-xs">{item.bio}</p>
+                                                    <div className="space-y-1">
+                                                        <p className="text-xs text-gray-300 line-clamp-1 max-w-xs">{item.bio}</p>
+                                                        <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-[0.12em] border ${
+                                                            item.reviews > 0
+                                                                ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                                                                : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                                                        }`}>
+                                                            {item.reviews > 0 ? `${item.reviews} Review(s)` : 'Eligible'}
+                                                        </span>
+                                                    </div>
                                                 </td>
                                             </>
                                         )}
                                         <td className="px-6 py-4 text-right">
-                                            <button className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+                                            <button
+                                                onClick={() => setSelectedRecord({ type: activeTab, item })}
+                                                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                                            >
                                                 <Icon name="Eye" className="w-4 h-4" />
                                             </button>
                                         </td>
@@ -494,6 +545,65 @@ const TeamsMentors = () => {
                     </div>
                 </div>
             </div>
+
+            {selectedRecord && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+                    <div className="glass-strong border border-white/10 rounded-3xl w-full max-w-xl shadow-2xl overflow-hidden">
+                        <div className="p-6 border-b border-white/10 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-2xl font-bold text-white">
+                                    {selectedRecord.type === 'teams' ? selectedRecord.item.name : selectedRecord.item.name}
+                                </h2>
+                                <p className="text-sm text-gray-400 mt-1 capitalize">{selectedRecord.type} details</p>
+                            </div>
+                            <button
+                                onClick={() => setSelectedRecord(null)}
+                                className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all"
+                            >
+                                X
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            {selectedRecord.type === 'teams' && (
+                                <>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                                            <p className="text-xs text-gray-500 uppercase font-bold">Hackathon</p>
+                                            <p className="text-sm text-white mt-1">{selectedRecord.item.hackathonTitle}</p>
+                                        </div>
+                                        <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                                            <p className="text-xs text-gray-500 uppercase font-bold">Members</p>
+                                            <p className="text-sm text-white mt-1">{selectedRecord.item.memberCount}</p>
+                                        </div>
+                                    </div>
+                                    <p className="text-sm text-gray-300">Mentor: {selectedRecord.item.mentor?.name || 'Unassigned'}</p>
+                                    <p className="text-sm text-gray-300">Submission: {selectedRecord.item.submissionStatus}</p>
+                                </>
+                            )}
+                            {selectedRecord.type === 'mentors' && (
+                                <>
+                                    <p className="text-sm text-gray-300">Domain: {selectedRecord.item.domain}</p>
+                                    <p className="text-sm text-gray-300">Assigned Teams: {selectedRecord.item.assignedTeams}</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {selectedRecord.item.expertise.map(skill => (
+                                            <span key={skill} className="px-2 py-1 bg-white/5 border border-white/10 rounded-lg text-xs text-gray-300">{skill}</span>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                            {selectedRecord.type === 'judges' && (
+                                <>
+                                    <p className="text-sm text-gray-300">Affiliation: {selectedRecord.item.affiliation}</p>
+                                    <p className="text-sm text-gray-300">Domain: {selectedRecord.item.domain}</p>
+                                    <p className="text-sm text-gray-300">Reviews: {selectedRecord.item.reviews || 0}</p>
+                                    <p className="text-sm text-gray-300">Status: {selectedRecord.item.eligible ? 'Eligible evaluator' : 'Evaluation activity'}</p>
+                                    <p className="text-sm text-gray-300">{selectedRecord.item.bio}</p>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

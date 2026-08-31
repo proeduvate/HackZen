@@ -60,12 +60,13 @@ const MentorshipRequests = () => {
     const selectedRequest = requestsList.find(r => r.id === selectedRequestId);
 
     const handleAction = async (requestId, actionType) => {
+        setIsSubmitting(true);
         try {
-            await updateMentorshipRequestStatus(requestId, actionType);
+            const result = await updateMentorshipRequestStatus(requestId, actionType);
 
             setRequestsList(prev => prev.map(req => {
                 if (req.id === requestId) {
-                    return { ...req, status: actionType === 'accept' ? 'Assigned' : 'Archived' };
+                    return { ...req, status: result.status };
                 }
                 return req;
             }));
@@ -114,7 +115,7 @@ const MentorshipRequests = () => {
                         </div>
 
                         <div className="flex p-1 bg-navy-900/50 rounded-xl border border-white/5">
-                            {['All', 'Pending', 'Archived'].map(tab => (
+                            {['All', 'Pending', 'Assigned', 'Archived'].map(tab => (
                                 <button
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
@@ -275,7 +276,7 @@ const MentorshipRequests = () => {
                                         </div>
                                         <div className="flex justify-between items-center py-3 border-b border-white/5">
                                             <span className="text-gray-400">Team Size</span>
-                                            <span className="text-white font-medium">{selectedRequest.teamSize} Members</span>
+                                            <span className="text-white font-medium">{selectedRequest.teamSize}</span>
                                         </div>
                                     </div>
 

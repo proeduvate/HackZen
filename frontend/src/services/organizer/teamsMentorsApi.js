@@ -12,41 +12,75 @@ import apiClient from '../../api/api';
  */
 export const fetchTeamsMentorsJudges = async () => {
     try {
-        const [mentorsRes, teamsRes] = await Promise.all([
+        const [mentorsRes, teamsRes, judgesRes] = await Promise.all([
             apiClient.get('/profile/mentors'),
-            apiClient.get('/teams/my-teams')
+            apiClient.get('/teams/organizer/all'),
+            apiClient.get('/teams/organizer/judges')
         ]);
 
-        // Map teams data
-        const teams = await Promise.all(teamsRes.data.map(async (team) => {
-            // Optional: Fetch member count/names if the backend doesn't provide them in bulk
-            // For now, we'll map the basic info and add placeholders for the UI
-            return {
-                id: team._id,
-                name: team.teamName,
-                domain: team.domain || 'General',
-                logo: team.teamName[0],
-                members: [], // We can fetch these on-demand or leave empty for the summary view
-                status: 'Active',
-                mentor: team.mentorId ? { id: team.mentorId, name: 'Mentor Assigned', avatar: 'M' } : null,
-                createdAt: team.createdAt
-            };
-        }));
-
-        // Map mentors data
         const mentors = mentorsRes.data.map(m => ({
             id: m.userId,
             name: m.name || 'Anonymous Mentor',
             avatar: (m.name || 'M')[0],
             domain: m.expertiseDomains?.[0] || 'Tech',
-            assignedTeams: 0, // This would need a backend aggregation
+            assignedTeams: 0,
             expertise: m.expertiseDomains || []
+        }));
+
+        const mentorMap = new Map(mentors.map(mentor => [mentor.id, mentor]));
+        const teams = teamsRes.data.map(team => {
+            const memberCount = Number(team.members) || 0;
+            const mentor = team.mentorId ? mentorMap.get(team.mentorId) : null;
+
+            return {
+                id: team.id || team._id,
+                hackathonId: team.hackathonId,
+                hackathonTitle: team.hackathonTitle || 'Hackathon',
+                name: team.name || team.teamName || 'Untitled Team',
+                domain: team.domain || 'General',
+                logo: (team.name || team.teamName || 'T')[0],
+                members: Array.from({ length: memberCount }, (_, idx) => ({
+                    id: `${team.id || team._id}-${idx}`,
+                    name: `Member ${idx + 1}`,
+                    avatar: String(idx + 1)
+                })),
+                memberCount,
+                status: team.status || 'Approved',
+                mentor: mentor ? {
+                    id: mentor.id,
+                    name: mentor.name,
+                    avatar: mentor.avatar
+                } : null,
+                createdAt: team.registrationDate || new Date().toISOString(),
+                submissionStatus: team.submissionStatus || 'Pending'
+            };
+        });
+
+        const mentorAssignments = teams.reduce((counts, team) => {
+            if (team.mentor?.id) {
+                counts[team.mentor.id] = (counts[team.mentor.id] || 0) + 1;
+            }
+            return counts;
+        }, {});
+
+        const mentorsWithCounts = mentors.map(mentor => ({
+            ...mentor,
+            assignedTeams: mentorAssignments[mentor.id] || 0
         }));
 
         return {
             teams,
-            mentors,
-            judges: [] // Judges integration to be completed in evaluation phase
+            mentors: mentorsWithCounts,
+            judges: judgesRes.data.map(judge => ({
+                id: judge.id,
+                name: judge.name,
+                avatar: judge.avatar || (judge.name || 'J')[0],
+                affiliation: judge.affiliation || 'Evaluator',
+                domain: judge.domain || 'Evaluation',
+                reviews: judge.reviews || 0,
+                eligible: Boolean(judge.eligible),
+                bio: judge.bio || `${judge.reviews || 0} review(s) submitted for your hackathons.`
+            }))
         };
     } catch (error) {
         console.error('Failed to fetch teams and mentors:', error);
@@ -62,9 +96,12 @@ export const fetchTeamsMentorsJudges = async () => {
 export const assignMentorToTeam = async (teamId, mentor) => {
     try {
         if (!mentor) {
-            // For removal, we'd need a backend endpoint like DELETE /teams/{id}/mentor
-            // For now, we'll return a placeholder error if removal isn't supported yet
-            throw new Error('Mentor removal not yet implemented on backend');
+            const { data } = await apiClient.delete(`/teams/${teamId}/mentor`);
+            return {
+                success: true,
+                message: 'Mentor removed successfully',
+                team: data
+            };
         }
 
         const { data } = await apiClient.post(`/teams/${teamId}/assign-mentor`, {
@@ -86,39 +123,37 @@ export const assignMentorToTeam = async (teamId, mentor) => {
  * Sends invitations to a list of mentors.
  */
 export const inviteMentors = async (invitationData) => {
-    // This currently uses a mock implementation for invitation flow
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            const historyKey = 'mock_tm_invitations';
-            const existingHistory = JSON.parse(sessionStorage.getItem(historyKey) || '[]');
-            
-            const newInvitations = invitationData.emails.map(email => ({
-                id: Date.now() + Math.random(),
-                email,
-                role: invitationData.role,
-                domain: invitationData.domain,
-                status: 'Pending',
-                sentAt: new Date().toISOString()
-            }));
-
-            sessionStorage.setItem(historyKey, JSON.stringify([...newInvitations, ...existingHistory]));
-            
-            resolve({ 
-                success: true, 
-                message: `${invitationData.emails.length} invitations dispatched.` 
-            });
-        }, 1200);
-    });
+    const { data } = await apiClient.post('/teams/mentor-invitations', invitationData);
+    return data;
 };
 
 /**
  * Fetches the history of sent invitations.
  */
 export const fetchInvitationHistory = async () => {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            const history = JSON.parse(sessionStorage.getItem('mock_tm_invitations') || '[]');
-            resolve(history);
-        }, 800);
-    });
+    const { data } = await apiClient.get('/teams/mentor-invitations');
+    return data.map(invite => ({
+        id: invite._id || invite.id,
+        email: invite.email,
+        role: invite.role,
+        domain: invite.domain,
+        status: invite.status,
+        emailSent: Boolean(invite.emailSent),
+        emailStatus: invite.emailStatus || (invite.emailSent ? 'sent' : 'failed'),
+        notificationSent: Boolean(invite.notificationSent),
+        sentAt: invite.sentAt
+    }));
+};
+
+export const exportRowsToCsv = (rows, filename) => {
+    const csvRows = rows.map(row => row.map(value => `"${String(value ?? '').replaceAll('"', '""')}"`).join(','));
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 };
