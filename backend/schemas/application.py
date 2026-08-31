@@ -18,8 +18,9 @@ class ApplicationBase(BaseModel):
     status: ApplicationStatus = ApplicationStatus.PENDING
 
 
-class ApplicationCreate(ApplicationBase):
-    pass
+class ApplicationCreate(BaseModel):
+    hackathonId: str = Field(..., alias="hackathonId")
+    teamId: Optional[str] = Field(None, alias="teamId")
 
 
 class ApplicationUpdate(BaseModel):

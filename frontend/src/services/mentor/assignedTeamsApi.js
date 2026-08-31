@@ -2,13 +2,9 @@ import apiClient from '../../api/api';
 
 /**
  * Mentor Assigned Teams API
- * Real backend integration for managing assigned and past teams in Mentor Dashboard.
+ * Uses real team assignments and mentor assignment notifications.
  */
 
-/**
- * Fetch all teams assigned to the current mentor (active) and all teams collection for past context.
- * @returns {Promise<{activeTeams: Array, pastTeams: Array}>}
- */
 export const fetchAssignedTeams = async () => {
     try {
         const { data: teams } = await apiClient.get('/teams/mentor-teams');
@@ -24,7 +20,7 @@ export const fetchAssignedTeams = async () => {
             nextActionTime: team.nextActionTime || 'TBD',
             alert: team.alert || null,
             members: team.memberCount || 0,
-            icon: '🚀'
+            icon: (team.teamName || 'T')[0]
         }));
 
         return { activeTeams, pastTeams: [] };
@@ -34,19 +30,17 @@ export const fetchAssignedTeams = async () => {
     }
 };
 
-/**
- * Join a team using an invite code
- * @param {string} code - The invite code
- */
 export const joinTeam = async (code) => {
     try {
         const { data } = await apiClient.post(`/teams/join/${code}`);
+        const teamName = data.teamName || `Team ${code}`;
+
         return {
             success: true,
-            message: `Successfully joined team`,
+            message: 'Successfully joined team',
             team: {
                 id: data._id || data.teamId,
-                name: data.teamName || `Team ${code}`,
+                name: teamName,
                 hackathon: data.hackathonId || 'Open Challenge',
                 domain: data.domain || 'General',
                 status: 'Active',
@@ -55,7 +49,7 @@ export const joinTeam = async (code) => {
                 nextActionTime: 'Pending',
                 alert: null,
                 members: 1,
-                icon: '🚀'
+                icon: teamName[0]
             }
         };
     } catch (error) {
@@ -64,9 +58,6 @@ export const joinTeam = async (code) => {
     }
 };
 
-/**
- * Fetch teams available for mentoring (Teams without a mentor assigned)
- */
 export const fetchDiscoverableTeams = async () => {
     try {
         const { data: teams } = await apiClient.get('/teams/my-teams');
@@ -84,7 +75,7 @@ export const fetchDiscoverableTeams = async () => {
                 progress: team.progress || 0,
                 status: team.status || 'Active',
                 requested: false,
-                icon: '⚛️'
+                icon: (team.teamName || 'T')[0]
             }));
     } catch (error) {
         console.error('Failed to fetch discoverable teams:', error);
@@ -92,10 +83,6 @@ export const fetchDiscoverableTeams = async () => {
     }
 };
 
-/**
- * Request to mentor a team by assigning yourself
- * @param {string} teamId
- */
 export const requestMentorTeam = async (teamId) => {
     try {
         const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -107,10 +94,6 @@ export const requestMentorTeam = async (teamId) => {
     }
 };
 
-/**
- * Create a new team — note: team creation is student-only in backend.
- * This is a placeholder that surfaces the backend error clearly.
- */
 export const createTeam = async (teamData) => {
     try {
         const { data } = await apiClient.post('/teams/', {
@@ -119,6 +102,7 @@ export const createTeam = async (teamData) => {
             domain: teamData.domain || 'Technology',
             description: teamData.description || ''
         });
+
         return {
             success: true,
             message: `Team ${data.teamName} created successfully!`,
@@ -133,7 +117,7 @@ export const createTeam = async (teamData) => {
                 nextActionTime: 'TBD',
                 alert: null,
                 members: 1,
-                icon: '🛠️'
+                icon: (data.teamName || 'T')[0]
             }
         };
     } catch (error) {
@@ -142,21 +126,20 @@ export const createTeam = async (teamData) => {
     }
 };
 
-/**
- * Fetch mentorship requests (notifications of type mentor_assignment)
- */
 export const fetchMentorshipRequests = async () => {
     try {
         const { data: notifications } = await apiClient.get('/inbox/?type=mentor_assignment');
+
         return notifications.map(notif => ({
             id: notif._id,
-            team: notif.message.split('assigned to ')[1] || 'New Team',
+            teamId: notif.teamId,
+            team: (notif.message || '').replace('You have been assigned to mentor ', '').replace('.', '') || 'New Team',
             domain: 'Mentorship',
             desc: notif.message,
             date: new Date(notif.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            time: 'Pending',
+            time: notif.read ? 'Reviewed' : 'New assignment',
             priority: notif.read === false,
-            icon: '🚀'
+            icon: 'M'
         }));
     } catch (error) {
         console.error('Failed to fetch mentorship requests:', error);
@@ -164,9 +147,16 @@ export const fetchMentorshipRequests = async () => {
     }
 };
 
-/**
- * Graduate a team — updates team status to completed via backend.
- */
+export const markMentorshipRequestRead = async (notificationId) => {
+    try {
+        await apiClient.put(`/inbox/${notificationId}/read`);
+        return { success: true };
+    } catch (error) {
+        console.error('Failed to mark mentorship request as read:', error);
+        throw error;
+    }
+};
+
 export const graduateTeam = async (teamId) => {
     try {
         await apiClient.put(`/teams/${teamId}`, { status: 'completed' });

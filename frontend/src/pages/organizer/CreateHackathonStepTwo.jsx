@@ -14,16 +14,29 @@ const CreateHackathonStepTwo = () => {
     const [config, setConfig] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
     const [newTrack, setNewTrack] = useState({ title: '', description: '' });
+    const [errors, setErrors] = useState({});
 
     useEffect(() => {
         getStepTwoConfig(draft).then(setConfig);
     }, [draft]);
 
     const handleAddTrack = () => {
-        if (newTrack.title.trim() && newTrack.description.trim()) {
-            setTracks(prev => [...prev, { ...newTrack, id: Date.now() }]);
-            setNewTrack({ title: '', description: '' });
+        const title = newTrack.title.trim();
+        const description = newTrack.description.trim();
+
+        if (!title || !description) {
+            setErrors((prev) => ({ ...prev, newTrack: 'Track title and description are required.' }));
+            return;
         }
+
+        if (tracks.some((track) => track.title.toLowerCase() === title.toLowerCase())) {
+            setErrors((prev) => ({ ...prev, newTrack: 'This track already exists.' }));
+            return;
+        }
+
+        setTracks(prev => [...prev, { title, description, id: Date.now() }]);
+        setNewTrack({ title: '', description: '' });
+        setErrors((prev) => ({ ...prev, newTrack: '', tracks: '' }));
     };
 
     const handleRemoveTrack = (trackId) => {
@@ -31,10 +44,48 @@ const CreateHackathonStepTwo = () => {
     };
 
     const handleContinue = async () => {
+        const nextErrors = {};
+        const pendingTitle = newTrack.title.trim();
+        const pendingDescription = newTrack.description.trim();
+        let tracksToSave = tracks;
+
+        if (pendingTitle || pendingDescription) {
+            if (!pendingTitle || !pendingDescription) {
+                nextErrors.newTrack = 'Complete both track title and description, or clear both fields.';
+            } else if (tracks.some((track) => track.title.toLowerCase() === pendingTitle.toLowerCase())) {
+                nextErrors.newTrack = 'This track already exists.';
+            } else {
+                tracksToSave = [...tracks, { title: pendingTitle, description: pendingDescription, id: Date.now() }];
+            }
+        }
+
+        if (tracksToSave.length === 0) {
+            nextErrors.tracks = 'Add at least one challenge track.';
+        }
+
+        if (!Number.isInteger(formData.minTeamSize) || formData.minTeamSize < 1) {
+            nextErrors.minTeamSize = 'Minimum team size must be at least 1.';
+        }
+
+        if (!Number.isInteger(formData.maxTeamSize) || formData.maxTeamSize < 2) {
+            nextErrors.maxTeamSize = 'Maximum team size must be at least 2.';
+        }
+
+        if (formData.minTeamSize > formData.maxTeamSize) {
+            nextErrors.teamSize = 'Minimum team size cannot be greater than maximum team size.';
+        }
+
+        if (Object.keys(nextErrors).length > 0) {
+            setErrors(nextErrors);
+            return;
+        }
+
         setIsSaving(true);
         try {
-            const updatedDraft = { ...draft, ...formData, tracks };
-            await saveStepTwoData(draft, { ...formData, tracks });
+            const updatedDraft = { ...draft, ...formData, tracks: tracksToSave };
+            await saveStepTwoData(draft, { ...formData, tracks: tracksToSave });
+            setTracks(tracksToSave);
+            setNewTrack({ title: '', description: '' });
             setDraft(updatedDraft);
             handleStepChange(3);
         } finally {
@@ -74,17 +125,25 @@ const CreateHackathonStepTwo = () => {
                         <div className="space-y-2 p-4 rounded-lg bg-white/5 border border-white/10">
                             <input
                                 value={newTrack.title}
-                                onChange={(e) => setNewTrack(prev => ({ ...prev, title: e.target.value }))}
+                                onChange={(e) => {
+                                    setNewTrack(prev => ({ ...prev, title: e.target.value }));
+                                    setErrors((prev) => ({ ...prev, newTrack: '' }));
+                                }}
                                 placeholder="Track title"
                                 className="w-full bg-white/5 border border-white/10 text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-colors text-sm"
                             />
                             <textarea
                                 value={newTrack.description}
-                                onChange={(e) => setNewTrack(prev => ({ ...prev, description: e.target.value }))}
+                                onChange={(e) => {
+                                    setNewTrack(prev => ({ ...prev, description: e.target.value }));
+                                    setErrors((prev) => ({ ...prev, newTrack: '' }));
+                                }}
                                 placeholder="Track description"
                                 rows={2}
                                 className="w-full bg-white/5 border border-white/10 text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-colors text-sm resize-none"
                             />
+                            <p className="text-xs text-gray-500">Click + Add, or Continue to Step 3 will include this filled track automatically.</p>
+                            {errors.newTrack ? <p className="text-xs text-red-400">{errors.newTrack}</p> : null}
                         </div>
 
                         {/* Existing Tracks */}
@@ -106,6 +165,7 @@ const CreateHackathonStepTwo = () => {
                                 </div>
                             ))}
                         </div>
+                        {errors.tracks ? <p className="text-xs text-red-400">{errors.tracks}</p> : null}
                     </div>
 
                     {/* Rules Section */}
@@ -121,22 +181,35 @@ const CreateHackathonStepTwo = () => {
                                         <input
                                             type="number"
                                             value={formData.minTeamSize}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, minTeamSize: Number(e.target.value) }))}
+                                            onChange={(e) => {
+                                                setFormData(prev => ({ ...prev, minTeamSize: Number(e.target.value) }));
+                                                setErrors((prev) => ({ ...prev, minTeamSize: '', teamSize: '' }));
+                                            }}
                                             min="1"
-                                            className="w-full bg-white/5 border border-white/10 text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-colors text-center text-sm"
+                                            className={`w-full bg-white/5 border text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-colors text-center text-sm ${
+                                                errors.minTeamSize || errors.teamSize ? 'border-red-500/50' : 'border-white/10'
+                                            }`}
                                         />
+                                        {errors.minTeamSize ? <p className="text-xs text-red-400">{errors.minTeamSize}</p> : null}
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-xs text-gray-500">Max</label>
                                         <input
                                             type="number"
                                             value={formData.maxTeamSize}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, maxTeamSize: Number(e.target.value) }))}
+                                            onChange={(e) => {
+                                                setFormData(prev => ({ ...prev, maxTeamSize: Number(e.target.value) }));
+                                                setErrors((prev) => ({ ...prev, maxTeamSize: '', teamSize: '' }));
+                                            }}
                                             min="2"
-                                            className="w-full bg-white/5 border border-white/10 text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-colors text-center text-sm"
+                                            className={`w-full bg-white/5 border text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-colors text-center text-sm ${
+                                                errors.maxTeamSize || errors.teamSize ? 'border-red-500/50' : 'border-white/10'
+                                            }`}
                                         />
+                                        {errors.maxTeamSize ? <p className="text-xs text-red-400">{errors.maxTeamSize}</p> : null}
                                     </div>
                                 </div>
+                                {errors.teamSize ? <p className="text-xs text-red-400 mt-2">{errors.teamSize}</p> : null}
                             </div>
 
                             <div className="flex items-center justify-between py-2 border-t border-white/5">

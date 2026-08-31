@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
     fetchCertificates,
     verifyCertificate,
+    downloadCertificate,
     downloadAllCertificates,
     shareTranscript,
     uploadCertificate,
@@ -203,14 +204,20 @@ const StudentCertificates = () => {
         }
     };
 
-    const handleShareTranscript = async () => {
-        setIsSharing(true);
+    const handleDownloadIndividual = async (certificate) => {
+        setCertificates((prev) => prev.map((cert) => (
+            cert.id === certificate.id ? { ...cert, isDownloading: true } : cert
+        )));
+
         try {
-            await shareTranscript();
+            await downloadCertificate(certificate);
         } catch (error) {
-            console.error('Share failed:', error);
+            console.error('Download failed:', error);
+            alert(error?.message || 'Unable to download this certificate');
         } finally {
-            setIsSharing(false);
+            setCertificates((prev) => prev.map((cert) => (
+                cert.id === certificate.id ? { ...cert, isDownloading: false } : cert
+            )));
         }
     };
 
@@ -222,6 +229,17 @@ const StudentCertificates = () => {
             console.error('Bulk download failed:', error);
         } finally {
             setIsDownloadingAll(false);
+        }
+    };
+
+    const handleShareTranscript = async () => {
+        setIsSharing(true);
+        try {
+            await shareTranscript();
+        } catch (error) {
+            console.error('Share failed:', error);
+        } finally {
+            setIsSharing(false);
         }
     };
 
@@ -439,6 +457,13 @@ const StudentCertificates = () => {
                                                     Edit
                                                 </button>
                                                 <button
+                                                    onClick={() => handleDownloadIndividual(cert)}
+                                                    disabled={cert.isDownloading}
+                                                    className="px-4 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-semibold transition-colors disabled:opacity-50"
+                                                >
+                                                    {cert.isDownloading ? '...' : 'Download'}
+                                                </button>
+                                                <button
                                                     onClick={() => handleDeleteCertificate(cert.id)}
                                                     className="px-4 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-semibold transition-colors"
                                                 >
@@ -460,7 +485,7 @@ const StudentCertificates = () => {
                         <div className="space-y-6">
                             <div>
                                 <h3 className="text-2xl font-bold text-white mb-2">Credential Center</h3>
-                                <p className="text-sm text-gray-400 italic">Verify a certificate from your achievement history.</p>
+                                <p className="text-sm text-gray-400 italic">Verify a certificate or export your full achievement history.</p>
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">

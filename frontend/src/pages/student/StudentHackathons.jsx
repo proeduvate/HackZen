@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { fetchAllHackathons } from '../../api/hackathonApi';
 
+const DEFAULT_HACKATHON_GRADIENT = 'bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-700';
+
 const StudentHackathons = () => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -25,7 +27,7 @@ const StudentHackathons = () => {
                 const data = await fetchAllHackathons();
                 // Map API data to UI format
                 const formattedData = data.map(h => ({
-                    id: h.id,
+                    id: h.id || h._id,
                     title: h.title,
                     organizer: h.organizer_name || 'ProEduvate Partner',
                     description: h.description,
@@ -36,7 +38,7 @@ const StudentHackathons = () => {
                     mode: h.location || 'Virtual',
                     status: h.status || 'Open',
                     teamSizeLimit: h.maxTeamSize || 4,
-                    image: 'bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-700', // Default image
+                    image: h.posterUrl || DEFAULT_HACKATHON_GRADIENT,
                     themes: h.themes || []
                 }));
                 setHackathons(formattedData);
@@ -111,7 +113,14 @@ const StudentHackathons = () => {
                     <div className="flex flex-col xl:flex-row gap-8">
                         {/* Left Column */}
                         <div className="xl:w-3/5 space-y-6">
-                            <div className={`h-64 md:h-80 rounded-2xl ${selectedHackathon.image} relative overflow-hidden glass border border-white/10`}>
+                            <div className={`h-64 md:h-80 rounded-2xl ${selectedHackathon.image?.startsWith('http') ? '' : selectedHackathon.image} relative overflow-hidden glass border border-white/10`}>
+                                {selectedHackathon.image?.startsWith('http') && (
+                                    <img
+                                        src={selectedHackathon.image}
+                                        alt={`${selectedHackathon.title} poster`}
+                                        className="absolute inset-0 w-full h-full object-cover"
+                                    />
+                                )}
                                 <div className="absolute inset-0 bg-black/20"></div>
                                 <div className="absolute bottom-6 left-6 right-6">
                                     <span className="inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/10 backdrop-blur-md border border-white/20 text-white mb-4">
@@ -218,7 +227,14 @@ const StudentHackathons = () => {
                                     onClick={() => handleHackathonClick(hackathon)}
                                     className="glass rounded-2xl border border-white/5 hover:border-purple-500/30 transition-all duration-300 group cursor-pointer flex flex-col overflow-hidden"
                                 >
-                                    <div className={`h-40 ${hackathon.image} p-6 relative`}>
+                                    <div className={`h-40 ${hackathon.image?.startsWith('http') ? '' : hackathon.image} p-6 relative`}>
+                                        {hackathon.image?.startsWith('http') && (
+                                            <img
+                                                src={hackathon.image}
+                                                alt={`${hackathon.title} poster`}
+                                                className="absolute inset-0 w-full h-full object-cover"
+                                            />
+                                        )}
                                         <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10 text-[10px] font-bold text-white uppercase">
                                             {hackathon.mode}
                                         </div>

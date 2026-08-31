@@ -232,6 +232,7 @@ const MyTeams = () => {
             }
         } catch (error) {
             console.error("Failed to create team:", error);
+            setAlerts([{ id: Date.now(), type: 'error', message: error.message || 'Failed to create team.' }, ...alerts]);
         }
     };
 
@@ -457,7 +458,7 @@ const MyTeams = () => {
                                     <h3 className="text-xl font-bold text-white group-hover:text-purple-400 transition-colors">{team.name}</h3>
                                     <span className="text-[10px] text-cyan-300 font-bold bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20 whitespace-nowrap">{team.roleInTeam}</span>
                                 </div>
-                                <p className="text-gray-400 text-sm line-clamp-2 mb-6">{team.domain} � {team.lastMessage}</p>
+                                <p className="text-gray-400 text-sm line-clamp-2 mb-6">{team.domain} • {team.lastMessage}</p>
 
                                 <div className="space-y-4 mt-auto">
                                     <div>
@@ -471,11 +472,26 @@ const MyTeams = () => {
                                     </div>
 
                                     <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                                        <div className="flex items-center gap-2">
-                                            <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" /></svg>
-                                            <span className="text-xs text-gray-300">{team.members} members</span>
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                                                <span className="text-xs text-gray-300">{team.members} members</span>
+                                            </div>
+                                            {team.teamCode && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (navigator.clipboard) navigator.clipboard.writeText(team.teamCode);
+                                                    }}
+                                                    title="Click to copy invite code"
+                                                    className="flex items-center gap-1.5 text-[11px] font-bold text-cyan-300 bg-cyan-500/10 border border-cyan-500/25 px-2 py-1 rounded-lg hover:bg-cyan-500/20 transition-colors"
+                                                >
+                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 8V6a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2h-2M6 12h8a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6a2 2 0 012-2z" /></svg>
+                                                    {team.teamCode}
+                                                </button>
+                                            )}
                                         </div>
-                                        <button className="flex items-center gap-1.5 text-xs text-purple-400 font-bold hover:text-purple-300 transition-colors">
+                                        <button className="flex items-center gap-1.5 text-xs text-purple-400 font-bold hover:text-purple-300 transition-colors shrink-0">
                                             Open Workspace
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
                                         </button>
@@ -513,8 +529,32 @@ const MyTeams = () => {
                                     <h3 className="text-xl font-bold text-white mb-3">{hack.name}</h3>
                                     <p className="text-gray-400 text-sm mb-6">Set up or join a team before the event begins.</p>
                                     <div className="mt-auto flex gap-3">
-                                        <button className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-white font-semibold rounded-xl border border-white/5 transition-colors">View Event</button>
-                                        <button className="px-4 py-3 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl transition-colors">Form Team</button>
+                                        <button
+                                            onClick={() => navigate('/student/hackathons')}
+                                            className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-white font-semibold rounded-xl border border-white/5 transition-colors"
+                                        >
+                                            View Event
+                                        </button>
+                                        <button
+                                            onClick={() => setModal({ type: 'join' })}
+                                            className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-white font-semibold rounded-xl border border-white/5 transition-colors"
+                                        >
+                                            Join Team
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setNewTeamData({
+                                                    name: '',
+                                                    hackathon: hack.id,
+                                                    hackathonId: hack.id,
+                                                    domain: hack.domain || 'Technology'
+                                                });
+                                                setModal({ type: 'create' });
+                                            }}
+                                            className="px-4 py-3 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl transition-colors"
+                                        >
+                                            Form Team
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -859,12 +899,12 @@ const MyTeams = () => {
                                             <select
                                                 required
                                                 value={newTeamData.hackathon}
-                                                onChange={(e) => setNewTeamData({ ...newTeamData, hackathon: e.target.value })}
+                                                onChange={(e) => setNewTeamData({ ...newTeamData, hackathon: e.target.value, hackathonId: e.target.value })}
                                                 className="w-full bg-navy-950/50 border border-white/5 rounded-2xl px-6 py-5 text-sm font-bold text-white focus:outline-none focus:border-purple-500/40 transition-all uppercase  tracking-widest shadow-inner appearance-none cursor-pointer"
                                             >
                                                 <option value="" className="bg-navy-900">SELECT DEPLOYMENT SECTOR...</option>
                                                 {registeredHackathons.map(h => (
-                                                    <option key={h.id} value={h.name} className="bg-navy-900">{h.name.toUpperCase()}</option>
+                                                    <option key={h.id} value={h.id} className="bg-navy-900">{h.name.toUpperCase()}</option>
                                                 ))}
                                             </select>
                                         </div>

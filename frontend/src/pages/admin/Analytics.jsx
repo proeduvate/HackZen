@@ -172,7 +172,7 @@ const AdminAnalytics = () => {
                                                     <img src={review.avatar} alt="" className="h-12 w-12 rounded-xl border border-white/10 object-cover" />
                                                     <div>
                                                         <p className="text-sm font-semibold text-white">{review.name}</p>
-                                                        <p className="text-xs text-gray-400">{review.role} � {review.time}</p>
+                                                        <p className="text-xs text-gray-400">{review.role} • {review.time}</p>
                                                     </div>
                                                     <div className="ml-auto text-sm font-semibold text-amber-300">{review.rating}/5</div>
                                                 </div>

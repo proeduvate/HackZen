@@ -18,6 +18,7 @@ export const normalizeCertificate = (certificate) => {
         category: 'Participant',
         image: getCertificatePreview(certificateUrl),
         status: 'Verified',
+        isDownloading: false,
         url: certificateUrl,
     };
 };
@@ -84,6 +85,26 @@ export const verifyCertificate = async (certId) => {
             date: '-'
         };
     }
+};
+
+export const downloadCertificate = async (certificate) => {
+    if (!certificate?.url) {
+        throw new Error('No uploaded certificate file found');
+    }
+
+    const extension = certificate.url.split('.').pop()?.split('?')[0] || 'file';
+    const safeTitle = (certificate.title || 'certificate').replace(/[^a-z0-9_-]+/gi, '-');
+    const link = document.createElement('a');
+
+    link.href = certificate.url;
+    link.download = `${safeTitle}.${extension}`;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    return { success: true };
 };
 
 /**

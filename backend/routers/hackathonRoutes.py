@@ -16,6 +16,7 @@ from schemas.hackathonSchema import HackathonCreate, HackathonUpdate, HackathonR
 from services.hackathonService import HackathonService
 from models.hackathonModel import HackathonStatus, HackathonTheme
 import json
+from datetime import datetime
 
 router = APIRouter()
 
@@ -385,3 +386,61 @@ async def message_organizer(
         }
     )
     return {"success": True, "message": "Message sent to organizer successfully."}
+
+
+@router.post("/{hackathon_id}/contact-admin")
+async def contact_admin(
+    hackathon_id: str,
+    body: Dict[str, Any],
+    current_user: Dict[str, Any] = Depends(with_auth),
+):
+    """Allow an organizer to contact platform admins about a hackathon."""
+    if current_user["role"] not in ["organizer", "admin"]:
+        raise HTTPException(status_code=403, detail="Organizer access required")
+
+    subject = body.get("subject", "").strip() or "Organizer Support Request"
+    message = body.get("message", "").strip()
+    if not message:
+        raise HTTPException(status_code=400, detail="Message cannot be empty")
+
+    db = get_db()
+    from bson import ObjectId as BsonId
+
+    if not BsonId.is_valid(hackathon_id):
+        raise HTTPException(status_code=400, detail="Invalid hackathon id")
+
+    hackathon = await db["hackathons"].find_one({"_id": BsonId(hackathon_id)})
+    if not hackathon:
+        raise HTTPException(status_code=404, detail="Hackathon not found")
+
+    if current_user["role"] != "admin" and hackathon.get("organizerId") != current_user["sub"]:
+        raise HTTPException(status_code=403, detail="Not authorized for this hackathon")
+
+    admins = await db["users"].find({"role": {"$in": ["admin", "superadmin"]}}).to_list(100)
+    if not admins:
+        await db["supportRequests"].insert_one(
+            {
+                "hackathonId": hackathon_id,
+                "organizerId": current_user["sub"],
+                "subject": subject,
+                "message": message,
+                "status": "open",
+                "createdAt": datetime.utcnow(),
+            }
+        )
+        return {"success": True, "message": "Support request saved for admin review."}
+
+    notifications = [
+        {
+            "userId": str(admin["_id"]),
+            "hackathonId": hackathon_id,
+            "type": "system_alert",
+            "message": f"{subject} - {hackathon.get('title', 'Hackathon')}: {message}",
+            "read": False,
+            "createdAt": datetime.utcnow(),
+        }
+        for admin in admins
+    ]
+    await db["notifications"].insert_many(notifications)
+
+    return {"success": True, "message": "Message sent to platform admins."}

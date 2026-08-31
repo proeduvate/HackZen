@@ -302,7 +302,7 @@ const EvaluationPanel = () => {
                                         <h2 className="text-2xl font-bold text-white mb-1 uppercase tracking-tight">{activeTeam.name}</h2>
                                         <h3 className="text-lg font-medium text-cyan-400 mb-2 truncate max-w-md">{activeTeam.project}</h3>
                                         <div className="flex items-center gap-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                                            <span>{activeTeam.members.join(', ')}</span>
+                                            <span>{activeTeam.members?.length > 0 ? activeTeam.members.join(', ') : 'Member details in Teams & Mentors'}</span>
                                             <span className="w-1.5 h-1.5 bg-gray-700 rounded-full animate-pulse"></span>
                                             <span className="text-gray-400">{activeTeam.submitted}</span>
                                         </div>

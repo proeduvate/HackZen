@@ -8,16 +8,22 @@ export const fetchSubmissions = async (teamId) => {
     try {
         if (!teamId) return [];
         const { data } = await apiClient.get(`/submissions/team/${teamId}`);
-        
+
         return data.map(sub => ({
-            id: sub._id,
-            project: 'Project Submission v' + sub.version,
-            hackathon: 'Current Hackathon', // Placeholder until hackathon title is joined
-            submittedAt: new Date(sub.submittedAt).toLocaleDateString(),
-            status: 'Submitted',
-            score: null,
-            feedback: null,
-            resources: ['Download Project']
+            id: sub.id,
+            teamId: sub.teamId,
+            team: sub.team || 'Unknown Team',
+            project: sub.title || `Project Submission v${sub.version}`,
+            hackathon: sub.hackathon || 'Current Hackathon',
+            desc: sub.description || '',
+            category: sub.track || 'General',
+            fileUrl: sub.fileUrl || null,
+            version: sub.version || 1,
+            submittedAt: sub.time || (sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString() : ''),
+            iso: sub.submittedAt || null,
+            status: sub.status || 'Pending Review',
+            score: sub.score ?? null,
+            evaluationCount: sub.evaluationCount ?? 0
         }));
     } catch (error) {
         console.error('Failed to fetch student submissions:', error);
@@ -27,14 +33,13 @@ export const fetchSubmissions = async (teamId) => {
 
 export const submitProject = async (submissionData) => {
     try {
-        const { data: teamSubs } = await apiClient.get(`/submissions/team/${submissionData.teamId}`);
-        const nextVersion = teamSubs.length + 1;
-
         const payload = {
             teamId: submissionData.teamId,
             stageId: submissionData.stageId || 'initial_stage',
-            fileUrl: submissionData.fileUrl || 'pending_upload',
-            version: nextVersion
+            fileUrl: submissionData.fileUrl,
+            project: submissionData.project || 'Untitled Project',
+            desc: submissionData.desc || '',
+            category: submissionData.category || 'General'
         };
 
         const { data } = await apiClient.post('/submissions/', payload);
