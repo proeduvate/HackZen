@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { register, login } from '../api/userApi';
+import ThemeToggle from '../components/ThemeToggle';
+import { usePlatformSettings } from '../context/PlatformSettingsContext';
 
 const Signup = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const roleFromUrl = searchParams.get('role') || 'student';
+    const { platformName, isPublicRegistrationAllowed } = usePlatformSettings();
 
     const [formData, setFormData] = useState({
         fullName: '',
@@ -31,6 +34,11 @@ const Signup = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+
+        if (!isPublicRegistrationAllowed) {
+            setError('Public registrations are currently closed by platform administration.');
+            return;
+        }
 
         if (formData.password !== formData.confirmPassword) {
             setError("Passwords don't match!");
@@ -82,31 +90,40 @@ const Signup = () => {
     return (
         <div className="flex items-center justify-center min-h-screen px-6 py-12 bg-navy-900">
             <div className="w-full max-w-md">
-                {/* Back Button */}
-                <Link
-                    to="/get-started"
-                    className="flex items-center gap-2 mb-6 text-gray-300 transition hover:text-white group"
-                >
-                    <svg
-                        className="w-4 h-4 transition transform group-hover:-translate-x-1"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                {/* Top Navigation Row */}
+                <div className="flex items-center justify-between mb-6">
+                    <Link
+                        to="/get-started"
+                        className="flex items-center gap-2 text-gray-300 transition hover:text-white group"
                     >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                    <span>Back</span>
-                </Link>
+                        <svg
+                            className="w-4 h-4 transition transform group-hover:-translate-x-1"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        <span>Back</span>
+                    </Link>
+                    <ThemeToggle />
+                </div>
 
                 <div className="mb-8 text-center">
-                    <img src="/proeduvatee-removebg-preview.png" alt="ProEduvate" className="h-20 mx-auto mb-4" />
+                    <img src="/proeduvatee-removebg-preview.png" alt={platformName || "ProEduvate"} className="h-20 mx-auto mb-4" />
                     <h2 className="mb-2 text-3xl font-bold text-white">Create Account</h2>
                     <p className="text-gray-400">
-                        Join ProEduvate as a <span className="font-semibold text-purple-400 capitalize">{formData.role}</span>
+                        Join {platformName || 'ProEduvate'} as a <span className="font-semibold text-purple-400 capitalize">{formData.role}</span>
                     </p>
                 </div>
 
                 <div className="p-8 border border-gray-700 shadow-xl bg-navy-800 rounded-2xl">
+                    {!isPublicRegistrationAllowed && (
+                        <div className="p-3.5 mb-5 text-xs font-bold text-center text-amber-300 border border-amber-500/40 rounded-xl bg-amber-500/10">
+                            ⚠️ Public registrations are currently closed by the platform administrator. Only existing or invited accounts can log in.
+                        </div>
+                    )}
+
                     {error && (
                         <div className="p-3 mb-4 text-sm text-center text-red-400 border border-red-500/30 rounded-lg bg-red-500/10">
                             {error}
@@ -241,8 +258,10 @@ const Signup = () => {
 
                         <button
                             type="submit"
-                            disabled={loading}
-                            className={`w-full py-3 font-semibold text-white transition-all duration-300 rounded-lg shadow-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 hover:shadow-xl flex items-center justify-center gap-2 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                            disabled={loading || !isPublicRegistrationAllowed}
+                            className={`w-full py-3 font-semibold text-white transition-all duration-300 rounded-lg shadow-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 hover:shadow-xl flex items-center justify-center gap-2 ${
+                                (loading || !isPublicRegistrationAllowed) ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
                         >
                             {loading ? (
                                 <>
@@ -252,6 +271,8 @@ const Signup = () => {
                                     </svg>
                                     <span>Creating Account...</span>
                                 </>
+                            ) : !isPublicRegistrationAllowed ? (
+                                'Registrations Closed'
                             ) : (
                                 'Create Account'
                             )}

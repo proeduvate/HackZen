@@ -13,21 +13,26 @@ class MongoDB:
     @classmethod
     async def connect(cls):
         try:
+            client_kwargs = {
+                "maxPoolSize": 100,
+                "minPoolSize": 10,
+                "serverSelectionTimeoutMS": 5000,
+            }
+            if "mongodb+srv://" in settings.MONGO_URI or "tls=true" in settings.MONGO_URI.lower():
+                client_kwargs["tlsCAFile"] = certifi.where()
+
             cls.client = AsyncIOMotorClient(
                 settings.MONGO_URI,
-                maxPoolSize=100,
-                minPoolSize=10,
-                serverSelectionTimeoutMS=5000,
-                tlsCAFile=certifi.where(),
+                **client_kwargs
             )
             await cls.client.admin.command("ping")
             cls.db = cls.client[settings.DB_NAME]
-            print("✅ Connected to MongoDB")
+            print("[DB] Connected to MongoDB")
 
             await cls.create_indexes()
 
         except ConnectionFailure as e:
-            print(f"❌ MongoDB connection failed: {e}")
+            print(f"[DB] MongoDB connection failed: {e}")
             raise
 
     @classmethod
@@ -88,13 +93,13 @@ class MongoDB:
             unique=True,
         )
 
-        print("✅ MongoDB indexes created")
+        print("[DB] MongoDB indexes created")
 
     @classmethod
     async def disconnect(cls):
         if cls.client:
             cls.client.close()
-            print("✅ Disconnected from MongoDB")
+            print("[DB] Disconnected from MongoDB")
 
     @classmethod
     def get_db(cls) -> AsyncIOMotorDatabase:

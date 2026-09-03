@@ -41,14 +41,16 @@ async def create_hackathon(
     2. application/json with all data (no files)
     """
 
-    # Check authorization
-    if current_user["role"] not in ["organizer", "admin"]:
+    # Check authorization (case-insensitive)
+    user_role = str(current_user.get("role", "")).lower()
+    if user_role not in ["organizer", "admin", "superadmin"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only organizers can create hackathons",
         )
 
     db = get_db()
+    organizer_id = str(current_user.get("_id") or current_user.get("sub") or current_user.get("id") or "org_default")
 
     try:
         content_type = request.headers.get("content-type", "")
@@ -91,7 +93,7 @@ async def create_hackathon(
 
         # CREATE HACKATHON (common logic for both cases)
         hackathon = await HackathonService.create_hackathon(
-            organizer_id=current_user["sub"],
+            organizer_id=organizer_id,
             data=validated_data,
             db=db,
             poster=poster_file,

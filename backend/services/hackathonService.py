@@ -73,14 +73,51 @@ class HackathonService:
         return hackathon_dict
 
     @staticmethod
+    def _normalize_hackathon(h: Dict[str, Any]) -> Dict[str, Any]:
+        now = datetime.utcnow()
+        h_id = str(h.get("_id") or h.get("id") or "")
+        h["_id"] = h_id
+        h["id"] = h_id
+
+        # Normalize Dates with robust fallbacks
+        start_d = h.get("registrationStart") or h.get("registration_start") or h.get("startDate") or h.get("start_date") or h.get("createdAt") or now
+        end_d = h.get("registrationEnd") or h.get("registration_end") or h.get("submissionDeadline") or h.get("endDate") or h.get("end_date") or now
+        h_start = h.get("hackathonStart") or h.get("hackathon_start") or h.get("startDate") or h.get("start_date") or now
+        h_end = h.get("hackathonEnd") or h.get("hackathon_end") or h.get("endDate") or h.get("end_date") or now
+
+        h["registrationStart"] = start_d
+        h["registrationEnd"] = end_d
+        h["hackathonStart"] = h_start
+        h["hackathonEnd"] = h_end
+        h["startDate"] = h.get("startDate") or (str(h_start)[:10] if isinstance(h_start, datetime) else str(h_start))
+        h["endDate"] = h.get("endDate") or (str(h_end)[:10] if isinstance(h_end, datetime) else str(h_end))
+
+        h["organizerId"] = str(h.get("organizerId") or "65e020000000000000000001")
+        h["createdAt"] = h.get("createdAt") or now
+        h["updatedAt"] = h.get("updatedAt") or now
+        
+        # Normalize themes list
+        if not h.get("themes"):
+            if h.get("theme"):
+                h["themes"] = [h.get("theme")]
+            elif h.get("category"):
+                h["themes"] = [h.get("category")]
+            else:
+                h["themes"] = ["Web Dev"]
+        elif isinstance(h["themes"], str):
+            h["themes"] = [h["themes"]]
+
+        return h
+
+    @staticmethod
     async def get_hackathon_by_id(hid: str, db) -> Optional[Dict[str, Any]]:
         coll = db.hackathons
         if not ObjectId.is_valid(hid):
             return None
         hackathon = await coll.find_one({"_id": ObjectId(hid)})
         if hackathon:
-            hackathon["_id"] = str(hackathon["_id"])
-        return hackathon
+            return HackathonService._normalize_hackathon(hackathon)
+        return None
 
     @staticmethod
     async def get_all_hackathons(
@@ -93,11 +130,30 @@ class HackathonService:
         hackathons = await cursor.to_list(100)
 
         for h in hackathons:
-            h["_id"] = str(h["_id"])
+            h_id = str(h["_id"])
+            HackathonService._normalize_hackathon(h)
+
             # Add participant count
             h["participants_count"] = await db.applications.count_documents(
-                {"hackathonId": h["_id"]}
+                {"hackathonId": h_id}
             )
+
+            # Join organizer user details
+            org_id = h.get("organizerId")
+            if org_id and ObjectId.is_valid(str(org_id)):
+                org_user = await db.users.find_one({"_id": ObjectId(str(org_id))}, {"password": 0})
+            elif org_id:
+                org_user = await db.users.find_one({"_id": str(org_id)}, {"password": 0})
+            else:
+                org_user = None
+
+            if org_user:
+                h["organizerName"] = org_user.get("name", org_user.get("email", "Platform Organizer").split("@")[0])
+                h["organization"] = org_user.get("organization", org_user.get("college", "HackZen Partner Org"))
+            else:
+                h["organizerName"] = h.get("organizerName", "Platform Organizer")
+                h["organization"] = h.get("organization", "HackZen Community")
+
         return hackathons
 
     @staticmethod
@@ -195,5 +251,5 @@ class HackathonService:
         hackathons = await cursor.to_list(100)
 
         for h in hackathons:
-            h["_id"] = str(h["_id"])
+            HackathonService._normalize_hackathon(h)
         return hackathons

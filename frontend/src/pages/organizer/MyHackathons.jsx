@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { fetchMyHackathons, toggleHackathonVisibility, toggleHackathonRegistration } from '../../services/organizer/myHackathonsApi';
 
 const MyHackathons = () => {
     const navigate = useNavigate();
@@ -14,6 +15,19 @@ const MyHackathons = () => {
 
     const tabs = ['All', 'Active', 'Upcoming', 'Past', 'Drafts'];
 
+    const loadHackathons = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const data = await fetchMyHackathons();
+            setHackathons(data);
+        } catch (error) {
+            console.error("Failed to fetch real hackathons, checking fallback:", error);
+            setHackathons([]);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
     // --- Persistence & Initial Load ---
     useEffect(() => {
         // Hydrate scroll position
@@ -22,79 +36,7 @@ const MyHackathons = () => {
             window.scrollTo(0, parseInt(savedScroll));
         }
 
-        // Simulate API Fetch
-        const fetchHackathons = async () => {
-            setIsLoading(true);
-            try {
-                // In a real app, this would be an axios/fetch call
-                await new Promise(resolve => setTimeout(resolve, 800));
-                const mockData = [
-                    {
-                        id: 1,
-                        title: "Future Tech Challenge 2026",
-                        banner: "https://images.unsplash.com/photo-1504384308090-c54be3852f33?auto=format&fit=crop&q=80&w=1000",
-                        startDate: "Feb 15, 2026",
-                        endDate: "Feb 17, 2026",
-                        mode: "Hybrid",
-                        registrations: 450,
-                        daysLeft: 40,
-                        status: "Active",
-                        regStatus: "Open",
-                        isVisible: true,
-                        category: "Emerging Tech"
-                    },
-                    {
-                        id: 2,
-                        title: "Green Energy Innovation Hack",
-                        banner: "https://images.unsplash.com/photo-1497436072909-60f360e1d4b0?auto=format&fit=crop&q=80&w=1000",
-                        startDate: "Mar 10, 2026",
-                        endDate: "Mar 12, 2026",
-                        mode: "Online",
-                        registrations: 120,
-                        daysLeft: 63,
-                        status: "Upcoming",
-                        regStatus: "Open",
-                        isVisible: true,
-                        category: "Sustainability"
-                    },
-                    {
-                        id: 3,
-                        title: "Internal Dev Sprint",
-                        banner: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=1000",
-                        startDate: "Jan 05, 2026",
-                        endDate: "Jan 07, 2026",
-                        mode: "Online",
-                        registrations: 85,
-                        daysLeft: 0,
-                        status: "Past",
-                        regStatus: "Closed",
-                        isVisible: false,
-                        category: "Software"
-                    },
-                    {
-                        id: 4,
-                        title: "AI for Social Good",
-                        banner: "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=1000",
-                        startDate: "TBD",
-                        endDate: "TBD",
-                        mode: "Hybrid",
-                        registrations: 0,
-                        daysLeft: 0,
-                        status: "Draft",
-                        regStatus: "Closed",
-                        isVisible: false,
-                        category: "AI/ML"
-                    },
-                ];
-                setHackathons(mockData);
-            } catch (error) {
-                console.error("Failed to fetch hackathons", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchHackathons();
+        loadHackathons();
 
         // Scroll listener for persistence
         const handleScroll = () => {
@@ -102,7 +44,7 @@ const MyHackathons = () => {
         };
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
+    }, [loadHackathons]);
 
     // Save UI state on changes
     useEffect(() => {
@@ -142,18 +84,11 @@ const MyHackathons = () => {
         setActionLoading(prev => ({ ...prev, [`vis-${id}`]: true }));
 
         try {
-            // Simulated API Sync
-            await new Promise((resolve, reject) => {
-                setTimeout(() => {
-                    // Randomly simulate failure for testing rollback (10% chance)
-                    // Math.random() > 0.1 ? resolve() : reject(new Error("API Failed"));
-                    resolve();
-                }, 1000);
-            });
+            await toggleHackathonVisibility(id);
         } catch (error) {
             // Rollback on failure
             setHackathons(previousState);
-            alert("Failed to update visibility. Please try again.");
+            alert("Failed to update visibility on server. Please try again.");
         } finally {
             setActionLoading(prev => ({ ...prev, [`vis-${id}`]: false }));
         }
@@ -173,12 +108,11 @@ const MyHackathons = () => {
         setActionLoading(prev => ({ ...prev, [`reg-${id}`]: true }));
 
         try {
-            // Simulated API Sync
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await toggleHackathonRegistration(id);
         } catch (error) {
             // Rollback on failure
             setHackathons(previousState);
-            alert("Failed to update registration status.");
+            alert("Failed to update registration status on server.");
         } finally {
             setActionLoading(prev => ({ ...prev, [`reg-${id}`]: false }));
         }

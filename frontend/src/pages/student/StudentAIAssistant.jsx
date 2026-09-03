@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { fetchInitialMessages, fetchQuickStarters, sendChatMessage } from '../../services/student/aiAssistantApi';
+import { fetchAllHackathons } from '../../api/hackathonApi';
 
 const StudentAIAssistant = () => {
-    const [selectedContext, setSelectedContext] = useState('Global Connect 2025');
+    const [contextOptions, setContextOptions] = useState([
+        { id: 'general', title: 'General System Context' },
+        { id: 'global_connect', title: 'Global Innovation Arena' },
+        { id: 'cybersecurity', title: 'CyberSecurity Sprint' }
+    ]);
+    const [selectedContext, setSelectedContext] = useState('General System Context');
     const [selectedObjective, setSelectedObjective] = useState('Ideation');
     const [messages, setMessages] = useState([]);
     const [quickStarters, setQuickStarters] = useState([]);
@@ -14,12 +20,22 @@ const StudentAIAssistant = () => {
         const loadInitialData = async () => {
             setIsLoading(true);
             try {
-                const [initialMsgs, triggers] = await Promise.all([
+                const [initialMsgs, triggers, hackathons] = await Promise.all([
                     fetchInitialMessages(),
-                    fetchQuickStarters()
+                    fetchQuickStarters(),
+                    fetchAllHackathons().catch(() => [])
                 ]);
                 setMessages(initialMsgs);
                 setQuickStarters(triggers);
+
+                if (hackathons && hackathons.length > 0) {
+                    const mapped = hackathons.map(h => ({ id: h.id || h._id, title: h.title }));
+                    setContextOptions([
+                        { id: 'general', title: 'General System Context' },
+                        ...mapped
+                    ]);
+                    setSelectedContext(mapped[0]?.title || 'General System Context');
+                }
             } catch (error) {
                 console.error('Failed to load AI data:', error);
             } finally {
@@ -81,9 +97,11 @@ const StudentAIAssistant = () => {
                                     value={selectedContext}
                                     onChange={(e) => setSelectedContext(e.target.value)}
                                 >
-                                    <option value="Global Connect 2025">Global Connect 2025</option>
-                                    <option value="CyberSecurity Sprint">CyberSecurity Sprint</option>
-                                    <option value="Green Tech Challenge">Green Tech Challenge</option>
+                                    {contextOptions.map((opt) => (
+                                        <option key={opt.id} value={opt.title}>
+                                            {opt.title}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                             <div className="space-y-3">
