@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 from datetime import datetime
 from models.hackathonModel import HackathonStatus, HackathonTheme
 import json
@@ -10,18 +10,22 @@ class HackathonBase(BaseModel):
     description: str
     location: Optional[str] = None
     problemStatement: Optional[str] = Field(None, alias="problemStatement")
-    themes: List[HackathonTheme]
-    registrationStart: datetime = Field(..., alias="registrationStart")
-    registrationEnd: datetime = Field(..., alias="registrationEnd")
-    hackathonStart: datetime = Field(..., alias="hackathonStart")
-    hackathonEnd: datetime = Field(..., alias="hackathonEnd")
+    themes: List[Union[HackathonTheme, str]] = Field(default_factory=lambda: ["Web Dev"])
+    registrationStart: Optional[Union[datetime, str]] = Field(None, alias="registrationStart")
+    registrationEnd: Optional[Union[datetime, str]] = Field(None, alias="registrationEnd")
+    hackathonStart: Optional[Union[datetime, str]] = Field(None, alias="hackathonStart")
+    hackathonEnd: Optional[Union[datetime, str]] = Field(None, alias="hackathonEnd")
+    startDate: Optional[Union[datetime, str]] = Field(None, alias="startDate")
+    endDate: Optional[Union[datetime, str]] = Field(None, alias="endDate")
     maxTeamSize: int = Field(default=4, alias="maxTeamSize")
     minTeamSize: int = Field(default=1, alias="minTeamSize")
     isPublic: bool = Field(default=True, alias="isPublic")
     rules: List[str] = []
-    status: HackathonStatus = HackathonStatus.DRAFT
+    status: Union[HackathonStatus, str] = HackathonStatus.DRAFT
     posterUrl: Optional[str] = Field(None, alias="posterUrl")
     templateUrl: Optional[str] = Field(None, alias="templateUrl")
+
+    model_config = {"populate_by_name": True, "from_attributes": True, "extra": "allow"}
 
 
 class HackathonCreate(HackathonBase):
@@ -34,10 +38,12 @@ class HackathonUpdate(BaseModel):
     location: Optional[str] = None
     problemStatement: Optional[str] = Field(None, alias="problemStatement")
     themes: Optional[List[HackathonTheme]] = None
-    registrationStart: Optional[datetime] = Field(None, alias="registrationStart")
-    registrationEnd: Optional[datetime] = Field(None, alias="registrationEnd")
-    hackathonStart: Optional[datetime] = Field(None, alias="hackathonStart")
-    hackathonEnd: Optional[datetime] = Field(None, alias="hackathonEnd")
+    registrationStart: Optional[Union[datetime, str]] = Field(None, alias="registrationStart")
+    registrationEnd: Optional[Union[datetime, str]] = Field(None, alias="registrationEnd")
+    hackathonStart: Optional[Union[datetime, str]] = Field(None, alias="hackathonStart")
+    hackathonEnd: Optional[Union[datetime, str]] = Field(None, alias="hackathonEnd")
+    startDate: Optional[Union[datetime, str]] = Field(None, alias="startDate")
+    endDate: Optional[Union[datetime, str]] = Field(None, alias="endDate")
     maxTeamSize: Optional[int] = Field(None, alias="maxTeamSize")
     minTeamSize: Optional[int] = Field(None, alias="minTeamSize")
     isPublic: Optional[bool] = Field(None, alias="isPublic")
@@ -46,13 +52,14 @@ class HackathonUpdate(BaseModel):
     posterUrl: Optional[str] = Field(None, alias="posterUrl")
     templateUrl: Optional[str] = Field(None, alias="templateUrl")
 
+    model_config = {"populate_by_name": True, "from_attributes": True, "extra": "allow"}
+
 
 class HackathonResponse(HackathonBase):
-    organizerId: str = Field(..., alias="organizerId")
-    createdAt: datetime = Field(..., alias="createdAt")
-    updatedAt: datetime = Field(..., alias="updatedAt")
+    id: Optional[str] = Field(None, alias="_id")
+    organizerId: Optional[str] = Field(None, alias="organizerId")
+    createdAt: Optional[Union[datetime, str]] = Field(None, alias="createdAt")
+    updatedAt: Optional[Union[datetime, str]] = Field(None, alias="updatedAt")
     participants_count: int = Field(default=0, alias="participants_count")
 
-    class Config:
-        populate_by_name = True
-        from_attributes = True
+    model_config = {"populate_by_name": True, "from_attributes": True, "extra": "allow"}

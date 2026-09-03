@@ -15,7 +15,8 @@ UPLOADS_DIR = BASE_DIR / "uploads"
 
 # Create uploads directory if it doesn't exist
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-print(f"📁 Uploads directory: {UPLOADS_DIR}")
+print(f"[Uploads] Directory: {UPLOADS_DIR}")
+
 
 
 @asynccontextmanager
@@ -145,11 +146,11 @@ if __name__ == "__main__":
     import uvicorn
 
     print("\n" + "=" * 60)
-    print("🎯 STARTING PROEDUVATE HACKATHON PLATFORM")
+    print("[STARTING] PROEDUVATE HACKATHON PLATFORM")
     print("=" * 60)
-    print(f"📱 App: {settings.APP_NAME}")
-    print(f"🌐 Host: {settings.BACKEND_URL}")
-    print(f"📊 Docs: http://{settings.BACKEND_URL}/docs")
+    print(f"App: {settings.APP_NAME}")
+    print(f"Host: {settings.BACKEND_URL}")
+    print(f"Docs: http://{settings.BACKEND_URL}/docs")
     print("=" * 60)
 
     # Run the server

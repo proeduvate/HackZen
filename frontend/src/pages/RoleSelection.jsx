@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import ThemeToggle from '../components/ThemeToggle';
+import Logo from '../components/Logo';
+import { usePlatformSettings } from '../context/PlatformSettingsContext';
 
 const RoleSelection = () => {
     const navigate = useNavigate();
+    const { isPublicRegistrationAllowed, platformName, isMaintenanceMode } = usePlatformSettings();
     const [selectedRole, setSelectedRole] = useState(null);
 
     const roles = [
@@ -30,7 +34,7 @@ const RoleSelection = () => {
     ];
 
     const handleContinue = () => {
-        if (!selectedRole) return;
+        if (!selectedRole || !isPublicRegistrationAllowed) return;
 
         // State Persistence: Store the selected role for RBAC logic downstream
         sessionStorage.setItem('temp_selected_role', selectedRole);
@@ -44,14 +48,15 @@ const RoleSelection = () => {
 
     return (
         <div className="min-h-screen px-4 py-8 bg-navy-900 sm:py-12 flex flex-col items-center">
-            {/* Back Button */}
-            <div className="w-full max-w-5xl mb-12">
+            {/* Top Navigation Bar */}
+            <div className="w-full max-w-5xl mb-12 flex items-center justify-between">
                 <Link to="/" className="inline-flex items-center gap-2 text-gray-400 transition hover:text-white group">
                     <svg className="w-5 h-5 transition group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
                     <span className="font-medium">Back to Home</span>
                 </Link>
+                <ThemeToggle />
             </div>
 
             {/* Header */}
@@ -60,8 +65,14 @@ const RoleSelection = () => {
                     Define Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">Identity</span>
                 </h1>
                 <p className="text-gray-400 text-lg max-w-xl mx-auto">
-                    Select a path below to customize your ProEduvate experience. You can't change this later without a new account.
+                    Select a path below to customize your {platformName || 'ProEduvate'} experience.
                 </p>
+
+                {!isPublicRegistrationAllowed && (
+                    <div className="mt-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs sm:text-sm font-semibold max-w-xl mx-auto animate-in fade-in duration-300">
+                        ⚠️ New account creation is currently closed by the platform administrator. Existing users can sign in below.
+                    </div>
+                )}
             </div>
 
             {/* Role Cards Container */}
@@ -115,16 +126,20 @@ const RoleSelection = () => {
             <div className="w-full max-w-4xl flex flex-col items-center gap-6">
                 <button
                     onClick={handleContinue}
-                    disabled={!selectedRole}
+                    disabled={!selectedRole || !isPublicRegistrationAllowed}
                     className={`
                         w-full sm:w-80 py-4 px-8 rounded-2xl font-black uppercase tracking-widest transition-all duration-300 transform
-                        ${selectedRole
+                        ${selectedRole && isPublicRegistrationAllowed
                             ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-xl hover:shadow-purple-500/40 hover:-translate-y-1 active:scale-95'
                             : 'bg-white/5 text-gray-500 cursor-not-allowed border border-white/5 opacity-50'
                         }
                     `}
                 >
-                    {selectedRole ? `Continue as ${selectedRole}` : 'Select a Role to Proceed'}
+                    {!isPublicRegistrationAllowed
+                        ? 'Registrations Closed'
+                        : selectedRole
+                        ? `Continue as ${selectedRole}`
+                        : 'Select a Role to Proceed'}
                 </button>
 
                 <div className="text-center">

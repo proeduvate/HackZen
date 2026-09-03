@@ -48,7 +48,11 @@ const StudentWorkspace = () => {
     useEffect(() => {
         if (activeTab !== 'Chat' || !selectedTeam) return;
 
+        let isCleanedUp = false;
+        let retryTimeoutId = null;
+
         const connectWS = () => {
+            if (isCleanedUp) return;
             const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
             // Correctly handle the base URL to create the WS URL
             const wsBase = apiBase.replace(/^http/, 'ws').replace(/\/api$/, '');
@@ -61,32 +65,38 @@ const StudentWorkspace = () => {
             ws.onopen = () => console.log("Chat connected");
 
             ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                if (data.type === 'new_message') {
-                    const msg = data.message;
-                    const newMessage = {
-                        id: msg._id || Date.now(),
-                        text: msg.content,
-                        sender: msg.senderId === userId ? 'me' : 'them',
-                        user: msg.senderName || (msg.senderId === userId ? userName : 'Teammate'),
-                        time: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                        type: msg.messageType || 'text'
-                    };
-                    
-                    setTeamMessages(prev => ({
-                        ...prev,
-                        [selectedTeam]: [...(prev[selectedTeam] || []), newMessage]
-                    }));
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'new_message') {
+                        const msg = data.message;
+                        const newMessage = {
+                            id: msg._id || Date.now(),
+                            text: msg.content,
+                            sender: msg.senderId === userId ? 'me' : 'them',
+                            user: msg.senderName || (msg.senderId === userId ? userName : 'Teammate'),
+                            time: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                            type: msg.messageType || 'text'
+                        };
+                        
+                        setTeamMessages(prev => ({
+                            ...prev,
+                            [selectedTeam]: [...(prev[selectedTeam] || []), newMessage]
+                        }));
+                    }
+                } catch (e) {
+                    console.error("Failed to parse websocket message:", e);
                 }
             };
 
             ws.onclose = () => {
-                console.log("Chat disconnected. Retrying in 3s...");
-                setTimeout(() => {
-                    if (activeTab === 'Chat' && socketRef.current?.readyState !== WebSocket.OPEN) {
-                        connectWS();
-                    }
-                }, 3000);
+                if (!isCleanedUp) {
+                    console.log("Chat disconnected. Retrying in 3s...");
+                    retryTimeoutId = setTimeout(() => {
+                        if (!isCleanedUp && activeTab === 'Chat' && socketRef.current?.readyState !== WebSocket.OPEN) {
+                            connectWS();
+                        }
+                    }, 3000);
+                }
             };
 
             ws.onerror = (err) => console.error("WebSocket Error:", err);
@@ -95,6 +105,8 @@ const StudentWorkspace = () => {
         connectWS();
 
         return () => {
+            isCleanedUp = true;
+            if (retryTimeoutId) clearTimeout(retryTimeoutId);
             if (socketRef.current) {
                 socketRef.current.close();
             }

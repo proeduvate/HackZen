@@ -23,6 +23,16 @@ const StudentHackathons = () => {
             setIsLoading(true);
             try {
                 const data = await fetchAllHackathons();
+                const computeDuration = (start, end) => {
+                    if (!start || !end) return '48 Hours';
+                    const diffMs = new Date(end) - new Date(start);
+                    if (diffMs <= 0 || isNaN(diffMs)) return '48 Hours';
+                    const hours = Math.round(diffMs / (1000 * 60 * 60));
+                    if (hours < 24) return `${hours} Hours`;
+                    const days = Math.round(hours / 24);
+                    return `${days} ${days === 1 ? 'Day' : 'Days'}`;
+                };
+
                 // Map API data to UI format
                 const formattedData = data.map(h => ({
                     id: h.id,
@@ -31,7 +41,7 @@ const StudentHackathons = () => {
                     description: h.description,
                     tags: h.themes || [],
                     date: new Date(h.hackathonStart).toLocaleDateString(),
-                    duration: '48 Hours', // Mocked duration
+                    duration: computeDuration(h.hackathonStart, h.hackathonEnd),
                     participants: h.participants_count || '0',
                     mode: h.location || 'Virtual',
                     status: h.status || 'Open',

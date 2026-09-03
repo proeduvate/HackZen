@@ -205,3 +205,20 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Local test & debug scripts (do not commit to git)
+backend/test_*.py
+backend/check_*.py
+backend/verify_*.py
+backend/debug_*.py
+backend/set_personal_passwords.py
+
+# Local testing & E2E artifacts
+frontend/e2e/
+frontend/midscene_run/
+frontend/test-results/
+frontend/playwright.config.js
+run_e2e_tests.bat
+.vscode/
+backend/uploads/
+

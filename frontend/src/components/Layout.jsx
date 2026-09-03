@@ -1,12 +1,111 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation, Outlet } from 'react-router-dom';
+import ThemeToggle from './ThemeToggle';
+import Logo from './Logo';
+import { fetchNotifications, markAllNotificationsRead, markNotificationRead } from '../services/admin/dashboardApi';
+
+// --- Single Message Popup Modal ---
+const MessageModal = ({ message, onClose }) => {
+    if (!message) return null;
+    return (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl relative text-slate-900 dark:text-white">
+                <button 
+                    onClick={onClose} 
+                    className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 dark:text-gray-400 dark:hover:text-white transition-colors p-1 rounded-lg"
+                    aria-label="Close modal"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+                <div className="flex items-center gap-3 mb-4 border-b border-slate-200 dark:border-white/10 pb-3">
+                    <div className="p-2.5 rounded-xl bg-sky-50 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-500/30 flex items-center justify-center shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="m3 11 18-5v12L3 14v-3z"/>
+                            <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 className="text-lg font-extrabold text-slate-900 dark:text-white leading-tight">{message.title}</h2>
+                        <span className="text-[10px] text-slate-500 dark:text-gray-400 font-mono">{message.createdAt || message.time}</span>
+                    </div>
+                </div>
+                <div className="bg-slate-50 dark:bg-black/20 p-4 rounded-xl border border-slate-200 dark:border-white/5">
+                    <p className="text-sm text-slate-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">{message.message}</p>
+                </div>
+                <div className="mt-6 flex justify-end">
+                    <button onClick={onClose} className="px-6 py-2 bg-sky-50 dark:bg-sky-500/20 hover:bg-sky-100 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-500/40 font-bold text-xs rounded-xl shadow-sm transition-all active:scale-95">Close</button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// --- Global Omnibox Search Items Dataset ---
+const globalSearchItems = [
+    // Navigation Pages
+    { id: 'p1', title: 'Operational Command Center', subtitle: 'Admin Executive Overview & Metrics', category: 'Pages', path: '/admin/dashboard' },
+    { id: 'p2', title: 'Organizer Approvals', subtitle: 'Review & Verify Organizer Applications', category: 'Pages', path: '/admin/organizer-approvals' },
+    { id: 'p3', title: 'Hackathon Approvals', subtitle: 'Approve & Moderate Hackathon Proposals', category: 'Pages', path: '/admin/hackathon-approvals' },
+    { id: 'p4', title: 'Users Management & Directory', subtitle: 'Inspect, Role-Edit & Governance Directory', category: 'Pages', path: '/admin/users' },
+    { id: 'p5', title: 'Submissions Scrutiny & Review', subtitle: 'Evaluate deliverables & originality scores', category: 'Pages', path: '/admin/submissions' },
+    { id: 'p6', title: 'Certificates & Credential Ledger', subtitle: 'Issue, Revoke & Verify Certificates', category: 'Pages', path: '/admin/certificates' },
+    { id: 'p7', title: 'Disputes & Incident Reports', subtitle: 'Resolve team disputes and plagiarism flags', category: 'Pages', path: '/admin/disputes' },
+    { id: 'p8', title: 'Analytics & College Rankings', subtitle: 'Participation trends & performance benchmarks', category: 'Pages', path: '/admin/analytics' },
+    { id: 'p9', title: 'Platform Security Settings', subtitle: 'Access controls and system preferences', category: 'Pages', path: '/admin/settings' },
+
+    // Users
+    { id: 'u1', title: 'Dr. Ramesh Kumar', subtitle: 'Mentor • 12 Teams (Overloaded) • Microsoft Research', category: 'Users', path: '/admin/users?role=MENTOR&filter=overloaded' },
+    { id: 'u2', title: 'Dr. Priya Nair', subtitle: 'Mentor • 10 Teams (Overloaded) • IIT Madras', category: 'Users', path: '/admin/users?role=MENTOR&filter=overloaded' },
+    { id: 'u3', title: 'Prof. Arun Selvam', subtitle: 'Mentor • 9 Teams (Overloaded) • VIT Chennai', category: 'Users', path: '/admin/users?role=MENTOR&filter=overloaded' },
+    { id: 'u4', title: 'Divya Krishnan', subtitle: 'Mentor • 11 Teams (Overloaded) • Google Cloud Labs', category: 'Users', path: '/admin/users?role=MENTOR&filter=overloaded' },
+    { id: 'u5', title: 'Mohan Das', subtitle: 'Mentor • 9 Teams (Overloaded) • Amazon Web Services', category: 'Users', path: '/admin/users?role=MENTOR&filter=overloaded' },
+    { id: 'u6', title: 'Sarath G', subtitle: 'Student • ABC Engineering College • 3 Submissions', category: 'Users', path: '/admin/users?tab=All%20Users' },
+    { id: 'u7', title: 'P Saravanan', subtitle: 'Organizer • ProEduvate Partner Org • 5 Events', category: 'Users', path: '/admin/organizer-approvals' },
+    { id: 'u8', title: 'M Sailesh', subtitle: 'Student • VIT Chennai • 2 Hackathons', category: 'Users', path: '/admin/users?tab=All%20Users' },
+    { id: 'u9', title: 'Ananya Rao', subtitle: 'Mentor • Microsoft Research • AI & Data Science', category: 'Users', path: '/admin/users?role=MENTOR' },
+
+    // Hackathons
+    { id: 'h1', title: 'Global AI Summit 2026', subtitle: 'Live Event • Stage 2 Final Submissions • 180 Participants', category: 'Hackathons', path: '/admin/hackathon-approvals?filter=active' },
+    { id: 'h2', title: 'Smart Campus Hackathon', subtitle: 'Pending Approval • SRM Institute of Science', category: 'Hackathons', path: '/admin/hackathon-approvals?filter=pending' },
+    { id: 'h3', title: 'CyberKnights Shield 2026', subtitle: 'Active Security Jam • Results Finalizing', category: 'Hackathons', path: '/admin/hackathon-approvals?filter=active' },
+    { id: 'h4', title: 'FinTech Innovate Challenge', subtitle: 'Draft Proposal • IIT Madras', category: 'Hackathons', path: '/admin/hackathon-approvals?filter=draft' },
+
+    // Submissions & Disputes
+    { id: 's1', title: 'Project CloudMatrix (Team Alpha)', subtitle: 'Final Deliverable • AI Summit • Health Score 92/100', category: 'Submissions', path: '/admin/submissions?filter=pending' },
+    { id: 's2', title: 'QuantumLeap Milestone 2', subtitle: 'Smart Campus • 88% Originality', category: 'Submissions', path: '/admin/submissions?filter=approved' },
+    { id: 's3', title: 'Dispute: Team Delta Plagiarism Flag', subtitle: 'High Similarity Alert on repo submission', category: 'Disputes', path: '/admin/disputes' },
+    { id: 's4', title: 'Certificate CERT-2026-0182 (Alex Johnson)', subtitle: 'Winner Credential • Global AI Summit 2026', category: 'Certificates', path: '/admin/certificates?filter=active' }
+];
+
 
 const DashboardLayout = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
+    const [selectedMessage, setSelectedMessage] = useState(null);
+    const [toastPopup, setToastPopup] = useState(null);
+    const mainRef = React.useRef(null);
+
+    // Global Omnibox Search State
+    const [globalSearchQuery, setGlobalSearchQuery] = useState('');
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const searchRef = React.useRef(null);
+
+
+    // Scroll to top on every route transition
+    React.useEffect(() => {
+        if (mainRef.current) {
+            mainRef.current.scrollTop = 0;
+        }
+        window.scrollTo(0, 0);
+    }, [location.pathname]);
 
     // Reactive User State
     const [storedUser, setStoredUser] = React.useState(() => {
@@ -24,29 +123,176 @@ const DashboardLayout = () => {
         return () => window.removeEventListener('user-update', handleUserUpdate);
     }, []);
 
+    // --- LocalStorage Read Notification Persistence ---
+    const getReadIds = () => {
+        try {
+            return JSON.parse(localStorage.getItem('read_notification_ids') || '[]');
+        } catch (e) {
+            return [];
+        }
+    };
+
+    const saveReadId = (id) => {
+        if (!id) return;
+        const current = getReadIds();
+        if (!current.includes(id)) {
+            localStorage.setItem('read_notification_ids', JSON.stringify([...current, id]));
+        }
+    };
+
+    const saveAllReadIds = (ids) => {
+        const current = getReadIds();
+        const combined = Array.from(new Set([...current, ...ids]));
+        localStorage.setItem('read_notification_ids', JSON.stringify(combined));
+    };
+
     // --- Notifications Integration ---
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
 
     const loadNotifications = async () => {
-        const [list, count] = await Promise.all([
-            import('../services/inboxApi').then(m => m.fetchNotifications({ limit: 5 })),
-            import('../services/inboxApi').then(m => m.fetchUnreadCount())
-        ]);
-        setNotifications(list);
-        setUnreadCount(count);
+        const localReadIds = getReadIds();
+        try {
+            const res = await fetchNotifications();
+            if (res && res.success && Array.isArray(res.notifications)) {
+                const list = res.notifications.map(n => {
+                    const isRead = n.read || n.isRead || localReadIds.includes(n.id);
+                    return { ...n, read: isRead, isRead: isRead };
+                });
+                // Ensure strictly sorted newest on top
+                const sortedList = [...list].sort((a, b) => {
+                    if (a.id && b.id) return b.id.localeCompare(a.id);
+                    return 0;
+                });
+                setNotifications(sortedList);
+                const unread = sortedList.filter(n => !n.read && !n.isRead);
+                setUnreadCount(unread.length);
+
+                // Auto-trigger Toast popup ONLY for new unread notifications that haven't popped up yet
+                if (unread.length > 0) {
+                    const latest = unread[0];
+                    const lastSeenId = localStorage.getItem('last_seen_announcement_id');
+                    if (lastSeenId !== latest.id && !localReadIds.includes(latest.id)) {
+                        setToastPopup(latest);
+                        localStorage.setItem('last_seen_announcement_id', latest.id);
+                        setTimeout(() => {
+                            setToastPopup(prev => (prev?.id === latest.id ? null : prev));
+                        }, 7000);
+                    }
+                }
+                return;
+            }
+        } catch (e) {
+            console.error("Failed to load dashboard notifications:", e);
+        }
+
+        try {
+            const data = await import('../api/userApi').then(m => m.fetchMyNotifications());
+            if (Array.isArray(data) && data.length > 0) {
+                const list = data.map(n => {
+                    const isRead = n.isRead || n.read || localReadIds.includes(n.id);
+                    return { ...n, isRead, read: isRead };
+                });
+                const sortedList = [...list].sort((a, b) => {
+                    if (a.id && b.id) return b.id.localeCompare(a.id);
+                    return 0;
+                });
+                setNotifications(sortedList);
+                setUnreadCount(sortedList.filter(n => !n.isRead).length);
+            }
+        } catch (e) {
+            setNotifications([]);
+            setUnreadCount(0);
+        }
     };
+
 
     React.useEffect(() => {
         loadNotifications();
-        // Poll for updates every 30 seconds
-        const interval = setInterval(loadNotifications, 30000);
-        return () => clearInterval(interval);
+        const interval = setInterval(loadNotifications, 10000);
+        window.addEventListener('announcement-sent', loadNotifications);
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('announcement-sent', loadNotifications);
+        };
     }, []);
 
+    // --- Click Outside Dropdowns Ref ---
+    const dropdownRef = React.useRef(null);
+    React.useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowNotifications(false);
+            }
+            if (searchRef.current && !searchRef.current.contains(event.target)) {
+                setIsSearchOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Filter live search items based on omnibox query
+    const searchResults = React.useMemo(() => {
+        const q = globalSearchQuery.trim().toLowerCase();
+        if (!q) return [];
+        return globalSearchItems.filter(item => {
+            return item.title.toLowerCase().includes(q) ||
+                   item.subtitle.toLowerCase().includes(q) ||
+                   item.category.toLowerCase().includes(q);
+        }).slice(0, 8);
+    }, [globalSearchQuery]);
+
+    const handleSearchSelect = (item) => {
+        navigate(item.path);
+        setGlobalSearchQuery('');
+        setIsSearchOpen(false);
+    };
+
+    const handleSearchKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            if (searchResults.length > 0) {
+                handleSearchSelect(searchResults[0]);
+            } else if (globalSearchQuery.trim()) {
+                navigate(`/admin/users?search=${encodeURIComponent(globalSearchQuery.trim())}`);
+                setIsSearchOpen(false);
+            }
+        } else if (e.key === 'Escape') {
+            setIsSearchOpen(false);
+        }
+    };
+
+
     const handleMarkAllRead = async () => {
-        const success = await import('../services/inboxApi').then(m => m.markAllAsRead());
-        if (success) loadNotifications();
+        const allIds = notifications.map(n => n.id).filter(Boolean);
+        saveAllReadIds(allIds);
+        setNotifications(prev => prev.map(n => ({ ...n, read: true, isRead: true })));
+        setUnreadCount(0);
+        try {
+            await markAllNotificationsRead();
+        } catch (error) {
+            console.error("Failed to mark all as read", error);
+        }
+    };
+
+    const handleOpenMessage = async (notif) => {
+        setSelectedMessage(notif);
+        setShowNotifications(false);
+        if (notif.id) {
+            saveReadId(notif.id);
+        }
+        setNotifications(prev => prev.map(n => (n.id === notif.id ? { ...n, read: true, isRead: true } : n)));
+        setUnreadCount(prev => Math.max(0, prev - 1));
+
+        if (!notif.read && !notif.isRead) {
+            try {
+                if (notif.id) {
+                    await markNotificationRead(notif.id);
+                }
+            } catch (error) {
+                console.error("Failed to mark single notification as read", error);
+            }
+        }
     };
 
     // Determine Role based on URL path
@@ -64,7 +310,6 @@ const DashboardLayout = () => {
             email: storedUser?.email || '',
             theme: 'purple',
             path: 'student',
-            logoGradient: 'from-purple-600 to-blue-600',
             avatarGradient: 'from-purple-500 to-indigo-500',
         },
         organizer: {
@@ -74,7 +319,6 @@ const DashboardLayout = () => {
             email: storedUser?.email || '',
             theme: 'cyan',
             path: 'organizer',
-            logoGradient: 'from-cyan-600 to-blue-600',
             avatarGradient: 'from-cyan-500 to-blue-500',
         },
         mentor: {
@@ -84,7 +328,6 @@ const DashboardLayout = () => {
             email: storedUser?.email || '',
             theme: 'purple',
             path: 'mentor',
-            logoGradient: 'from-purple-600 to-blue-600',
             avatarGradient: 'from-purple-500 to-indigo-500',
         },
         admin: {
@@ -94,28 +337,8 @@ const DashboardLayout = () => {
             email: storedUser?.email || '',
             theme: 'blue',
             path: 'admin',
-            logoGradient: 'from-blue-800 to-indigo-900',
             avatarGradient: 'from-blue-600 to-indigo-700',
         }
-    };
-
-    // Style configurations
-    const indicatorStyles = {
-        purple: "bg-purple-400 shadow-[0_0_10px_rgba(192,132,252,0.5)]",
-        cyan: "bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]",
-        blue: "bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.5)]"
-    };
-
-    const iconStyles = {
-        purple: "group-hover:text-purple-400 group-hover:drop-shadow-[0_0_8px_rgba(192,132,252,0.5)]",
-        cyan: "group-hover:text-cyan-400 group-hover:drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]",
-        blue: "group-hover:text-blue-400 group-hover:drop-shadow-[0_0_8px_rgba(96,165,250,0.5)]"
-    };
-
-    const activeStyles = {
-        purple: "bg-purple-500/10 text-white border-purple-500/30",
-        cyan: "bg-cyan-500/10 text-white border-cyan-500/30",
-        blue: "bg-blue-500/10 text-white border-blue-500/30"
     };
 
     const handleLogout = () => {
@@ -124,7 +347,6 @@ const DashboardLayout = () => {
     };
 
     const currentRole = isAdmin ? roleConfig.admin : (isOrganizer ? roleConfig.organizer : (isMentor ? roleConfig.mentor : roleConfig.student));
-    const themeColor = currentRole.theme;
 
     // Admin Navigation Items
     const adminNav = [
@@ -175,7 +397,6 @@ const DashboardLayout = () => {
         },
     ];
 
-    // Navigation Items
     const studentNav = [
         {
             name: 'Dashboard', path: '/student/dashboard', icon: (
@@ -265,7 +486,7 @@ const DashboardLayout = () => {
         },
         {
             name: 'Mentorship Requests', path: '/mentor/mentorship-requests', icon: (
-                <svg className=" w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
             )
         },
         {
@@ -290,8 +511,6 @@ const DashboardLayout = () => {
 
     let navItems = isAdmin ? adminNav : (isOrganizer ? organizerNav : (isMentor ? mentorNav : studentNav));
 
-    // If user is admin but currently in another dashboard (e.g. mentor/organizer/student), 
-    // add an "Admin Panel" link at the bottom of the nav
     if (isAdminUser && !isAdmin) {
         navItems = [...navItems, {
             name: 'Admin Panel',
@@ -303,7 +522,7 @@ const DashboardLayout = () => {
     }
 
     return (
-        <div className="flex h-screen bg-navy-900 bg-radial text-white overflow-hidden font-sans">
+        <div className="flex h-screen bg-[#f8fafc] dark:bg-navy-950 text-slate-900 dark:text-white overflow-hidden font-sans transition-colors duration-300">
             {/* Mobile Overlay */}
             {sidebarOpen && (
                 <div
@@ -312,186 +531,421 @@ const DashboardLayout = () => {
                 />
             )}
 
-            {/* Sidebar */}
-            <aside className={`
-                fixed lg:relative z-50 w-64 h-full glass-strong border-r border-white/10 flex flex-col transition-transform duration-300 ease-in-out
-                ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-            `}>
-                {/* Logo Area */}
-                <Link to="/" className="py-6 w-full flex items-center justify-center border-b border-white/10 group">
-                    <img
-                        src="/proeduvatee-removebg-preview.png"
-                        alt="ProEduvate"
-                        className="mx-auto h-14 w-auto transition-transform duration-300 group-hover:scale-110 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]"
-                    />
-                </Link>
+            {/* --- SIDEBAR CONTAINER --- */}
+            <div 
+                className={`bg-[#f9f9f9] dark:bg-navy-900 border-r border-[#e2e8f0] dark:border-white/10 flex flex-col shrink-0 transition-all duration-300 ease-in-out ${
+                    isSidebarExpanded ? 'w-64' : 'w-[72px]'
+                } ${sidebarOpen ? 'translate-x-0 fixed inset-y-0 left-0 z-40' : '-translate-x-full lg:translate-x-0 fixed lg:relative h-full z-20'}`}
+            >
 
-                {/* Navigation Menu */}
-                <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-2">
+                {/* Sidebar Top Header */}
+                {isSidebarExpanded ? (
+                    <div className="h-16 flex items-center justify-between px-4 border-b border-[#e2e8f0] dark:border-white/10 shrink-0">
+                        {/* Left: Brand Logo (No Tooltip) */}
+                        <Link to="/" className="flex items-center gap-2.5 focus:outline-none select-none">
+                            <Logo size="sm" />
+                        </Link>
+
+                        {/* Right: Sidebar Toggle Button (Collapse Sidebar) */}
+                        <div className="relative group/toggle">
+                            <button 
+                                onClick={() => setIsSidebarExpanded(false)}
+                                className="p-2 rounded-xl text-slate-600 dark:text-gray-300 hover:bg-slate-200/60 dark:hover:bg-white/10 transition-colors focus:outline-none cursor-pointer"
+                                aria-label="Collapse Sidebar"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <rect width="18" height="18" x="3" y="3" rx="2" strokeWidth="2" />
+                                    <path strokeWidth="2" strokeLinecap="round" d="M9 3v18" />
+                                </svg>
+                            </button>
+                            {/* Tooltip for Collapse Sidebar */}
+                            <span 
+                                style={{ color: '#ffffff' }}
+                                className="absolute right-0 top-full mt-2 px-3 py-1 text-xs font-medium !text-white bg-[#1A1F2C] backdrop-blur-sm rounded-lg shadow-2xl border border-neutral-800/20 pointer-events-none opacity-0 group-hover/toggle:opacity-100 transition-all duration-200 ease-in-out whitespace-nowrap z-[9999]"
+                            >
+                                Collapse Sidebar
+                                <span className="absolute w-2 h-2 bg-[#1A1F2C] transform rotate-45 right-3 top-[-4px] border-t border-l border-neutral-800/20"></span>
+                            </span>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="h-16 flex items-center justify-center border-b border-[#e2e8f0] dark:border-white/10 shrink-0">
+                        {/* Collapsed Mode: ProEduvate Emblem button that morphs into Sidebar Toggle icon on hover */}
+                        <div className="relative group/logo">
+                            <button 
+                                onClick={() => setIsSidebarExpanded(true)}
+                                className="p-2 rounded-xl hover:bg-slate-200/60 dark:hover:bg-white/10 transition-colors flex items-center justify-center focus:outline-none cursor-pointer group/icon"
+                                aria-label="Open Sidebar"
+                            >
+                                <div className="w-7 h-7 relative flex items-center justify-center">
+                                    {/* Default Rocket Emblem SVG */}
+                                    <svg className="w-7 h-7 text-[#0ea5e9] transform -rotate-12 transition-all duration-200 group-hover/icon:opacity-0 group-hover/icon:scale-75 absolute" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M3.4 20.4l17.4-7.5c.8-.3.8-1.4 0-1.7L3.4 3.7c-.7-.3-1.4.3-1.2 1l2.4 6.8c.1.3.3.5.6.6l8.8 1.4-8.8 1.4c-.3.1-.5.3-.6.6l-2.4 6.9c-.2.7.5 1.3 1.2 1z"/>
+                                    </svg>
+                                    {/* On Hover: Sidebar Toggle Icon [ ] */}
+                                    <svg className="w-5 h-5 text-slate-700 dark:text-white transition-all duration-200 opacity-0 scale-75 group-hover/icon:opacity-100 group-hover/icon:scale-100 absolute" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <rect width="18" height="18" x="3" y="3" rx="2" strokeWidth="2" />
+                                        <path strokeWidth="2" strokeLinecap="round" d="M9 3v18" />
+                                    </svg>
+                                </div>
+                            </button>
+                            {/* Tooltip for Open Sidebar when collapsed */}
+                            <span 
+                                style={{ color: '#ffffff' }}
+                                className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-1 text-xs font-medium !text-white bg-[#1A1F2C] backdrop-blur-sm rounded-lg shadow-2xl border border-neutral-800/20 pointer-events-none opacity-0 group-hover/logo:opacity-100 transition-all duration-200 ease-in-out whitespace-nowrap z-[9999]"
+                            >
+                                Open Sidebar
+                                <span className="absolute w-2 h-2 bg-[#1A1F2C] transform rotate-45 left-[-4px] top-1/2 -translate-y-1/2 border-l border-b border-neutral-800/20"></span>
+                            </span>
+                        </div>
+                    </div>
+                )}
+                
+                {/* Navigation Links with Hover Tooltips */}
+                <nav className="flex-1 py-4 px-3 space-y-1 scrollbar-hide">
                     {navItems.map((item) => {
-                        // For the main dashboard path, use exact match to avoid highlighting it for every sub-route
-                        // For other routes, use startsWith to keep the parent nav item highlighted
                         const isDashboardRoot = item.path.endsWith('/dashboard');
                         const isActive = isDashboardRoot
                             ? location.pathname === item.path
                             : location.pathname.startsWith(item.path);
+
                         return (
-                            <Link
-                                key={item.name}
-                                to={item.path}
-                                onClick={() => setSidebarOpen(false)}
-                                className={`
-                                    flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group
-                                    ${isActive
-                                        ? `${activeStyles[themeColor] || activeStyles.purple} border`
-                                        : 'text-gray-400 hover:text-white hover:bg-white/5'}
-                                `}
-                            >
-                                <span className={`transition-transform duration-300 ${iconStyles[themeColor] || iconStyles.purple}`}>
-                                    {item.icon}
-                                </span>
-                                <span className="font-bold tracking-wide uppercase text-[12px]">{item.name}</span>
-                                {isActive && (
-                                    <div className={`ml-auto w-1.5 h-1.5 rounded-full ${indicatorStyles[themeColor] || indicatorStyles.purple}`} />
+                            <div key={item.name} className="relative group">
+                                <button
+                                    onClick={() => {
+                                        navigate(item.path);
+                                        setSidebarOpen(false);
+                                    }}
+                                    className={`w-full flex items-center ${isSidebarExpanded ? 'px-3 justify-start' : 'justify-center'} py-2.5 rounded-2xl text-sm font-bold transition-all duration-300 ${
+                                        isActive 
+                                        ? 'bg-sky-50 text-[#0ea5e9] dark:bg-sky-500/10 dark:text-sky-400' 
+                                        : 'text-[#64748b] dark:text-gray-400 hover:bg-[#f1f5f9] dark:hover:bg-white/5'
+                                    }`}
+                                >
+                                    <span className={`shrink-0 ${isActive ? 'opacity-100 text-[#0ea5e9] dark:text-sky-400' : 'opacity-70'} ${isSidebarExpanded ? 'mr-3' : ''}`}>
+                                        {item.icon}
+                                    </span>
+                                    
+                                    {/* Text (Visible only when expanded) */}
+                                    {isSidebarExpanded && <span className="truncate">{item.name}</span>}
+                                </button>
+
+                                {/* Tooltip rendered ONLY when sidebar is collapsed (icon-only mode) */}
+                                {!isSidebarExpanded && (
+                                    <span 
+                                        style={{ color: '#ffffff' }}
+                                        className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-4 py-2 text-sm font-medium !text-white bg-[#1A1F2C] backdrop-blur-sm rounded-lg shadow-2xl border border-neutral-800/20 pointer-events-none opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200 ease-in-out whitespace-nowrap z-[9999]"
+                                    >
+                                        {item.name}
+                                        <span className="absolute w-2 h-2 bg-[#1A1F2C] transform rotate-45 left-[-4px] top-1/2 -translate-y-1/2 border-l border-b border-neutral-800/20"></span>
+                                    </span>
                                 )}
-                            </Link>
+                            </div>
                         );
                     })}
                 </nav>
 
+                {/* Compact Profile at Bottom */}
+                <div className="p-3 border-t border-[#e2e8f0] dark:border-white/10 shrink-0 relative group">
+                    <button 
+                        onClick={() => navigate(`/${currentRole.path}/profile`)}
+                        className={`flex items-center gap-3 w-full p-2 rounded-full hover:bg-[#f1f5f9] dark:hover:bg-white/5 transition-colors ${isSidebarExpanded ? 'justify-start' : 'justify-center'}`}
+                    >
+                        <div className="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-200/80 dark:border-sky-500/30 flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
+                            {currentRole.name.charAt(0).toUpperCase()}
+                        </div>
+                        {isSidebarExpanded && (
+                            <div className="flex flex-col text-left overflow-hidden">
+                                <span className="text-xs font-bold text-[#1e293b] dark:text-white truncate">{currentRole.roleName}</span>
+                                <span className="text-[10px] text-[#64748b] dark:text-gray-400 truncate">{currentRole.fullName}</span>
+                            </div>
+                        )}
+                    </button>
 
-                {/* Bottom Badge */}
-                <div className="p-4 mt-auto">
-                    <div className="glass p-4 rounded-xl flex items-center gap-3 border border-white/5">
-                        <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${currentRole.avatarGradient} flex items-center justify-center`}>
-                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-0.5">Deployment Role</p>
-                            <p className="text-sm font-bold text-white tracking-tight uppercase">{currentRole.roleName}</p>
-                        </div>
-                    </div>
+                    {/* Tooltip rendered ONLY when sidebar is collapsed (icon-only mode) */}
+                    {!isSidebarExpanded && (
+                        <span 
+                            style={{ color: '#ffffff' }}
+                            className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-4 py-2 text-sm font-medium !text-white bg-[#1A1F2C] backdrop-blur-sm rounded-lg shadow-2xl border border-neutral-800/20 pointer-events-none opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200 ease-in-out whitespace-nowrap z-[9999]"
+                        >
+                            {currentRole.roleName} ({currentRole.fullName})
+                            <span className="absolute w-2 h-2 bg-[#1A1F2C] transform rotate-45 left-[-4px] top-1/2 -translate-y-1/2 border-l border-b border-neutral-800/20"></span>
+                        </span>
+                    )}
                 </div>
-            </aside>
+            </div>
 
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col h-full relative overflow-hidden">
-                {/* Header */}
-                <header className="h-20 glass-strong border-b border-white/10 flex items-center justify-between px-6 lg:px-10 sticky top-0 z-30">
-                    <div className="flex items-center gap-4">
+                {/* --- MAIN CONTENT HEADER --- */}
+                <header className="h-16 bg-[#ffffff] dark:bg-navy-900/80 backdrop-blur-md border-b border-[#e2e8f0] dark:border-white/10 flex items-center justify-between px-6 shrink-0 z-10 transition-colors overflow-visible">
+                    <div className="flex items-center gap-3">
                         <button
                             onClick={() => setSidebarOpen(true)}
-                            className="lg:hidden p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                            className="p-2 text-[#64748b] dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-[#f1f5f9] dark:hover:bg-white/10 rounded-full lg:hidden transition-colors"
                         >
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                         </button>
 
-                        {/* Search Bar - Common for dashboard */}
-                        <div className="relative hidden md:block w-96 group">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg className={`w-5 h-5 text-gray-400 group-focus-within:text-${themeColor}-400 transition-colors`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        {/* Search Bar Container with Live Omnibox Dropdown */}
+                        <div className="relative hidden md:block w-96" ref={searchRef}>
+                            <div className="relative flex items-center">
+                                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                    <svg className="w-4 h-4 text-slate-400 dark:text-gray-400 group-focus-within:text-[#0ea5e9] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                    </svg>
+                                </div>
+                                <input
+                                    type="text"
+                                    value={globalSearchQuery}
+                                    onChange={(e) => {
+                                        setGlobalSearchQuery(e.target.value);
+                                        setIsSearchOpen(true);
+                                    }}
+                                    onFocus={() => {
+                                        if (globalSearchQuery.trim().length > 0) setIsSearchOpen(true);
+                                    }}
+                                    onKeyDown={handleSearchKeyDown}
+                                    placeholder={isAdmin ? "SEARCH USERS, HACKATHONS, SUBMISSIONS..." : "SEARCH..."}
+                                    className="w-full pl-9 pr-9 py-2 bg-slate-100 dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-2xl text-[11px] font-bold text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-[#0ea5e9] focus:ring-2 focus:ring-sky-500/20 transition-all shadow-sm"
+                                />
+                                {globalSearchQuery && (
+                                    <button 
+                                        onClick={() => { setGlobalSearchQuery(''); setIsSearchOpen(false); }}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
+                                        aria-label="Clear search"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                            <line x1="18" y1="6" x2="6" y2="18"/>
+                                            <line x1="6" y1="6" x2="18" y2="18"/>
+                                        </svg>
+                                    </button>
+                                )}
                             </div>
-                            <input
-                                type="text"
-                                placeholder={isAdmin ? "SEARCH USERS, HACKATHONS..." : "SEARCH..."}
-                                className={`w-full pl-10 pr-4 py-2.5 bg-navy-900/50 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-${themeColor}-500/50 transition-all`}
-                            />
-                        </div>
-                    </div>
 
-                    {/* Right Actions */}
-                    <div className="flex items-center gap-6">
-                        {/* Notifications */}
-                        <div className="relative">
+                            {/* Search Results Dropdown Popup */}
+                            {isSearchOpen && globalSearchQuery.trim().length > 0 && (
+                                <div className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in duration-150">
+                                    <div className="p-2 border-b border-slate-100 dark:border-white/5 flex items-center justify-between text-[10px] uppercase font-black tracking-wider text-slate-400 dark:text-gray-400 px-3">
+                                        <span>Quick Jump Results ({searchResults.length})</span>
+                                        <span>Press ↵ Enter to Open</span>
+                                    </div>
+
+                                    <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-white/5 scrollbar-hide">
+                                        {searchResults.length === 0 ? (
+                                            <div className="p-4 text-center text-xs text-slate-500 dark:text-gray-400">
+                                                <p className="font-bold">No exact match found for "{globalSearchQuery}"</p>
+                                                <button 
+                                                    onClick={() => {
+                                                        navigate(`/admin/users?search=${encodeURIComponent(globalSearchQuery.trim())}`);
+                                                        setIsSearchOpen(false);
+                                                    }}
+                                                    className="mt-2 text-[11px] font-bold text-sky-500 hover:underline"
+                                                >
+                                                    Search Directory for "{globalSearchQuery}" →
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            searchResults.map((item) => (
+                                                <div
+                                                    key={item.id}
+                                                    onClick={() => handleSearchSelect(item)}
+                                                    className="p-3 hover:bg-sky-50 dark:hover:bg-white/5 transition-colors cursor-pointer flex items-center justify-between group"
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="w-8 h-8 shrink-0 rounded-xl bg-sky-50 dark:bg-white/10 border border-sky-200 dark:border-white/10 flex items-center justify-center text-sky-600 dark:text-sky-400 text-[10px] font-black uppercase">
+                                                            {item.category === 'Pages' ? 'PG' : item.category === 'Users' ? 'USR' : item.category === 'Hackathons' ? 'HCK' : item.category === 'Submissions' ? 'SUB' : item.category === 'Certificates' ? 'CRT' : 'DSP'}
+                                                        </span>
+                                                        <div>
+                                                            <p className="text-xs font-extrabold text-slate-900 dark:text-white group-hover:text-sky-500 transition-colors">
+                                                                {item.title}
+                                                            </p>
+                                                            <p className="text-[10px] text-slate-500 dark:text-gray-400 font-medium">
+                                                                {item.subtitle}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-gray-300 border border-slate-200 dark:border-white/10">
+                                                            {item.category}
+                                                        </span>
+                                                        <span className="text-xs text-sky-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            →
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                        </div>
+
+                    </div>
+                    
+                    {/* Right side (Theme, Notifications, Admin Dropdown) - Gemini Chat style spacing */}
+                    <div className="flex items-center gap-4 sm:gap-5 relative" ref={dropdownRef}>
+                        
+                        {/* Theme Toggle */}
+                        <div className="relative flex items-center justify-center">
+                            <ThemeToggle />
+                        </div>
+
+                        {/* Notification Bell */}
+                        <div className="relative flex items-center justify-center">
                             <button
                                 onClick={() => setShowNotifications(!showNotifications)}
-                                className="relative p-2 text-gray-300 hover:text-white transition-colors"
+                                className="relative w-9 h-9 flex items-center justify-center text-slate-600 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-full transition-colors"
                             >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                                 {unreadCount > 0 && (
-                                    <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-black text-white animate-pulse shadow-lg shadow-red-600/30 tracking-tighter">
+                                    <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-600 text-[10px] font-black text-white animate-pulse shadow-lg shadow-rose-600/30 tracking-tighter">
                                         {unreadCount}
                                     </span>
                                 )}
                             </button>
-
-                            {/* Notification Dropdown */}
-                            {showNotifications && (
-                                <div className="absolute right-0 mt-2 w-80 glass-strong border border-white/10 rounded-xl shadow-2xl py-2 animate-in fade-in slide-in-from-top-2 duration-200 transform origin-top-right z-50">
-                                    <div className="px-4 py-3 border-b border-white/10 flex justify-between items-center">
-                                        <h3 className="font-semibold text-white">Notifications</h3>
-                                        {unreadCount > 0 && (
-                                            <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-[10px] font-bold">
-                                                {unreadCount} NEW
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div className="max-h-64 overflow-y-auto">
-                                        {notifications.length > 0 ? (
-                                            notifications.map((notif, i) => (
-                                                <div key={notif.id || i} className="px-4 py-3 hover:bg-white/5 cursor-pointer border-b border-white/5 last:border-0 transition-colors">
-                                                    <p className="text-sm text-gray-300">{notif.message}</p>
-                                                    <span className="text-xs text-gray-500 mt-1 block">
-                                                        {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                    </span>
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <div className="px-4 py-8 text-center">
-                                                <p className="text-sm text-gray-500 italic">No notifications yet</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="p-2 border-t border-white/10 text-center">
-                                        <button 
-                                            onClick={handleMarkAllRead}
-                                            className={`text-xs text-${themeColor}-400 hover:text-${themeColor}-300 font-medium transition-colors`}
-                                        >
-                                            Mark all as read
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
                         </div>
 
-                        {/* Profile Dropdown */}
-                        <div className="relative">
+                        {/* Profile Dropdown Button */}
+                        <div className="relative flex items-center justify-center">
                             <button
                                 onClick={() => setShowProfileMenu(!showProfileMenu)}
-                                className="flex items-center gap-3 hover:bg-white/5 py-1.5 px-3 rounded-full transition-all border border-transparent hover:border-white/10"
+                                className="flex items-center justify-center gap-2 p-1 pr-3 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-full transition-colors border border-slate-200 dark:border-white/10"
                             >
-                                <div className={`w-9 h-9 rounded-full bg-gradient-to-r ${currentRole.avatarGradient} flex items-center justify-center text-white font-black shadow-lg shadow-purple-500/20 ring-2 ring-white/10 italic`}>
-                                    {currentRole.name.charAt(0)}
+                                <div className="w-7 h-7 rounded-full bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-200/80 dark:border-sky-500/30 flex items-center justify-center font-bold text-[10px] shrink-0 shadow-sm">
+                                    {currentRole.name.charAt(0).toUpperCase()}
                                 </div>
-                                <span className="hidden md:block text-[12px] font-bold text-white uppercase tracking-wider">
-                                    {currentRole.fullName.toUpperCase()}
+                                <span className="hidden md:block text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider leading-none">
+                                    {currentRole.name}
                                 </span>
-                                <svg className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showProfileMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                <svg className={`w-3.5 h-3.5 text-slate-500 dark:text-gray-400 transition-transform duration-200 shrink-0 ${showProfileMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="m6 9 6 6 6-6" />
+                                </svg>
                             </button>
 
+                            {/* Profile Dropdown Menu */}
                             {showProfileMenu && (
-                                <div className="absolute right-0 mt-3 w-56 glass-strong border border-white/10 rounded-xl shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                                    <div className="px-4 py-3 border-b border-white/10 mb-2">
-                                        <p className="text-sm font-medium text-white">{currentRole.fullName}</p>
-                                        <p className="text-xs text-gray-400 truncate">{currentRole.email}</p>
+                                <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <div className="px-4 py-3 border-b border-slate-200 dark:border-white/10 mb-2">
+                                        <p className="text-sm font-extrabold text-slate-900 dark:text-white">{currentRole.fullName}</p>
+                                        <p className="text-xs text-slate-500 dark:text-gray-400 truncate">{currentRole.email}</p>
                                     </div>
-                                    <Link to={`/${currentRole.path}/profile`} className="block px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors">My Profile</Link>
-                                    <Link to={`/${currentRole.path}/settings`} className="block px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors">Settings</Link>
-                                    <div className="h-px bg-white/10 my-2"></div>
-                                    <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors">
+                                    <Link to={`/${currentRole.path}/profile`} className="block px-4 py-2 text-xs font-bold text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-colors">My Profile</Link>
+                                    <Link to={`/${currentRole.path}/settings`} className="block px-4 py-2 text-xs font-bold text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-colors">Settings</Link>
+                                    <div className="h-px bg-slate-200 dark:bg-white/10 my-2"></div>
+                                    <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors">
                                         Logout
                                     </button>
                                 </div>
                             )}
                         </div>
+
+                        {/* Notification Dropdown Panel */}
+                        {showNotifications && (
+                            <div className="absolute right-12 top-full mt-2 w-80 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl py-2 animate-in fade-in slide-in-from-top-2 duration-200 transform origin-top-right z-50">
+                                <div className="px-4 py-3 border-b border-slate-200 dark:border-white/10 flex justify-between items-center">
+                                    <h3 className="font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-white">Notifications ({unreadCount})</h3>
+                                    {unreadCount > 0 && (
+                                        <button 
+                                            onClick={handleMarkAllRead}
+                                            className="px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 hover:text-blue-700 text-[10px] font-bold transition-colors"
+                                        >
+                                            Mark all as read
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="max-h-64 overflow-y-auto">
+                                    {notifications.length > 0 ? (
+                                        notifications.map((notif, i) => (
+                                            <div 
+                                                key={notif.id || i} 
+                                                onClick={() => handleOpenMessage(notif)}
+                                                className={`px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer border-b border-slate-100 dark:border-white/5 last:border-0 transition-colors flex gap-3 ${(notif.read || notif.isRead) ? 'opacity-60' : 'bg-blue-50/50 dark:bg-blue-500/5'}`}
+                                            >
+                                                <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${(notif.read || notif.isRead) ? 'bg-transparent' : 'bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.8)]'}`}></div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex justify-between items-start mb-0.5">
+                                                        <h4 className={`text-xs font-bold ${(notif.read || notif.isRead) ? 'text-slate-600 dark:text-gray-300' : 'text-slate-900 dark:text-white'}`}>{notif.title || 'Announcement'}</h4>
+                                                        <span className="text-[9px] text-slate-400 whitespace-nowrap ml-2">
+                                                            {notif.createdAt || notif.time || 'Just now'}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-[11px] text-slate-500 dark:text-gray-400 line-clamp-2 leading-relaxed">{notif.message}</p>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="px-4 py-8 text-center">
+                                            <p className="text-sm text-slate-400 italic">No notifications yet</p>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="p-2 border-t border-slate-200 dark:border-white/10 text-center">
+                                    <button 
+                                        onClick={handleMarkAllRead}
+                                        className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-bold transition-colors"
+                                    >
+                                        Mark all as read
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </header>
 
                 {/* Main Content from child routes */}
-                <main className="flex-1 overflow-y-auto p-6 lg:p-10 scrollbar-hide">
+                <main ref={mainRef} className="flex-1 overflow-y-auto p-6 lg:p-10 scrollbar-hide">
                     <Outlet />
                 </main>
             </div>
+
+            {/* Global Real-time Toast Popup Banner */}
+            {toastPopup && (
+                <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top-4 fade-in duration-300 max-w-md w-full px-4 pointer-events-auto">
+                    <div className="bg-white/95 dark:bg-navy-950/95 backdrop-blur-xl border border-sky-300/80 dark:border-sky-500/40 text-slate-900 dark:text-white p-4 rounded-2xl shadow-2xl shadow-sky-900/10 dark:shadow-sky-900/30 flex items-start gap-3.5 relative group">
+                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-sky-500 flex items-center justify-center text-white shrink-0 shadow-lg shadow-sky-500/20">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="m3 11 18-5v12L3 14v-3z"/>
+                                <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>
+                            </svg>
+                        </div>
+                        <div className="flex-1 min-w-0 pr-6">
+
+                            <div className="flex items-center gap-2 mb-0.5">
+                                <span className="text-[10px] font-black uppercase tracking-wider bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 px-2 py-0.5 rounded-full border border-sky-200 dark:border-sky-500/30">Announcement</span>
+                                <span className="text-[9.5px] text-slate-500 dark:text-gray-400 font-mono">{toastPopup.createdAt || toastPopup.time}</span>
+                            </div>
+                            <h4 className="text-sm font-extrabold text-slate-900 dark:text-white truncate">{toastPopup.title}</h4>
+                            <p className="text-xs text-slate-600 dark:text-gray-300 line-clamp-2 mt-0.5 leading-relaxed">{toastPopup.message}</p>
+                            <div className="mt-2.5 flex items-center gap-3">
+                                <button
+                                    onClick={() => {
+                                        setSelectedMessage(toastPopup);
+                                        setToastPopup(null);
+                                    }}
+                                    className="text-xs font-bold text-sky-600 dark:text-sky-400 hover:underline underline-offset-2 transition-colors"
+                                >
+                                    View Full Message →
+                                </button>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setToastPopup(null)}
+                            className="absolute top-3 right-3 text-slate-400 hover:text-slate-700 dark:text-gray-400 dark:hover:text-white p-1 rounded-lg transition-colors text-xs font-bold"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                </div>
+            )}
+
+
+            {/* Single Notification Message Modal */}
+            <MessageModal 
+                message={selectedMessage} 
+                onClose={() => setSelectedMessage(null)} 
+            />
         </div>
     );
 };

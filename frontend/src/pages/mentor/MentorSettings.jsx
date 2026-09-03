@@ -4,6 +4,7 @@ import { fetchMentorProfile, updateMentorProfile } from '../../services/mentor/p
 const MentorSettings = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [toast, setToast] = useState(null);
     const [profileData, setProfileData] = useState({
         name: '',
         institution: '',
@@ -18,6 +19,11 @@ const MentorSettings = () => {
             scholar: ''
         }
     });
+
+    const showToast = (text, type = 'success') => {
+        setToast({ text, type });
+        setTimeout(() => setToast(null), 3500);
+    };
 
     useEffect(() => {
         const loadProfile = async () => {
@@ -55,11 +61,11 @@ const MentorSettings = () => {
                     name: profileData.name
                 }));
                 window.dispatchEvent(new Event('user-update'));
-                alert('Profile Model Synced successfully!');
+                showToast('Mentor profile saved successfully!', 'success');
             }
         } catch (err) {
             console.error("Save failed:", err);
-            alert("Failed to synchronize with profileModel.py");
+            showToast('Failed to save profile changes. Please try again.', 'error');
         } finally {
             setSaving(false);
         }
@@ -72,7 +78,17 @@ const MentorSettings = () => {
     );
 
     return (
-        <div className="max-w-5xl mx-auto space-y-12 pb-20 animate-in fade-in slide-in-from-bottom-5 duration-700">
+        <div className="max-w-5xl mx-auto space-y-12 pb-20 animate-in fade-in slide-in-from-bottom-5 duration-700 relative">
+            {/* Toast alert */}
+            {toast && (
+                <div className={`fixed bottom-8 right-8 z-[999] px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-3 border text-sm font-semibold animate-in slide-in-from-bottom-4 duration-300 ${
+                    toast.type === 'success' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 backdrop-blur-md' : 'bg-red-500/20 text-red-300 border-red-500/40 backdrop-blur-md'
+                }`}>
+                    <span>{toast.type === 'success' ? '✓' : '⚠️'}</span>
+                    <span>{toast.text}</span>
+                </div>
+            )}
+
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>

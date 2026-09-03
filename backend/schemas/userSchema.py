@@ -52,8 +52,16 @@ class UserMyResponse(BaseModel):
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+    twoFactorCode: Optional[str] = None
 
 
 class TokenResponse(BaseModel):
-    token: str
-    user: UserResponse
+    token: Optional[str] = None
+    user: Optional[UserResponse] = None
+    requires2FA: Optional[bool] = False
+    message: Optional[str] = None
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+

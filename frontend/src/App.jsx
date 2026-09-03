@@ -1,5 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { ThemeProvider } from './context/ThemeContext';
+import { PlatformSettingsProvider } from './context/PlatformSettingsContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import MaintenanceBanner from './components/MaintenanceBanner';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -18,6 +22,7 @@ import StudentAIAssistant from './pages/student/StudentAIAssistant';
 import StudentProfile from './pages/student/StudentProfile';
 import EditStudentProfile from './pages/student/EditStudentProfile';
 import StudentSubmissions from './pages/student/StudentSubmissions';
+import StudentWorkspace from './pages/student/StudentWorkspace';
 import DashboardLayout from './components/Layout';
 import MyHackathons from './pages/organizer/MyHackathons';
 import OrganizerDashboard from './pages/organizer/Dashboard';
@@ -39,7 +44,9 @@ import Feedback from './pages/mentor/Feedback';
 import MentorProfile from './pages/mentor/MentorProfile';
 import AdminDashboard from './pages/admin/Dashboard';
 import Unauthorized from './pages/Unauthorized';
+import NotFound from './pages/NotFound';
 import OrganizerApprovals from './pages/admin/OrganizerApprovals';
+import HackathonApprovals from './pages/admin/HackathonApprovals';
 import AdminAnalytics from './pages/admin/Analytics';
 import AdminDisputes from './pages/admin/Disputes';
 import AdminCertificates from './pages/admin/Certificates';
@@ -61,15 +68,22 @@ import EvaluationCriteria from './pages/organizer/EvaluationCriteria';
 import InitializeEvent from './pages/organizer/InitializeEvent';
 import InviteMentors from './pages/organizer/InviteMentors';
 
-
 import './App.css';
 
-// Universal Protected Route Component
+// Universal Protected Route Component with Hydration Guard
 const ProtectedRoute = ({ children, requiredRole }) => {
-  const userRole = sessionStorage.getItem('userRole');
-  const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+  const { isAuthenticated, userRole, isLoading } = useAuth();
 
-  if (!isLoggedIn) {
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8">
+        <div className="w-10 h-10 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin mb-4"></div>
+        <p className="text-gray-400 text-xs font-medium animate-pulse">Restoring workspace session...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
@@ -91,7 +105,7 @@ function AppContent() {
     '/forgot-password',
   ];
 
-  // Check if the current path is in the hide list or starts with /student (dashboard)
+  // Check if the current path is in the hide list or starts with dashboard prefixes
   const shouldHideFooter =
     hideFooterPaths.includes(location.pathname) ||
     location.pathname.startsWith('/student') ||
@@ -101,7 +115,8 @@ function AppContent() {
     location.pathname.startsWith('/unauthorized');
 
   return (
-    <div className="flex flex-col min-h-screen text-white bg-navy-900">
+    <div className="flex flex-col min-h-screen text-slate-900 dark:text-white bg-slate-50 dark:bg-navy-900 transition-colors duration-300">
+      <MaintenanceBanner />
       <Routes>
         {/* Main Landing Page */}
         <Route path="/" element={<Home />} />
@@ -141,12 +156,11 @@ function AppContent() {
             <Route path="step-2" element={<HackathonRegistrationStepTwo />} />
             <Route path="step-3" element={<HackathonRegistrationStepThree />} />
           </Route>
-          <Route path="teams" element={<TeamsPage />} />
           <Route path="ai-assistant" element={<StudentAIAssistant />} />
-          <Route path="profile">
-            <Route index element={<StudentProfile />} />
-            <Route path="edit" element={<EditStudentProfile />} />
-          </Route>
+          <Route path="teams" element={<TeamsPage />} />
+          <Route path="workspace" element={<StudentWorkspace />} />
+          <Route path="profile" element={<StudentProfile />} />
+          <Route path="profile/edit" element={<EditStudentProfile />} />
           <Route path="settings" element={<StudentSettings />} />
         </Route>
 
@@ -160,30 +174,30 @@ function AppContent() {
           }
         >
           <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<OrganizerDashboard />} />
+          <Route path="my-hackathons" element={<MyHackathons />} />
+          <Route path="analytics" element={<Analytics />} />
+          <Route path="teams-mentors" element={<TeamsMentors />} />
           <Route path="create-hackathon" element={<CreateHackathon />}>
             <Route index element={<Navigate to="step-1" replace />} />
             <Route path="step-1" element={<CreateHackathonStepOne />} />
             <Route path="step-2" element={<CreateHackathonStepTwo />} />
             <Route path="step-3" element={<CreateHackathonStepThree />} />
           </Route>
-          <Route path="dashboard" element={<OrganizerDashboard />} />
-          <Route path="my-hackathons" element={<MyHackathons />} />
-          <Route path="analytics" element={<Analytics />} />
-          <Route path="teams-mentors" element={<TeamsMentors />} />
+          <Route path="manage-hackathon" element={<ManageHackathon />}>
+            <Route index element={<Navigate to="overview" replace />} />
+            <Route path="overview" element={<OrganizerDashboard />} />
+            <Route path="criteria" element={<EvaluationCriteria />} />
+            <Route path="initialize" element={<InitializeEvent />} />
+            <Route path="invite-mentors" element={<InviteMentors />} />
+          </Route>
+          <Route path="edit-timeline" element={<EditTimeline />} />
           <Route path="submissions" element={<Submissions />} />
           <Route path="evaluation" element={<EvaluationPanel />} />
-          <Route path="evaluation/criteria" element={<EvaluationCriteria />} />
-          <Route path="initialize-event" element={<InitializeEvent />} />
-          <Route path="invite-mentors" element={<InviteMentors />} />
           <Route path="results" element={<ResultsCertificates />} />
-          <Route path="hackathons/:hackathonId/edit-timeline" element={<EditTimeline />} />
-          <Route path="hackathons/:hackathonId/manage" element={<ManageHackathon />} />
-          <Route path="profile">
-            <Route index element={<OrganizerProfile />} />
-            <Route path="edit" element={<EditOrganizerProfile />} />
-          </Route>
+          <Route path="profile" element={<OrganizerProfile />} />
+          <Route path="profile/edit" element={<EditOrganizerProfile />} />
           <Route path="settings" element={<OrganizerSettings />} />
-
         </Route>
 
         {/* Mentor Dashboard Routes */}
@@ -197,23 +211,17 @@ function AppContent() {
         >
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<MentorDashboard />} />
-          <Route path="mentorship-requests" element={<MentorshipRequests />} />
-          <Route path="teams">
-            <Route index element={<AssignedTeams />} />
-            <Route path=":teamId/workspace" element={<TeamsPage />} />
-            <Route path="join" element={<DiscoverTeams />} />
-            <Route path="create" element={<CreateTeam />} />
-          </Route>
+          <Route path="requests" element={<MentorshipRequests />} />
           <Route path="feedback" element={<Feedback />} />
-          <Route path="profile">
-            <Route index element={<MentorProfile />} />
-            <Route path="edit" element={<EditMentorProfile />} />
-          </Route>
+          <Route path="assigned-teams" element={<AssignedTeams />} />
+          <Route path="discover-teams" element={<DiscoverTeams />} />
+          <Route path="create-team" element={<CreateTeam />} />
+          <Route path="profile" element={<MentorProfile />} />
+          <Route path="profile/edit" element={<EditMentorProfile />} />
           <Route path="settings" element={<MentorSettings />} />
-
         </Route>
 
-        {/* Admin Dashboard Routes - Protected */}
+        {/* Admin Dashboard Routes */}
         <Route
           path="/admin"
           element={
@@ -224,35 +232,22 @@ function AppContent() {
         >
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="profile" element={<AdminProfile />} />
+          <Route path="profile/edit" element={<EditAdminProfile />} />
           <Route path="organizer-approvals" element={<OrganizerApprovals />} />
-          <Route path="hackathon-approvals">
-            <Route index element={<div className="p-10 space-y-4">
-              <h2 className="text-2xl font-bold">Hackathon Approvals</h2>
-              <div className="glass p-6 rounded-2xl border border-white/10 flex justify-between items-center group cursor-pointer hover:border-blue-500/50 transition-all" onClick={() => window.location.href = '/admin/hackathon-approvals/detail'}>
-                <div>
-                  <h3 className="font-bold text-lg group-hover:text-blue-400 transition-colors">Global Hackathon 2025</h3>
-                  <p className="text-sm text-gray-400">Status: Changes Requested</p>
-                </div>
-                <button className="px-4 py-2 bg-blue-600/10 text-blue-400 rounded-xl text-sm font-bold border border-blue-500/20 group-hover:bg-blue-600 group-hover:text-white transition-all">Review Changes</button>
-              </div>
-            </div>} />
-            <Route path="detail" element={<HackathonChangeRequest />} />
-          </Route>
-          <Route path="users" element={<UsersManagement />} />
-          <Route path="submissions" element={<AdminSubmissions />} />
-          <Route path="certificates" element={<AdminCertificates />} />
-          <Route path="disputes" element={<AdminDisputes />} />
+          <Route path="hackathon-approvals" element={<HackathonApprovals />} />
           <Route path="analytics" element={<AdminAnalytics />} />
-          <Route path="profile">
-            <Route index element={<AdminProfile />} />
-            <Route path="edit" element={<EditAdminProfile />} />
-          </Route>
+          <Route path="disputes" element={<AdminDisputes />} />
+          <Route path="certificates" element={<AdminCertificates />} />
+          <Route path="submissions" element={<AdminSubmissions />} />
+          <Route path="users" element={<UsersManagement />} />
+          <Route path="hackathon-change-requests" element={<HackathonChangeRequest />} />
+          <Route path="hackathon-change-requests/:requestId" element={<HackathonChangeRequest />} />
           <Route path="settings" element={<AdminSettings />} />
-
         </Route>
 
         {/* Catch-all route for 404 */}
-        <Route path="*" element={<div className="text-white p-10 font-bold text-2xl flex items-center justify-center min-h-[50vh]">404 | Page not found</div>} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
 
       {/* Conditionally render Footer */}
@@ -261,11 +256,30 @@ function AppContent() {
   );
 }
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTo(0, 0);
+    document.body.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
+
 function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <ThemeProvider>
+      <PlatformSettingsProvider>
+        <AuthProvider>
+          <Router>
+            <ScrollToTop />
+            <AppContent />
+          </Router>
+        </AuthProvider>
+      </PlatformSettingsProvider>
+    </ThemeProvider>
   );
 }
 
