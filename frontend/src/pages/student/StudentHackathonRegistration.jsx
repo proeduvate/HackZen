@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { fetchHackathonById } from '../../services/student/upcomingHackathonsApi';
 import { getRegistrationDraft } from '../../services/student/hackathonRegistrationApi';
+import { usePlatformSettings } from '../../context/PlatformSettingsContext';
 
 const steps = [
     { 
@@ -28,9 +29,14 @@ const StudentHackathonRegistration = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { hackathonId } = useParams();
+    const { maxTeamSize } = usePlatformSettings();
     const [hackathon, setHackathon] = useState(null);
     const [draft, setDraft] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+
+    const effectiveTeamLimit = hackathon?.teamSizeLimit 
+        ? Math.min(Number(hackathon.teamSizeLimit), maxTeamSize) 
+        : maxTeamSize;
 
     useEffect(() => {
         const loadRegistrationFlow = async () => {
@@ -178,7 +184,7 @@ const StudentHackathonRegistration = () => {
                             </div>
                             <div className="flex justify-between gap-4">
                                 <span className="text-gray-400">Team Limit</span>
-                                <span className="text-white font-semibold text-right">{hackathon.teamSizeLimit} Members</span>
+                                <span className="text-white font-semibold text-right">{effectiveTeamLimit} Members</span>
                             </div>
                             <div className="flex justify-between gap-4">
                                 <span className="text-gray-400">Reward</span>

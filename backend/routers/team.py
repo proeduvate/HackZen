@@ -311,15 +311,28 @@ async def join_team(team_id_or_code: str, current_user: dict = Depends(with_auth
         {"teamId": str(team["_id"])}
     )
 
+    # Fetch live platform settings
+    platform_settings = await db["settings"].find_one({"key": "global_config"}) or {}
+    platform_max = int(platform_settings.get("maxTeamSize", 4))
+    allow_team_changes = bool(platform_settings.get("allowTeamChanges", True))
+
+    if not allow_team_changes:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Team composition changes are currently locked by platform policy."
+        )
+
     hackathon = None
     if ObjectId.is_valid(hackathon_id):
         hackathon = await db["hackathons"].find_one({"_id": ObjectId(hackathon_id)})
 
-    max_size = hackathon.get("maxTeamSize", 4) if hackathon else 4
+    hackathon_max = int(hackathon.get("maxTeamSize", platform_max)) if hackathon else platform_max
+    max_size = min(hackathon_max, platform_max)
 
     if current_members_count >= max_size:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Team is already full"
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail=f"Team is already full (Maximum team size limit is {max_size} members based on platform policy)."
         )
 
     new_member = {
@@ -418,6 +431,14 @@ async def remove_team_member(
     if not team:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Team not found"
+        )
+
+    # Check platform settings for team composition changes policy
+    platform_settings = await db["settings"].find_one({"key": "global_config"}) or {}
+    if not bool(platform_settings.get("allowTeamChanges", True)):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Team composition changes are currently locked by platform policy."
         )
 
     # 2. Verify current user is the team leader

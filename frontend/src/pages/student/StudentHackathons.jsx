@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { fetchAllHackathons } from '../../api/hackathonApi';
+import { usePlatformSettings } from '../../context/PlatformSettingsContext';
 
 const StudentHackathons = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const { maxTeamSize } = usePlatformSettings();
     const [selectedHackathon, setSelectedHackathon] = useState(null);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
@@ -45,7 +47,7 @@ const StudentHackathons = () => {
                     participants: h.participants_count || '0',
                     mode: h.location || 'Virtual',
                     status: h.status || 'Open',
-                    teamSizeLimit: h.maxTeamSize || 4,
+                    teamSizeLimit: Math.min(Number(h.maxTeamSize || maxTeamSize), maxTeamSize),
                     image: 'bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-700', // Default image
                     themes: h.themes || []
                 }));

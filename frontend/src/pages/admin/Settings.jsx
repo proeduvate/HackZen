@@ -34,6 +34,7 @@ import {
     ToolsIcon
 } from '../../components/AdminIcons';
 import { useTheme } from '../../context/ThemeContext';
+import { usePlatformSettings } from '../../context/PlatformSettingsContext';
 
 // --- Animated Subtle Toggle Component ---
 const Toggle = ({ enabled, onChange, disabled = false }) => (
@@ -88,6 +89,7 @@ const initialAdminsFallback = [
 
 const Settings = () => {
     const { theme: currentTheme } = useTheme();
+    const { broadcastSettingsUpdate } = usePlatformSettings();
     const isLightTheme = currentTheme === 'light';
 
     const theme = {
@@ -302,8 +304,12 @@ const Settings = () => {
             await updatePlatformSettings(config);
             
             // Trigger real-time cross-component and cross-tab update
-            window.dispatchEvent(new Event('platform-settings-updated'));
-            localStorage.setItem('platformSettingsTimestamp', Date.now().toString());
+            if (typeof broadcastSettingsUpdate === 'function') {
+                broadcastSettingsUpdate(config);
+            } else {
+                window.dispatchEvent(new CustomEvent('platform-settings-updated', { detail: config }));
+                localStorage.setItem('platformSettingsTimestamp', Date.now().toString());
+            }
 
             showToast("Platform configurations saved and propagated successfully!", "success");
             const freshLogs = await fetchAuditLogs(logFilters);

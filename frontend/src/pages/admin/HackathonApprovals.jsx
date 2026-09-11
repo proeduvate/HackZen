@@ -10,6 +10,7 @@ import {
 } from '../../services/admin/hackathonApprovalsApi';
 import { CheckIcon, TriangleAlertIcon, ShieldIcon, UsersIcon, RocketIcon, StarIcon, SearchIcon, ZapIcon, EditIcon, ClockIcon } from '../../components/AdminIcons';
 import { useTheme } from '../../context/ThemeContext';
+import { usePlatformSettings } from '../../context/PlatformSettingsContext';
 import AiAnalysisLoader from '../../components/AiAnalysisLoader';
 import AiAnalysisPopup from '../../components/AiAnalysisPopup';
 
@@ -41,6 +42,7 @@ const ActionModal = ({ isOpen, onClose, title, subtitle, children }) => {
 
 const HackathonApprovals = () => {
     const { theme: currentTheme } = useTheme();
+    const { maxTeamSize: platformMaxTeam } = usePlatformSettings();
     const isLightTheme = currentTheme === 'light';
     const [searchParams] = useSearchParams();
 
@@ -661,6 +663,11 @@ const HackathonApprovals = () => {
                                                 <div className="p-2.5 rounded-lg bg-white dark:bg-black/20 border border-slate-200/60 dark:border-white/5 text-center">
                                                     <span className="text-[9px] font-bold uppercase text-slate-500 dark:text-gray-400 block">Team Limit</span>
                                                     <span className="font-bold text-slate-900 dark:text-white">{selectedHackathon.minTeamSize}-{selectedHackathon.maxTeamSize} Members</span>
+                                                    {Number(selectedHackathon.maxTeamSize) > platformMaxTeam ? (
+                                                        <span className="text-[8px] font-black uppercase text-amber-500 block mt-0.5 tracking-tight">Exceeds Baseline ({platformMaxTeam})</span>
+                                                    ) : (
+                                                        <span className="text-[8px] font-semibold text-emerald-500 block mt-0.5 tracking-tight">Within Baseline (Max {platformMaxTeam})</span>
+                                                    )}
                                                 </div>
                                                 <div className="p-2.5 rounded-lg bg-white dark:bg-black/20 border border-slate-200/60 dark:border-white/5 text-center">
                                                     <span className="text-[9px] font-bold uppercase text-slate-500 dark:text-gray-400 block">Visibility</span>

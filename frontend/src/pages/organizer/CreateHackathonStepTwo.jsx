@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { getStepTwoConfig, saveStepTwoData } from '../../services/organizer/createHackathonStepTwoApi';
+import { usePlatformSettings } from '../../context/PlatformSettingsContext';
 
 const CreateHackathonStepTwo = () => {
     const { draft, setDraft, handleStepChange } = useOutletContext();
+    const { maxTeamSize: platformMaxTeam, minTeamSize: platformMinTeam } = usePlatformSettings();
+
     const [tracks, setTracks] = useState(draft.tracks);
     const [formData, setFormData] = useState({
-        minTeamSize: draft.minTeamSize,
-        maxTeamSize: draft.maxTeamSize,
+        minTeamSize: draft.minTeamSize || platformMinTeam || 1,
+        maxTeamSize: Math.min(draft.maxTeamSize || platformMaxTeam || 4, platformMaxTeam || 4),
         isPublic: draft.isPublic,
         autoApprove: draft.autoApprove,
     });
@@ -114,15 +117,19 @@ const CreateHackathonStepTwo = () => {
 
                         <div className="space-y-4">
                             <div>
-                                <label className="text-xs font-semibold text-gray-400 uppercase block mb-2">Team Size</label>
+                                <div className="flex justify-between items-center mb-2">
+                                    <label className="text-xs font-semibold text-gray-400 uppercase block">Team Size</label>
+                                    <span className="text-[10px] text-cyan-400/80 font-medium">Platform baseline: Max {platformMaxTeam}</span>
+                                </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="space-y-1">
                                         <label className="text-xs text-gray-500">Min</label>
                                         <input
                                             type="number"
                                             value={formData.minTeamSize}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, minTeamSize: Number(e.target.value) }))}
-                                            min="1"
+                                            onChange={(e) => setFormData(prev => ({ ...prev, minTeamSize: Math.max(1, Number(e.target.value)) }))}
+                                            min={platformMinTeam || 1}
+                                            max={formData.maxTeamSize}
                                             className="w-full bg-white/5 border border-white/10 text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-colors text-center text-sm"
                                         />
                                     </div>
@@ -131,8 +138,9 @@ const CreateHackathonStepTwo = () => {
                                         <input
                                             type="number"
                                             value={formData.maxTeamSize}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, maxTeamSize: Number(e.target.value) }))}
-                                            min="2"
+                                            onChange={(e) => setFormData(prev => ({ ...prev, maxTeamSize: Math.min(platformMaxTeam || 12, Math.max(formData.minTeamSize, Number(e.target.value))) }))}
+                                            min={formData.minTeamSize}
+                                            max={platformMaxTeam || 12}
                                             className="w-full bg-white/5 border border-white/10 text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-colors text-center text-sm"
                                         />
                                     </div>

@@ -1,14 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import { getStepOneConfig, saveStepOneData } from '../../services/student/hackathonRegistrationStepOneApi';
+import { usePlatformSettings } from '../../context/PlatformSettingsContext';
 
 const HackathonRegistrationStepOne = () => {
     const navigate = useNavigate();
     const { hackathonId } = useParams();
     const { hackathon, draft, setDraft } = useOutletContext();
+    const { maxTeamSize, minTeamSize, getTeamSizeOptions } = usePlatformSettings();
+
+    const effectiveTeamLimit = hackathon?.teamSizeLimit ? Math.min(Number(hackathon.teamSizeLimit), maxTeamSize) : maxTeamSize;
+    const availableSizes = getTeamSizeOptions(effectiveTeamLimit);
+
     const [formData, setFormData] = useState({
         teamName: draft.teamName,
-        teamSize: draft.teamSize,
+        teamSize: Math.min(Math.max(draft.teamSize || minTeamSize, minTeamSize), effectiveTeamLimit),
         leaderName: draft.leaderName,
         leaderEmail: draft.leaderEmail,
     });
@@ -21,8 +27,18 @@ const HackathonRegistrationStepOne = () => {
             sessionStorage.getItem('user') || '{"name":"Hari","email":"hari@proeduvate.com"}'
         );
 
-        getStepOneConfig(hackathon, storedUser).then(setConfig);
-    }, [hackathon]);
+        getStepOneConfig(hackathon, storedUser, { minTeamSize, maxTeamSize: effectiveTeamLimit }).then(setConfig);
+    }, [hackathon, minTeamSize, effectiveTeamLimit]);
+
+    // Ensure selected teamSize stays within real-time bounds when platform settings change
+    useEffect(() => {
+        setFormData(prev => {
+            if (prev.teamSize > effectiveTeamLimit || prev.teamSize < minTeamSize) {
+                return { ...prev, teamSize: effectiveTeamLimit };
+            }
+            return prev;
+        });
+    }, [effectiveTeamLimit, minTeamSize]);
 
     const handleContinue = async () => {
         const nextErrors = {};
@@ -81,9 +97,11 @@ const HackathonRegistrationStepOne = () => {
                                 onChange={(e) => setFormData((prev) => ({ ...prev, teamSize: Number(e.target.value) }))}
                                 className="w-full bg-navy-900/50 border border-white/10 text-white p-3 rounded-xl focus:outline-none"
                             >
-                                {config ? Array.from({ length: config.maxTeamSize - 1 }, (_, index) => index + 2).map((size) => (
-                                    <option key={size} value={size}>{size} Members</option>
-                                )) : null}
+                                {availableSizes.map((size) => (
+                                    <option key={size} value={size}>
+                                        {size} {size === 1 ? 'Member (Solo)' : 'Members'}
+                                    </option>
+                                ))}
                             </select>
                         </div>
 
@@ -126,7 +144,7 @@ const HackathonRegistrationStepOne = () => {
                         </div>
                         <div className="flex justify-between gap-4">
                             <span className="text-gray-400">Team Limit</span>
-                            <span className="text-white font-semibold text-right">{hackathon.teamSizeLimit} Members</span>
+                            <span className="text-white font-semibold text-right">{effectiveTeamLimit} Members</span>
                         </div>
                     </div>
                 </div>

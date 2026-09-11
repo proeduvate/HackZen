@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { fetchResultsAndCertificates, publishResults, issueCertificates } from '../../services/organizer/resultsCertificatesApi';
+import { usePlatformSettings } from '../../context/PlatformSettingsContext';
 
 const ResultsCertificates = () => {
+    const { publicLeaderboard } = usePlatformSettings();
     // --- State Management ---
     const [leaderboard, setLeaderboard] = useState([]);
     const [templates, setTemplates] = useState([]);
@@ -188,6 +190,11 @@ const ResultsCertificates = () => {
                             <Icon name="Award" className="w-6 h-6 text-yellow-500" />
                             Final Leaderboard
                         </h2>
+                        {!publicLeaderboard && (
+                            <span className="text-[10px] text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded font-bold">
+                                🔒 Hidden from public by platform policy
+                            </span>
+                        )}
                         {isLoading && <span className="text-xs text-cyan-400 animate-pulse bg-cyan-950/30 px-2 py-0.5 rounded border border-cyan-500/20">Syncing...</span>}
                     </div>
                     <div className="flex gap-2">

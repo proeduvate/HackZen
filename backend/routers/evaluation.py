@@ -57,6 +57,12 @@ async def get_submission_evaluations(submission_id: str):
 async def get_leaderboard(hackathon_id: str):
     """Calculate and return leaderboard for a specific hackathon"""
     db = get_db()
+
+    # Check live platform settings for public leaderboard visibility
+    settings = await db["settings"].find_one({"key": "global_config"}) or {}
+    if not bool(settings.get("publicLeaderboard", True)):
+        return []
+
     eval_collection = db["evaluations"]
     teams_collection = db["teams"]
 

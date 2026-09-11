@@ -129,6 +129,12 @@ const Signup = () => {
                             {error}
                         </div>
                     )}
+                    {!isPublicRegistrationAllowed && (
+                        <div className="p-3 mb-4 text-xs font-semibold text-center text-amber-300 border border-amber-500/30 rounded-xl bg-amber-500/10 flex items-center justify-center gap-2">
+                            <span>⚠️</span>
+                            <span>Public registrations are temporarily closed by platform policy.</span>
+                        </div>
+                    )}
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div>
                             <label htmlFor="fullName" className="block mb-2 text-sm font-medium text-gray-300">

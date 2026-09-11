@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import apiClient from '../../api/api';
 import { getMyTeams } from '../../api/teamApi';
+import { usePlatformSettings } from '../../context/PlatformSettingsContext';
 
 const StudentWorkspace = () => {
+    const navigate = useNavigate();
+    const { allowTeamChanges } = usePlatformSettings();
     // State management
     const [teams, setTeams] = useState([]);
     const [selectedTeam, setSelectedTeam] = useState(null);
@@ -274,6 +278,11 @@ const StudentWorkspace = () => {
                                         <span className="text-sm text-gray-400 font-medium">
                                             {currentTeam?.isOnline ? `Online • ${currentTeam?.status}` : 'Offline'}
                                         </span>
+                                        {!allowTeamChanges && (
+                                            <span className="ml-2 text-[10px] px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20 font-semibold">
+                                                🔒 Team members locked by platform
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -404,9 +413,13 @@ const StudentWorkspace = () => {
                             {activeTab === 'Files' && (
                                 <div className="flex-1 flex flex-col items-center justify-center text-gray-500 space-y-4">
                                     <div className="text-6xl">📁</div>
-                                    <p className="text-xl font-medium">Team files will appear here</p>
-                                    <button className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl border border-white/10 transition-colors">
-                                        Upload Document
+                                    <p className="text-xl font-medium text-gray-300">Project Deliverables & Repository</p>
+                                    <p className="text-xs text-gray-400 max-w-sm text-center">Upload deliverable archives, submit live demo URLs, and track jury evaluations.</p>
+                                    <button 
+                                        onClick={() => navigate('/student/submissions')}
+                                        className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg active:scale-95"
+                                    >
+                                        Open Deliverables & Project Submission Portal
                                     </button>
                                 </div>
                             )}

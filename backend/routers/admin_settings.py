@@ -62,7 +62,28 @@ async def get_public_platform_config():
     if not settings:
         settings = {}
 
+    max_team = int(settings.get("maxTeamSize", 4))
+    min_team = int(settings.get("minTeamSize", 1))
+    allow_team_changes = bool(settings.get("allowTeamChanges", True))
+    allow_late = bool(settings.get("allowLateSubmissions", False))
+    pub_leaderboard = bool(settings.get("publicLeaderboard", True))
+    plagiarism = bool(settings.get("plagiarismDetect", True))
+
+    max_file_size = settings.get("maxUploadFileSize", settings.get("maxUploadSizeMB", "100 MB"))
+    allowed_types = settings.get("allowedFileTypes", ["ZIP", "PDF", "PPTX", "DOCX", "MP4"])
+    require_github = bool(settings.get("gitHubRepo", settings.get("requireGithubRepo", True)))
+    require_demo = bool(settings.get("demoUrl", settings.get("requireLiveDemo", True)))
+
+    maint_mode = bool(settings.get("maintenanceMode", False))
+    pub_reg = bool(settings.get("publicRegistrations", True))
+
+    prefix = settings.get("prefix", settings.get("certificatePrefix", "PROEDU"))
+    auto_winner = bool(settings.get("autoGenWinner", settings.get("autoGenerateWinners", True)))
+    auto_part = bool(settings.get("autoGenParticipant", settings.get("autoGenerateParticipants", False)))
+    pub_verif = bool(settings.get("publicVerification", settings.get("publicQrVerification", True)))
+
     return {
+        # Top-level direct properties for easy consumption
         "platformName": settings.get("platformName", "ProEduvate"),
         "website": settings.get("website", "https://proeduvate.com"),
         "supportEmail": settings.get("supportEmail", "support@proeduvate.com"),
@@ -70,12 +91,74 @@ async def get_public_platform_config():
         "timezone": settings.get("timezone", "Asia/Kolkata (IST)"),
         "country": settings.get("country", "India"),
         "dateFormat": settings.get("dateFormat", "MMM DD, YYYY"),
-        "maintenanceMode": bool(settings.get("maintenanceMode", False)),
-        "publicRegistrations": bool(settings.get("publicRegistrations", True)),
-        "maxTeamSize": int(settings.get("maxTeamSize", 4)),
-        "minTeamSize": int(settings.get("minTeamSize", 1)),
-        "allowLateSubmissions": bool(settings.get("allowLateSubmissions", False)),
-        "publicLeaderboard": bool(settings.get("publicLeaderboard", True)),
+        "maintenanceMode": maint_mode,
+        "publicRegistrations": pub_reg,
+        "primaryColor": settings.get("primaryColor", "#3B82F6"),
+        "secondaryColor": settings.get("secondaryColor", "#0F172A"),
+        "logoUrl": settings.get("logoUrl", ""),
+
+        # Hackathon rule properties
+        "maxTeamSize": max_team,
+        "minTeamSize": min_team,
+        "allowTeamChanges": allow_team_changes,
+        "allowLateSubmissions": allow_late,
+        "publicLeaderboard": pub_leaderboard,
+        "plagiarismDetect": plagiarism,
+
+        # Submission properties
+        "maxUploadFileSize": max_file_size,
+        "maxUploadSizeMB": max_file_size,
+        "allowedFileTypes": allowed_types,
+        "gitHubRepo": require_github,
+        "requireGithubRepo": require_github,
+        "demoUrl": require_demo,
+        "requireLiveDemo": require_demo,
+
+        # Certificate properties
+        "prefix": prefix,
+        "certificatePrefix": prefix,
+        "autoGenWinner": auto_winner,
+        "autoGenerateWinners": auto_winner,
+        "autoGenParticipant": auto_part,
+        "autoGenerateParticipants": auto_part,
+        "publicVerification": pub_verif,
+        "publicQrVerification": pub_verif,
+
+        # Domain nested objects for components requiring domain namespaces
+        "hackathons": {
+            "maxTeamSize": max_team,
+            "minTeamSize": min_team,
+            "allowTeamChanges": allow_team_changes,
+            "allowLateSubmissions": allow_late,
+            "publicLeaderboard": pub_leaderboard,
+            "plagiarismDetect": plagiarism,
+        },
+        "general": {
+            "platformName": settings.get("platformName", "ProEduvate"),
+            "website": settings.get("website", "https://proeduvate.com"),
+            "supportEmail": settings.get("supportEmail", "support@proeduvate.com"),
+            "supportPhone": settings.get("supportPhone", "+91 800 123 4567"),
+            "timezone": settings.get("timezone", "Asia/Kolkata (IST)"),
+            "country": settings.get("country", "India"),
+            "dateFormat": settings.get("dateFormat", "MMM DD, YYYY"),
+            "maintenanceMode": maint_mode,
+            "publicRegistrations": pub_reg,
+            "primaryColor": settings.get("primaryColor", "#3B82F6"),
+            "secondaryColor": settings.get("secondaryColor", "#0F172A"),
+            "logoUrl": settings.get("logoUrl", ""),
+        },
+        "submissions": {
+            "maxUploadFileSize": max_file_size,
+            "allowedFileTypes": allowed_types,
+            "gitHubRepo": require_github,
+            "demoUrl": require_demo,
+        },
+        "certificates": {
+            "prefix": prefix,
+            "autoGenWinner": auto_winner,
+            "autoGenParticipant": auto_part,
+            "publicVerification": pub_verif,
+        },
         "timestamp": datetime.utcnow().isoformat()
     }
 
@@ -213,6 +296,18 @@ async def update_all_platform_settings(payload: dict, request: Request, current_
     for k, v in payload.items():
         if k not in ["general", "security", "notifications", "hackathons", "submissions", "certificates"]:
             update_dict[k] = v
+
+    # Ensure integer types for numeric constraints
+    if "maxTeamSize" in update_dict:
+        try:
+            update_dict["maxTeamSize"] = int(update_dict["maxTeamSize"])
+        except (ValueError, TypeError):
+            update_dict["maxTeamSize"] = 4
+    if "minTeamSize" in update_dict:
+        try:
+            update_dict["minTeamSize"] = int(update_dict["minTeamSize"])
+        except (ValueError, TypeError):
+            update_dict["minTeamSize"] = 1
 
     if update_dict:
         await db["settings"].update_one(

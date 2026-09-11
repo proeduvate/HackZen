@@ -22,10 +22,18 @@ def get_submission_collection():
 async def create_submission(
     sub_data: SubmissionCreate, current_user: dict = Depends(with_auth)
 ):
-    """Submit project for a hackathon stage"""
-    members_collection = get_db()["teamMembers"]
+    """Submit project for a hackathon stage with real-time platform constraints validation."""
+    db = get_db()
+    members_collection = db["teamMembers"]
+    teams_collection = db["teams"]
+    hackathons_collection = db["hackathons"]
+
+    user_id = current_user.get("id") or current_user.get("sub") or current_user.get("_id")
+    target_team_id = getattr(sub_data, "teamId", getattr(sub_data, "team_id", ""))
+    target_stage_id = getattr(sub_data, "stageId", getattr(sub_data, "stage_id", "initial_stage"))
+
     is_member = await members_collection.find_one(
-        {"teamId": sub_data.team_id, "userId": current_user["sub"]}
+        {"teamId": target_team_id, "userId": user_id}
     )
 
     if not is_member:
@@ -34,15 +42,86 @@ async def create_submission(
             detail="Only team members can submit projects",
         )
 
-    collection = get_submission_collection()
+    # 1. Fetch live platform settings
+    platform_settings = await db["settings"].find_one({"key": "global_config"}) or {}
+    allow_late = bool(platform_settings.get("allowLateSubmissions", False))
+    min_team_size = int(platform_settings.get("minTeamSize", 1))
+    req_github = bool(platform_settings.get("gitHubRepo", platform_settings.get("requireGithubRepo", False)))
+    req_demo = bool(platform_settings.get("demoUrl", platform_settings.get("requireLiveDemo", False)))
+    plagiarism_detect = bool(platform_settings.get("plagiarismDetect", True))
 
+    # 2. Check team size minimum
+    member_count = await members_collection.count_documents({"teamId": target_team_id})
+    if member_count < min_team_size:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Team must have at least {min_team_size} member{'s' if min_team_size > 1 else ''} to submit a project based on platform policy (currently has {member_count})."
+        )
+
+    # 3. Check GitHub Repo and Live Demo requirements
+    if req_github and not (sub_data.githubUrl and sub_data.githubUrl.strip()):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="GitHub Repository URL is required by platform policy."
+        )
+    if req_demo and not (sub_data.liveDemoUrl and sub_data.liveDemoUrl.strip()):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Live Demo URL is required by platform policy."
+        )
+
+    # 4. Check deadline against hackathon
+    team = await teams_collection.find_one({"_id": ObjectId(target_team_id)}) if ObjectId.is_valid(target_team_id) else None
+    hackathon = None
+    if team and team.get("hackathonId") and ObjectId.is_valid(str(team["hackathonId"])):
+        hackathon = await hackathons_collection.find_one({"_id": ObjectId(str(team["hackathonId"]))})
+
+    now = datetime.utcnow()
+    is_late = False
+
+    if hackathon:
+        deadline_raw = hackathon.get("submissionDeadline") or hackathon.get("hackathonEnd") or hackathon.get("registrationEnd")
+        if deadline_raw:
+            deadline_dt = None
+            if isinstance(deadline_raw, datetime):
+                deadline_dt = deadline_raw
+            elif isinstance(deadline_raw, str):
+                try:
+                    deadline_dt = datetime.fromisoformat(deadline_raw.replace("Z", "+00:00")).replace(tzinfo=None)
+                except:
+                    deadline_dt = None
+
+            if deadline_dt and now > deadline_dt:
+                if not allow_late:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Submissions are closed. Late submissions are not permitted by platform policy."
+                    )
+                is_late = True
+
+    collection = get_submission_collection()
     current_version = await collection.count_documents(
-        {"teamId": sub_data.team_id, "stageId": sub_data.stage_id}
+        {"teamId": target_team_id, "stageId": target_stage_id}
     )
 
     sub_dict = sub_data.model_dump(by_alias=True)
     sub_dict["version"] = current_version + 1
-    sub_dict["submittedAt"] = datetime.utcnow()
+    sub_dict["submittedAt"] = now
+    sub_dict["isLate"] = is_late
+    sub_dict["status"] = "Late Submission" if is_late else "Submitted"
+    sub_dict["lateAudit"] = "Auto-flagged late submission" if is_late else ""
+
+    # Attach hackathon title if available
+    if hackathon:
+        sub_dict["hackathonTitle"] = hackathon.get("title", "Hackathon")
+        sub_dict["hackathonId"] = str(hackathon.get("_id", ""))
+
+    if plagiarism_detect:
+        sub_dict["aiReview"] = "AI Originality Check Queued"
+        sub_dict["aiScore"] = 92 # Initial base originality score
+    else:
+        sub_dict["aiReview"] = "AI Originality Check Disabled by Platform Policy"
+        sub_dict["aiScore"] = None
 
     result = await collection.insert_one(sub_dict)
     sub_dict["_id"] = str(result.inserted_id)
