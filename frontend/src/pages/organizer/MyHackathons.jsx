@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchMyHackathons, toggleHackathonVisibility, toggleHackathonRegistration } from '../../services/organizer/myHackathonsApi';
+import { fetchMyHackathons, toggleHackathonRegistration, toggleHackathonVisibility } from '../../services/organizer/myHackathonsApi';
 
 const MyHackathons = () => {
     const navigate = useNavigate();
@@ -15,19 +15,6 @@ const MyHackathons = () => {
 
     const tabs = ['All', 'Active', 'Upcoming', 'Past', 'Drafts'];
 
-    const loadHackathons = useCallback(async () => {
-        setIsLoading(true);
-        try {
-            const data = await fetchMyHackathons();
-            setHackathons(data);
-        } catch (error) {
-            console.error("Failed to fetch real hackathons, checking fallback:", error);
-            setHackathons([]);
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
-
     // --- Persistence & Initial Load ---
     useEffect(() => {
         // Hydrate scroll position
@@ -36,8 +23,20 @@ const MyHackathons = () => {
             window.scrollTo(0, parseInt(savedScroll));
         }
 
-        loadHackathons();
+        const fetchHackathons = async () => {
+            setIsLoading(true);
+            try {
+                const data = await fetchMyHackathons();
+                setHackathons(data);
+            } catch (error) {
+                console.error('Failed to fetch hackathons', error);
+                setHackathons([]);
+            } finally {
+                setIsLoading(false);
+            }
+        };
 
+        fetchHackathons();
 
         // Scroll listener for persistence
         const handleScroll = () => {
@@ -45,7 +44,7 @@ const MyHackathons = () => {
         };
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
-    }, [loadHackathons]);
+    }, []);
 
     // Save UI state on changes
     useEffect(() => {
@@ -63,8 +62,12 @@ const MyHackathons = () => {
 
     // --- Filtering Logic ---
     const filteredHackathons = useMemo(() => {
-        return hackathons.filter(h => {
-            const matchesTab = activeTab === 'All' ? true : h.status === activeTab;
+        return hackathons.filter((h) => {
+            const matchesTab = activeTab === 'All'
+                ? true
+                : activeTab === 'Drafts'
+                    ? h.status === 'Draft'
+                    : h.status === activeTab;
             const matchesSearch = h.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
                 h.category?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
                 h.mode.toLowerCase().includes(debouncedSearch.toLowerCase());
@@ -74,48 +77,43 @@ const MyHackathons = () => {
 
     // --- Action Handlers ---
     const handleToggleVisibility = async (id) => {
-        const hackathon = hackathons.find(h => h.id === id);
+        const hackathon = hackathons.find((h) => h.id === id);
         if (!hackathon) return;
 
-        // Optimistic Update
         const previousState = [...hackathons];
-        setHackathons(prev => prev.map(h =>
-            h.id === id ? { ...h, isVisible: !h.isVisible } : h
-        ));
-        setActionLoading(prev => ({ ...prev, [`vis-${id}`]: true }));
+        setHackathons((prev) => prev.map((h) => (h.id === id ? { ...h, isVisible: !h.isVisible } : h)));
+        setActionLoading((prev) => ({ ...prev, [`vis-${id}`]: true }));
 
         try {
-            await toggleHackathonVisibility(id);
+            const result = await toggleHackathonVisibility(id);
+            setHackathons((prev) => prev.map((h) => (h.id === id ? { ...h, isVisible: result.hackathon.isVisible } : h)));
         } catch (error) {
-            // Rollback on failure
             setHackathons(previousState);
-            alert("Failed to update visibility on server. Please try again.");
+            alert('Failed to update visibility. Please try again.');
         } finally {
-            setActionLoading(prev => ({ ...prev, [`vis-${id}`]: false }));
+            setActionLoading((prev) => ({ ...prev, [`vis-${id}`]: false }));
         }
     };
 
     const handleToggleRegistrations = async (id) => {
-        const hackathon = hackathons.find(h => h.id === id);
+        const hackathon = hackathons.find((h) => h.id === id);
         if (!hackathon) return;
 
-        const newStatus = hackathon.regStatus === 'Open' ? 'Closed' : 'Open';
-
-        // Optimistic Update
         const previousState = [...hackathons];
-        setHackathons(prev => prev.map(h =>
-            h.id === id ? { ...h, regStatus: newStatus } : h
-        ));
-        setActionLoading(prev => ({ ...prev, [`reg-${id}`]: true }));
+        const nextRegStatus = hackathon.regStatus === 'Open' ? 'Closed' : 'Open';
+        setHackathons((prev) => prev.map((h) => (h.id === id ? { ...h, regStatus: nextRegStatus } : h)));
+        setActionLoading((prev) => ({ ...prev, [`reg-${id}`]: true }));
 
         try {
-            await toggleHackathonRegistration(id);
+            const result = await toggleHackathonRegistration(id);
+            const nextStatus = result.hackathon.status === 'Registration Open' ? 'Open' : 'Closed';
+            const nextDisplayStatus = result.hackathon.status === 'Draft' ? 'Draft' : 'Active';
+            setHackathons((prev) => prev.map((h) => (h.id === id ? { ...h, regStatus: nextStatus, status: nextDisplayStatus } : h)));
         } catch (error) {
-            // Rollback on failure
             setHackathons(previousState);
-            alert("Failed to update registration status on server.");
+            alert('Failed to update registration status.');
         } finally {
-            setActionLoading(prev => ({ ...prev, [`reg-${id}`]: false }));
+            setActionLoading((prev) => ({ ...prev, [`reg-${id}`]: false }));
         }
     };
 
@@ -124,7 +122,10 @@ const MyHackathons = () => {
     };
 
     const handleManage = (id) => {
-        navigate(`/organizer/hackathons/${id}/manage`);
+        const selectedHackathon = hackathons.find((h) => h.id === id);
+        navigate(`/organizer/hackathons/${id}/manage`, {
+            state: { hackathon: selectedHackathon }
+        });
     };
 
     const handleCreateNew = () => {

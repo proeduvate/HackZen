@@ -1,17 +1,40 @@
 import apiClient from '../../api/api';
 
-const normalizeHackathonStatus = (status) => {
-    const normalized = (status || '').toLowerCase();
+const formatDate = (value) => {
+    if (!value) return 'TBD';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'TBD' : date.toLocaleDateString();
+};
 
-    if (normalized.includes('draft')) return 'Drafts';
-    if (normalized.includes('completed') || normalized.includes('past') || normalized.includes('results')) return 'Past';
-    if (normalized.includes('upcoming')) return 'Upcoming';
+const getDisplayStatus = (hackathon) => {
+    if (!hackathon?.status) return 'Active';
+
+    const rawStatus = String(hackathon.status).toLowerCase();
+    if (rawStatus.includes('draft')) return 'Draft';
+    if (rawStatus.includes('completed') || rawStatus.includes('results')) return 'Past';
+
+    const now = new Date();
+    const startDate = hackathon.hackathonStart ? new Date(hackathon.hackathonStart) : null;
+    const endDate = hackathon.hackathonEnd ? new Date(hackathon.hackathonEnd) : null;
+
+    if (startDate && startDate > now) return 'Upcoming';
+    if (endDate && endDate < now) return 'Past';
     return 'Active';
+};
+
+const getDisplayRegistrationStatus = (hackathon) => {
+    const rawStatus = String(hackathon?.status || '').toLowerCase();
+    if (rawStatus.includes('draft')) return 'Closed';
+    if (rawStatus.includes('registration')) return 'Open';
+
+    const registrationEnd = hackathon?.registrationEnd ? new Date(hackathon.registrationEnd) : null;
+    if (registrationEnd && registrationEnd <= new Date()) return 'Closed';
+    return 'Open';
 };
 
 /**
  * My Hackathons API
- * 
+ *
  * This service manages fetching the organizer's hackathons, and toggling
  * their visibility and registration statuses using the real backend.
  */
@@ -22,22 +45,22 @@ const normalizeHackathonStatus = (status) => {
  */
 export const fetchMyHackathons = async () => {
     try {
-        const { data } = await apiClient.get('/hackathon/myhackathons');
-        
-        return data.map(h => ({
-            id: h._id || h.id,
+        const { data } = await apiClient.get('/hackathons/myhackathons');
+
+        return data.map((h) => ({
+            id: h._id,
             title: h.title,
-            banner: h.posterUrl || "https://images.unsplash.com/photo-1504384308090-c54be3852f33?auto=format&fit=crop&q=80&w=1000",
-            startDate: new Date(h.hackathonStart).toLocaleDateString(),
-            endDate: new Date(h.hackathonEnd).toLocaleDateString(),
+            banner: h.posterUrl || 'https://images.unsplash.com/photo-1504384308090-c54be3852f33?auto=format&fit=crop&q=80&w=1000',
+            startDate: formatDate(h.hackathonStart),
+            endDate: formatDate(h.hackathonEnd),
             mode: h.location === 'Online' ? 'Online' : 'Hybrid',
-            registrations: 0, // Need to fetch separately or join in backend
+            registrations: h.participants_count ?? 0,
             daysLeft: Math.max(0, Math.ceil((new Date(h.hackathonEnd) - new Date()) / (1000 * 60 * 60 * 24))),
-            status: normalizeHackathonStatus(h.status),
-            rawStatus: h.status,
-            regStatus: new Date(h.registrationEnd) > new Date() ? "Open" : "Closed",
+            status: getDisplayStatus(h),
+            regStatus: getDisplayRegistrationStatus(h),
             isVisible: h.isPublic,
-            category: h.themes?.[0] || "General"
+            category: h.themes?.[0] || 'General',
+            rawStatus: h.status
         }));
     } catch (error) {
         console.error('Failed to fetch my hackathons:', error);
@@ -52,8 +75,8 @@ export const fetchMyHackathons = async () => {
  */
 export const toggleHackathonVisibility = async (id) => {
     try {
-        const { data: current } = await apiClient.get(`/hackathon/${id}`);
-        const { data: updated } = await apiClient.put(`/hackathon/${id}`, {
+        const { data: current } = await apiClient.get(`/hackathons/${id}`);
+        const { data: updated } = await apiClient.put(`/hackathons/${id}`, {
             isPublic: !current.isPublic
         });
 
@@ -79,11 +102,11 @@ export const toggleHackathonVisibility = async (id) => {
  */
 export const toggleHackathonRegistration = async (id) => {
     try {
-        const { data: current } = await apiClient.get(`/hackathon/${id}`);
-        const newStatus = current.status === 'Registration Open' ? 'Draft' : 'Registration Open';
-        
-        const { data: updated } = await apiClient.put(`/hackathon/${id}`, {
-            status: newStatus
+        const { data: current } = await apiClient.get(`/hackathons/${id}`);
+        const nextStatus = current.status === 'Registration Open' ? 'Draft' : 'Registration Open';
+
+        const { data: updated } = await apiClient.put(`/hackathons/${id}`, {
+            status: nextStatus
         });
 
         return {
