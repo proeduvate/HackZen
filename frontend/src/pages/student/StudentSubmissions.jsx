@@ -264,9 +264,9 @@ const StudentSubmissions = () => {
                 </div>
             )}
 
-<<<<<<< HEAD
             {/* Submission Modal Enforcing Live Platform Rules */}
             {isModalOpen && (
+
                 <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
                     <div className="bg-navy-900 border border-white/10 rounded-2xl p-6 sm:p-8 w-full max-w-lg shadow-2xl relative text-white max-h-[90vh] overflow-y-auto custom-scrollbar">
                         <button 

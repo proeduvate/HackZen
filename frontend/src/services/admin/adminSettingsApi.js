@@ -1,5 +1,8 @@
+import apiClient from '../../api/api';
+
 /**
- * Admin Settings Mock API
+ * Admin Settings Mock & Real API
+
  * Connected to localStorage for managing platform config and admin access without a backend,
  * but simulates real API network latency to trigger UI loading states correctly.
  */
@@ -67,10 +70,11 @@ export const removeAdmin = async (id) => {
     admins = admins.filter(admin => admin.id !== id);
     setStorage('mock_admin_list', admins);
     return { success: true, admins };
-import apiClient from '../../api/api';
+};
 
 /**
  * Admin Settings API
+
  * Connected to live backend endpoints for managing platform configuration, RBAC, sessions, and audit logs.
  */
 
