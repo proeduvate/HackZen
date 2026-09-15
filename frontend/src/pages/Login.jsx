@@ -45,6 +45,25 @@ const Login = () => {
             const { token, user } = response;
             const role = user.role;
 
+            // Comprehensive storage sync for session persistence
+            sessionStorage.setItem('isLoggedIn', 'true');
+            sessionStorage.setItem('userRole', role);
+            sessionStorage.setItem('user', JSON.stringify(user));
+            sessionStorage.setItem('token', token);
+
+            // Notify app of state change
+            window.dispatchEvent(new Event('user-update'));
+
+            // Redirect based on role
+            if (role === 'admin') {
+                navigate('/admin/dashboard');
+            } else if (role === 'organizer') {
+                navigate('/organizer/dashboard');
+            } else if (role === 'mentor') {
+                navigate('/mentor/dashboard');
+            } else {
+                navigate('/student/dashboard');
+            }
             // Fast-sync storage
             const storageData = {
                 isLoggedIn: 'true',
