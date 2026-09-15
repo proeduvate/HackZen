@@ -35,11 +35,19 @@ async def issue_certificate(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Certificate already issued"
         )
 
+    db = get_db()
+    settings = await db["settings"].find_one({"key": "global_config"}) or {}
+    prefix = str(settings.get("prefix") or settings.get("certificatePrefix") or "PROEDU").strip().upper() or "PROEDU"
+    year = datetime.utcnow().year
+    import uuid
+    validation_id = f"{prefix}-{year}-{str(uuid.uuid4())[:8].upper()}"
+
     cert_data = {
         "userId": user_id,
         "teamId": team_id,
         "hackathonId": hackathon_id,
         "certificateUrl": f"/api/certificates/view/{user_id}_{hackathon_id}",
+        "validationId": validation_id,
         "issuedAt": datetime.utcnow(),
     }
 
@@ -66,6 +74,15 @@ async def get_my_certificates(current_user: dict = Depends(with_auth)):
 @router.get("/{certificate_id}", response_model=CertificateResponse)
 async def get_certificate(certificate_id: str):
     """Get certificate details"""
+    db = get_db()
+    settings = await db["settings"].find_one({"key": "global_config"}) or {}
+    is_public_enabled = settings.get("publicVerification", settings.get("publicQrVerification", True))
+    if is_public_enabled is False:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Public certificate verification is disabled by platform policy."
+        )
+
     collection = get_certificates_collection()
     cert = await collection.find_one({"_id": ObjectId(certificate_id)})
     if not cert:

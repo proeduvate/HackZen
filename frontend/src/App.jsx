@@ -67,6 +67,7 @@ import EditAdminProfile from './pages/admin/EditAdminProfile';
 import EvaluationCriteria from './pages/organizer/EvaluationCriteria';
 import InitializeEvent from './pages/organizer/InitializeEvent';
 import InviteMentors from './pages/organizer/InviteMentors';
+import PublicVerifyCertificate from './pages/PublicVerifyCertificate';
 
 import './App.css';
 
@@ -135,6 +136,10 @@ function AppContent() {
 
         {/* Unauthorized Access Page */}
         <Route path="/unauthorized" element={<Unauthorized />} />
+
+        {/* Public Certificate Verification Routes */}
+        <Route path="/verify" element={<PublicVerifyCertificate />} />
+        <Route path="/verify/:certId" element={<PublicVerifyCertificate />} />
 
         {/* Student Dashboard Routes */}
         <Route

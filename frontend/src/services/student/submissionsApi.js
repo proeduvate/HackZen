@@ -62,8 +62,39 @@ export const fetchSubmissions = async (teamId) => {
     }
 };
 
+export const uploadSubmissionFile = async (file) => {
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const { data } = await apiClient.post('/submissions/upload', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return data;
+    } catch (error) {
+        console.error('File upload failed:', error);
+        throw error;
+    }
+};
+
 export const submitProject = async (submissionData) => {
     try {
+        let uploadedFileUrl = submissionData.fileUrl || '';
+
+        // If a real File object is provided, upload it to the server
+        if (submissionData.file instanceof File) {
+            try {
+                const uploadRes = await uploadSubmissionFile(submissionData.file);
+                if (uploadRes?.fileUrl) {
+                    uploadedFileUrl = uploadRes.fileUrl;
+                }
+            } catch (upErr) {
+                console.warn('Backend file upload failed or skipped, falling back to named reference:', upErr);
+                uploadedFileUrl = `/uploads/submissions/${submissionData.file.name}`;
+            }
+        }
+
         let nextVersion = 1;
         try {
             const { data: teamSubs } = await apiClient.get(`/submissions/team/${submissionData.teamId}`);
@@ -78,7 +109,7 @@ export const submitProject = async (submissionData) => {
             project: submissionData.project || 'Hackathon Project Submission',
             desc: submissionData.desc || '',
             category: submissionData.category || 'General',
-            fileUrl: submissionData.fileUrl || 'https://storage.proeduvate.com/submissions/archive.zip',
+            fileUrl: uploadedFileUrl || (submissionData.file?.name ? `/uploads/submissions/${submissionData.file.name}` : ''),
             githubUrl: submissionData.githubUrl || '',
             liveDemoUrl: submissionData.liveDemoUrl || '',
             version: nextVersion

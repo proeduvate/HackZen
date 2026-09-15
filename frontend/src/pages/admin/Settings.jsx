@@ -161,7 +161,7 @@ const Settings = () => {
         },
         submissions: {
             maxUploadFileSize: '100 MB',
-            allowedFileTypes: ['ZIP', 'PDF', 'PPTX', 'DOCX'],
+            allowedFileTypes: ['ZIP', 'PDF', 'PPTX', 'DOCX', 'MP4', 'TAR.GZ'],
             gitHubRepo: true,
             demoUrl: true
         },
@@ -1348,7 +1348,11 @@ const Settings = () => {
                                         <input 
                                             type="text" 
                                             value={config.certificates.prefix}
-                                            onChange={(e) => handleInputChange('certificates', 'prefix', e.target.value.toUpperCase())}
+                                            onChange={(e) => {
+                                                const sanitized = e.target.value.toUpperCase().replace(/[^A-Z0-9\-]/g, '');
+                                                handleInputChange('certificates', 'prefix', sanitized);
+                                            }}
+                                            placeholder="PROEDU"
                                             className={`w-full px-3.5 py-2 text-xs font-mono font-bold focus:outline-none ${theme.inputBg}`} 
                                         />
                                     </div>
@@ -1357,7 +1361,7 @@ const Settings = () => {
                                         <input 
                                             type="text" 
                                             disabled 
-                                            value={`${config.certificates.prefix || 'PROEDU'}-2026-XXXXX`}
+                                            value={`${config.certificates.prefix || 'PROEDU'}-${new Date().getFullYear()}-XXXXX`}
                                             className={`w-full px-3.5 py-2 text-xs font-mono text-slate-500 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-xl cursor-not-allowed`} 
                                         />
                                     </div>

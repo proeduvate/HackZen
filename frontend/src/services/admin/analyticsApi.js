@@ -94,3 +94,35 @@ export const fetchSmartAiInsights = async () => {
         return null;
     }
 };
+
+/**
+ * Downloads official PDF analytics report as binary blob
+ */
+export const exportAnalyticsPdf = async (params = {}) => {
+    try {
+        const response = await apiClient.get('/admin/analytics/export/pdf', {
+            params,
+            responseType: 'blob'
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Failed to export analytics PDF:', error);
+        throw error;
+    }
+};
+
+/**
+ * Downloads official styled Excel spreadsheet as binary blob
+ */
+export const exportAnalyticsExcel = async (params = {}) => {
+    try {
+        const response = await apiClient.get('/admin/analytics/export/excel', {
+            params,
+            responseType: 'blob'
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Failed to export analytics Excel:', error);
+        throw error;
+    }
+};

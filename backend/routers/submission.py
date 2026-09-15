@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Body
+from fastapi import APIRouter, Depends, HTTPException, status, Body, UploadFile, File
 from typing import List, Optional, Dict, Any
+import os
 from bson import ObjectId
 from datetime import datetime, timedelta
 
@@ -14,6 +15,77 @@ router = APIRouter()
 
 def get_submission_collection():
     return get_db()["submissions"]
+
+
+@router.post("/upload")
+async def upload_submission_file(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(with_auth)
+):
+    """Upload project deliverable archive with real-time platform constraints validation."""
+    db = get_db()
+    platform_settings = await db["settings"].find_one({"key": "global_config"}) or {}
+    
+    # 1. Parse max file size
+    max_size_str = platform_settings.get("maxUploadFileSize", platform_settings.get("maxUploadSizeMB", "100 MB"))
+    max_mb = 100
+    try:
+        max_mb = int("".join(filter(str.isdigit, str(max_size_str)))) or 100
+    except:
+        max_mb = 100
+    max_bytes = max_mb * 1024 * 1024
+
+    # 2. Parse allowed file extensions
+    allowed_types_raw = platform_settings.get("allowedFileTypes", ["ZIP", "PDF", "PPTX", "DOCX", "MP4", "TAR.GZ"])
+    if isinstance(allowed_types_raw, str):
+        allowed_types = [t.strip().upper().lstrip(".") for t in allowed_types_raw.split(",") if t.strip()]
+    elif isinstance(allowed_types_raw, list):
+        allowed_types = [str(t).strip().upper().lstrip(".") for t in allowed_types_raw if str(t).strip()]
+    else:
+        allowed_types = ["ZIP", "PDF", "PPTX", "DOCX", "MP4", "TAR.GZ"]
+
+    # 3. Validate file extension (supporting compound extensions like .tar.gz)
+    filename = file.filename or "deliverable"
+    filename_lower = filename.lower()
+    if filename_lower.endswith(".tar.gz"):
+        ext = "TAR.GZ"
+    else:
+        ext = filename.rsplit(".", 1)[-1].upper() if "." in filename else ""
+
+    if ext not in allowed_types:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File extension .{ext.lower()} is not allowed by platform policy. Allowed deliverable types: {', '.join(allowed_types)}"
+        )
+
+    # 4. Validate file size
+    contents = await file.read()
+    file_size = len(contents)
+    if file_size > max_bytes:
+        file_mb = round(file_size / (1024 * 1024), 1)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File size ({file_mb} MB) exceeds platform maximum upload limit of {max_size_str}."
+        )
+
+    # 5. Save file to uploads/submissions
+    upload_dir = os.path.join(os.getcwd(), "uploads", "submissions")
+    os.makedirs(upload_dir, exist_ok=True)
+    clean_filename = f"{int(datetime.utcnow().timestamp())}_{filename.replace(' ', '_')}"
+    file_path = os.path.join(upload_dir, clean_filename)
+
+    with open(file_path, "wb") as f:
+        f.write(contents)
+
+    file_url = f"/uploads/submissions/{clean_filename}"
+    return {
+        "success": True,
+        "filename": filename,
+        "fileUrl": file_url,
+        "sizeBytes": file_size,
+        "sizeMB": round(file_size / (1024 * 1024), 2),
+        "extension": ext
+    }
 
 
 @router.post(
@@ -69,6 +141,29 @@ async def create_submission(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Live Demo URL is required by platform policy."
         )
+
+    # Validate deliverable file format if local fileUrl provided
+    if sub_data.fileUrl and sub_data.fileUrl.strip():
+        file_lower = sub_data.fileUrl.strip().lower()
+        if not file_lower.startswith("http://") and not file_lower.startswith("https://"):
+            allowed_types_raw = platform_settings.get("allowedFileTypes", ["ZIP", "PDF", "PPTX", "DOCX", "MP4", "TAR.GZ"])
+            if isinstance(allowed_types_raw, str):
+                allowed_types = [t.strip().upper().lstrip(".") for t in allowed_types_raw.split(",") if t.strip()]
+            elif isinstance(allowed_types_raw, list):
+                allowed_types = [str(t).strip().upper().lstrip(".") for t in allowed_types_raw if str(t).strip()]
+            else:
+                allowed_types = ["ZIP", "PDF", "PPTX", "DOCX", "MP4", "TAR.GZ"]
+
+            if file_lower.endswith(".tar.gz"):
+                f_ext = "TAR.GZ"
+            else:
+                f_ext = file_lower.rsplit(".", 1)[-1].upper() if "." in file_lower else ""
+
+            if f_ext and f_ext not in allowed_types:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Deliverable file extension .{f_ext.lower()} is not allowed by platform policy. Allowed deliverable types: {', '.join(allowed_types)}"
+                )
 
     # 4. Check deadline against hackathon
     team = await teams_collection.find_one({"_id": ObjectId(target_team_id)}) if ObjectId.is_valid(target_team_id) else None

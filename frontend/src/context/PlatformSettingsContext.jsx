@@ -66,7 +66,7 @@ export const defaultPlatformSettings = {
     },
     submissions: {
         maxUploadFileSize: '100 MB',
-        allowedFileTypes: ['ZIP', 'PDF', 'PPTX', 'DOCX', 'MP4'],
+        allowedFileTypes: ['ZIP', 'PDF', 'PPTX', 'DOCX', 'MP4', 'TAR.GZ'],
         gitHubRepo: true,
         demoUrl: true,
     },
@@ -99,11 +99,46 @@ export const PlatformSettingsProvider = ({ children }) => {
                 ? Number(incomingData.minTeamSize) 
                 : (incomingData.hackathons?.minTeamSize !== undefined ? Number(incomingData.hackathons.minTeamSize) : prev.minTeamSize);
 
+            const maxUploadFileSize = incomingData.maxUploadFileSize || incomingData.submissions?.maxUploadFileSize || prev.maxUploadFileSize || '100 MB';
+            let allowedFileTypes = incomingData.allowedFileTypes || incomingData.submissions?.allowedFileTypes || prev.allowedFileTypes || ['ZIP', 'PDF', 'PPTX', 'DOCX', 'MP4', 'TAR.GZ'];
+            if (typeof allowedFileTypes === 'string') {
+                allowedFileTypes = allowedFileTypes.split(',').map(s => s.trim().toUpperCase().replace(/^\./, '')).filter(Boolean);
+            }
+            const gitHubRepo = incomingData.gitHubRepo !== undefined
+                ? Boolean(incomingData.gitHubRepo)
+                : (incomingData.submissions?.gitHubRepo !== undefined ? Boolean(incomingData.submissions.gitHubRepo) : Boolean(prev.gitHubRepo ?? true));
+            const demoUrl = incomingData.demoUrl !== undefined
+                ? Boolean(incomingData.demoUrl)
+                : (incomingData.submissions?.demoUrl !== undefined ? Boolean(incomingData.submissions.demoUrl) : Boolean(prev.demoUrl ?? true));
+
+            const prefix = incomingData.prefix || incomingData.certificatePrefix || incomingData.certificates?.prefix || prev.prefix || 'PROEDU';
+            const autoGenWinner = incomingData.autoGenWinner !== undefined 
+                ? Boolean(incomingData.autoGenWinner) 
+                : (incomingData.certificates?.autoGenWinner !== undefined ? Boolean(incomingData.certificates.autoGenWinner) : Boolean(prev.autoGenWinner ?? true));
+            const autoGenParticipant = incomingData.autoGenParticipant !== undefined 
+                ? Boolean(incomingData.autoGenParticipant) 
+                : (incomingData.certificates?.autoGenParticipant !== undefined ? Boolean(incomingData.certificates.autoGenParticipant) : Boolean(prev.autoGenParticipant ?? false));
+            const publicVerification = incomingData.publicVerification !== undefined 
+                ? Boolean(incomingData.publicVerification) 
+                : (incomingData.certificates?.publicVerification !== undefined ? Boolean(incomingData.certificates.publicVerification) : Boolean(prev.publicVerification ?? true));
+
             const merged = {
                 ...prev,
                 ...incomingData,
                 maxTeamSize,
                 minTeamSize,
+                maxUploadFileSize,
+                allowedFileTypes,
+                gitHubRepo,
+                demoUrl,
+                prefix,
+                certificatePrefix: prefix,
+                autoGenWinner,
+                autoGenerateWinners: autoGenWinner,
+                autoGenParticipant,
+                autoGenerateParticipants: autoGenParticipant,
+                publicVerification,
+                publicQrVerification: publicVerification,
                 hackathons: {
                     ...prev.hackathons,
                     ...(incomingData.hackathons || {}),
@@ -116,11 +151,19 @@ export const PlatformSettingsProvider = ({ children }) => {
                 },
                 submissions: {
                     ...prev.submissions,
-                    ...(incomingData.submissions || {})
+                    ...(incomingData.submissions || {}),
+                    maxUploadFileSize,
+                    allowedFileTypes,
+                    gitHubRepo,
+                    demoUrl
                 },
                 certificates: {
                     ...prev.certificates,
-                    ...(incomingData.certificates || {})
+                    ...(incomingData.certificates || {}),
+                    prefix,
+                    autoGenWinner,
+                    autoGenParticipant,
+                    publicVerification
                 }
             };
             try {
@@ -283,6 +326,60 @@ export const PlatformSettingsProvider = ({ children }) => {
         return !isPast || Boolean(platformSettings.allowLateSubmissions);
     }, [platformSettings.allowLateSubmissions]);
 
+    // Helper: calculate max file size in bytes
+    const getMaxUploadSizeBytes = useCallback(() => {
+        const sizeStr = platformSettings.maxUploadFileSize || platformSettings.submissions?.maxUploadFileSize || '100 MB';
+        const num = parseInt(sizeStr, 10) || 100;
+        return num * 1024 * 1024;
+    }, [platformSettings.maxUploadFileSize, platformSettings.submissions?.maxUploadFileSize]);
+
+    // Helper: get HTML accept attribute string for allowed extensions
+    const getAllowedExtensionsAcceptString = useCallback(() => {
+        const rawList = platformSettings.allowedFileTypes || platformSettings.submissions?.allowedFileTypes || ['ZIP', 'PDF', 'PPTX', 'DOCX', 'MP4', 'TAR.GZ'];
+        const list = Array.isArray(rawList) ? rawList : String(rawList).split(',');
+        return list.map(ext => `.${ext.trim().toLowerCase()}`).join(',');
+    }, [platformSettings.allowedFileTypes, platformSettings.submissions?.allowedFileTypes]);
+
+    // Helper: validate a deliverable file against active platform deliverable rules
+    const validateDeliverableFile = useCallback((file) => {
+        if (!file) {
+            return { valid: false, error: 'No file selected.' };
+        }
+
+        // 1. Check file size
+        const maxBytes = getMaxUploadSizeBytes();
+        const sizeLabel = platformSettings.maxUploadFileSize || platformSettings.submissions?.maxUploadFileSize || '100 MB';
+        if (file.size > maxBytes) {
+            const actualMb = (file.size / (1024 * 1024)).toFixed(1);
+            return {
+                valid: false,
+                error: `File size (${actualMb} MB) exceeds platform limit of ${sizeLabel}.`
+            };
+        }
+
+        // 2. Check file extension (with .tar.gz compound extension support)
+        const rawAllowed = platformSettings.allowedFileTypes || platformSettings.submissions?.allowedFileTypes || ['ZIP', 'PDF', 'PPTX', 'DOCX', 'MP4', 'TAR.GZ'];
+        const allowed = (Array.isArray(rawAllowed) ? rawAllowed : String(rawAllowed).split(','))
+            .map(x => x.trim().toUpperCase().replace(/^\./, ''));
+
+        const fileNameLower = file.name.toLowerCase();
+        let ext = '';
+        if (fileNameLower.endsWith('.tar.gz')) {
+            ext = 'TAR.GZ';
+        } else {
+            ext = file.name.split('.').pop().toUpperCase();
+        }
+
+        if (!allowed.includes(ext)) {
+            return {
+                valid: false,
+                error: `File type .${ext.toLowerCase()} is not permitted by platform policy. Allowed formats: ${allowed.join(', ')}`
+            };
+        }
+
+        return { valid: true, error: null };
+    }, [getMaxUploadSizeBytes, platformSettings.maxUploadFileSize, platformSettings.submissions?.maxUploadFileSize, platformSettings.allowedFileTypes, platformSettings.submissions?.allowedFileTypes]);
+
     const value = useMemo(() => ({
         platformSettings,
         isLoading,
@@ -291,6 +388,9 @@ export const PlatformSettingsProvider = ({ children }) => {
         broadcastSettingsUpdate,
         getTeamSizeOptions,
         isSubmissionAllowed,
+        getMaxUploadSizeBytes,
+        getAllowedExtensionsAcceptString,
+        validateDeliverableFile,
 
         // Direct getters
         platformName: platformSettings.platformName || 'ProEduvate',
@@ -313,16 +413,18 @@ export const PlatformSettingsProvider = ({ children }) => {
 
         // Submissions rules
         maxUploadFileSize: platformSettings.maxUploadFileSize || '100 MB',
-        allowedFileTypes: platformSettings.allowedFileTypes || ['ZIP', 'PDF', 'PPTX', 'DOCX', 'MP4'],
+        allowedFileTypes: platformSettings.allowedFileTypes || ['ZIP', 'PDF', 'PPTX', 'DOCX', 'MP4', 'TAR.GZ'],
         gitHubRepo: Boolean(platformSettings.gitHubRepo ?? true),
         demoUrl: Boolean(platformSettings.demoUrl ?? true),
 
-        // Certificates rules
+        // Certificates rules & helpers
         prefix: platformSettings.prefix || 'PROEDU',
         autoGenWinner: Boolean(platformSettings.autoGenWinner ?? true),
         autoGenParticipant: Boolean(platformSettings.autoGenParticipant),
         publicVerification: Boolean(platformSettings.publicVerification ?? true),
-    }), [platformSettings, isLoading, formatDate, fetchSettings, broadcastSettingsUpdate, getTeamSizeOptions, isSubmissionAllowed]);
+        formatValidationId: (serial = 'XXXXX') => `${platformSettings.prefix || 'PROEDU'}-${new Date().getFullYear()}-${serial}`,
+        isPublicVerificationAllowed: () => Boolean(platformSettings.publicVerification ?? true),
+    }), [platformSettings, isLoading, formatDate, fetchSettings, broadcastSettingsUpdate, getTeamSizeOptions, isSubmissionAllowed, getMaxUploadSizeBytes, getAllowedExtensionsAcceptString, validateDeliverableFile]);
 
     return (
         <PlatformSettingsContext.Provider value={value}>
@@ -365,6 +467,8 @@ export const usePlatformSettings = () => {
             autoGenWinner: true,
             autoGenParticipant: false,
             publicVerification: true,
+            formatValidationId: (serial = 'XXXXX') => `PROEDU-${new Date().getFullYear()}-${serial}`,
+            isPublicVerificationAllowed: () => true,
         };
     }
     return context;

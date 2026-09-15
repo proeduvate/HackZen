@@ -6,8 +6,10 @@ import {
     downloadAllCertificates,
     shareTranscript
 } from '../../services/student/certificatesApi';
+import { usePlatformSettings } from '../../context/PlatformSettingsContext';
 
 const StudentCertificates = () => {
+    const { prefix, publicVerification } = usePlatformSettings();
     const [certId, setCertId] = useState('');
     const [isVerifying, setIsVerifying] = useState(false);
     const [verifiedResult, setVerifiedResult] = useState(() => {
@@ -264,14 +266,21 @@ const StudentCertificates = () => {
                             </div>
 
                             <div className="glass p-6 rounded-2xl border border-white/5">
-                                <h4 className="text-lg font-bold text-white mb-4">Certificate Verification</h4>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h4 className="text-lg font-bold text-white">Certificate Verification</h4>
+                                    {!publicVerification && (
+                                        <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
+                                            🔒 Public QR Portal Disabled
+                                        </span>
+                                    )}
+                                </div>
                                 <div className="space-y-4">
                                     <input
                                         type="text"
                                         value={certId}
-                                        onChange={(e) => setCertId(e.target.value)}
+                                        onChange={(e) => setCertId(e.target.value.toUpperCase())}
                                         onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
-                                        placeholder="e.g., PE-2024-NX8829-VZ"
+                                        placeholder={`e.g., ${prefix || 'PROEDU'}-${new Date().getFullYear()}-A1B2C3D4`}
                                         className="w-full bg-navy-900/50 border border-white/10 text-white px-4 py-3 rounded-xl focus:outline-none focus:border-purple-500/50 transition-colors placeholder:text-gray-500 font-mono text-sm uppercase"
                                     />
 

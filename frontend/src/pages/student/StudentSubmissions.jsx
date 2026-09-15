@@ -18,7 +18,9 @@ const StudentSubmissions = () => {
         allowedFileTypes,
         gitHubRepo,
         demoUrl,
-        isSubmissionAllowed
+        isSubmissionAllowed,
+        validateDeliverableFile,
+        getAllowedExtensionsAcceptString
     } = usePlatformSettings();
 
     const [form, setForm] = useState({
@@ -58,21 +60,11 @@ const StudentSubmissions = () => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // 1. Validate file extension
-        const ext = file.name.split('.').pop().toUpperCase();
-        const allowed = (allowedFileTypes || ['ZIP', 'PDF', 'PPTX', 'DOCX']).map(x => x.toUpperCase());
-        if (!allowed.includes(ext)) {
-            setErrorMessage(`Invalid file format .${ext}. Platform allows: ${allowed.join(', ')}`);
+        const validation = validateDeliverableFile(file);
+        if (!validation.valid) {
+            setErrorMessage(validation.error);
             e.target.value = '';
-            return;
-        }
-
-        // 2. Validate max upload size
-        const maxMb = parseInt(maxUploadFileSize) || 100;
-        const maxBytes = maxMb * 1024 * 1024;
-        if (file.size > maxBytes) {
-            setErrorMessage(`File exceeds the platform maximum upload size of ${maxUploadFileSize} (${(file.size / (1024 * 1024)).toFixed(1)} MB uploaded).`);
-            e.target.value = '';
+            setForm(prev => ({ ...prev, file: null }));
             return;
         }
 
@@ -113,7 +105,8 @@ const StudentSubmissions = () => {
                 desc: form.desc,
                 githubUrl: form.githubUrl,
                 liveDemoUrl: form.liveDemoUrl,
-                fileUrl: form.file ? `https://storage.proeduvate.com/uploads/${form.file.name}` : ''
+                file: form.file,
+                fileUrl: form.file ? `/uploads/submissions/${form.file.name}` : ''
             });
 
             setSuccessMessage('Project submitted successfully!');
@@ -309,13 +302,17 @@ const StudentSubmissions = () => {
                             <div>
                                 <div className="flex justify-between items-center mb-1">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase">
-                                        GitHub Repository URL {gitHubRepo && <span className="text-sky-400">(Required by Platform Policy)</span>}
+                                        GitHub Repository URL {gitHubRepo ? (
+                                            <span className="text-sky-400 font-bold">* (Required by Platform Policy)</span>
+                                        ) : (
+                                            <span className="text-gray-500 font-normal lowercase">(optional)</span>
+                                        )}
                                     </label>
                                 </div>
                                 <input
                                     type="url"
                                     required={gitHubRepo}
-                                    placeholder="https://github.com/org/repo"
+                                    placeholder={gitHubRepo ? "https://github.com/org/repo (required)" : "https://github.com/org/repo (optional)"}
                                     value={form.githubUrl}
                                     onChange={(e) => setForm(prev => ({ ...prev, githubUrl: e.target.value }))}
                                     className="w-full px-3.5 py-2 bg-black/20 border border-white/10 rounded-xl text-white outline-none font-mono"
@@ -325,13 +322,17 @@ const StudentSubmissions = () => {
                             <div>
                                 <div className="flex justify-between items-center mb-1">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase">
-                                        Live Demo URL {demoUrl && <span className="text-sky-400">(Required by Platform Policy)</span>}
+                                        Live Demo URL {demoUrl ? (
+                                            <span className="text-sky-400 font-bold">* (Required by Platform Policy)</span>
+                                        ) : (
+                                            <span className="text-gray-500 font-normal lowercase">(optional)</span>
+                                        )}
                                     </label>
                                 </div>
                                 <input
                                     type="url"
                                     required={demoUrl}
-                                    placeholder="https://my-app.vercel.app"
+                                    placeholder={demoUrl ? "https://my-app.vercel.app (required)" : "https://my-app.vercel.app (optional)"}
                                     value={form.liveDemoUrl}
                                     onChange={(e) => setForm(prev => ({ ...prev, liveDemoUrl: e.target.value }))}
                                     className="w-full px-3.5 py-2 bg-black/20 border border-white/10 rounded-xl text-white outline-none font-mono"
@@ -345,9 +346,16 @@ const StudentSubmissions = () => {
                                 </div>
                                 <input
                                     type="file"
+                                    accept={getAllowedExtensionsAcceptString ? getAllowedExtensionsAcceptString() : '.zip,.pdf,.pptx,.docx,.mp4,.tar.gz'}
                                     onChange={handleFileChange}
                                     className="w-full px-3.5 py-2 bg-black/20 border border-white/10 rounded-xl text-white file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-sky-500/20 file:text-sky-300 hover:file:bg-sky-500/30 cursor-pointer"
                                 />
+                                {form.file && (
+                                    <div className="mt-1.5 p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center justify-between text-[11px] text-emerald-300">
+                                        <span>✓ Attached: {form.file.name}</span>
+                                        <span className="text-gray-400 font-mono">{(form.file.size / (1024 * 1024)).toFixed(2)} MB</span>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Late submission indicator */}

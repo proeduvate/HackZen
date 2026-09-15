@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { fetchResultsAndCertificates, publishResults, issueCertificates } from '../../services/organizer/resultsCertificatesApi';
 import { usePlatformSettings } from '../../context/PlatformSettingsContext';
+import apiClient from '../../api/api';
 
 const ResultsCertificates = () => {
-    const { publicLeaderboard } = usePlatformSettings();
+    const { publicLeaderboard, autoGenWinner, autoGenParticipant, prefix } = usePlatformSettings();
     // --- State Management ---
     const [leaderboard, setLeaderboard] = useState([]);
     const [templates, setTemplates] = useState([]);
@@ -65,8 +66,17 @@ const ResultsCertificates = () => {
 
         try {
             await publishResults('hackathon-123'); // Example ID
+            
+            // Trigger auto-issue pipeline if enabled by platform settings
+            if (autoGenWinner || autoGenParticipant) {
+                try {
+                    await apiClient.post('/admin/certificates/auto-issue/hackathon-123');
+                } catch (autoErr) {
+                    console.warn("Auto-issue pipeline notification:", autoErr);
+                }
+            }
+
             setPublishStatus('published');
-            // Visual feedback would ideally use a toast here
             console.log("Results Published Successfully");
         } catch (error) {
             console.error("Publishing failed:", error);
@@ -315,7 +325,21 @@ const ResultsCertificates = () => {
 
             {/* Certificate Templates Section */}
             <div>
-                <h2 className="text-xl font-bold text-white mb-4">Certificate Templates</h2>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                    <h2 className="text-xl font-bold text-white">Certificate Templates</h2>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        {autoGenWinner && (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                <span>⚡ Winner Auto-Issuance Active ({prefix})</span>
+                            </span>
+                        )}
+                        {autoGenParticipant && (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                                <span>⚡ Participant Auto-Issuance Active</span>
+                            </span>
+                        )}
+                    </div>
+                </div>
                 {isLoading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="glass h-64 rounded-2xl border border-white/5 animate-pulse"></div>

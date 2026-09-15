@@ -70,7 +70,9 @@ async def get_public_platform_config():
     plagiarism = bool(settings.get("plagiarismDetect", True))
 
     max_file_size = settings.get("maxUploadFileSize", settings.get("maxUploadSizeMB", "100 MB"))
-    allowed_types = settings.get("allowedFileTypes", ["ZIP", "PDF", "PPTX", "DOCX", "MP4"])
+    allowed_types = settings.get("allowedFileTypes", ["ZIP", "PDF", "PPTX", "DOCX", "MP4", "TAR.GZ"])
+    if isinstance(allowed_types, str):
+        allowed_types = [t.strip().upper().lstrip(".") for t in allowed_types.split(",") if t.strip()]
     require_github = bool(settings.get("gitHubRepo", settings.get("requireGithubRepo", True)))
     require_demo = bool(settings.get("demoUrl", settings.get("requireLiveDemo", True)))
 
@@ -308,6 +310,78 @@ async def update_all_platform_settings(payload: dict, request: Request, current_
             update_dict["minTeamSize"] = int(update_dict["minTeamSize"])
         except (ValueError, TypeError):
             update_dict["minTeamSize"] = 1
+
+    # Normalize file deliverable policies
+    if "allowedFileTypes" in update_dict:
+        aft = update_dict["allowedFileTypes"]
+        if isinstance(aft, str):
+            update_dict["allowedFileTypes"] = [x.strip().upper().lstrip(".") for x in aft.split(",") if x.strip()]
+        elif isinstance(aft, list):
+            update_dict["allowedFileTypes"] = [str(x).strip().upper().lstrip(".") for x in aft if str(x).strip()]
+
+    if "maxUploadFileSize" in update_dict:
+        update_dict["maxUploadSizeMB"] = str(update_dict["maxUploadFileSize"])
+    elif "maxUploadSizeMB" in update_dict:
+        update_dict["maxUploadFileSize"] = str(update_dict["maxUploadSizeMB"])
+
+    if "gitHubRepo" in update_dict:
+        val = bool(update_dict["gitHubRepo"])
+        update_dict["gitHubRepo"] = val
+        update_dict["requireGithubRepo"] = val
+    elif "requireGithubRepo" in update_dict:
+        val = bool(update_dict["requireGithubRepo"])
+        update_dict["gitHubRepo"] = val
+        update_dict["requireGithubRepo"] = val
+
+    if "demoUrl" in update_dict:
+        val = bool(update_dict["demoUrl"])
+        update_dict["demoUrl"] = val
+        update_dict["requireLiveDemo"] = val
+    elif "requireLiveDemo" in update_dict:
+        val = bool(update_dict["requireLiveDemo"])
+        update_dict["demoUrl"] = val
+        update_dict["requireLiveDemo"] = val
+
+    # Normalize Certificate Automation & Credential Engine policies
+    if "prefix" in update_dict or "certificatePrefix" in update_dict:
+        raw_prefix = str(update_dict.get("prefix") or update_dict.get("certificatePrefix") or "PROEDU").strip().upper()
+        # Clean prefix to uppercase letters, numbers, and hyphens
+        import re
+        clean_prefix = re.sub(r'[^A-Z0-9\-]', '', raw_prefix) or "PROEDU"
+        current_year = datetime.utcnow().year
+        template_str = f"{clean_prefix}-{current_year}-XXXXX"
+
+        update_dict["prefix"] = clean_prefix
+        update_dict["certificatePrefix"] = clean_prefix
+        update_dict["formatTemplate"] = template_str
+        update_dict["validationTemplate"] = template_str
+
+    if "autoGenWinner" in update_dict:
+        val = bool(update_dict["autoGenWinner"])
+        update_dict["autoGenWinner"] = val
+        update_dict["autoGenerateWinners"] = val
+    elif "autoGenerateWinners" in update_dict:
+        val = bool(update_dict["autoGenerateWinners"])
+        update_dict["autoGenWinner"] = val
+        update_dict["autoGenerateWinners"] = val
+
+    if "autoGenParticipant" in update_dict:
+        val = bool(update_dict["autoGenParticipant"])
+        update_dict["autoGenParticipant"] = val
+        update_dict["autoGenerateParticipants"] = val
+    elif "autoGenerateParticipants" in update_dict:
+        val = bool(update_dict["autoGenerateParticipants"])
+        update_dict["autoGenParticipant"] = val
+        update_dict["autoGenerateParticipants"] = val
+
+    if "publicVerification" in update_dict:
+        val = bool(update_dict["publicVerification"])
+        update_dict["publicVerification"] = val
+        update_dict["publicQrVerification"] = val
+    elif "publicQrVerification" in update_dict:
+        val = bool(update_dict["publicQrVerification"])
+        update_dict["publicVerification"] = val
+        update_dict["publicQrVerification"] = val
 
     if update_dict:
         await db["settings"].update_one(

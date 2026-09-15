@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
     TemplateIcon, 
@@ -22,16 +22,89 @@ import {
     verifyCertificatePublic, 
     previewBulkIssuance,
     bulkIssueConfirm,
-    restoreCertificate
+    restoreCertificate,
+    fetchCertificateTemplates,
+    uploadCertificateTemplate,
+    deleteCertificateTemplate
 } from '../../services/admin/adminCertificatesApi';
 import { useTheme } from '../../context/ThemeContext';
+import { usePlatformSettings } from '../../context/PlatformSettingsContext';
+
+// --- Built-in Official Certificate Templates ---
+export const DEFAULT_BUILTIN_TEMPLATES = [
+    {
+        id: "tpl_winner",
+        name: "Winner Certificate",
+        category: "Winner",
+        type: "Winner",
+        description: "Official ProEduvate gold & navy championship certificate for hackathon winners.",
+        imageUrl: "/certificates/winner-cert.png",
+        dimensions: "1649 × 954 px",
+        format: "PNG",
+        isBuiltIn: true,
+        isDefault: true,
+        colorScheme: "Gold & Navy"
+    },
+    {
+        id: "tpl_runner_up",
+        name: "Runner-up Certificate",
+        category: "Runner Up",
+        type: "Runner Up",
+        description: "Distinguished silver-purple tier credential for runner-up hackathon teams.",
+        imageUrl: "/certificates/runner-up-cert.png",
+        dimensions: "1649 × 954 px",
+        format: "PNG",
+        isBuiltIn: true,
+        isDefault: true,
+        colorScheme: "Silver & Royal Blue"
+    },
+    {
+        id: "tpl_participation",
+        name: "Participation Certificate",
+        category: "Participation",
+        type: "Participant",
+        description: "Official credential verifying active participation and solution submission.",
+        imageUrl: "/certificates/participation-cert.png",
+        dimensions: "1649 × 954 px",
+        format: "PNG",
+        isBuiltIn: true,
+        isDefault: true,
+        colorScheme: "Emerald & Gold"
+    }
+];
+
+// Helper to resolve certificate template image from record
+export const getCertificateTemplateImage = (cert, templates = []) => {
+    if (!cert) return '/certificates/winner-cert.png';
+    const typeStr = String(cert.type || cert.certType || '').toUpperCase();
+    const tmplStr = String(cert.template || '').toUpperCase();
+
+    const allTmpls = (templates && templates.length > 0) ? templates : DEFAULT_BUILTIN_TEMPLATES;
+    const customMatch = allTmpls.find(t => 
+        (t.name && tmplStr && t.name.toLowerCase() === cert.template?.toLowerCase()) ||
+        (t.type && typeStr && t.type.toUpperCase() === typeStr)
+    );
+    if (customMatch?.imageUrl) {
+        return customMatch.imageUrl;
+    }
+
+    if (typeStr.includes('WINNER') || tmplStr.includes('WINNER')) {
+        return '/certificates/winner-cert.png';
+    }
+    if (typeStr.includes('RUNNER') || tmplStr.includes('RUNNER') || typeStr.includes('SECOND')) {
+        return '/certificates/runner-up-cert.png';
+    }
+    if (typeStr.includes('PARTICIP') || tmplStr.includes('PARTICIP')) {
+        return '/certificates/participation-cert.png';
+    }
+    return '/certificates/winner-cert.png';
+};
 
 // --- Reusable Action Modal Component ---
 const ActionModal = ({ isOpen, onClose, title, subtitle, children, maxWidth = "max-w-md" }) => {
     if (!isOpen) return null;
     return (
         <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-
             <div className={`bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-2xl p-6 w-full ${maxWidth} shadow-2xl relative max-h-[90vh] overflow-y-auto scrollbar-hide text-slate-900 dark:text-white`}>
                 <button 
                     onClick={onClose} 
@@ -53,54 +126,130 @@ const ActionModal = ({ isOpen, onClose, title, subtitle, children, maxWidth = "m
 };
 
 // --- Live Certificate Visual Document Preview Component ---
-const CertificateDocument = ({ cert, isLightTheme }) => {
+const CertificateDocument = ({ cert, isLightTheme, templates = [], onPreviewFull }) => {
     if (!cert) return null;
 
     const recipient = cert.recipientName || cert.recipient?.name || 'Alex Johnson';
     const event = cert.hackathon || cert.eventTitle || cert.event || 'Global AI Summit 2026';
     const type = cert.type || 'WINNER';
     const valId = cert.validationId || 'CERT-SEED-001';
-    const date = cert.dateIssued || 'Aug 04, 2026';
+
+    const certImage = getCertificateTemplateImage(cert, templates);
+    const isWinner = type.toUpperCase().includes('WINNER');
+    const isRunnerUp = type.toUpperCase().includes('RUNNER');
+
+    const badgeClasses = isWinner 
+        ? 'bg-amber-500/20 text-amber-300 border-amber-400/40' 
+        : isRunnerUp 
+            ? 'bg-purple-500/20 text-purple-300 border-purple-400/40' 
+            : 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40';
 
     return (
-        <div className="p-6 bg-gradient-to-br from-amber-500/10 via-slate-900 to-navy-950 border-4 border-amber-500/40 rounded-2xl shadow-2xl relative text-center text-white overflow-hidden my-2">
-            {/* Background Seal Watermark */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-5 pointer-events-none text-9xl">🎓</div>
+        <div className="relative group rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-2xl bg-slate-950 text-white my-2 transition-all">
+            {/* Top Toolbar */}
+            <div className="flex items-center justify-between px-3.5 py-2.5 bg-slate-900/95 border-b border-white/10 text-xs">
+                <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span className="font-bold text-slate-300 text-[11px] tracking-wide">
+                        Template: <strong className="text-white">{cert.template || `${type} Certificate`}</strong>
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${badgeClasses}`}>
+                        {type}
+                    </span>
+                </div>
 
-            <div className="flex justify-between items-center text-[10px] uppercase font-black tracking-widest text-amber-400 mb-4 border-b border-amber-500/30 pb-2">
-                <span>PROEDUVATE OFFICIAL CREDENTIAL</span>
-                <span className="font-mono">ID: {valId}</span>
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => onPreviewFull?.({
+                            title: `${recipient} — ${type} Certificate`,
+                            imageUrl: certImage,
+                            category: type
+                        })}
+                        className="px-2.5 py-1 text-[11px] font-bold bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                        title="View high-resolution certificate"
+                    >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        <span>Full Size</span>
+                    </button>
+                    <a
+                        href={certImage}
+                        download={`${recipient.replace(/\s+/g, '_')}_Certificate.png`}
+                        className="px-2.5 py-1 text-[11px] font-bold bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-400/30 rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                        title="Download certificate image"
+                    >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        <span>Download</span>
+                    </a>
+                </div>
             </div>
 
-            <p className="text-[11px] uppercase tracking-widest text-gray-300 font-extrabold mb-1">CERTIFICATE OF RECOGNITION</p>
-            <h3 className="text-2xl font-black text-amber-300 tracking-tight my-2 font-serif uppercase">{recipient}</h3>
-            <p className="text-xs text-gray-300">has successfully distinguished as <strong className="text-amber-400 font-bold uppercase">{type}</strong> in</p>
-            <h4 className="text-base font-extrabold text-white mt-1 mb-4">{event}</h4>
+            {/* Certificate Visual Image Display with Aspect Ratio Preservation */}
+            <div 
+                className="relative w-full aspect-[1649/954] bg-gradient-to-b from-slate-900 via-slate-950 to-black overflow-hidden flex items-center justify-center cursor-pointer"
+                onClick={() => onPreviewFull?.({
+                    title: `${recipient} — ${type} Certificate`,
+                    imageUrl: certImage,
+                    category: type
+                })}
+            >
+                <img 
+                    src={certImage} 
+                    alt={`${type} Certificate`}
+                    className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-[1.01]"
+                    loading="lazy"
+                />
 
-            <div className="flex justify-between items-end border-t border-amber-500/30 pt-3 text-[10px] text-gray-400">
-                <div className="text-left">
-                    <p className="font-bold text-white">Date Issued: {date}</p>
-                    <p className="text-[9px]">Verified Platform Authority</p>
+                {/* Subtle Hover Action Overlay */}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-3 backdrop-blur-[1px]">
+                    <div className="px-4 py-2 bg-white/95 hover:bg-white text-slate-900 rounded-xl font-black text-xs shadow-2xl flex items-center gap-2 transform group-hover:scale-105 transition-all">
+                        <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
+                        </svg>
+                        <span>Click to Enlarge Full Certificate</span>
+                    </div>
                 </div>
-                
-                {/* QR Code Graphic Box */}
-                <div className="p-1.5 bg-white rounded shadow-md border border-amber-400">
-                    <div className="w-10 h-10 bg-slate-900 flex items-center justify-center text-[8px] font-mono text-amber-400 text-center font-bold">
-                        QR SCAN
+            </div>
+
+            {/* Bottom Recipient & Validation Strip */}
+            <div className="px-4 py-3 bg-slate-900/95 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-3">
+                    <div>
+                        <p className="text-[10px] uppercase font-bold text-slate-400">Recipient</p>
+                        <p className="font-extrabold text-white text-sm tracking-tight">{recipient}</p>
+                    </div>
+                    <div className="h-6 w-px bg-white/10 hidden sm:block"></div>
+                    <div className="hidden sm:block">
+                        <p className="text-[10px] uppercase font-bold text-slate-400">Event</p>
+                        <p className="font-semibold text-slate-200 truncate max-w-[200px]">{event}</p>
                     </div>
                 </div>
 
-                <div className="text-right">
-                    <p className="font-mono text-amber-400 font-bold">{valId}</p>
-                    <p className="text-[9px]">verify.proeduvate.com</p>
+                <div className="flex items-center gap-3 ml-auto">
+                    <div className="text-right">
+                        <p className="text-[10px] uppercase font-bold text-slate-400">Validation ID</p>
+                        <p className="font-mono text-sky-400 font-bold">{valId}</p>
+                    </div>
+                    <div className="p-1 bg-white rounded-md shadow-sm">
+                        <div className="w-8 h-8 bg-slate-900 rounded flex items-center justify-center text-[7px] font-mono text-amber-400 text-center font-black leading-none">
+                            QR<br/>VERIFIED
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     );
 };
 
+
 const Certificates = () => {
     const { theme: currentTheme } = useTheme();
+    const { prefix, platformName } = usePlatformSettings();
     const isLightTheme = currentTheme === 'light';
 
     const theme = {
@@ -149,6 +298,26 @@ const Certificates = () => {
     const [isReplacementModalOpen, setIsReplacementModalOpen] = useState(false);
     const [isTemplatesModalOpen, setIsTemplatesModalOpen] = useState(false);
 
+    // Templates & Upload Management State
+    const [templates, setTemplates] = useState(DEFAULT_BUILTIN_TEMPLATES);
+    const [templateCategories, setTemplateCategories] = useState(["All", "Winner", "Runner Up", "Participation", "Special Recognition", "Custom"]);
+    const [templatesLoading, setTemplatesLoading] = useState(false);
+    const [isTemplatesDropdownOpen, setIsTemplatesDropdownOpen] = useState(false);
+    const templatesDropdownRef = useRef(null);
+    const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+    const [selectedTemplateCategory, setSelectedTemplateCategory] = useState('All');
+    const [previewImageModal, setPreviewImageModal] = useState({ isOpen: false, title: '', imageUrl: '', category: '' });
+
+    // Upload Form State
+    const [uploadForm, setUploadForm] = useState({
+        file: null,
+        name: '',
+        category: 'Winner',
+        description: '',
+        previewUrl: ''
+    });
+    const [uploading, setUploading] = useState(false);
+
     // Form inputs State
     const [issueForm, setIssueForm] = useState({
         recipientName: '',
@@ -176,6 +345,17 @@ const Certificates = () => {
     const [bulkTemplate, setBulkTemplate] = useState('Winner Certificate');
     const [bulkPreviewData, setBulkPreviewData] = useState(null);
     const [bulkResultData, setBulkResultData] = useState(null);
+
+    // Dropdown Outside Click Listener
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (templatesDropdownRef.current && !templatesDropdownRef.current.contains(event.target)) {
+                setIsTemplatesDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     // URL Param Sync
     useEffect(() => {
@@ -221,9 +401,113 @@ const Certificates = () => {
         }
     };
 
+    const loadTemplatesData = async () => {
+        setTemplatesLoading(true);
+        try {
+            const data = await fetchCertificateTemplates();
+            if (data && Array.isArray(data.templates) && data.templates.length > 0) {
+                setTemplates(data.templates);
+                if (data.categories) {
+                    setTemplateCategories(data.categories);
+                }
+            }
+        } catch (err) {
+            console.error("Failed to load certificate templates:", err);
+        } finally {
+            setTemplatesLoading(false);
+        }
+    };
+
     useEffect(() => {
         loadCertificatesData();
+        loadTemplatesData();
     }, []);
+
+    // Template Actions
+    const handleFileSelect = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.size > 15 * 1024 * 1024) {
+            showToast("File size exceeds maximum 15MB", "error");
+            return;
+        }
+
+        const previewUrl = URL.createObjectURL(file);
+        const inferredName = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+        setUploadForm(prev => ({
+            ...prev,
+            file,
+            name: prev.name || inferredName,
+            previewUrl
+        }));
+    };
+
+    const handleUploadTemplateSubmit = async (e) => {
+        e.preventDefault();
+        if (!uploadForm.file) {
+            showToast("Please select a certificate image file to upload", "warning");
+            return;
+        }
+        if (!uploadForm.name.trim()) {
+            showToast("Please enter a certificate template name", "warning");
+            return;
+        }
+
+        setUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append("file", uploadForm.file);
+            formData.append("name", uploadForm.name.trim());
+            formData.append("category", uploadForm.category);
+            formData.append("description", uploadForm.description.trim());
+
+            await uploadCertificateTemplate(formData);
+            showToast("Certificate template uploaded successfully!", "success");
+            setIsUploadModalOpen(false);
+            setUploadForm({
+                file: null,
+                name: '',
+                category: 'Winner',
+                description: '',
+                previewUrl: ''
+            });
+            await loadTemplatesData();
+        } catch (err) {
+            console.error("Failed to upload template:", err);
+            const msg = err.response?.data?.detail || "Failed to upload certificate template";
+            showToast(msg, "error");
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleDeleteTemplate = async (templateId) => {
+        if (!window.confirm("Are you sure you want to delete this custom certificate template?")) return;
+        try {
+            await deleteCertificateTemplate(templateId);
+            showToast("Certificate template removed successfully", "info");
+            await loadTemplatesData();
+        } catch (err) {
+            console.error("Failed to delete template:", err);
+            showToast("Failed to delete template", "error");
+        }
+    };
+
+    const templatesByCategoryCount = useMemo(() => {
+        const counts = { All: templates.length, Winner: 0, "Runner Up": 0, Participation: 0 };
+        templates.forEach(t => {
+            const cat = t.category || "Custom";
+            counts[cat] = (counts[cat] || 0) + 1;
+        });
+        return counts;
+    }, [templates]);
+
+    const filteredTemplates = useMemo(() => {
+        if (selectedTemplateCategory === 'All') return templates;
+        return templates.filter(t => t.category === selectedTemplateCategory);
+    }, [templates, selectedTemplateCategory]);
+
 
     // Derived Statistics
     const stats = useMemo(() => {
@@ -460,13 +744,137 @@ const Certificates = () => {
                 </div>
                 
                 <div className="flex items-center gap-2.5 self-start md:self-auto flex-wrap">
-                    <button 
-                        onClick={() => setIsTemplatesModalOpen(true)} 
-                        className="px-3.5 py-1.5 bg-purple-50 dark:bg-purple-500/10 hover:bg-purple-100 text-purple-700 dark:text-purple-400 border border-purple-300 dark:border-purple-500/30 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
-                    >
-                        <TemplateIcon className="w-3.5 h-3.5" /> 
-                        <span>Templates</span>
-                    </button>
+                    {/* Interactive Templates Dropdown Button */}
+                    <div className="relative" ref={templatesDropdownRef}>
+                        <button 
+                            type="button"
+                            onClick={() => setIsTemplatesDropdownOpen(!isTemplatesDropdownOpen)} 
+                            className="px-3.5 py-1.5 bg-purple-50 dark:bg-purple-500/10 hover:bg-purple-100 dark:hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-500/30 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 select-none"
+                            aria-expanded={isTemplatesDropdownOpen}
+                        >
+                            <TemplateIcon className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" /> 
+                            <span>Templates</span>
+                            <svg 
+                                className={`w-3.5 h-3.5 transition-transform duration-200 ${isTemplatesDropdownOpen ? 'rotate-180 text-purple-600' : 'text-purple-400'}`} 
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        {/* Dropdown Menu */}
+                        {isTemplatesDropdownOpen && (
+                            <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 shadow-2xl z-50 p-2 animate-in fade-in slide-in-from-top-2 duration-150 text-slate-800 dark:text-white">
+                                <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
+                                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-gray-400">
+                                        Certificate Categories
+                                    </span>
+                                    <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-purple-50 dark:bg-purple-500/20 text-purple-600 dark:text-purple-300">
+                                        {templates.length} Designs
+                                    </span>
+                                </div>
+
+                                <div className="py-1 space-y-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setSelectedTemplateCategory('Winner');
+                                            setIsTemplatesModalOpen(true);
+                                            setIsTemplatesDropdownOpen(false);
+                                        }}
+                                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold hover:bg-amber-50 dark:hover:bg-amber-500/10 flex items-center justify-between group transition-colors"
+                                    >
+                                        <div className="flex items-center gap-2.5">
+                                            <span className="text-base">🏆</span>
+                                            <div>
+                                                <div className="text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 font-extrabold">Winner Tier</div>
+                                                <div className="text-[10px] font-normal text-slate-500 dark:text-gray-400">Gold & Navy Championship</div>
+                                            </div>
+                                        </div>
+                                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-400/20 text-amber-700 dark:text-amber-300 font-mono font-bold">
+                                            {templatesByCategoryCount['Winner'] || 1}
+                                        </span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setSelectedTemplateCategory('Runner Up');
+                                            setIsTemplatesModalOpen(true);
+                                            setIsTemplatesDropdownOpen(false);
+                                        }}
+                                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold hover:bg-purple-50 dark:hover:bg-purple-500/10 flex items-center justify-between group transition-colors"
+                                    >
+                                        <div className="flex items-center gap-2.5">
+                                            <span className="text-base">🥈</span>
+                                            <div>
+                                                <div className="text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 font-extrabold">Runner-Up Tier</div>
+                                                <div className="text-[10px] font-normal text-slate-500 dark:text-gray-400">Silver & Royal Blue Distinction</div>
+                                            </div>
+                                        </div>
+                                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-400/20 text-purple-700 dark:text-purple-300 font-mono font-bold">
+                                            {templatesByCategoryCount['Runner Up'] || 1}
+                                        </span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setSelectedTemplateCategory('Participation');
+                                            setIsTemplatesModalOpen(true);
+                                            setIsTemplatesDropdownOpen(false);
+                                        }}
+                                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold hover:bg-emerald-50 dark:hover:bg-emerald-500/10 flex items-center justify-between group transition-colors"
+                                    >
+                                        <div className="flex items-center gap-2.5">
+                                            <span className="text-base">📜</span>
+                                            <div>
+                                                <div className="text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 font-extrabold">Participation Tier</div>
+                                                <div className="text-[10px] font-normal text-slate-500 dark:text-gray-400">Emerald & Gold Credential</div>
+                                            </div>
+                                        </div>
+                                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-400/20 text-emerald-700 dark:text-emerald-300 font-mono font-bold">
+                                            {templatesByCategoryCount['Participation'] || 1}
+                                        </span>
+                                    </button>
+                                </div>
+
+                                <div className="my-1 border-t border-slate-100 dark:border-white/5"></div>
+
+                                <div className="p-1 space-y-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setSelectedTemplateCategory('All');
+                                            setIsTemplatesModalOpen(true);
+                                            setIsTemplatesDropdownOpen(false);
+                                        }}
+                                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold bg-slate-50 dark:bg-white/5 hover:bg-purple-50 dark:hover:bg-purple-500/15 text-slate-800 dark:text-slate-200 flex items-center justify-between transition-colors"
+                                    >
+                                        <span className="flex items-center gap-2">
+                                            <span>🗂️</span>
+                                            <span>Manage All Templates...</span>
+                                        </span>
+                                        <span className="text-[10px] text-slate-400">→</span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsUploadModalOpen(true);
+                                            setIsTemplatesDropdownOpen(false);
+                                        }}
+                                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-extrabold bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2 transition-colors shadow-sm"
+                                    >
+                                        <span>📤</span>
+                                        <span>Upload New Certificate...</span>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                     <button 
                         onClick={() => { setBulkStep(1); setBulkPreviewData(null); setBulkResultData(null); setIsBulkModalOpen(true); }} 
                         className="px-3.5 py-1.5 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-500/30 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
@@ -550,7 +958,7 @@ const Certificates = () => {
                     </span>
                     <input 
                         type="text" 
-                        placeholder="Enter validation ID (e.g. CERT-2026-A1B2C3D4)..." 
+                        placeholder={`Enter validation ID (e.g. ${prefix || 'PROEDU'}-2026-A1B2C3D4)...`} 
                         value={verifySearchId} 
                         onChange={(e) => setVerifySearchId(e.target.value)} 
                         className={`flex-1 rounded-xl px-3.5 py-1.5 text-xs font-mono font-bold focus:outline-none focus:border-sky-500 ${theme.inputBg}`}
@@ -800,7 +1208,13 @@ const Certificates = () => {
                                         )}
 
                                         {/* Live Visual Certificate Render */}
-                                        <CertificateDocument cert={selectedCert} isLightTheme={isLightTheme} />
+                                        <CertificateDocument 
+                                            cert={selectedCert} 
+                                            isLightTheme={isLightTheme} 
+                                            templates={templates} 
+                                            onPreviewFull={(data) => setPreviewImageModal({ isOpen: true, ...data })} 
+                                        />
+
 
                                         {/* 8-Point Eligibility Checklist */}
                                         <div className={`p-4 rounded-xl border ${theme.innerBg}`}>
@@ -990,7 +1404,18 @@ const Certificates = () => {
                             <label className="text-[10px] font-black uppercase tracking-wider mb-1 block text-slate-500 dark:text-gray-400">Certificate Type</label>
                             <select 
                                 value={issueForm.type} 
-                                onChange={(e) => setIssueForm({...issueForm, type: e.target.value, template: `${e.target.value} Certificate`})} 
+                                onChange={(e) => {
+                                    const newType = e.target.value;
+                                    const matchTmpl = templates.find(t => 
+                                        (t.category && t.category.toLowerCase() === newType.toLowerCase()) ||
+                                        (t.type && t.type.toLowerCase() === newType.toLowerCase())
+                                    );
+                                    setIssueForm({
+                                        ...issueForm, 
+                                        type: newType, 
+                                        template: matchTmpl ? matchTmpl.name : `${newType} Certificate`
+                                    });
+                                }} 
                                 className={`w-full rounded-xl px-3 py-2 text-xs font-bold focus:outline-none ${theme.inputBg}`}
                             >
                                 <option value="Winner">Winner</option>
@@ -1006,13 +1431,31 @@ const Certificates = () => {
                                 onChange={(e) => setIssueForm({...issueForm, template: e.target.value})} 
                                 className={`w-full rounded-xl px-3 py-2 text-xs font-bold focus:outline-none ${theme.inputBg}`}
                             >
-                                <option value="Winner Certificate">Winner Certificate</option>
-                                <option value="Runner-up Certificate">Runner-up Certificate</option>
-                                <option value="Participant Certificate">Participant Certificate</option>
-                                <option value="Mentor Certificate">Mentor Certificate</option>
+                                {templates.map(t => (
+                                    <option key={t.id} value={t.name}>{t.name} ({t.category})</option>
+                                ))}
                             </select>
                         </div>
                     </div>
+
+                    {/* Live Certificate Design Preview in Issue Modal */}
+                    <div className="p-3 bg-slate-900 rounded-xl border border-white/10 flex items-center gap-3">
+                        <div className="w-24 aspect-[1649/954] rounded-lg overflow-hidden bg-black shrink-0 border border-white/10 shadow">
+                            <img 
+                                src={getCertificateTemplateImage({ type: issueForm.type, template: issueForm.template }, templates)} 
+                                alt="Selected Certificate Design" 
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                        <div className="text-xs text-white">
+                            <p className="font-extrabold text-sky-400 flex items-center gap-1.5">
+                                <span>🎨</span>
+                                <span>Design: {issueForm.template || `${issueForm.type} Certificate`}</span>
+                            </p>
+                            <p className="text-[10px] text-slate-400 mt-0.5">High-resolution authentic certificate image</p>
+                        </div>
+                    </div>
+
 
                     <div>
                         <label className="text-[10px] font-black uppercase tracking-wider mb-1 block text-slate-500 dark:text-gray-400">Event Title</label>
@@ -1171,11 +1614,25 @@ const Certificates = () => {
                                 onChange={(e) => setBulkTemplate(e.target.value)} 
                                 className={`w-full rounded-xl px-3 py-2 text-xs font-bold border ${theme.inputBg}`}
                             >
-                                <option value="Winner Certificate">Winner Certificate</option>
-                                <option value="Runner-up Certificate">Runner-up Certificate</option>
-                                <option value="Participant Certificate">Participant Certificate</option>
-                                <option value="Mentor Certificate">Mentor Certificate</option>
+                                {templates.map(t => (
+                                    <option key={t.id} value={t.name}>{t.name} ({t.category})</option>
+                                ))}
                             </select>
+                        </div>
+
+                        {/* Live Bulk Template Preview */}
+                        <div className="p-3 bg-slate-900 rounded-xl border border-white/10 flex items-center gap-3">
+                            <div className="w-24 aspect-[1649/954] rounded-lg overflow-hidden bg-black shrink-0 border border-white/10 shadow">
+                                <img 
+                                    src={getCertificateTemplateImage({ template: bulkTemplate }, templates)} 
+                                    alt="Selected Bulk Template" 
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                            <div className="text-xs text-white">
+                                <p className="font-extrabold text-indigo-400">Batch Design: {bulkTemplate}</p>
+                                <p className="text-[10px] text-slate-400 mt-0.5">Recipients will receive certificates rendered with this design</p>
+                            </div>
                         </div>
 
                         <div className="flex justify-end gap-2 pt-2">
@@ -1225,33 +1682,373 @@ const Certificates = () => {
                 )}
             </ActionModal>
 
-            {/* 5. TEMPLATES MODAL */}
+            {/* 5. CATEGORIZED CERTIFICATE TEMPLATES GALLERY MODAL */}
             <ActionModal 
                 isOpen={isTemplatesModalOpen} 
                 onClose={() => setIsTemplatesModalOpen(false)} 
                 title="Certificate Design Templates"
-                subtitle="Configured visual themes for hackathon achievements."
-                maxWidth="max-w-xl"
+                subtitle="Official designs and custom uploaded certificate templates."
+                maxWidth="max-w-4xl"
             >
-                <div className="space-y-3">
-                    {[
-                        { title: "Winner Certificate", type: "Winner", color: "text-amber-500", desc: "Gold seal visual with achievement honorarium header." },
-                        { title: "Runner-up Certificate", type: "Runner Up", color: "text-purple-500", desc: "Silver-purple tier certificate with distinguished rank notation." },
-                        { title: "Participant Certificate", type: "Participant", color: "text-sky-500", desc: "Standard hackathon participation and solution submission proof." },
-                        { title: "Mentor Certificate", type: "Mentor", color: "text-teal-500", desc: "Special recognition for team guidance and technical mentorship." }
-                    ].map((tmpl, idx) => (
-                        <div key={idx} className={`p-3.5 rounded-xl border flex justify-between items-center text-xs ${theme.innerBg}`}>
-                            <div>
-                                <h4 className={`font-extrabold ${tmpl.color}`}>{tmpl.title}</h4>
-                                <p className="text-slate-600 dark:text-gray-300 text-[11px] mt-0.5">{tmpl.desc}</p>
-                            </div>
-                            <span className="px-2.5 py-1 rounded-full text-[9px] font-bold bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10">
-                                Active Template
-                            </span>
+                <div className="space-y-4">
+                    {/* Category Filter Bar & Upload Action */}
+                    <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2 border-b border-slate-200 dark:border-white/10">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            {['All', 'Winner', 'Runner Up', 'Participation'].map((cat) => {
+                                const isSel = selectedTemplateCategory === cat;
+                                const count = templatesByCategoryCount[cat] || (cat === 'All' ? templates.length : 0);
+                                return (
+                                    <button
+                                        key={cat}
+                                        type="button"
+                                        onClick={() => setSelectedTemplateCategory(cat)}
+                                        className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
+                                            isSel 
+                                            ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20' 
+                                            : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-white/10'
+                                        }`}
+                                    >
+                                        <span>{cat === 'All' ? '🗂️ All' : cat === 'Winner' ? '🏆 Winner' : cat === 'Runner Up' ? '🥈 Runner Up' : '📜 Participation'}</span>
+                                        <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                                            isSel ? 'bg-white/25 text-white' : 'bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-gray-400'
+                                        }`}>
+                                            {count}
+                                        </span>
+                                    </button>
+                                );
+                            })}
                         </div>
-                    ))}
+
+                        <button
+                            type="button"
+                            onClick={() => setIsUploadModalOpen(true)}
+                            className="px-3.5 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-extrabold rounded-xl shadow-md transition-all flex items-center gap-1.5 active:scale-95"
+                        >
+                            <span>📤</span>
+                            <span>Upload New Certificate</span>
+                        </button>
+                    </div>
+
+                    {/* Templates Grid */}
+                    {filteredTemplates.length === 0 ? (
+                        <div className="p-8 text-center bg-slate-50 dark:bg-white/[0.02] rounded-2xl border border-dashed border-slate-300 dark:border-white/10">
+                            <p className="text-3xl mb-2">📭</p>
+                            <p className="text-xs font-bold text-slate-600 dark:text-gray-300">No certificate templates found in this category</p>
+                            <button
+                                onClick={() => setIsUploadModalOpen(true)}
+                                className="mt-3 px-3 py-1.5 bg-purple-600 text-white text-xs font-bold rounded-lg"
+                            >
+                                Upload Certificate to {selectedTemplateCategory}
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto pr-1 custom-scrollbar">
+                            {filteredTemplates.map((tmpl) => {
+                                const catLower = (tmpl.category || tmpl.type || '').toLowerCase();
+                                const badgeColor = catLower.includes('winner')
+                                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                                    : catLower.includes('runner')
+                                    ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+                                    : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+
+                                return (
+                                    <div 
+                                        key={tmpl.id}
+                                        className="group rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900/80 overflow-hidden shadow-sm hover:shadow-lg transition-all flex flex-col"
+                                    >
+                                        {/* Image Box */}
+                                        <div 
+                                            className="relative aspect-[1649/954] w-full bg-slate-950 overflow-hidden cursor-pointer flex items-center justify-center"
+                                            onClick={() => setPreviewImageModal({
+                                                isOpen: true,
+                                                title: tmpl.name,
+                                                imageUrl: tmpl.imageUrl,
+                                                category: tmpl.category || tmpl.type
+                                            })}
+                                        >
+                                            <img 
+                                                src={tmpl.imageUrl} 
+                                                alt={tmpl.name} 
+                                                className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-[1.02]"
+                                                loading="lazy"
+                                            />
+
+                                            {/* Badges Overlay */}
+                                            <div className="absolute top-2 left-2 flex items-center gap-1.5 pointer-events-none">
+                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border backdrop-blur-md ${badgeColor}`}>
+                                                    {tmpl.category || tmpl.type || 'Custom'}
+                                                </span>
+                                            </div>
+
+                                            <div className="absolute top-2 right-2 pointer-events-none">
+                                                <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-black/60 text-white/90 border border-white/20 backdrop-blur-md">
+                                                    {tmpl.isBuiltIn ? 'Official Built-in' : 'Custom Upload'}
+                                                </span>
+                                            </div>
+
+                                            {/* Hover Inspect CTA */}
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-[1px]">
+                                                <span className="px-3 py-1.5 rounded-xl bg-white text-slate-900 text-xs font-black shadow-lg flex items-center gap-1.5">
+                                                    <svg className="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                    </svg>
+                                                    Inspect High-Res
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {/* Card Info & Actions */}
+                                        <div className="p-3.5 flex-1 flex flex-col justify-between">
+                                            <div>
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <h3 className="text-xs font-black text-slate-900 dark:text-white leading-tight">{tmpl.name}</h3>
+                                                    <span className="text-[10px] font-mono text-slate-400 shrink-0">
+                                                        {tmpl.dimensions || '1649 × 954'}
+                                                    </span>
+                                                </div>
+                                                <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-1 line-clamp-2">
+                                                    {tmpl.description || `High-fidelity ${tmpl.category} certificate design.`}
+                                                </p>
+                                            </div>
+
+                                            <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-white/5 flex items-center justify-between gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const targetType = tmpl.type || tmpl.category || 'Winner';
+                                                        setIssueForm(prev => ({
+                                                            ...prev,
+                                                            type: targetType,
+                                                            template: tmpl.name
+                                                        }));
+                                                        setIsTemplatesModalOpen(false);
+                                                        setIsIssueModalOpen(true);
+                                                    }}
+                                                    className="px-3 py-1.5 bg-purple-50 dark:bg-purple-500/20 hover:bg-purple-100 dark:hover:bg-purple-500/30 text-purple-700 dark:text-purple-300 rounded-lg text-xs font-black flex items-center gap-1 transition-colors"
+                                                >
+                                                    <span>✨ Use For Issuance</span>
+                                                </button>
+
+                                                <div className="flex items-center gap-1.5">
+                                                    <a
+                                                        href={tmpl.imageUrl}
+                                                        download={`${tmpl.name.replace(/\s+/g, '_')}_Template.png`}
+                                                        className="px-2.5 py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-gray-300 rounded-lg text-xs font-bold transition-colors flex items-center gap-1"
+                                                        title="Download Template Image"
+                                                    >
+                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                        </svg>
+                                                    </a>
+
+                                                    {!tmpl.isBuiltIn && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleDeleteTemplate(tmpl.id)}
+                                                            className="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/20 rounded-lg transition-colors"
+                                                            title="Delete Custom Template"
+                                                        >
+                                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
             </ActionModal>
+
+            {/* 6. WEBPAGE CERTIFICATE UPLOADER MODAL */}
+            <ActionModal
+                isOpen={isUploadModalOpen}
+                onClose={() => setIsUploadModalOpen(false)}
+                title="Upload Certificate Template"
+                subtitle="Add an authentic certificate design image to HackZen's issuing engine."
+                maxWidth="max-w-lg"
+            >
+                <form onSubmit={handleUploadTemplateSubmit} className="space-y-4">
+                    {/* File Drop Area / Preview */}
+                    <div>
+                        <label className="text-[10px] font-black uppercase tracking-wider mb-1 block text-slate-500 dark:text-gray-400">
+                            Certificate Template Image
+                        </label>
+                        {uploadForm.file ? (
+                            <div className="relative rounded-2xl overflow-hidden border border-purple-500/40 bg-slate-950 p-2 group">
+                                <div className="aspect-[1649/954] w-full flex items-center justify-center overflow-hidden rounded-xl bg-black">
+                                    <img 
+                                        src={uploadForm.previewUrl} 
+                                        alt="Selected Preview" 
+                                        className="w-full h-full object-contain"
+                                    />
+                                </div>
+                                <div className="mt-2 px-2 flex items-center justify-between text-xs text-slate-300">
+                                    <span className="truncate font-semibold max-w-[200px]">{uploadForm.file.name}</span>
+                                    <span className="font-mono text-purple-400 font-bold">{(uploadForm.file.size / (1024 * 1024)).toFixed(2)} MB</span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setUploadForm(prev => ({ ...prev, file: null, previewUrl: '' }))}
+                                    className="absolute top-4 right-4 p-1.5 bg-black/70 hover:bg-rose-600 text-white rounded-lg transition-colors shadow-lg"
+                                    title="Remove and choose another image"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        ) : (
+                            <label className="border-2 border-dashed border-purple-300 dark:border-purple-500/30 hover:border-purple-500 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer bg-purple-50/50 dark:bg-purple-500/5 hover:bg-purple-100/50 transition-all group">
+                                <div className="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-500 dark:text-purple-400 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                <p className="text-xs font-black text-slate-800 dark:text-white">Click or drag certificate image here to upload</p>
+                                <p className="text-[10px] text-slate-500 dark:text-gray-400 mt-1">Supports PNG, JPG, WebP, SVG • Up to 15MB</p>
+                                <input 
+                                    type="file" 
+                                    accept="image/png,image/jpeg,image/webp,image/svg+xml" 
+                                    className="hidden" 
+                                    onChange={handleFileSelect} 
+                                />
+                            </label>
+                        )}
+                    </div>
+
+                    {/* Template Name */}
+                    <div>
+                        <label className="text-[10px] font-black uppercase tracking-wider mb-1 block text-slate-500 dark:text-gray-400">
+                            Template Name / Title
+                        </label>
+                        <input
+                            type="text"
+                            required
+                            placeholder="e.g. HackZen AI First Prize Certificate"
+                            value={uploadForm.name}
+                            onChange={(e) => setUploadForm(prev => ({ ...prev, name: e.target.value }))}
+                            className={`w-full rounded-xl px-3 py-2 text-xs focus:outline-none ${theme.inputBg}`}
+                        />
+                    </div>
+
+                    {/* Category Selector */}
+                    <div>
+                        <label className="text-[10px] font-black uppercase tracking-wider mb-1 block text-slate-500 dark:text-gray-400">
+                            Certificate Category / Tier
+                        </label>
+                        <select
+                            value={uploadForm.category}
+                            onChange={(e) => setUploadForm(prev => ({ ...prev, category: e.target.value }))}
+                            className={`w-full rounded-xl px-3 py-2 text-xs font-bold focus:outline-none ${theme.inputBg}`}
+                        >
+                            <option value="Winner">🏆 Winner (1st / Champion)</option>
+                            <option value="Runner Up">🥈 Runner Up (2nd / 3rd Place)</option>
+                            <option value="Participation">📜 Participation / Attendee</option>
+                            <option value="Special Recognition">🎖️ Special Recognition</option>
+                            <option value="Custom">✨ Custom Achievement</option>
+                        </select>
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                        <label className="text-[10px] font-black uppercase tracking-wider mb-1 block text-slate-500 dark:text-gray-400">
+                            Description (Optional)
+                        </label>
+                        <textarea
+                            placeholder="Design notes or special achievement criteria..."
+                            rows="2"
+                            value={uploadForm.description}
+                            onChange={(e) => setUploadForm(prev => ({ ...prev, description: e.target.value }))}
+                            className={`w-full rounded-xl px-3 py-2 text-xs focus:outline-none resize-none ${theme.inputBg}`}
+                        ></textarea>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex justify-end gap-2 pt-2">
+                        <button
+                            type="button"
+                            onClick={() => setIsUploadModalOpen(false)}
+                            className="px-4 py-2 text-xs text-slate-500 font-bold"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={uploading || !uploadForm.file}
+                            className="px-5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5 disabled:opacity-50"
+                        >
+                            {uploading ? (
+                                <>
+                                    <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                    </svg>
+                                    <span>Uploading Certificate...</span>
+                                </>
+                            ) : (
+                                <span>Save & Add Template</span>
+                            )}
+                        </button>
+                    </div>
+                </form>
+            </ActionModal>
+
+            {/* 7. FULL-RESOLUTION PREVIEW MODAL */}
+            {previewImageModal.isOpen && (
+                <div 
+                    className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+                    onClick={() => setPreviewImageModal({ isOpen: false, title: '', imageUrl: '', category: '' })}
+                >
+                    <div 
+                        className="bg-slate-900 border border-white/10 rounded-2xl max-w-5xl w-full p-4 overflow-hidden shadow-2xl flex flex-col space-y-3"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                            <div>
+                                <h3 className="text-sm font-extrabold text-white">{previewImageModal.title}</h3>
+                                <p className="text-[11px] text-purple-400 font-bold uppercase tracking-wider mt-0.5">
+                                    {previewImageModal.category} • Authentic Resolution
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <a
+                                    href={previewImageModal.imageUrl}
+                                    download={`${previewImageModal.title.replace(/\s+/g, '_')}_Full.png`}
+                                    className="px-3 py-1.5 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-400/30 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
+                                >
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                    </svg>
+                                    <span>Download</span>
+                                </a>
+                                <button
+                                    onClick={() => setPreviewImageModal({ isOpen: false, title: '', imageUrl: '', category: '' })}
+                                    className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Image Viewer Container */}
+                        <div className="bg-black/90 rounded-xl p-2 flex items-center justify-center max-h-[72vh] overflow-hidden border border-white/5">
+                            <img 
+                                src={previewImageModal.imageUrl} 
+                                alt={previewImageModal.title}
+                                className="max-h-[68vh] w-auto object-contain rounded shadow-2xl" 
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
 
         </div>
     );

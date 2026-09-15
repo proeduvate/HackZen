@@ -103,3 +103,38 @@ export const restoreCertificate = async (certificateId) => {
         throw error;
     }
 };
+
+export const fetchCertificateTemplates = async () => {
+    try {
+        const { data } = await apiClient.get('/admin/certificates/templates');
+        return data || { templates: [], categories: [] };
+    } catch (error) {
+        console.error('Failed to fetch certificate templates:', error);
+        throw error;
+    }
+};
+
+export const uploadCertificateTemplate = async (formData) => {
+    try {
+        const { data } = await apiClient.post('/admin/certificates/templates/upload', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return data;
+    } catch (error) {
+        console.error('Failed to upload certificate template:', error);
+        throw error;
+    }
+};
+
+export const deleteCertificateTemplate = async (templateId) => {
+    try {
+        const { data } = await apiClient.delete(`/admin/certificates/templates/${templateId}`);
+        return data;
+    } catch (error) {
+        console.error('Failed to delete certificate template:', error);
+        throw error;
+    }
+};
+

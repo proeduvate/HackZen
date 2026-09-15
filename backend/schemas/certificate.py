@@ -15,6 +15,7 @@ class CertificateBase(BaseModel):
 class CertificateResponse(CertificateBase):
     id: str = Field(..., alias="_id")
     issuedAt: datetime = Field(..., alias="issuedAt")
+    validationId: Optional[str] = Field(None, alias="validationId")
 
     class Config:
         populate_by_name = True

@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchSubmissions } from '../../services/organizer/submissionsApi';
+import { usePlatformSettings } from '../../context/PlatformSettingsContext';
 
 const Submissions = () => {
     const navigate = useNavigate();
+    const { maxUploadFileSize, allowedFileTypes, gitHubRepo, demoUrl } = usePlatformSettings();
     // Icon component
     const Icon = ({ name, className }) => {
         const icons = {
@@ -101,6 +103,25 @@ const Submissions = () => {
                         <Icon name="Download" className="w-4 h-4" />
                         Export
                     </button>
+                </div>
+            </div>
+
+            {/* Active Platform Deliverables Policy Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-black/20 rounded-xl border border-white/5 text-xs text-gray-400">
+                <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                    <span className="font-semibold text-white">Platform Deliverable Baseline:</span>
+                    <span>Max Size: <strong className="text-cyan-300">{maxUploadFileSize}</strong></span>
+                    <span>•</span>
+                    <span>Allowed Formats: <strong className="text-purple-300">{(allowedFileTypes || []).join(', ')}</strong></span>
+                </div>
+                <div className="flex items-center gap-3">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${gitHubRepo ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20' : 'bg-white/5 text-gray-400'}`}>
+                        GitHub: {gitHubRepo ? 'Mandatory' : 'Optional'}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${demoUrl ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20' : 'bg-white/5 text-gray-400'}`}>
+                        Demo: {demoUrl ? 'Mandatory' : 'Optional'}
+                    </span>
                 </div>
             </div>
 

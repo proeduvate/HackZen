@@ -15,7 +15,9 @@ import {
     fetchMentorsJudgesAnalytics,
     fetchAiCertificatesAnalytics,
     fetchSecurityPerformanceAnalytics,
-    fetchSmartAiInsights
+    fetchSmartAiInsights,
+    exportAnalyticsPdf,
+    exportAnalyticsExcel
 } from '../../services/admin/analyticsApi';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -231,6 +233,7 @@ const AdminAnalytics = () => {
     const [securityMetrics, setSecurityMetrics] = useState(null);
     const [systemPerfData, setSystemPerfData] = useState(defaultSystemPerformanceData);
     const [aiInsights, setAiInsights] = useState([]);
+    const [isExporting, setIsExporting] = useState(null); // 'PDF' | 'Excel' | null
 
     // Load Live Analytics Data from Backend
     useEffect(() => {
@@ -392,68 +395,103 @@ const AdminAnalytics = () => {
     };
 
     // Export Generation Logic for CSV, Excel, and PDF
-    const handleExport = (format) => {
+    const handleExport = async (format) => {
+        const timestamp = new Date().toISOString().slice(0, 10);
+        const filterParams = {
+            range: dateRange,
+            hackathon: selectedHackathon,
+            college: selectedCollege,
+            role: selectedRole
+        };
+
         if (format === 'PDF') {
-            showToast("Opening printable layout for PDF export...", "success");
-            setTimeout(() => window.print(), 350);
+            try {
+                setIsExporting('PDF');
+                showToast("Generating official executive PDF report...", "info");
+                const blobData = await exportAnalyticsPdf(filterParams);
+                if (blobData) {
+                    downloadFile(blobData, `HackZen_Analytics_${timestamp}.pdf`, 'application/pdf');
+                    showToast("Analytics report downloaded as PDF successfully!", "success");
+                }
+            } catch (err) {
+                console.error("PDF export error:", err);
+                showToast("Failed to generate PDF export. Please try again.", "error");
+            } finally {
+                setIsExporting(null);
+            }
             return;
         }
 
-        try {
-            const timestamp = new Date().toISOString().slice(0, 10);
-            const summaryRows = [
-                ["HackZen Central Platform Analytics & Intelligence Report"],
-                [`Export Generated: ${new Date().toLocaleString()}`],
-                [`Date Range: ${dateRange} | Hackathon Scope: ${selectedHackathon} | College: ${selectedCollege} | Role: ${selectedRole}`],
-                [],
-                ["--- KEY PERFORMANCE INDICATORS ---"],
-                ["Metric", "Value", "Growth / Change"],
-                ["Total Users", kpis?.totalUsers?.val || "1248", kpis?.totalUsers?.change || "+12.4%"],
-                ["Running Hackathons", kpis?.runningHacks?.val || "4", kpis?.runningHacks?.change || "+2"],
-                ["Completed Hackathons", kpis?.completedHacks?.val || "12", kpis?.completedHacks?.change || "+4"],
-                ["Pending Approvals", kpis?.pendingApprovals?.val || "17", kpis?.pendingApprovals?.change || "Action needed"],
-                ["Active Teams", kpis?.activeTeams?.val || "324", kpis?.activeTeams?.change || "+8.7%"],
-                ["Submissions", kpis?.submissions?.val || "3842", kpis?.submissions?.change || "+18.2%"],
-                ["Certificates Minted", kpis?.certificates?.val || "1126", kpis?.certificates?.change || "+31%"],
-                ["System Uptime", kpis?.uptime?.val || "99.98%", kpis?.uptime?.change || "100% Target"],
-                [],
-                ["--- TOP HACKATHONS ---"],
-                ["Rank", "Hackathon Event", "Participants", "Submissions", "Completion Rate"],
-                ...topHackathonsData.map(h => [h.rank, h.name, h.participants, h.submissions, h.completion]),
-                [],
-                ["--- TOP MENTORS ---"],
-                ["Rank", "Mentor Name", "Organization", "Sessions", "Rating"],
-                ...topMentorsData.map(m => [m.rank, m.name, m.company, m.sessions, m.rating]),
-                [],
-                ["--- USER DEMOGRAPHICS BY ROLE ---"],
-                ["Role", "Percentage", "Count"],
-                ...roleDistData.map(r => [r.name, `${r.value}%`, r.count || "N/A"]),
-                [],
-                ["--- TOP INSTITUTIONS ---"],
-                ["Institution", "Registered Students"],
-                ...collegeDistData.map(c => [c.college, c.students]),
-                [],
-                ["--- TECH STACK POPULARITY ---"],
-                ["Technology", "Usage Count"],
-                ...techStackData.map(t => [t.tech, t.count])
-            ];
+        if (format === 'Excel') {
+            try {
+                setIsExporting('Excel');
+                showToast("Generating styled multi-sheet Excel spreadsheet...", "info");
+                const blobData = await exportAnalyticsExcel(filterParams);
+                if (blobData) {
+                    downloadFile(
+                        blobData,
+                        `HackZen_Analytics_${timestamp}.xlsx`,
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    );
+                    showToast("Analytics report downloaded as Excel spreadsheet!", "success");
+                }
+            } catch (err) {
+                console.error("Excel export error:", err);
+                showToast("Failed to generate Excel export. Please try again.", "error");
+            } finally {
+                setIsExporting(null);
+            }
+            return;
+        }
 
-            if (format === 'CSV') {
+        if (format === 'CSV') {
+            try {
+                const summaryRows = [
+                    ["HackZen Central Platform Analytics & Intelligence Report"],
+                    [`Export Generated: ${new Date().toLocaleString()}`],
+                    [`Date Range: ${dateRange} | Hackathon Scope: ${selectedHackathon} | College: ${selectedCollege} | Role: ${selectedRole}`],
+                    [],
+                    ["--- KEY PERFORMANCE INDICATORS ---"],
+                    ["Metric", "Value", "Growth / Change"],
+                    ["Total Users", kpis?.totalUsers?.val || "1248", kpis?.totalUsers?.change || "+12.4%"],
+                    ["Running Hackathons", kpis?.runningHacks?.val || "4", kpis?.runningHacks?.change || "+2"],
+                    ["Completed Hackathons", kpis?.completedHacks?.val || "12", kpis?.completedHacks?.change || "+4"],
+                    ["Pending Approvals", kpis?.pendingApprovals?.val || "17", kpis?.pendingApprovals?.change || "Action needed"],
+                    ["Active Teams", kpis?.activeTeams?.val || "324", kpis?.activeTeams?.change || "+8.7%"],
+                    ["Submissions", kpis?.submissions?.val || "3842", kpis?.submissions?.change || "+18.2%"],
+                    ["Certificates Minted", kpis?.certificates?.val || "1126", kpis?.certificates?.change || "+31%"],
+                    ["System Uptime", kpis?.uptime?.val || "99.98%", kpis?.uptime?.change || "100% Target"],
+                    [],
+                    ["--- TOP HACKATHONS ---"],
+                    ["Rank", "Hackathon Event", "Participants", "Submissions", "Completion Rate"],
+                    ...topHackathonsData.map(h => [h.rank, h.name, h.participants, h.submissions, h.completion]),
+                    [],
+                    ["--- TOP MENTORS ---"],
+                    ["Rank", "Mentor Name", "Organization", "Sessions", "Rating"],
+                    ...topMentorsData.map(m => [m.rank, m.name, m.company, m.sessions, m.rating]),
+                    [],
+                    ["--- USER DEMOGRAPHICS BY ROLE ---"],
+                    ["Role", "Percentage", "Count"],
+                    ...roleDistData.map(r => [r.name, `${r.value}%`, r.count || "N/A"]),
+                    [],
+                    ["--- TOP INSTITUTIONS ---"],
+                    ["Institution", "Registered Students"],
+                    ...collegeDistData.map(c => [c.college, c.students]),
+                    [],
+                    ["--- TECH STACK POPULARITY ---"],
+                    ["Technology", "Usage Count"],
+                    ...techStackData.map(t => [t.tech, t.count])
+                ];
+
                 const csvContent = "\uFEFF" + summaryRows
                     .map(row => row.map(cell => `"${String(cell || '').replace(/"/g, '""')}"`).join(','))
                     .join('\n');
                 downloadFile(csvContent, `HackZen_Analytics_${timestamp}.csv`, 'text/csv;charset=utf-8;');
                 showToast("Analytics report downloaded as CSV successfully!", "success");
-            } else if (format === 'Excel') {
-                const excelContent = "\uFEFF" + summaryRows
-                    .map(row => row.map(cell => `"${String(cell || '').replace(/"/g, '""')}"`).join('\t'))
-                    .join('\n');
-                downloadFile(excelContent, `HackZen_Analytics_${timestamp}.xls`, 'application/vnd.ms-excel;charset=utf-8;');
-                showToast("Analytics report downloaded as Excel spreadsheet!", "success");
+            } catch (err) {
+                console.error("Export error:", err);
+                showToast("Failed to generate analytics export file.", "error");
             }
-        } catch (err) {
-            console.error("Export error:", err);
-            showToast("Failed to generate analytics export file.", "error");
         }
     };
 
@@ -480,16 +518,56 @@ const AdminAnalytics = () => {
                 
                 {/* Export Action Buttons */}
                 <div className="flex flex-wrap items-center gap-2">
-                    <button onClick={() => handleExport('PDF')} className="px-4 py-2 bg-sky-50 dark:bg-sky-500/20 hover:bg-sky-100 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-500/30 rounded-2xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95">
-                        <FileTextIcon className="w-3.5 h-3.5" /> Export PDF
+                    <button 
+                        disabled={isExporting !== null}
+                        onClick={() => handleExport('PDF')} 
+                        className={`px-4 py-2 bg-sky-50 dark:bg-sky-500/20 hover:bg-sky-100 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-500/30 rounded-2xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95 ${isExporting === 'PDF' ? 'opacity-70 cursor-wait' : ''}`}
+                    >
+                        {isExporting === 'PDF' ? (
+                            <>
+                                <svg className="animate-spin -ml-0.5 mr-1 h-3.5 w-3.5 text-sky-600 dark:text-sky-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Generating PDF...
+                            </>
+                        ) : (
+                            <>
+                                <FileTextIcon className="w-3.5 h-3.5" /> Export PDF
+                            </>
+                        )}
                     </button>
-                    <button onClick={() => handleExport('Excel')} className="px-4 py-2 bg-emerald-50 dark:bg-emerald-500/20 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 rounded-2xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95">
-                        <ExcelSheetIcon className="w-3.5 h-3.5" /> Export Excel
+                    <button 
+                        disabled={isExporting !== null}
+                        onClick={() => handleExport('Excel')} 
+                        className={`px-4 py-2 bg-emerald-50 dark:bg-emerald-500/20 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 rounded-2xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95 ${isExporting === 'Excel' ? 'opacity-70 cursor-wait' : ''}`}
+                    >
+                        {isExporting === 'Excel' ? (
+                            <>
+                                <svg className="animate-spin -ml-0.5 mr-1 h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Generating Excel...
+                            </>
+                        ) : (
+                            <>
+                                <ExcelSheetIcon className="w-3.5 h-3.5" /> Export Excel
+                            </>
+                        )}
                     </button>
-                    <button onClick={() => handleExport('CSV')} className="px-4 py-2 bg-purple-50 dark:bg-purple-500/20 hover:bg-purple-100 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/30 rounded-2xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95">
+                    <button 
+                        disabled={isExporting !== null}
+                        onClick={() => handleExport('CSV')} 
+                        className="px-4 py-2 bg-purple-50 dark:bg-purple-500/20 hover:bg-purple-100 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/30 rounded-2xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95"
+                    >
                         <FileTextIcon className="w-3.5 h-3.5" /> Export CSV
                     </button>
-                    <button onClick={() => window.print()} className="px-4 py-2 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-white/10 rounded-2xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95">
+                    <button 
+                        disabled={isExporting !== null}
+                        onClick={() => window.print()} 
+                        className="px-4 py-2 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-white/10 rounded-2xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95"
+                    >
                         <PrinterIcon className="w-3.5 h-3.5" /> Print Report
                     </button>
                 </div>

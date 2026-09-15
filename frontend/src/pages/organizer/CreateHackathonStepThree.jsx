@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { getStepThreeReview, submitStepThreeHackathon } from '../../services/organizer/createHackathonStepThreeApi';
+import { usePlatformSettings } from '../../context/PlatformSettingsContext';
 
 const CreateHackathonStepThree = () => {
     const navigate = useNavigate();
     const { draft } = useOutletContext();
+    const { maxUploadFileSize, allowedFileTypes, gitHubRepo, demoUrl } = usePlatformSettings();
     const [review, setReview] = useState(null);
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -113,6 +115,38 @@ const CreateHackathonStepThree = () => {
                             <div className="flex justify-between items-center py-2">
                                 <span className="text-sm text-gray-400">Auto-Approval</span>
                                 <span className="text-white font-semibold">{draft.autoApprove ? 'Enabled' : 'Disabled'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Platform Submission Deliverables Baseline */}
+                    <div className="glass p-6 rounded-xl border border-white/5 space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-bold text-white">Platform Submission Deliverables</h3>
+                            <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                                Global Baseline
+                            </span>
+                        </div>
+                        <div className="space-y-3">
+                            <div className="flex justify-between items-center py-2 border-b border-white/5">
+                                <span className="text-sm text-gray-400">Max Archive Upload Size</span>
+                                <span className="text-white font-semibold">{maxUploadFileSize}</span>
+                            </div>
+                            <div className="flex justify-between items-center py-2 border-b border-white/5">
+                                <span className="text-sm text-gray-400">Allowed File Formats</span>
+                                <span className="text-purple-300 font-semibold text-xs">{(allowedFileTypes || []).join(', ')}</span>
+                            </div>
+                            <div className="flex justify-between items-center py-2 border-b border-white/5">
+                                <span className="text-sm text-gray-400">GitHub Repository URL</span>
+                                <span className={`font-semibold text-xs ${gitHubRepo ? 'text-sky-400' : 'text-gray-400'}`}>
+                                    {gitHubRepo ? 'Mandatory Requirement' : 'Optional'}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center py-2">
+                                <span className="text-sm text-gray-400">Live Demo Deployment</span>
+                                <span className={`font-semibold text-xs ${demoUrl ? 'text-sky-400' : 'text-gray-400'}`}>
+                                    {demoUrl ? 'Mandatory Requirement' : 'Optional'}
+                                </span>
                             </div>
                         </div>
                     </div>
