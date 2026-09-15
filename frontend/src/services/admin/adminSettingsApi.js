@@ -34,15 +34,13 @@ const setStorage = (key, data) => {
 const simulateDelay = (ms = 500) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const getPlatformSettings = async () => {
-    await simulateDelay(600);
-    return getStorage('mock_admin_settings', INITIAL_SETTINGS);
+    try {
+        return await fetchPlatformSettings();
+    } catch {
+        return getStorage('mock_admin_settings', INITIAL_SETTINGS);
+    }
 };
 
-export const updatePlatformSettings = async (newSettings) => {
-    await simulateDelay(800);
-    setStorage('mock_admin_settings', newSettings);
-    return newSettings;
-};
 
 export const getAdmins = async () => {
     await simulateDelay(600);
