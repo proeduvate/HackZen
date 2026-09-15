@@ -20,6 +20,7 @@ from routers import (
     admin_organizers,
     admin_analytics,
     admin_settings,
+    settingsRoutes,
 )
 
 router = APIRouter()
@@ -38,6 +39,7 @@ router.include_router(inbox.router, prefix="/inbox", tags=["Notifications"])
 router.include_router(application.router, prefix="/applications", tags=["Applications"])
 router.include_router(submission.router, prefix="/submissions", tags=["Submissions"])
 router.include_router(evaluation.router, prefix="/evaluations", tags=["Evaluations"])
+router.include_router(settingsRoutes.router, prefix="/settings", tags=["Settings"])
 
 # Admin Backend Routers
 router.include_router(admin_users.router)
@@ -47,3 +49,4 @@ router.include_router(admin_disputes.router)
 router.include_router(admin_organizers.router)
 router.include_router(admin_analytics.router)
 router.include_router(admin_settings.router)
+
