@@ -14,8 +14,24 @@ import base64
 
 security = HTTPBearer(auto_error=False)
 
+_CONTROL_CHARS = re.compile(r"[\x00-\x1f\x7f]")
+_MULTI_SPACE = re.compile(r"\s+")
+
+
+def sanitize_text(value: str, limit: int = 8000) -> str:
+    cleaned = _CONTROL_CHARS.sub(" ", value)
+    cleaned = _MULTI_SPACE.sub(" ", cleaned).strip()
+    return cleaned[:limit]
+
+
+def secure_filename(name: str) -> str:
+    from pathlib import Path
+    base = Path(name).name
+    return re.sub(r"[^A-Za-z0-9._-]", "_", base)
+
 
 def get_password_hash(password: str) -> str:
+
     """Hash a password for storing."""
     salt = bcrypt.gensalt(rounds=12)  # Increased rounds for better security
     hashed_password = bcrypt.hashpw(password.encode("utf-8"), salt)

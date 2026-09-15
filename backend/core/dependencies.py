@@ -1,10 +1,28 @@
-from fastapi import Depends, Security, HTTPException, status
-from typing import List, Dict, Any
+from __future__ import annotations
+
+from fastapi import Depends, Security, HTTPException, status, Request
+from typing import List, Dict, Any, Optional
 from core.security import get_current_user
 from services.userService import UserService
-
-
 from datetime import datetime
+
+try:
+    from ai.init import AIContainer
+    from ai.services.ai_service import AIService
+    from ai.services.dataset_service import DatasetService
+    from ai.services.memory_service import MemoryService
+except Exception:
+    try:
+        from backend.ai.init import AIContainer
+        from backend.ai.services.ai_service import AIService
+        from backend.ai.services.dataset_service import DatasetService
+        from backend.ai.services.memory_service import MemoryService
+    except Exception:
+        AIContainer = Any
+        AIService = Any
+        DatasetService = Any
+        MemoryService = Any
+
 
 async def with_auth(
     current_user_payload: Dict[str, Any] = Security(get_current_user),
@@ -41,7 +59,6 @@ async def with_auth(
             "name": current_user_payload.get("email", "Mock User"),
         }
 
-
     user = await UserService.get_user_by_id(user_id)
 
     if not user:
@@ -77,3 +94,22 @@ class RequireRole:
                 )
 
         return user
+
+
+def get_ai_container(request: Request) -> Any:
+    container = getattr(request.app.state, "ai_container", None)
+    if container is None:
+        raise RuntimeError("AI container has not been initialized")
+    return container
+
+
+def get_ai_service(container: Any = Depends(get_ai_container)) -> Any:
+    return getattr(container, "ai_service", None)
+
+
+def get_memory_service(container: Any = Depends(get_ai_container)) -> Any:
+    return getattr(container, "memory_service", None)
+
+
+def get_dataset_service(container: Any = Depends(get_ai_container)) -> Any:
+    return getattr(container, "dataset_service", None)
