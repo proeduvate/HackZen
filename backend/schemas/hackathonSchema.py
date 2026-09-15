@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import List, Optional, Dict, Any, Union
 from datetime import datetime
 from models.hackathonModel import HackathonStatus, HackathonTheme
@@ -6,8 +6,8 @@ import json
 
 
 class HackathonBase(BaseModel):
-    title: str
-    description: str
+    title: str = Field(..., min_length=3, max_length=120)
+    description: str = Field(..., min_length=20, max_length=2000)
     location: Optional[str] = None
     problemStatement: Optional[str] = Field(None, alias="problemStatement")
     themes: List[Union[HackathonTheme, str]] = Field(default_factory=lambda: ["Web Dev"])
@@ -26,6 +26,7 @@ class HackathonBase(BaseModel):
     templateUrl: Optional[str] = Field(None, alias="templateUrl")
 
     model_config = {"populate_by_name": True, "from_attributes": True, "extra": "allow"}
+
 
 
 class HackathonCreate(HackathonBase):
@@ -60,6 +61,7 @@ class HackathonResponse(HackathonBase):
     organizerId: Optional[str] = Field(None, alias="organizerId")
     createdAt: Optional[Union[datetime, str]] = Field(None, alias="createdAt")
     updatedAt: Optional[Union[datetime, str]] = Field(None, alias="updatedAt")
+
     participants_count: int = Field(default=0, alias="participants_count")
 
     model_config = {"populate_by_name": True, "from_attributes": True, "extra": "allow"}

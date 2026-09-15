@@ -22,7 +22,7 @@ class SubmissionBase(BaseModel):
 
 
 class SubmissionCreate(SubmissionBase):
-    pass
+    version: int = 1
 
 
 class SubmissionResponse(SubmissionBase):

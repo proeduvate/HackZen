@@ -19,6 +19,15 @@ class EmailService:
         self.smtp_password = settings.SMTP_PASSWORD
         self.email_from = settings.EMAIL_FROM
 
+    def is_configured(self) -> bool:
+        return bool(
+            self.smtp_host
+            and self.smtp_port
+            and self.smtp_user
+            and self.smtp_password
+            and self.email_from
+        )
+
     async def send_email(
         self,
         to_email: str,
@@ -28,6 +37,10 @@ class EmailService:
         attachments: Optional[List[dict]] = None,
     ) -> bool:
         """Send email with optional attachments"""
+        if not self.is_configured():
+            print("Failed to send email: SMTP settings are not configured")
+            return False
+
         try:
             # Create message
             msg = MIMEMultipart("alternative")
@@ -133,6 +146,61 @@ class EmailService:
         
         Best regards,
         The ProEduvate Team
+        """
+
+        return await self.send_email(to_email, subject, html_content, text_content)
+
+    async def send_mentor_invitation_email(
+        self,
+        to_email: str,
+        organizer_name: str,
+        role: str,
+        domain: str,
+        message: str,
+    ) -> bool:
+        """Send a mentor invitation email from an organizer."""
+        subject = f"Invitation to join ProEduvate as {role}"
+        signup_url = f"{settings.FRONTEND_URL.rstrip('/')}/signup?role=mentor" if settings.FRONTEND_URL else "/signup?role=mentor"
+
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <body style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.6;">
+            <div style="max-width: 620px; margin: 0 auto; padding: 24px;">
+                <div style="background: linear-gradient(135deg, #0891b2, #2563eb); color: white; padding: 28px; border-radius: 14px 14px 0 0;">
+                    <h1 style="margin: 0;">Mentor Invitation</h1>
+                    <p style="margin: 8px 0 0;">You have been invited to support a ProEduvate hackathon.</p>
+                </div>
+                <div style="background: #f8fafc; padding: 28px; border: 1px solid #e5e7eb; border-radius: 0 0 14px 14px;">
+                    <p>Hello,</p>
+                    <p><strong>{organizer_name}</strong> invited you to join as a <strong>{role}</strong>.</p>
+                    <p><strong>Focus domain:</strong> {domain}</p>
+                    <div style="background: white; border-left: 4px solid #0891b2; padding: 16px; margin: 20px 0;">
+                        {message}
+                    </div>
+                    <p>You can accept the invitation by creating or opening your mentor account.</p>
+                    <p>
+                        <a href="{signup_url}" style="display: inline-block; background: #2563eb; color: white; padding: 12px 18px; border-radius: 8px; text-decoration: none;">
+                            Open Mentor Dashboard
+                        </a>
+                    </p>
+                    <p style="font-size: 12px; color: #64748b;">This email was sent by ProEduvate Hackathon Platform.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        text_content = f"""
+        Mentor Invitation
+
+        {organizer_name} invited you to join ProEduvate as a {role}.
+        Focus domain: {domain}
+
+        Message:
+        {message}
+
+        Open your mentor account here: {signup_url}
         """
 
         return await self.send_email(to_email, subject, html_content, text_content)

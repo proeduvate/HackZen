@@ -49,42 +49,66 @@ export const saveRegistrationDraft = async (hackathonId, nextDraft) => {
 
 export const submitHackathonRegistration = async (hackathonId, draft) => {
     try {
-        console.log('Mocking Registration submission for:', hackathonId, draft);
-        
-        // Simulating network delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        /* REAL API CALL - Commented out for mock flow
-        const payload = {
+        const teamPayload = {
             hackathonId: hackathonId,
-            teamName: draft.teamName,
-            teamSize: parseInt(draft.teamSize),
-            members: draft.memberEmails.filter(email => email.trim() !== ''),
-            notes: draft.notes
+            teamName: draft.teamName
         };
 
-        const { data } = await apiClient.post('/applications/', payload);
-        */
+        let team;
+        try {
+            const { data } = await apiClient.post('/teams/', teamPayload);
+            team = data;
+        } catch (teamError) {
+            const detail = teamError.response?.data?.detail || teamError.response?.data?.error?.message || '';
+            const canReuseExistingTeam = detail.includes('already a member') || detail.includes('Team name already exists');
 
-        // Mock response data
-        const mockData = {
-            _id: 'mock_reg_' + Math.random().toString(36).substr(2, 9),
-            appliedAt: new Date().toISOString(),
+            if (!canReuseExistingTeam) {
+                throw teamError;
+            }
+
+            const { data: myTeams } = await apiClient.get('/teams/my-teams');
+            team = myTeams.find(item => item.hackathonId === hackathonId);
+
+            if (!team) {
+                throw teamError;
+            }
+        }
+
+        const teamId = team._id || team.id;
+
+        const applicationPayload = {
+            hackathonId,
+            teamId
         };
+
+        let application;
+        try {
+            const { data } = await apiClient.post('/applications/', applicationPayload);
+            application = data;
+        } catch (applicationError) {
+            const detail = applicationError.response?.data?.detail || applicationError.response?.data?.error?.message || '';
+            if (!detail.includes('already applied')) {
+                throw applicationError;
+            }
+
+            const { data: applications } = await apiClient.get('/applications/my');
+            application = applications.find(item => item.hackathonId === hackathonId) || {};
+        }
         
-        // Clean up local draft on success
         const drafts = readDrafts();
         delete drafts[hackathonId];
         writeDrafts(drafts);
 
         return {
             success: true,
-            registrationId: mockData._id,
-            timestamp: mockData.appliedAt,
+            registrationId: application._id || application.id,
+            teamId,
+            timestamp: application.appliedAt,
             draft,
         };
     } catch (error) {
         console.error('Registration submission failed:', error);
-        throw error;
+        const detail = error.response?.data?.detail || error.response?.data?.error?.message;
+        throw new Error(detail || 'Registration could not be completed. Please try again.');
     }
 };

@@ -38,6 +38,7 @@ const MyHackathons = () => {
 
         loadHackathons();
 
+
         // Scroll listener for persistence
         const handleScroll = () => {
             sessionStorage.setItem('organizer_hackathons_scroll', window.scrollY.toString());

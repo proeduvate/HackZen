@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { fetchSubmissions, submitProject } from '../../services/student/submissionsApi';
 import { getMyTeams } from '../../api/teamApi';
+import { fetchMyTeams } from '../../services/student/teamsApi';
 import { usePlatformSettings } from '../../context/PlatformSettingsContext';
+
+const STAGES = [
+    { value: 'initial_stage', label: 'Initial Submission' },
+    { value: 'round_1', label: 'Round 1' },
+    { value: 'round_2', label: 'Round 2' },
+    { value: 'final', label: 'Final Deliverable' }
+];
+
+const CATEGORIES = ['General', 'AI/ML', 'Web3', 'Cybersecurity', 'HealthTech', 'FinTech', 'EdTech', 'Sustainability'];
 
 const StudentSubmissions = () => {
     const [submissions, setSubmissions] = useState([]);
@@ -25,6 +35,8 @@ const StudentSubmissions = () => {
 
     const [form, setForm] = useState({
         teamId: '',
+        stageId: 'initial_stage',
+        category: 'General',
         project: '',
         desc: '',
         githubUrl: '',
@@ -35,10 +47,14 @@ const StudentSubmissions = () => {
     const loadData = async () => {
         setIsLoading(true);
         try {
-            const [subsData, teamsData] = await Promise.all([
-                fetchSubmissions().catch(() => []),
-                getMyTeams().catch(() => [])
-            ]);
+            let teamsData = [];
+            try {
+                teamsData = await getMyTeams();
+            } catch {
+                teamsData = await fetchMyTeams().catch(() => []);
+            }
+
+            const subsData = await fetchSubmissions().catch(() => []);
             setSubmissions(subsData || []);
             setMyTeams(teamsData || []);
             if (teamsData && teamsData.length > 0 && !form.teamId) {
@@ -54,6 +70,7 @@ const StudentSubmissions = () => {
     useEffect(() => {
         loadData();
     }, []);
+
 
     // File validation against real-time admin settings
     const handleFileChange = (e) => {
@@ -178,10 +195,15 @@ const StudentSubmissions = () => {
                         <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                     </div>
                     <h3 className="text-xl font-bold text-white mb-2">No Submissions Yet</h3>
-                    <p className="text-gray-400 text-sm max-w-sm mx-auto mb-5">You haven't submitted any projects yet. Participate in hackathons and submit your deliverables.</p>
+                    <p className="text-gray-400 text-sm max-w-sm mx-auto mb-5">
+                        {myTeams.length === 0
+                            ? "Join or form a team first, then submit your project deliverables for evaluation."
+                            : "You haven't submitted any projects yet. Submit your deliverables for active hackathons."}
+                    </p>
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all border border-white/10"
+                        disabled={myTeams.length === 0}
+                        className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 disabled:opacity-40"
                     >
                         Submit Your Project Deliverable
                     </button>
@@ -191,21 +213,29 @@ const StudentSubmissions = () => {
                     {submissions.map((sub) => (
                         <div key={sub.id} className="glass p-6 rounded-2xl border border-white/5 hover:border-purple-500/30 transition-all duration-300 flex flex-col justify-between h-full group">
                             <div>
-                                <div className="flex justify-between items-start mb-6">
+                                <div className="flex justify-between items-start mb-6 gap-3">
                                     <div>
-                                        <h3 className="text-xl font-bold text-white group-hover:text-purple-400 transition-colors w-11/12 leading-tight">{sub.project}</h3>
-                                        <p className="text-sm text-gray-400 mt-2">{sub.hackathon}</p>
+                                        <h3 className="text-xl font-bold text-white group-hover:text-purple-400 transition-colors leading-tight">{sub.project}</h3>
+                                        <p className="text-sm text-gray-400 mt-2">{sub.hackathon} • {sub.team}</p>
                                     </div>
                                     <StatusBadge status={sub.status} isLate={sub.isLate} />
                                 </div>
 
                                 <div className="space-y-6 mb-8">
+                                    {sub.desc && <p className="text-sm text-gray-300 leading-relaxed line-clamp-2">{sub.desc}</p>}
+
                                     <div className="flex flex-wrap gap-2">
-                                        {sub.resources.map((res, i) => (
-                                            <span key={i} className="px-3 py-1 bg-white/5 border border-white/5 rounded-lg text-xs font-medium text-gray-400 transition-colors">
-                                                {res}
-                                            </span>
-                                        ))}
+                                        <span className="px-3 py-1 bg-white/5 border border-white/5 rounded-lg text-xs font-medium text-gray-400">
+                                            {sub.category}
+                                        </span>
+                                        <span className="px-3 py-1 bg-white/5 border border-white/5 rounded-lg text-xs font-medium text-gray-400">
+                                            v{sub.version}
+                                        </span>
+                                        {sub.fileUrl && sub.fileUrl !== 'pending_upload' && (
+                                            <a href={sub.fileUrl} target="_blank" rel="noreferrer" className="px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-lg text-xs font-medium text-cyan-300 hover:bg-cyan-500/20 transition-colors">
+                                                Open Project Link
+                                            </a>
+                                        )}
                                     </div>
 
                                     {sub.feedback && (
@@ -222,7 +252,7 @@ const StudentSubmissions = () => {
                                     <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                                     <span className="text-xs text-gray-400">{sub.submittedAt}</span>
                                 </div>
-                                {sub.score && (
+                                {sub.score != null && (
                                     <div className="text-right">
                                         <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Originality Score</p>
                                         <p className="text-lg font-bold text-purple-400">{sub.score}%</p>
@@ -234,6 +264,7 @@ const StudentSubmissions = () => {
                 </div>
             )}
 
+<<<<<<< HEAD
             {/* Submission Modal Enforcing Live Platform Rules */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -393,3 +424,4 @@ const StudentSubmissions = () => {
 };
 
 export default StudentSubmissions;
+

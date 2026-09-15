@@ -20,12 +20,14 @@ const CreateHackathon = () => {
             startDate: '',
             endDate: '',
             description: '',
+            location: '',
             tracks: [],
             minTeamSize: 2,
             maxTeamSize: 4,
             isPublic: true,
             autoApprove: false,
-            banner: null
+            posterFile: null,
+            posterPreview: ''
         };
     });
 

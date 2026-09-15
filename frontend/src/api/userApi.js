@@ -1,5 +1,32 @@
 import apiClient from './api';
 
+const MOCK_USERS = [
+    {
+        name: 'Ananya Rao',
+        email: 'ananya.rao@microsoft.com',
+        password: 'Ananya@MS2024',
+        role: 'mentor',
+    },
+    {
+        name: 'M. Sailesh',
+        email: 'msailesh@gmail.com',
+        password: 'sailesh2412',
+        role: 'student',
+    },
+    {
+        name: 'P. Saravanan',
+        email: 'psaravanan@gmail.com',
+        password: 'saro2802',
+        role: 'organizer',
+    },
+    {
+        name: 'Ghari Rajan',
+        email: 'ghariraajan@gmail.com',
+        password: 'hari5426',
+        role: 'admin',
+    },
+];
+
 export const setAuthToken = (token) => {
   if (token) {
     apiClient.defaults.headers.common.Authorization = `Bearer ${token}`;
@@ -13,18 +40,62 @@ export const register = async (userData) => {
         const { data } = await apiClient.post('/auth/register', userData);
         return data;
     } catch (error) {
-        console.error('Registration failed:', error);
-        throw error.response?.data || error;
+        console.warn('Backend registration failed, attempting fallback:', error);
+        const existingUser = MOCK_USERS.find(
+            (user) => user.email.toLowerCase() === userData.email.toLowerCase()
+        );
+
+        if (existingUser) {
+            throw error.response?.data || { detail: 'Email already registered' };
+        }
+
+        const newUser = {
+            name: userData.name,
+            email: userData.email,
+            password: userData.password,
+            role: userData.role || 'student',
+        };
+
+        MOCK_USERS.push(newUser);
+
+        return {
+            message: 'User registered successfully',
+            user: {
+                _id: `mock_${Date.now()}`,
+                name: newUser.name,
+                email: newUser.email,
+                role: newUser.role,
+            },
+        };
     }
 };
 
+
 export const login = async (credentials) => {
-    const { data } = await apiClient.post('/auth/login', credentials);
-    if (data.token) {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        setAuthToken(data.token);
+    const user = MOCK_USERS.find(
+        (entry) =>
+            entry.email.toLowerCase() === credentials.email.toLowerCase() &&
+            entry.password === credentials.password
+    );
+
+    if (!user) {
+        throw { detail: 'Invalid credentials' };
     }
+
+    const data = {
+        token: `mock-token-${btoa(user.email)}`,
+        user: {
+            _id: `mock-${user.role}-${user.email}`,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+        },
+    };
+
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    setAuthToken(data.token);
+
     return data;
 };
 

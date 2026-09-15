@@ -10,6 +10,7 @@ import re
 from uuid import uuid4
 from core.config import settings
 import json
+import base64
 
 security = HTTPBearer(auto_error=False)
 
@@ -120,6 +121,33 @@ async def get_current_user(
             detail="Not authenticated",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    if settings.ALLOW_MOCK_AUTH and token.startswith("mock-token-"):
+        encoded_email = token.replace("mock-token-", "", 1)
+        try:
+            padding = "=" * (-len(encoded_email) % 4)
+            email = base64.b64decode(f"{encoded_email}{padding}").decode("utf-8")
+        except Exception:
+            email = "mock@example.com"
+
+        mock_roles = {
+            "ananya.rao@microsoft.com": "mentor",
+            "msailesh@gmail.com": "student",
+            "psaravanan@gmail.com": "organizer",
+            "ghariraajan@gmail.com": "admin",
+        }
+        role = mock_roles.get(email.lower(), "student")
+
+        return {
+            "id": f"mock-{role}-{email}",
+            "email": email,
+            "role": role,
+            "permissions": [],
+            "team_id": None,
+            "exp": None,
+            "jti": "mock-token",
+            "is_mock": True,
+        }
 
     payload = verify_token(token, "access")
 

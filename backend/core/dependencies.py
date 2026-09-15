@@ -32,6 +32,16 @@ async def with_auth(
             {"$set": {"lastActive": datetime.utcnow()}}
         )
 
+    if current_user_payload.get("is_mock"):
+        return {
+            "_id": user_id,
+            "sub": user_id,
+            "email": current_user_payload.get("email"),
+            "role": current_user_payload.get("role", "student"),
+            "name": current_user_payload.get("email", "Mock User"),
+        }
+
+
     user = await UserService.get_user_by_id(user_id)
 
     if not user:

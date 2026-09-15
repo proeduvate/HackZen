@@ -18,13 +18,11 @@ class MongoDB:
                 "minPoolSize": 10,
                 "serverSelectionTimeoutMS": 5000,
             }
-            if "mongodb+srv://" in settings.MONGO_URI or "tls=true" in settings.MONGO_URI.lower():
+            if any(k in settings.MONGO_URI.lower() for k in ["mongodb+srv", "ssl=true", "tls=true"]):
                 client_kwargs["tlsCAFile"] = certifi.where()
 
-            cls.client = AsyncIOMotorClient(
-                settings.MONGO_URI,
-                **client_kwargs
-            )
+            cls.client = AsyncIOMotorClient(settings.MONGO_URI, **client_kwargs)
+
             await cls.client.admin.command("ping")
             cls.db = cls.client[settings.DB_NAME]
             print("[DB] Connected to MongoDB")

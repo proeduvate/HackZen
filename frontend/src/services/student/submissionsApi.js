@@ -31,18 +31,24 @@ export const fetchSubmissions = async (teamId) => {
                     if (!Array.isArray(data)) return [];
                     return data.map(sub => ({
                         id: sub._id || sub.id,
-                        project: sub.project || (`Project Submission v${sub.version}`),
-                        hackathon: sub.hackathonTitle || t.teamName || 'Active Hackathon',
-                        teamName: t.teamName,
-                        teamId: t.id,
-                        submittedAt: new Date(sub.submittedAt).toLocaleDateString(),
+                        teamId: sub.teamId || t.id,
+                        team: sub.team || t.teamName || 'Active Team',
+                        teamName: sub.team || t.teamName,
+                        project: sub.project || sub.title || (`Project Submission v${sub.version || 1}`),
+                        hackathon: sub.hackathon || sub.hackathonTitle || t.teamName || 'Current Hackathon',
+                        desc: sub.desc || sub.description || '',
+                        category: sub.category || sub.track || 'General',
+                        submittedAt: sub.time || (sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString() : ''),
+                        iso: sub.submittedAt || null,
                         status: sub.status || (sub.isLate ? 'Late Submission' : 'Submitted'),
                         isLate: Boolean(sub.isLate),
-                        score: sub.aiScore || null,
+                        score: sub.score ?? sub.aiScore ?? null,
+                        evaluationCount: sub.evaluationCount ?? 0,
                         feedback: sub.aiReview || sub.feedback || null,
                         githubUrl: sub.githubUrl || '',
                         liveDemoUrl: sub.liveDemoUrl || '',
                         fileUrl: sub.fileUrl || '',
+                        version: sub.version || 1,
                         resources: [
                             sub.githubUrl ? 'GitHub Repo' : null,
                             sub.liveDemoUrl ? 'Live Demo' : null,
@@ -122,3 +128,4 @@ export const submitProject = async (submissionData) => {
         throw error;
     }
 };
+

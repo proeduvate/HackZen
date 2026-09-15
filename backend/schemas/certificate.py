@@ -6,8 +6,11 @@ from typing import Optional
 
 class CertificateBase(BaseModel):
     userId: str = Field(..., alias="userId")
-    teamId: str = Field(..., alias="teamId")
-    hackathonId: str = Field(..., alias="hackathonId")
+    teamId: Optional[str] = Field(None, alias="teamId")
+    hackathonId: Optional[str] = Field(None, alias="hackathonId")
+    title: Optional[str] = Field(None, alias="title")
+    completionDate: Optional[str] = Field(None, alias="completionDate")
+    description: Optional[str] = Field(None, alias="description")
     certificateUrl: str = Field(..., alias="certificateUrl")
     filePath: Optional[str] = Field(None, alias="filePath")
 
