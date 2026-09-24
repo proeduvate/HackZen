@@ -222,4 +222,5 @@ frontend/playwright.config.js
 run_e2e_tests.bat
 .vscode/
 backend/uploads/
+backend/scratch/
 

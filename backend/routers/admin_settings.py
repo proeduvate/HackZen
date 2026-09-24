@@ -5,10 +5,11 @@ from datetime import datetime, timedelta
 from bson import ObjectId
 import os
 import shutil
+import asyncio
 
 from database import get_db
 from core.dependencies import RequireRole, get_current_user
-
+from core.config import settings as app_settings
 
 router = APIRouter(prefix="/admin/settings", tags=["Admin Settings"])
 
@@ -30,6 +31,15 @@ class PlatformSettingsUpdateRequest(BaseModel):
     hackathons: Optional[Dict[str, Any]] = None
     submissions: Optional[Dict[str, Any]] = None
     certificates: Optional[Dict[str, Any]] = None
+
+class SmtpTestRequest(BaseModel):
+    smtpHost: Optional[str] = None
+    smtpPort: Optional[int] = 587
+    smtpUser: Optional[str] = None
+    smtpPassword: Optional[str] = None
+    smtpFrom: Optional[str] = None
+    smtpUseTls: Optional[bool] = True
+    testRecipient: Optional[str] = None
 
 
 # --- Helper: Audit Logging ---
@@ -246,7 +256,13 @@ async def get_all_platform_settings(current_user: dict = Depends(RequireRole(["a
             "newDisputeNotif": settings.get("newDisputeNotif", True),
             "certVerifNotif": settings.get("certVerifNotif", False),
             "sysErrorNotif": settings.get("sysErrorNotif", True),
-            "secAlertNotif": settings.get("secAlertNotif", True)
+            "secAlertNotif": settings.get("secAlertNotif", True),
+            "smtpHost": settings.get("smtpHost", "smtp.gmail.com"),
+            "smtpPort": int(settings.get("smtpPort", 587)),
+            "smtpUser": settings.get("smtpUser", "notifications@hackzen.org"),
+            "smtpPassword": settings.get("smtpPassword", "••••••••••••"),
+            "smtpFrom": settings.get("smtpFrom", "HackZen Platform <notifications@hackzen.org>"),
+            "smtpUseTls": bool(settings.get("smtpUseTls", True))
         },
         "hackathons": {
             "maxTeamSize": int(settings.get("maxTeamSize", 4)),
@@ -1082,4 +1098,79 @@ async def get_notification_dispatch_history(current_user: dict = Depends(Require
     return result
 
 
+@router.post("/smtp/test")
+async def test_smtp_configuration(data: SmtpTestRequest, current_user: dict = Depends(RequireRole(["admin", "superadmin"]))):
+    """Test SMTP connection credentials and dispatch a test verification email."""
+    db = get_db()
+    
+    stored_settings = await db["settings"].find_one({"key": "global_config"}) or {}
+    
+    host = data.smtpHost or stored_settings.get("smtpHost") or getattr(app_settings, "SMTP_HOST", "smtp.gmail.com")
+    port = data.smtpPort or stored_settings.get("smtpPort") or getattr(app_settings, "SMTP_PORT", 587)
+    user = data.smtpUser or stored_settings.get("smtpUser") or getattr(app_settings, "SMTP_USER", "")
+    password = data.smtpPassword or stored_settings.get("smtpPassword") or getattr(app_settings, "SMTP_PASSWORD", "")
+    from_email = data.smtpFrom or stored_settings.get("smtpFrom") or getattr(app_settings, "EMAIL_FROM", "notifications@hackzen.org")
+    recipient = data.testRecipient or current_user.get("email", "admin@proeduvate.com")
+    use_tls = data.smtpUseTls if data.smtpUseTls is not None else stored_settings.get("smtpUseTls", True)
 
+    if not host or not port:
+        raise HTTPException(status_code=400, detail="SMTP Host and Port are required.")
+
+    try:
+        import smtplib
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+
+        def _verify_and_send():
+            server = smtplib.SMTP(host, int(port), timeout=10)
+            if use_tls:
+                server.starttls()
+            if user and password and password != "••••••••••••":
+                server.login(user, password)
+                
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = "HackZen Platform - SMTP Connection Test Successful"
+            msg["From"] = from_email
+            msg["To"] = recipient
+            
+            html = f"""
+            <div style="font-family: sans-serif; padding: 24px; background: #0f172a; color: #f8fafc; border-radius: 12px;">
+                <h2 style="color: #38bdf8; margin-top: 0;">SMTP Test Verification Successful</h2>
+                <p>This email confirms that the HackZen SMTP outbound mail gateway is correctly configured and operational.</p>
+                <div style="background: rgba(255,255,255,0.05); padding: 16px; border-radius: 8px; margin: 16px 0;">
+                    <p style="margin: 4px 0;"><strong>Host:</strong> {host}:{port}</p>
+                    <p style="margin: 4px 0;"><strong>TLS Enabled:</strong> {'Yes' if use_tls else 'No'}</p>
+                    <p style="margin: 4px 0;"><strong>Sender:</strong> {from_email}</p>
+                    <p style="margin: 4px 0;"><strong>Dispatched to:</strong> {recipient}</p>
+                </div>
+                <p style="color: #94a3b8; font-size: 12px;">Dispatched by Administrator: {current_user.get('email', 'Admin')}</p>
+            </div>
+            """
+            msg.attach(MIMEText(html, "html"))
+            server.send_message(msg)
+            server.quit()
+            return True
+
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, _verify_and_send)
+        
+        await log_admin_settings_audit(
+            db,
+            action="SMTP Test Dispatched",
+            details=f"Dispatched SMTP connection test to {recipient} via {host}:{port}.",
+            category="Settings",
+            target="Email Gateway",
+            admin_email=current_user.get("email", "admin@proeduvate.com")
+        )
+
+        return {
+            "success": True,
+            "message": f"SMTP handshake and test email successfully delivered to {recipient}."
+        }
+    except Exception as e:
+        err_msg = str(e)
+        return {
+            "success": False,
+            "message": f"SMTP Test Status: {err_msg}",
+            "details": "Verify your SMTP host, port, credentials (e.g. App Password), or network connectivity."
+        }

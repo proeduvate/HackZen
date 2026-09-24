@@ -159,6 +159,7 @@ const Submissions = () => {
     const [isRequestChangesOpen, setIsRequestChangesOpen] = useState(false);
     const [isFlagModalOpen, setIsFlagModalOpen] = useState(false);
     const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
+    const [isDisqualifyModalOpen, setIsDisqualifyModalOpen] = useState(false);
     
     // Form Inputs State
     const [changeRequests, setChangeRequests] = useState({
@@ -174,6 +175,8 @@ const Submissions = () => {
     const [extendedDeadline, setExtendedDeadline] = useState('24 hours');
     const [flagReason, setFlagReason] = useState('High Code Similarity / Plagiarism Detected');
     const [flagExplanation, setFlagExplanation] = useState('');
+    const [disqualifyReason, setDisqualifyReason] = useState('Severe Code Plagiarism');
+    const [disqualifyExplanation, setDisqualifyExplanation] = useState('');
     const [newAdminNote, setNewAdminNote] = useState('');
 
     useEffect(() => {
@@ -183,6 +186,7 @@ const Submissions = () => {
             if (f === 'pending' || f === 'pending review') setActiveTab('Pending Review');
             else if (f === 'approved') setActiveTab('Approved');
             else if (f === 'rejected') setActiveTab('Rejected');
+            else if (f === 'disqualified') setActiveTab('Disqualified');
             else if (f === 'flagged') setActiveTab('Flagged');
             else if (f === 'incomplete') {
                 setActiveTab('All');
@@ -252,7 +256,8 @@ const Submissions = () => {
         const changes = submissions.filter(s => (s.status || '').toLowerCase().includes('changes')).length;
         const flagged = submissions.filter(s => (s.status || '').toLowerCase().includes('flag')).length;
         const rejected = submissions.filter(s => s.status === 'Rejected').length;
-        return { total, pending, approved, changes, flagged, rejected };
+        const disqualified = submissions.filter(s => (s.status || '').toLowerCase() === 'disqualified').length;
+        return { total, pending, approved, changes, flagged, rejected, disqualified };
     }, [submissions]);
 
     // Filter Logic
@@ -268,6 +273,8 @@ const Submissions = () => {
                 matchesTab = status === 'approved';
             } else if (tab === 'rejected') {
                 matchesTab = status === 'rejected';
+            } else if (tab === 'disqualified') {
+                matchesTab = status === 'disqualified';
             } else if (tab === 'changes requested') {
                 matchesTab = status.includes('changes');
             } else if (tab === 'flagged') {
@@ -295,17 +302,30 @@ const Submissions = () => {
     const selectedSub = submissions.find(s => s.id === selectedSubId) || filteredSubs[0] || null;
 
     // Single Status Action
-    const handleStatusUpdate = async (id, newStatus) => {
+    const handleStatusUpdate = async (id, newStatus, reason = '') => {
         setActionLoading(true);
         try {
-            await updateSubmissionStatus(id, newStatus);
-            setSubmissions(subs => subs.map(s => s.id === id ? { ...s, status: newStatus } : s));
-            showToast(`Submission status updated to ${newStatus}`, newStatus === 'Approved' ? 'success' : 'info');
+            await updateSubmissionStatus(id, newStatus, reason);
+            setSubmissions(subs => subs.map(s => s.id === id ? { 
+                ...s, 
+                status: newStatus,
+                ...(newStatus === 'Disqualified' ? { disqualificationReason: reason } : {})
+            } : s));
+            showToast(`Submission status updated to ${newStatus}`, newStatus === 'Approved' ? 'success' : newStatus === 'Disqualified' ? 'warning' : 'info');
         } catch (error) {
             showToast(`Failed to update status to ${newStatus}`, 'error');
         } finally {
             setActionLoading(false);
         }
+    };
+
+    // Disqualify Action Submit
+    const handleDisqualifySubmit = async () => {
+        if (!selectedSub) return;
+        const fullReason = disqualifyExplanation ? `${disqualifyReason}: ${disqualifyExplanation}` : disqualifyReason;
+        await handleStatusUpdate(selectedSub.id, 'Disqualified', fullReason);
+        setIsDisqualifyModalOpen(false);
+        setDisqualifyExplanation('');
     };
 
     // Request Changes Action
@@ -512,12 +532,13 @@ const Submissions = () => {
                     
                     {/* Status Tabs */}
                     <div className="p-2.5 border-b border-slate-200 dark:border-white/5 flex gap-1 shrink-0 bg-slate-50/70 dark:bg-white/[0.02] overflow-x-auto scrollbar-hide">
-                        {['All', 'Pending Review', 'Approved', 'Changes Requested', 'Flagged', 'Rejected'].map((tab) => {
+                        {['All', 'Pending Review', 'Approved', 'Changes Requested', 'Flagged', 'Rejected', 'Disqualified'].map((tab) => {
                             const count = tab === 'All' ? stats.total :
                                           tab === 'Pending Review' ? stats.pending :
                                           tab === 'Approved' ? stats.approved :
                                           tab === 'Changes Requested' ? stats.changes :
                                           tab === 'Flagged' ? stats.flagged :
+                                          tab === 'Disqualified' ? stats.disqualified :
                                           stats.rejected;
                             const isActive = activeTab === tab;
                             return (
@@ -1187,6 +1208,26 @@ const Submissions = () => {
                                             </button>
                                         </>
                                     )}
+
+                                    {selectedSub.status === 'Disqualified' && (
+                                        <button 
+                                            onClick={() => handleStatusUpdate(selectedSub.id, 'Pending Review')}
+                                            disabled={actionLoading}
+                                            className="px-4 py-1.5 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 text-slate-700 dark:text-gray-300 text-xs font-bold rounded-xl transition-all"
+                                        >
+                                            Reinstate to Pending
+                                        </button>
+                                    )}
+
+                                    {selectedSub.status !== 'Disqualified' && (
+                                        <button 
+                                            onClick={() => setIsDisqualifyModalOpen(true)}
+                                            disabled={actionLoading}
+                                            className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all"
+                                        >
+                                            Disqualify Team
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </>
@@ -1323,6 +1364,63 @@ const Submissions = () => {
                             className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs rounded-xl shadow-md transition-colors"
                         >
                             {actionLoading ? 'Flagging...' : 'Confirm Flag'}
+                        </button>
+                    </div>
+                </div>
+            </ActionModal>
+
+            {/* DISQUALIFY MODAL */}
+            <ActionModal 
+                isOpen={isDisqualifyModalOpen} 
+                onClose={() => setIsDisqualifyModalOpen(false)} 
+                title="Disqualify Team Submission"
+                subtitle="Specify official reason and evidence context for team disqualification."
+            >
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        {[
+                            'Severe Code Plagiarism',
+                            'Official Rule Violation',
+                            'Ineligible Team Composition',
+                            'Submission SLA Breach',
+                            'Other Disqualification Cause'
+                        ].map(reason => (
+                            <label key={reason} className="flex items-center gap-2 text-xs text-slate-700 dark:text-gray-300 cursor-pointer p-2 rounded-lg bg-slate-100 dark:bg-black/30 border border-slate-200 dark:border-white/5">
+                                <input 
+                                    type="radio" 
+                                    name="disqualifyReason" 
+                                    value={reason} 
+                                    checked={disqualifyReason === reason}
+                                    onChange={(e) => setDisqualifyReason(e.target.value)} 
+                                    className="text-rose-600 focus:ring-rose-500" 
+                                /> 
+                                <span className="font-bold">{reason}</span>
+                            </label>
+                        ))}
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-gray-300 mb-1.5">Official Violation Notes & Context:</label>
+                        <textarea 
+                            placeholder="Explain the specific violation, SLA breach, or evidence details..." 
+                            rows="2" 
+                            value={disqualifyExplanation} 
+                            onChange={(e) => setDisqualifyExplanation(e.target.value)} 
+                            className="w-full bg-slate-50 dark:bg-black/40 border border-slate-300 dark:border-white/10 rounded-xl p-3 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-rose-500 resize-none"
+                        ></textarea>
+                    </div>
+                    <div className="flex justify-end gap-2.5 pt-2">
+                        <button 
+                            onClick={() => setIsDisqualifyModalOpen(false)} 
+                            className="px-4 py-2 text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white text-xs font-bold transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            onClick={handleDisqualifySubmit} 
+                            disabled={actionLoading}
+                            className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs rounded-xl shadow-md transition-colors"
+                        >
+                            {actionLoading ? 'Disqualifying...' : 'Confirm Disqualification'}
                         </button>
                     </div>
                 </div>

@@ -813,6 +813,60 @@ const OrganizerApprovals = () => {
                                                         <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">✓ Zero adverse risk factors detected for this organizer account.</p>
                                                     )}
                                                 </div>
+
+                                                {/* Quick Apply AI Recommendation Banner */}
+                                                {currentAiReview && (
+                                                    <div className="p-3.5 rounded-xl border border-sky-200 dark:border-sky-500/30 bg-sky-50/60 dark:bg-sky-500/10 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+                                                        <div>
+                                                            <span className="font-black text-[10px] uppercase tracking-wider text-sky-800 dark:text-sky-300 block mb-0.5">
+                                                                AI Verification Action: {currentAiReview.recommendation || 'APPROVE'}
+                                                            </span>
+                                                            <p className="text-[11px] text-slate-600 dark:text-slate-300">
+                                                                {currentAiReview.recommendation === 'APPROVE' && "Low risk rating. Credentials and institutional standing verified."}
+                                                                {currentAiReview.recommendation === 'REQUEST_CHANGES' && "Medium risk tier. Additional organizational verification or credentials requested."}
+                                                                {currentAiReview.recommendation === 'REJECT' && "High risk flags or unverifiable credentials detected."}
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            {currentAiReview.recommendation === 'APPROVE' && (
+                                                                <button
+                                                                    onClick={() => handleApprove(selectedApp.id)}
+                                                                    disabled={actionLoading}
+                                                                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow transition-all active:scale-95 flex items-center gap-1.5"
+                                                                >
+                                                                    <CheckIcon className="w-3.5 h-3.5" />
+                                                                    Approve Organizer Now
+                                                                </button>
+                                                            )}
+                                                            {currentAiReview.recommendation === 'REQUEST_CHANGES' && (
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setChangeMessage(currentAiReview.aiSummary || "Please provide official institutional affiliation verification.");
+                                                                        setIsRequestChangesOpen(true);
+                                                                    }}
+                                                                    disabled={actionLoading}
+                                                                    className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl shadow transition-all active:scale-95 flex items-center gap-1.5"
+                                                                >
+                                                                    <TriangleAlertIcon className="w-3.5 h-3.5" />
+                                                                    Request Verification with AI Summary
+                                                                </button>
+                                                            )}
+                                                            {currentAiReview.recommendation === 'REJECT' && (
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setRejectReason('Unverified Identity');
+                                                                        setRejectMessage(currentAiReview.aiSummary || "Application does not satisfy authenticity verification.");
+                                                                        setIsRejectOpen(true);
+                                                                    }}
+                                                                    disabled={actionLoading}
+                                                                    className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl shadow transition-all active:scale-95 flex items-center gap-1.5"
+                                                                >
+                                                                    Reject with AI Dossier
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </>
                                         )}
 

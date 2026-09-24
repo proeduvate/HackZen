@@ -77,8 +77,11 @@ class OrganizerProfileCreate(BaseModel):
     institutionName: Optional[str] = Field(None, alias="institutionName")
     institutionType: Optional[str] = Field(None, alias="institutionType")
     designation: Optional[str] = None
+    bio: Optional[str] = None
     phoneNumber: Optional[str] = Field(None, alias="phoneNumber")
     linkedinUrl: Optional[str] = Field(None, alias="linkedinUrl")
+    emailReports: Optional[str] = Field(default="weekly", alias="emailReports")
+    autoApproveMentors: Optional[bool] = Field(default=False, alias="autoApproveMentors")
 
     model_config = {"populate_by_name": True, "from_attributes": True}
 
@@ -88,8 +91,11 @@ class OrganizerProfileUpdate(BaseModel):
     institutionName: Optional[str] = Field(None, alias="institutionName")
     institutionType: Optional[str] = Field(None, alias="institutionType")
     designation: Optional[str] = None
+    bio: Optional[str] = None
     phoneNumber: Optional[str] = Field(None, alias="phoneNumber")
     linkedinUrl: Optional[str] = Field(None, alias="linkedinUrl")
+    emailReports: Optional[str] = Field(None, alias="emailReports")
+    autoApproveMentors: Optional[bool] = Field(None, alias="autoApproveMentors")
 
 
 class OrganizerProfile(OrganizerProfileCreate):

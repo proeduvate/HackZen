@@ -170,19 +170,7 @@ async def get_all_users(current_user: dict = Depends(RequireRole(["admin", "supe
                 else:
                     active_teams_count += 1
             
-            # If no DB teams linked yet, use realistic defaults based on mentor experience
-            if active_teams_count == 0 and past_teams_count == 0:
-                if u.get("isOverloaded") or "ramesh" in u.get("email", "").lower() or "priya" in u.get("email", "").lower():
-                    active_teams_count = 7
-                    past_teams_count = 5
-                elif "arun" in u.get("email", "").lower() or "divya" in u.get("email", "").lower() or "mohan" in u.get("email", "").lower():
-                    active_teams_count = 6
-                    past_teams_count = 4
-                else:
-                    active_teams_count = 3
-                    past_teams_count = 4
-
-            is_overloaded = active_teams_count > 5
+            is_overloaded = active_teams_count > 5 or u.get("isOverloaded", False)
 
         formatted_users.append({
             "id": u_id,
@@ -190,8 +178,8 @@ async def get_all_users(current_user: dict = Depends(RequireRole(["admin", "supe
             "email": u.get("email", ""),
             "role": u_role,
             "status": u.get("status", "Active"),
-            "college": u.get("college", u.get("organization", "ABC Engineering College")),
-            "department": u.get("department", "Computer Science"),
+            "college": u.get("college", u.get("organization", "Platform Participant")),
+            "department": u.get("department", "Engineering & Technology"),
             "year": u.get("year", "3rd Year"),
             "emailVerified": u.get("emailVerified", True),
             "orgVerified": u.get("orgVerified", u.get("role") in ["ORGANIZER", "organizer", "ADMIN", "admin"]),
@@ -214,43 +202,7 @@ async def get_user_profile(user_id: str, current_user: dict = Depends(RequireRol
     query = {"_id": ObjectId(user_id)} if ObjectId.is_valid(user_id) else {"_id": user_id}
     u = await db["users"].find_one(query, {"password": 0})
     if not u:
-        # Fallback profile response
-        return {
-            "success": True,
-            "profile": {
-                "id": user_id,
-                "name": "Alex Johnson",
-                "email": "alex.j@abc.edu",
-                "role": "STUDENT",
-                "status": "Active",
-                "college": "ABC Engineering College",
-                "department": "Computer Science & Engineering",
-                "year": "3rd Year",
-                "emailVerified": True,
-                "orgVerified": True,
-                "riskLevel": "LOW",
-                "riskScore": 0,
-                "riskFactors": ["No risk indicators detected"],
-                "joinedDate": "Aug 10, 2026",
-                "lastActive": "Just now",
-                "activitySummary": {
-                    "hackathonsCount": 4,
-                    "teamsCount": 3,
-                    "activeTeamsCount": 2,
-                    "pastTeamsCount": 1,
-                    "submissionsCount": 4,
-                    "certsCount": 3,
-                    "mentorSessionsCount": 7
-                },
-                "recentActivities": [
-                    {"time": "Today, 09:21 AM", "event": "Logged in to platform dashboard"},
-                    {"time": "Yesterday, 04:15 PM", "event": "Submitted project repository v3"},
-                    {"time": "Aug 09, 2026", "event": "Joined Global AI Summit 2026"},
-                    {"time": "Aug 07, 2026", "event": "Downloaded Certificate CERT-2026-0182"},
-                    {"time": "Aug 05, 2026", "event": "Created Team CyberKnights"}
-                ]
-            }
-        }
+        raise HTTPException(status_code=404, detail="User not found")
 
     u_id = str(u["_id"])
     created_dt = u.get("createdAt")

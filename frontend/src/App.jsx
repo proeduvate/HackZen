@@ -8,6 +8,7 @@ import Footer from './components/Footer';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/SignUp';
+import OAuthCallback from './pages/OAuthCallback';
 import RoleSelection from './pages/RoleSelection';
 import ForgotPassword from './pages/ForgotPassword';
 import StudentDashboard from './pages/student/StudentDashboard';
@@ -32,6 +33,7 @@ import CreateHackathon from './pages/organizer/CreateHackathon';
 import CreateHackathonStepOne from './pages/organizer/CreateHackathonStepOne';
 import CreateHackathonStepTwo from './pages/organizer/CreateHackathonStepTwo';
 import CreateHackathonStepThree from './pages/organizer/CreateHackathonStepThree';
+import CreateHackathonStepFour from './pages/organizer/CreateHackathonStepFour';
 import Submissions from './pages/organizer/Submissions';
 import EvaluationPanel from './pages/organizer/EvaluationPanel';
 import ResultsCertificates from './pages/organizer/ResultsCertificates';
@@ -103,7 +105,9 @@ function AppContent() {
     '/login',
     '/signup',
     '/get-started',
+    '/role-selection',
     '/forgot-password',
+    '/oauth/callback',
   ];
 
   // Check if the current path is in the hide list or starts with dashboard prefixes
@@ -124,12 +128,16 @@ function AppContent() {
 
         {/* Role Selection - Step 1: Choose Your Role */}
         <Route path="/get-started" element={<RoleSelection />} />
+        <Route path="/role-selection" element={<RoleSelection />} />
 
         {/* Signup - Step 2: Create Account (role pre-filled) */}
         <Route path="/signup" element={<Signup />} />
 
         {/* Login - For Returning Users */}
         <Route path="/login" element={<Login />} />
+
+        {/* OAuth Callback */}
+        <Route path="/oauth/callback" element={<OAuthCallback />} />
 
         {/* Forgot Password */}
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -188,6 +196,7 @@ function AppContent() {
             <Route path="step-1" element={<CreateHackathonStepOne />} />
             <Route path="step-2" element={<CreateHackathonStepTwo />} />
             <Route path="step-3" element={<CreateHackathonStepThree />} />
+            <Route path="step-4" element={<CreateHackathonStepFour />} />
           </Route>
           <Route path="manage-hackathon" element={<ManageHackathon />}>
             <Route index element={<Navigate to="overview" replace />} />
@@ -196,10 +205,18 @@ function AppContent() {
             <Route path="initialize" element={<InitializeEvent />} />
             <Route path="invite-mentors" element={<InviteMentors />} />
           </Route>
+          <Route path="manage-hackathon/:hackathonId" element={<ManageHackathon />} />
+          <Route path="hackathons/:hackathonId/manage" element={<ManageHackathon />} />
           <Route path="edit-timeline" element={<EditTimeline />} />
+          <Route path="edit-timeline/:hackathonId" element={<EditTimeline />} />
+          <Route path="hackathons/:hackathonId/edit-timeline" element={<EditTimeline />} />
           <Route path="submissions" element={<Submissions />} />
           <Route path="evaluation" element={<EvaluationPanel />} />
+          <Route path="evaluation-panel" element={<Navigate to="/organizer/evaluation" replace />} />
+          <Route path="evaluation/criteria" element={<EvaluationCriteria />} />
           <Route path="results" element={<ResultsCertificates />} />
+          <Route path="results-certificates" element={<Navigate to="/organizer/results" replace />} />
+          <Route path="invite-mentors" element={<Navigate to="/organizer/teams-mentors" replace />} />
           <Route path="profile" element={<OrganizerProfile />} />
           <Route path="profile/edit" element={<EditOrganizerProfile />} />
           <Route path="settings" element={<OrganizerSettings />} />

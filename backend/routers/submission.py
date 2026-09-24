@@ -18,6 +18,10 @@ ALLOWED_SUBMISSION_STATUSES = {
     "Shortlisted",
     "Rejected",
     "Evaluated",
+    "Approved",
+    "Disqualified",
+    "Flagged for Investigation",
+    "Changes Requested",
 }
 
 
@@ -639,20 +643,68 @@ async def update_sub_status(
     if user_role == "organizer" and not await can_manage_submission(sub, current_user, get_db()):
         raise HTTPException(status_code=403, detail="Not authorized to update this submission")
 
-    await collection.update_one(query, {"$set": {"status": new_status, "reviewedAt": datetime.utcnow()}})
+    update_doc = {"status": new_status, "reviewedAt": datetime.utcnow()}
+    reason = status_update.get("reason", "Submission disqualified due to administrative review.")
+    if new_status == "Disqualified":
+        update_doc["disqualificationReason"] = reason
+
+    await collection.update_one(query, {
+        "$set": update_doc,
+        "$push": {
+            "timeline": {
+                "date": datetime.utcnow().strftime("%b %d, %Y %I:%M %p"),
+                "event": f"Status updated to {new_status}" + (f" ({reason})" if new_status == "Disqualified" else "")
+            }
+        }
+    })
+
+    db = get_db()
+    team_id = sub.get("teamId")
+
+    # If disqualified, synchronize team status and log official dispute/audit trail
+    if new_status == "Disqualified":
+        if team_id:
+            try:
+                team_q = {"_id": ObjectId(team_id)} if ObjectId.is_valid(team_id) else {"id": team_id}
+                await db["teams"].update_one(team_q, {"$set": {"status": "Disqualified", "submissionStatus": "Disqualified"}})
+            except Exception:
+                pass
+
+        # Record in disputes
+        await db["disputes"].insert_one({
+            "type": "Disqualification",
+            "submissionId": submission_id,
+            "teamId": team_id,
+            "reporter": current_user.get("email", "Admin"),
+            "details": reason,
+            "decision": "Disqualified",
+            "status": "Resolved",
+            "createdAt": datetime.utcnow()
+        })
+
+        # Notify team
+        if team_id:
+            await db["notifications"].insert_one({
+                "title": "Submission Disqualified",
+                "message": f"Notice: Submission has been disqualified by administrators. Reason: {reason}",
+                "target_audience": "all",
+                "teamId": team_id,
+                "createdBy": current_user.get("sub", "admin"),
+                "createdAt": datetime.utcnow(),
+                "readBy": []
+            })
 
     # Log Audit Action
-    db = get_db()
     await db["audit_logs"].insert_one({
         "action": f"Submission Status: {new_status}",
-        "details": f"Submission ID '{submission_id}' marked as {new_status}.",
+        "details": f"Submission ID '{submission_id}' marked as {new_status}." + (f" Reason: {reason}" if new_status == "Disqualified" else ""),
         "category": "Submission",
         "color": "emerald" if new_status in ["Approved", "Evaluated", "Shortlisted"] else "amber" if new_status == "Changes Requested" else "red",
         "icon": "📄",
         "timestamp": datetime.utcnow()
     })
 
-    return {"success": True, "status": new_status, "message": "Submission status updated"}
+    return {"success": True, "status": new_status, "message": f"Submission status updated to {new_status}"}
 
 
 

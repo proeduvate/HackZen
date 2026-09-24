@@ -21,78 +21,18 @@ import {
 } from '../../services/admin/analyticsApi';
 import { useTheme } from '../../context/ThemeContext';
 
-// --- MOCK & DEFAULT DATA FALLBACKS ---
-const defaultRegistrationTrendData = [
-    { name: 'Jan', students: 420, mentors: 40, organizers: 8 },
-    { name: 'Feb', students: 650, mentors: 55, organizers: 12 },
-    { name: 'Mar', students: 1100, mentors: 80, organizers: 18 },
-    { name: 'Apr', students: 1550, mentors: 110, organizers: 24 },
-    { name: 'May', students: 2150, mentors: 150, organizers: 32 },
-    { name: 'Jun', students: 2840, mentors: 210, organizers: 45 }
-];
+// --- EMPTY STATE COMPONENT ---
 
-const defaultRoleDistribution = [
-    { name: 'Students', value: 78, color: '#3b82f6' },
-    { name: 'Mentors', value: 12, color: '#f59e0b' },
-    { name: 'Organizers', value: 7, color: '#8b5cf6' },
-    { name: 'Admins', value: 3, color: '#10b981' }
-];
-
-const defaultCollegeDistribution = [
-    { college: 'ABC Engg College', students: 480 },
-    { college: 'VIT Chennai', students: 390 },
-    { college: 'SRM Institute', students: 310 },
-    { college: 'IIT Madras', students: 260 },
-    { college: 'Anna University', students: 190 }
-];
-
-const defaultTechStackDistribution = [
-    { tech: 'React / Next.js', count: 420 },
-    { tech: 'Python / PyTorch', count: 380 },
-    { tech: 'Node.js / Express', count: 290 },
-    { tech: 'FastAPI / MongoDB', count: 210 },
-    { tech: 'Solidity / Web3', count: 140 }
-];
-
-const defaultSubmissionTimelineData = [
-    { week: 'Week 1', submissions: 140, evaluated: 110 },
-    { week: 'Week 2', submissions: 280, evaluated: 230 },
-    { week: 'Week 3', submissions: 520, evaluated: 410 },
-    { week: 'Week 4', submissions: 940, evaluated: 820 }
-];
-
-const defaultAiQueriesTrend = [
-    { day: 'Mon', queries: 1420, avgLatency: '1.1s' },
-    { day: 'Tue', queries: 1850, avgLatency: '1.2s' },
-    { day: 'Wed', queries: 2400, avgLatency: '1.0s' },
-    { day: 'Thu', queries: 3100, avgLatency: '1.3s' },
-    { day: 'Fri', queries: 2900, avgLatency: '1.1s' },
-    { day: 'Sat', queries: 3800, avgLatency: '1.2s' },
-    { day: 'Sun', queries: 4100, avgLatency: '1.1s' }
-];
-
-const defaultSystemPerformanceData = [
-    { time: '00:00', latency: 42, cpu: 14, memory: 32 },
-    { time: '04:00', latency: 38, cpu: 12, memory: 30 },
-    { time: '08:00', latency: 45, cpu: 22, memory: 38 },
-    { time: '12:00', latency: 52, cpu: 35, memory: 45 },
-    { time: '16:00', latency: 48, cpu: 28, memory: 42 },
-    { time: '20:00', latency: 41, cpu: 19, memory: 35 }
-];
-
-const defaultTopMentors = [
-    { rank: '#1', name: 'Ananya Rao', company: 'Microsoft', sessions: 28, rating: '4.95' },
-    { rank: '#2', name: 'Priya Sharma', company: 'Google', sessions: 24, rating: '4.92' },
-    { rank: '#3', name: 'Kumar S', company: 'Amazon', sessions: 21, rating: '4.88' },
-    { rank: '#4', name: 'Rohan Verma', company: 'ProEduvate', sessions: 18, rating: '4.85' }
-];
-
-const defaultTopHackathons = [
-    { rank: '#1', name: 'Global AI Summit 2026', participants: 642, submissions: 148, completion: '88%' },
-    { rank: '#2', name: 'CyberKnights Shield', participants: 410, submissions: 92, completion: '82%' },
-    { rank: '#3', name: 'EcoTech Green Sprint', participants: 320, submissions: 78, completion: '79%' },
-    { rank: '#4', name: 'FinTech DeFi Challenge', participants: 240, submissions: 54, completion: '74%' }
-];
+// Empty Analytics State Component
+const EmptyAnalyticsState = ({ title = "No Analytics Data Recorded", message = "Data will populate automatically as users register, participate, and submit projects.", height = "h-52" }) => (
+    <div className={`w-full ${height} flex flex-col items-center justify-center text-center p-6 rounded-xl border border-dashed border-slate-300 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.01]`}>
+        <div className="w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-2.5 text-blue-500 shadow-sm">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+        </div>
+        <h4 className="text-xs font-bold text-slate-800 dark:text-white mb-0.5">{title}</h4>
+        <p className="text-[11px] text-slate-500 dark:text-gray-400 max-w-xs">{message}</p>
+    </div>
+);
 
 // Custom Theme-Aware Tooltip Component for all Recharts Graphs
 const CustomChartTooltip = ({ active, payload, label, isLightTheme }) => {
@@ -216,69 +156,79 @@ const AdminAnalytics = () => {
     const [selectedRole, setSelectedRole] = useState('All Roles');
 
     // Dynamic Live Data States
+    const [isLoading, setIsLoading] = useState(true);
     const [kpis, setKpis] = useState(null);
     const [userMetrics, setUserMetrics] = useState(null);
-    const [roleDistData, setRoleDistData] = useState(defaultRoleDistribution);
-    const [collegeDistData, setCollegeDistData] = useState(defaultCollegeDistribution);
-    const [registrationData, setRegistrationData] = useState(defaultRegistrationTrendData);
+    const [roleDistData, setRoleDistData] = useState([]);
+    const [collegeDistData, setCollegeDistData] = useState([]);
+    const [registrationData, setRegistrationData] = useState([]);
     const [hackathonMetrics, setHackathonMetrics] = useState(null);
-    const [topHackathonsData, setTopHackathonsData] = useState(defaultTopHackathons);
+    const [topHackathonsData, setTopHackathonsData] = useState([]);
     const [teamsMetrics, setTeamsMetrics] = useState(null);
-    const [submissionTimeline, setSubmissionTimeline] = useState(defaultSubmissionTimelineData);
-    const [techStackData, setTechStackData] = useState(defaultTechStackDistribution);
+    const [submissionTimeline, setSubmissionTimeline] = useState([]);
+    const [techStackData, setTechStackData] = useState([]);
     const [mentorsMetrics, setMentorsMetrics] = useState(null);
-    const [topMentorsData, setTopMentorsData] = useState(defaultTopMentors);
+    const [topMentorsData, setTopMentorsData] = useState([]);
     const [aiCertMetrics, setAiCertMetrics] = useState(null);
-    const [aiQueriesData, setAiQueriesData] = useState(defaultAiQueriesTrend);
+    const [aiQueriesData, setAiQueriesData] = useState([]);
     const [securityMetrics, setSecurityMetrics] = useState(null);
-    const [systemPerfData, setSystemPerfData] = useState(defaultSystemPerformanceData);
+    const [systemPerfData, setSystemPerfData] = useState([]);
     const [aiInsights, setAiInsights] = useState([]);
     const [isExporting, setIsExporting] = useState(null); // 'PDF' | 'Excel' | null
 
     // Load Live Analytics Data from Backend
     useEffect(() => {
         const loadAnalyticsData = async () => {
+            setIsLoading(true);
             const params = { range: dateRange, hackathon: selectedHackathon, college: selectedCollege, role: selectedRole };
             
-            const [
-                overviewRes, usersRes, regRes, hacksRes, teamsRes, mentorsRes, aiCertRes, secRes, insightsRes
-            ] = await Promise.all([
-                fetchAnalyticsOverview(params),
-                fetchUserAnalytics(params),
-                fetchRegistrationTrend(params),
-                fetchHackathonAnalytics(params),
-                fetchTeamsSubmissionsAnalytics(params),
-                fetchMentorsJudgesAnalytics(params),
-                fetchAiCertificatesAnalytics(params),
-                fetchSecurityPerformanceAnalytics(params),
-                fetchSmartAiInsights()
-            ]);
+            try {
+                const [
+                    overviewRes, usersRes, regRes, hacksRes, teamsRes, mentorsRes, aiCertRes, secRes, insightsRes
+                ] = await Promise.all([
+                    fetchAnalyticsOverview(params),
+                    fetchUserAnalytics(params),
+                    fetchRegistrationTrend(params),
+                    fetchHackathonAnalytics(params),
+                    fetchTeamsSubmissionsAnalytics(params),
+                    fetchMentorsJudgesAnalytics(params),
+                    fetchAiCertificatesAnalytics(params),
+                    fetchSecurityPerformanceAnalytics(params),
+                    fetchSmartAiInsights()
+                ]);
 
-            if (overviewRes?.kpis) setKpis(overviewRes.kpis);
-            if (usersRes?.metrics) setUserMetrics(usersRes.metrics);
-            if (usersRes?.roleDistribution) setRoleDistData(usersRes.roleDistribution);
-            if (usersRes?.collegeDistribution) setCollegeDistData(usersRes.collegeDistribution);
-            if (regRes?.trend && Array.isArray(regRes.trend)) {
-                setRegistrationData(regRes.trend.map(t => ({
-                    name: t.name || t.month || 'Month',
-                    month: t.month || t.name || 'Month',
-                    students: Number(t.students) || 0,
-                    mentors: Number(t.mentors) || 0,
-                    organizers: Number(t.organizers) || 0
-                })));
+                if (overviewRes?.kpis) setKpis(overviewRes.kpis);
+                if (usersRes?.metrics) setUserMetrics(usersRes.metrics);
+                setRoleDistData(usersRes?.roleDistribution || []);
+                setCollegeDistData(usersRes?.collegeDistribution || []);
+                if (regRes?.trend && Array.isArray(regRes.trend) && regRes.trend.length > 0) {
+                    setRegistrationData(regRes.trend.map(t => ({
+                        name: t.name || t.month || 'Month',
+                        month: t.month || t.name || 'Month',
+                        students: Number(t.students) || 0,
+                        mentors: Number(t.mentors) || 0,
+                        organizers: Number(t.organizers) || 0
+                    })));
+                } else {
+                    setRegistrationData(regRes?.trend || []);
+                }
+                if (hacksRes?.metrics) setHackathonMetrics(hacksRes.metrics);
+                setTopHackathonsData(hacksRes?.topHackathons || []);
+                if (teamsRes?.metrics) setTeamsMetrics(teamsRes.metrics);
+                setSubmissionTimeline(teamsRes?.submissionTimeline || []);
+                setTechStackData(teamsRes?.techStackDistribution || []);
+                if (mentorsRes?.metrics) setMentorsMetrics(mentorsRes.metrics);
+                setTopMentorsData(mentorsRes?.topMentors || []);
+                if (aiCertRes?.metrics) setAiCertMetrics(aiCertRes.metrics);
+                setAiQueriesData(aiCertRes?.aiQueriesTrend || []);
+                if (secRes?.metrics) setSecurityMetrics(secRes.metrics);
+                setSystemPerfData(secRes?.systemPerformanceData || []);
+                if (insightsRes?.insights) setAiInsights(insightsRes.insights);
+            } catch (err) {
+                console.error("Failed to load analytics data:", err);
+            } finally {
+                setIsLoading(false);
             }
-            if (hacksRes?.metrics) setHackathonMetrics(hacksRes.metrics);
-            if (hacksRes?.topHackathons) setTopHackathonsData(hacksRes.topHackathons);
-            if (teamsRes?.metrics) setTeamsMetrics(teamsRes.metrics);
-            if (teamsRes?.submissionTimeline) setSubmissionTimeline(teamsRes.submissionTimeline);
-            if (teamsRes?.techStackDistribution) setTechStackData(teamsRes.techStackDistribution);
-            if (mentorsRes?.metrics) setMentorsMetrics(mentorsRes.metrics);
-            if (mentorsRes?.topMentors) setTopMentorsData(mentorsRes.topMentors);
-            if (aiCertRes?.metrics) setAiCertMetrics(aiCertRes.metrics);
-            if (aiCertRes?.aiQueriesTrend) setAiQueriesData(aiCertRes.aiQueriesTrend);
-            if (secRes?.metrics) setSecurityMetrics(secRes.metrics);
-            if (secRes?.systemPerformanceData) setSystemPerfData(secRes.systemPerformanceData);
-            if (insightsRes?.insights) setAiInsights(insightsRes.insights);
         };
 
         loadAnalyticsData();
@@ -800,53 +750,57 @@ const AdminAnalytics = () => {
                                 Live Feed
                             </span>
                         </div>
-                        <div className="h-[220px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <LineChart key={`reg-${dateRange}-${selectedHackathon}-${selectedCollege}-${selectedRole}`} data={registrationData}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke={isLightTheme ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)'} vertical={false} />
-                                    <XAxis dataKey="name" stroke={isLightTheme ? '#475569' : '#64748b'} fontSize={10} tickLine={false} />
-                                    <YAxis stroke={isLightTheme ? '#475569' : '#64748b'} fontSize={10} tickLine={false} />
-                                    <Tooltip content={<CustomChartTooltip isLightTheme={isLightTheme} />} />
-                                    <Line 
-                                        type="monotone" 
-                                        dataKey="students" 
-                                        name="Students" 
-                                        stroke="#0052cc" 
-                                        strokeWidth={3} 
-                                        dot={{r: 4, fill: '#0052cc', strokeWidth: 2, stroke: isLightTheme ? '#ffffff' : '#0f172a'}} 
-                                        activeDot={{r: 6, stroke: '#0052cc', strokeWidth: 2}}
-                                        isAnimationActive={true}
-                                        animationDuration={1600}
-                                        animationEasing="ease-out"
-                                        animationBegin={100}
-                                    />
-                                    <Line 
-                                        type="monotone" 
-                                        dataKey="mentors" 
-                                        name="Mentors" 
-                                        stroke="#f59e0b" 
-                                        strokeWidth={2}
-                                        dot={{r: 3}}
-                                        isAnimationActive={true}
-                                        animationDuration={1800}
-                                        animationEasing="ease-out"
-                                        animationBegin={200}
-                                    />
-                                    <Line 
-                                        type="monotone" 
-                                        dataKey="organizers" 
-                                        name="Organizers" 
-                                        stroke="#8b5cf6" 
-                                        strokeWidth={2}
-                                        dot={{r: 3}}
-                                        isAnimationActive={true}
-                                        animationDuration={2000}
-                                        animationEasing="ease-out"
-                                        animationBegin={300}
-                                    />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        </div>
+                        {registrationData && registrationData.length > 0 ? (
+                            <div className="h-[220px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart key={`reg-${dateRange}-${selectedHackathon}-${selectedCollege}-${selectedRole}`} data={registrationData}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke={isLightTheme ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)'} vertical={false} />
+                                        <XAxis dataKey="name" stroke={isLightTheme ? '#475569' : '#64748b'} fontSize={10} tickLine={false} />
+                                        <YAxis stroke={isLightTheme ? '#475569' : '#64748b'} fontSize={10} tickLine={false} />
+                                        <Tooltip content={<CustomChartTooltip isLightTheme={isLightTheme} />} />
+                                        <Line 
+                                            type="monotone" 
+                                            dataKey="students" 
+                                            name="Students" 
+                                            stroke="#0052cc" 
+                                            strokeWidth={3} 
+                                            dot={{r: 4, fill: '#0052cc', strokeWidth: 2, stroke: isLightTheme ? '#ffffff' : '#0f172a'}} 
+                                            activeDot={{r: 6, stroke: '#0052cc', strokeWidth: 2}}
+                                            isAnimationActive={true}
+                                            animationDuration={1600}
+                                            animationEasing="ease-out"
+                                            animationBegin={100}
+                                        />
+                                        <Line 
+                                            type="monotone" 
+                                            dataKey="mentors" 
+                                            name="Mentors" 
+                                            stroke="#f59e0b" 
+                                            strokeWidth={2} 
+                                            dot={{r: 3}}
+                                            isAnimationActive={true}
+                                            animationDuration={1800}
+                                            animationEasing="ease-out"
+                                            animationBegin={200}
+                                        />
+                                        <Line 
+                                            type="monotone" 
+                                            dataKey="organizers" 
+                                            name="Organizers" 
+                                            stroke="#8b5cf6" 
+                                            strokeWidth={2} 
+                                            dot={{r: 3}}
+                                            isAnimationActive={true}
+                                            animationDuration={2000}
+                                            animationEasing="ease-out"
+                                            animationBegin={300}
+                                        />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </div>
+                        ) : (
+                            <EmptyAnalyticsState title="No Registration Trend Data" message="No user registrations recorded for the selected filter range." height="h-[220px]" />
+                        )}
                     </div>
 
                     {/* Role Distribution Pie Chart */}
@@ -855,36 +809,42 @@ const AdminAnalytics = () => {
                             <h3 className={`text-sm font-black self-start ${theme.headingText}`}>Role Distribution</h3>
                             <span className="text-[10px] font-bold text-purple-500">Breakdown</span>
                         </div>
-                        <div className="h-[180px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart key={`role-${dateRange}-${selectedHackathon}-${selectedCollege}-${selectedRole}`}>
-                                    <Pie 
-                                        data={roleDistData} 
-                                        innerRadius={55} 
-                                        outerRadius={75} 
-                                        paddingAngle={5} 
-                                        dataKey="value"
-                                        isAnimationActive={true}
-                                        animationDuration={1600}
-                                        animationEasing="ease-out"
-                                        animationBegin={150}
-                                    >
-                                        {roleDistData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip content={<CustomChartTooltip isLightTheme={isLightTheme} />} />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
-                        <div className="w-full grid grid-cols-2 gap-2 mt-2">
-                            {roleDistData.map(r => (
-                                <div key={r.name} className={`flex items-center gap-2 text-[10px] font-bold ${theme.subText}`}>
-                                    <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: r.color}}></div>
-                                    {r.name} ({r.value}%)
+                        {roleDistData && roleDistData.length > 0 && roleDistData.some(r => (r.value > 0 || r.count > 0)) ? (
+                            <>
+                                <div className="h-[180px] w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart key={`role-${dateRange}-${selectedHackathon}-${selectedCollege}-${selectedRole}`}>
+                                            <Pie 
+                                                data={roleDistData} 
+                                                innerRadius={55} 
+                                                outerRadius={75} 
+                                                paddingAngle={5} 
+                                                dataKey="value"
+                                                isAnimationActive={true}
+                                                animationDuration={1600}
+                                                animationEasing="ease-out"
+                                                animationBegin={150}
+                                            >
+                                                {roleDistData.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.color} />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip content={<CustomChartTooltip isLightTheme={isLightTheme} />} />
+                                        </PieChart>
+                                    </ResponsiveContainer>
                                 </div>
-                            ))}
-                        </div>
+                                <div className="w-full grid grid-cols-2 gap-2 mt-2">
+                                    {roleDistData.map(r => (
+                                        <div key={r.name} className={`flex items-center gap-2 text-[10px] font-bold ${theme.subText}`}>
+                                            <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: r.color}}></div>
+                                            {r.name} ({r.value}%)
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
+                        ) : (
+                            <EmptyAnalyticsState title="No Role Distribution Data" message="No user role distributions available." height="h-[210px]" />
+                        )}
                     </div>
                 </div>
 
@@ -894,26 +854,30 @@ const AdminAnalytics = () => {
                         <h3 className={`text-sm font-black ${theme.headingText}`}>Top Registered Colleges & Institutions</h3>
                         <span className="text-[10px] font-bold text-sky-500">Institution Breakdown</span>
                     </div>
-                    <div className="h-[160px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart key={`college-${dateRange}-${selectedHackathon}-${selectedCollege}-${selectedRole}`} data={collegeDistData} layout="vertical" margin={{left: 20}}>
-                                <CartesianGrid strokeDasharray="3 3" stroke={isLightTheme ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)'} horizontal={false} />
-                                <XAxis type="number" hide />
-                                <YAxis dataKey="college" type="category" stroke={isLightTheme ? '#475569' : '#94a3b8'} fontSize={10} axisLine={false} tickLine={false} />
-                                <Tooltip content={<CustomChartTooltip isLightTheme={isLightTheme} />} />
-                                <Bar 
-                                    dataKey="students" 
-                                    fill="#0052cc" 
-                                    radius={[0, 6, 6, 0]} 
-                                    barSize={16}
-                                    isAnimationActive={true}
-                                    animationDuration={1500}
-                                    animationEasing="ease-out"
-                                    animationBegin={150}
-                                />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
+                    {collegeDistData && collegeDistData.length > 0 ? (
+                        <div className="h-[160px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart key={`college-${dateRange}-${selectedHackathon}-${selectedCollege}-${selectedRole}`} data={collegeDistData} layout="vertical" margin={{left: 20}}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke={isLightTheme ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)'} horizontal={false} />
+                                    <XAxis type="number" hide />
+                                    <YAxis dataKey="college" type="category" stroke={isLightTheme ? '#475569' : '#94a3b8'} fontSize={10} axisLine={false} tickLine={false} />
+                                    <Tooltip content={<CustomChartTooltip isLightTheme={isLightTheme} />} />
+                                    <Bar 
+                                        dataKey="students" 
+                                        fill="#0052cc" 
+                                        radius={[0, 6, 6, 0]} 
+                                        barSize={16}
+                                        isAnimationActive={true}
+                                        animationDuration={1500}
+                                        animationEasing="ease-out"
+                                        animationBegin={150}
+                                    />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    ) : (
+                        <EmptyAnalyticsState title="No College Data" message="No registered colleges or institutions recorded yet." height="h-[160px]" />
+                    )}
                 </div>
             </AnalyticsSection>
 
@@ -939,30 +903,36 @@ const AdminAnalytics = () => {
                     <div className="p-4 border-b border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
                         <h3 className={`text-xs font-black uppercase tracking-wider ${theme.headingText}`}>Highest Registered & Most Active Hackathons</h3>
                     </div>
-                    <div className="overflow-x-auto p-2">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className={`border-b text-[10px] font-bold uppercase tracking-wider ${isLightTheme ? 'border-slate-200 text-slate-500' : 'border-white/10 text-gray-500'}`}>
-                                    <th className="px-4 py-2.5">Rank / Hackathon</th>
-                                    <th className="px-4 py-2.5">Participants</th>
-                                    <th className="px-4 py-2.5">Submissions</th>
-                                    <th className="px-4 py-2.5">Completion Rate</th>
-                                </tr>
-                            </thead>
-                            <tbody className={`divide-y ${isLightTheme ? 'divide-slate-200' : 'divide-white/5'}`}>
-                                {topHackathonsData.map((h, i) => (
-                                    <tr key={i} className={theme.hoverRow}>
-                                        <td className="px-4 py-3 text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                            <span>{h.rank}</span> {h.name}
-                                        </td>
-                                        <td className="px-4 py-3 text-xs font-mono text-slate-600 dark:text-gray-300">{h.participants}</td>
-                                        <td className="px-4 py-3 text-xs font-mono text-slate-600 dark:text-gray-300">{h.submissions}</td>
-                                        <td className="px-4 py-3 text-xs font-bold text-emerald-600 dark:text-emerald-400">{h.completion}</td>
+                    {topHackathonsData && topHackathonsData.length > 0 ? (
+                        <div className="overflow-x-auto p-2">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className={`border-b text-[10px] font-bold uppercase tracking-wider ${isLightTheme ? 'border-slate-200 text-slate-500' : 'border-white/10 text-gray-500'}`}>
+                                        <th className="px-4 py-2.5">Rank / Hackathon</th>
+                                        <th className="px-4 py-2.5">Participants</th>
+                                        <th className="px-4 py-2.5">Submissions</th>
+                                        <th className="px-4 py-2.5">Completion Rate</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody className={`divide-y ${isLightTheme ? 'divide-slate-200' : 'divide-white/5'}`}>
+                                    {topHackathonsData.map((h, i) => (
+                                        <tr key={i} className={theme.hoverRow}>
+                                            <td className="px-4 py-3 text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                                <span>{h.rank}</span> {h.name}
+                                            </td>
+                                            <td className="px-4 py-3 text-xs font-mono text-slate-600 dark:text-gray-300">{h.participants}</td>
+                                            <td className="px-4 py-3 text-xs font-mono text-slate-600 dark:text-gray-300">{h.submissions}</td>
+                                            <td className="px-4 py-3 text-xs font-bold text-emerald-600 dark:text-emerald-400">{h.completion}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <div className="p-4">
+                            <EmptyAnalyticsState title="No Hackathon Data" message="No hackathons matching the selected criteria." height="h-[140px]" />
+                        </div>
+                    )}
                 </div>
             </AnalyticsSection>
 
@@ -992,50 +962,54 @@ const AdminAnalytics = () => {
                             <h3 className={`text-sm font-black ${theme.headingText}`}>Submission Progress & Evaluation Timeline</h3>
                             <span className="text-[10px] font-bold text-purple-500">Timeline</span>
                         </div>
-                        <div className="h-[200px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart key={`sub-${dateRange}-${selectedHackathon}-${selectedCollege}-${selectedRole}`} data={submissionTimeline}>
-                                    <defs>
-                                        <linearGradient id="colorSub" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4}/>
-                                            <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.0}/>
-                                        </linearGradient>
-                                        <linearGradient id="colorEval" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
-                                            <stop offset="95%" stopColor="#10b981" stopOpacity={0.0}/>
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" stroke={isLightTheme ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)'} vertical={false} />
-                                    <XAxis dataKey="week" stroke={isLightTheme ? '#475569' : '#64748b'} fontSize={10} tickLine={false} />
-                                    <YAxis stroke={isLightTheme ? '#475569' : '#64748b'} fontSize={10} tickLine={false} />
-                                    <Tooltip content={<CustomChartTooltip isLightTheme={isLightTheme} />} />
-                                    <Area 
-                                        type="monotone" 
-                                        dataKey="submissions" 
-                                        name="Submissions" 
-                                        stroke="#8b5cf6" 
-                                        fill="url(#colorSub)" 
-                                        strokeWidth={2.5} 
-                                        isAnimationActive={true}
-                                        animationDuration={1600}
-                                        animationEasing="ease-out"
-                                        animationBegin={100}
-                                    />
-                                    <Area 
-                                        type="monotone" 
-                                        dataKey="evaluated" 
-                                        name="Evaluated" 
-                                        stroke="#10b981" 
-                                        fill="url(#colorEval)" 
-                                        strokeWidth={2.5} 
-                                        isAnimationActive={true}
-                                        animationDuration={1800}
-                                        animationEasing="ease-out"
-                                        animationBegin={250}
-                                    />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </div>
+                        {submissionTimeline && submissionTimeline.length > 0 ? (
+                            <div className="h-[200px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart key={`sub-${dateRange}-${selectedHackathon}-${selectedCollege}-${selectedRole}`} data={submissionTimeline}>
+                                        <defs>
+                                            <linearGradient id="colorSub" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4}/>
+                                                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.0}/>
+                                            </linearGradient>
+                                            <linearGradient id="colorEval" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
+                                                <stop offset="95%" stopColor="#10b981" stopOpacity={0.0}/>
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" stroke={isLightTheme ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)'} vertical={false} />
+                                        <XAxis dataKey="week" stroke={isLightTheme ? '#475569' : '#64748b'} fontSize={10} tickLine={false} />
+                                        <YAxis stroke={isLightTheme ? '#475569' : '#64748b'} fontSize={10} tickLine={false} />
+                                        <Tooltip content={<CustomChartTooltip isLightTheme={isLightTheme} />} />
+                                        <Area 
+                                            type="monotone" 
+                                            dataKey="submissions" 
+                                            name="Submissions" 
+                                            stroke="#8b5cf6" 
+                                            fill="url(#colorSub)" 
+                                            strokeWidth={2.5} 
+                                            isAnimationActive={true}
+                                            animationDuration={1600}
+                                            animationEasing="ease-out"
+                                            animationBegin={100}
+                                        />
+                                        <Area 
+                                            type="monotone" 
+                                            dataKey="evaluated" 
+                                            name="Evaluated" 
+                                            stroke="#10b981" 
+                                            fill="url(#colorEval)" 
+                                            strokeWidth={2.5} 
+                                            isAnimationActive={true}
+                                            animationDuration={1800}
+                                            animationEasing="ease-out"
+                                            animationBegin={250}
+                                        />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
+                        ) : (
+                            <EmptyAnalyticsState title="No Submissions Recorded" message="No project submissions recorded in the timeline." height="h-[200px]" />
+                        )}
                     </div>
 
                     {/* Technology Stack Distribution Bar Chart */}
@@ -1044,26 +1018,30 @@ const AdminAnalytics = () => {
                             <h3 className={`text-sm font-black ${theme.headingText}`}>Most Popular Tech Stacks Used</h3>
                             <span className="text-[10px] font-bold text-sky-500">Frameworks</span>
                         </div>
-                        <div className="h-[200px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart key={`tech-${dateRange}-${selectedHackathon}-${selectedCollege}-${selectedRole}`} data={techStackData} layout="vertical" margin={{left: 25}}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke={isLightTheme ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)'} horizontal={false} />
-                                    <XAxis type="number" hide />
-                                    <YAxis dataKey="tech" type="category" stroke={isLightTheme ? '#475569' : '#94a3b8'} fontSize={10} axisLine={false} tickLine={false} />
-                                    <Tooltip content={<CustomChartTooltip isLightTheme={isLightTheme} />} />
-                                    <Bar 
-                                        dataKey="count" 
-                                        fill="#3b82f6" 
-                                        radius={[0, 6, 6, 0]} 
-                                        barSize={16}
-                                        isAnimationActive={true}
-                                        animationDuration={1500}
-                                        animationEasing="ease-out"
-                                        animationBegin={150}
-                                    />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
+                        {techStackData && techStackData.length > 0 ? (
+                            <div className="h-[200px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart key={`tech-${dateRange}-${selectedHackathon}-${selectedCollege}-${selectedRole}`} data={techStackData} layout="vertical" margin={{left: 25}}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke={isLightTheme ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)'} horizontal={false} />
+                                        <XAxis type="number" hide />
+                                        <YAxis dataKey="tech" type="category" stroke={isLightTheme ? '#475569' : '#94a3b8'} fontSize={10} axisLine={false} tickLine={false} />
+                                        <Tooltip content={<CustomChartTooltip isLightTheme={isLightTheme} />} />
+                                        <Bar 
+                                            dataKey="count" 
+                                            fill="#3b82f6" 
+                                            radius={[0, 6, 6, 0]} 
+                                            barSize={16}
+                                            isAnimationActive={true}
+                                            animationDuration={1500}
+                                            animationEasing="ease-out"
+                                            animationBegin={150}
+                                        />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        ) : (
+                            <EmptyAnalyticsState title="No Tech Stack Data" message="No technology stacks detected in submissions yet." height="h-[200px]" />
+                        )}
                     </div>
                 </div>
             </AnalyticsSection>
@@ -1089,30 +1067,36 @@ const AdminAnalytics = () => {
                     <div className="p-4 border-b border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
                         <h3 className={`text-xs font-black uppercase tracking-wider ${theme.headingText}`}>Top Mentors Leaderboard</h3>
                     </div>
-                    <div className="overflow-x-auto p-2">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className={`border-b text-[10px] font-bold uppercase tracking-wider ${isLightTheme ? 'border-slate-200 text-slate-500' : 'border-white/10 text-gray-500'}`}>
-                                    <th className="px-4 py-2.5">Rank / Mentor</th>
-                                    <th className="px-4 py-2.5">Organization</th>
-                                    <th className="px-4 py-2.5">Sessions Conducted</th>
-                                    <th className="px-4 py-2.5">Rating</th>
-                                </tr>
-                            </thead>
-                            <tbody className={`divide-y ${isLightTheme ? 'divide-slate-200' : 'divide-white/5'}`}>
-                                {topMentorsData.map((m, i) => (
-                                    <tr key={i} className={theme.hoverRow}>
-                                        <td className="px-4 py-3 text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                            <span>{m.rank}</span> {m.name}
-                                        </td>
-                                        <td className="px-4 py-3 text-xs font-medium text-slate-600 dark:text-gray-300">{m.company}</td>
-                                        <td className="px-4 py-3 text-xs font-mono text-slate-600 dark:text-gray-300">{m.sessions} sessions</td>
-                                        <td className="px-4 py-3 text-xs font-bold text-amber-500 flex items-center gap-1"><StarIcon className="w-3.5 h-3.5 text-amber-500" /> {m.rating}</td>
+                    {topMentorsData && topMentorsData.length > 0 ? (
+                        <div className="overflow-x-auto p-2">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className={`border-b text-[10px] font-bold uppercase tracking-wider ${isLightTheme ? 'border-slate-200 text-slate-500' : 'border-white/10 text-gray-500'}`}>
+                                        <th className="px-4 py-2.5">Rank / Mentor</th>
+                                        <th className="px-4 py-2.5">Organization</th>
+                                        <th className="px-4 py-2.5">Sessions Conducted</th>
+                                        <th className="px-4 py-2.5">Rating</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody className={`divide-y ${isLightTheme ? 'divide-slate-200' : 'divide-white/5'}`}>
+                                    {topMentorsData.map((m, i) => (
+                                        <tr key={i} className={theme.hoverRow}>
+                                            <td className="px-4 py-3 text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                                <span>{m.rank}</span> {m.name}
+                                            </td>
+                                            <td className="px-4 py-3 text-xs font-medium text-slate-600 dark:text-gray-300">{m.company}</td>
+                                            <td className="px-4 py-3 text-xs font-mono text-slate-600 dark:text-gray-300">{m.sessions} sessions</td>
+                                            <td className="px-4 py-3 text-xs font-bold text-amber-500 flex items-center gap-1"><StarIcon className="w-3.5 h-3.5 text-amber-500" /> {m.rating}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <div className="p-4">
+                            <EmptyAnalyticsState title="No Mentor Records" message="No mentor sessions or judge evaluations logged yet." height="h-[140px]" />
+                        </div>
+                    )}
                 </div>
             </AnalyticsSection>
 
@@ -1140,34 +1124,38 @@ const AdminAnalytics = () => {
                         <h3 className={`text-sm font-black ${theme.headingText}`}>Daily AI Assistant Queries Volume</h3>
                         <span className="text-[10px] font-bold text-emerald-500">AI Traffic</span>
                     </div>
-                    <div className="h-[200px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart key={`ai-${dateRange}-${selectedHackathon}-${selectedCollege}-${selectedRole}`} data={aiQueriesData}>
-                                <defs>
-                                    <linearGradient id="colorAi" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
-                                        <stop offset="95%" stopColor="#10b981" stopOpacity={0.0}/>
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke={isLightTheme ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)'} vertical={false} />
-                                <XAxis dataKey="day" stroke={isLightTheme ? '#475569' : '#64748b'} fontSize={10} tickLine={false} />
-                                <YAxis stroke={isLightTheme ? '#475569' : '#64748b'} fontSize={10} tickLine={false} />
-                                <Tooltip content={<CustomChartTooltip isLightTheme={isLightTheme} />} />
-                                <Area 
-                                    type="monotone" 
-                                    dataKey="queries" 
-                                    name="AI Queries" 
-                                    stroke="#10b981" 
-                                    fill="url(#colorAi)" 
-                                    strokeWidth={2.5} 
-                                    isAnimationActive={true}
-                                    animationDuration={1600}
-                                    animationEasing="ease-out"
-                                    animationBegin={150}
-                                />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    </div>
+                    {aiQueriesData && aiQueriesData.length > 0 ? (
+                        <div className="h-[200px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart key={`ai-${dateRange}-${selectedHackathon}-${selectedCollege}-${selectedRole}`} data={aiQueriesData}>
+                                    <defs>
+                                        <linearGradient id="colorAi" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
+                                            <stop offset="95%" stopColor="#10b981" stopOpacity={0.0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke={isLightTheme ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)'} vertical={false} />
+                                    <XAxis dataKey="day" stroke={isLightTheme ? '#475569' : '#64748b'} fontSize={10} tickLine={false} />
+                                    <YAxis stroke={isLightTheme ? '#475569' : '#64748b'} fontSize={10} tickLine={false} />
+                                    <Tooltip content={<CustomChartTooltip isLightTheme={isLightTheme} />} />
+                                    <Area 
+                                        type="monotone" 
+                                        dataKey="queries" 
+                                        name="AI Queries" 
+                                        stroke="#10b981" 
+                                        fill="url(#colorAi)" 
+                                        strokeWidth={2.5} 
+                                        isAnimationActive={true}
+                                        animationDuration={1600}
+                                        animationEasing="ease-out"
+                                        animationBegin={150}
+                                    />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    ) : (
+                        <EmptyAnalyticsState title="No AI Queries Recorded" message="No AI queries or assistant telemetry logged yet." height="h-[200px]" />
+                    )}
                 </div>
             </AnalyticsSection>
 
@@ -1193,40 +1181,44 @@ const AdminAnalytics = () => {
                         <h3 className={`text-sm font-black ${theme.headingText}`}>API Response Time & System Load (24 Hours)</h3>
                         <span className="text-[10px] font-bold text-sky-500">Latency & CPU</span>
                     </div>
-                    <div className="h-[200px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart key={`perf-${dateRange}-${selectedHackathon}-${selectedCollege}-${selectedRole}`} data={systemPerfData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke={isLightTheme ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)'} vertical={false} />
-                                <XAxis dataKey="time" stroke={isLightTheme ? '#475569' : '#64748b'} fontSize={10} tickLine={false} />
-                                <YAxis stroke={isLightTheme ? '#475569' : '#64748b'} fontSize={10} tickLine={false} />
-                                <Tooltip content={<CustomChartTooltip isLightTheme={isLightTheme} />} />
-                                <Line 
-                                    type="monotone" 
-                                    dataKey="latency" 
-                                    name="Latency (ms)" 
-                                    stroke="#3b82f6" 
-                                    strokeWidth={2.5} 
-                                    dot={{r: 3, fill: '#3b82f6'}}
-                                    isAnimationActive={true}
-                                    animationDuration={1600}
-                                    animationEasing="ease-out"
-                                    animationBegin={100}
-                                />
-                                <Line 
-                                    type="monotone" 
-                                    dataKey="cpu" 
-                                    name="CPU Load (%)" 
-                                    stroke="#f59e0b" 
-                                    strokeWidth={2.5} 
-                                    dot={{r: 3, fill: '#f59e0b'}}
-                                    isAnimationActive={true}
-                                    animationDuration={1800}
-                                    animationEasing="ease-out"
-                                    animationBegin={250}
-                                />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </div>
+                    {systemPerfData && systemPerfData.length > 0 ? (
+                        <div className="h-[200px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart key={`perf-${dateRange}-${selectedHackathon}-${selectedCollege}-${selectedRole}`} data={systemPerfData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke={isLightTheme ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)'} vertical={false} />
+                                    <XAxis dataKey="time" stroke={isLightTheme ? '#475569' : '#64748b'} fontSize={10} tickLine={false} />
+                                    <YAxis stroke={isLightTheme ? '#475569' : '#64748b'} fontSize={10} tickLine={false} />
+                                    <Tooltip content={<CustomChartTooltip isLightTheme={isLightTheme} />} />
+                                    <Line 
+                                        type="monotone" 
+                                        dataKey="latency" 
+                                        name="Latency (ms)" 
+                                        stroke="#3b82f6" 
+                                        strokeWidth={2.5} 
+                                        dot={{r: 3, fill: '#3b82f6'}}
+                                        isAnimationActive={true}
+                                        animationDuration={1600}
+                                        animationEasing="ease-out"
+                                        animationBegin={100}
+                                    />
+                                    <Line 
+                                        type="monotone" 
+                                        dataKey="cpu" 
+                                        name="CPU Load (%)" 
+                                        stroke="#f59e0b" 
+                                        strokeWidth={2.5} 
+                                        dot={{r: 3, fill: '#f59e0b'}}
+                                        isAnimationActive={true}
+                                        animationDuration={1800}
+                                        animationEasing="ease-out"
+                                        animationBegin={250}
+                                    />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+                    ) : (
+                        <EmptyAnalyticsState title="No Performance Metrics" message="Performance telemetries will display as system transactions execute." height="h-[200px]" />
+                    )}
                 </div>
             </AnalyticsSection>
 

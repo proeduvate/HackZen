@@ -108,7 +108,9 @@ async def login(credentials: LoginRequest, request: Request):
     # Clear failed login attempts on successful password
     await db["login_attempts"].delete_many({"email": clean_email})
 
+    # Normalize role to lowercase so seeded uppercase values (ADMIN, STUDENT, etc.) work
     user_role = str(user.get("role", "")).lower()
+    user["role"] = user_role  # persist normalized role for token + response
 
     # 4. Session Timeout Calculation
     session_timeout_str = str(settings.get("sessionTimeout", "30 Minutes"))
@@ -161,6 +163,10 @@ async def login(credentials: LoginRequest, request: Request):
 
 @router.get("/me", response_model=UserMyResponse, response_model_by_alias=True)
 async def get_my_user_info(current_user: Dict[str, Any] = Depends(with_auth)):
+    if not current_user.get("name"):
+        email = current_user.get("email", "")
+        current_user["name"] = email.split("@")[0].capitalize() if email else "User"
+    current_user["role"] = str(current_user.get("role", "student")).lower()
     return UserMyResponse(**current_user)
 
 

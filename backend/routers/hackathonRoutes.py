@@ -7,6 +7,7 @@ from fastapi import (
     UploadFile,
     Form,
     Request,
+    Body,
 )
 from typing import List, Optional, Dict, Any
 from database import get_db
@@ -446,3 +447,55 @@ async def contact_admin(
     await db["notifications"].insert_many(notifications)
 
     return {"success": True, "message": "Message sent to platform admins."}
+
+
+@router.get("/{id}/timeline")
+async def get_hackathon_timeline(id: str, current_user: Dict[str, Any] = Depends(with_auth)):
+    """Get hackathon timeline phases"""
+    db = get_db()
+    from bson import ObjectId as BsonId
+    query = {"_id": BsonId(id)} if BsonId.is_valid(id) else {"_id": id}
+    hackathon = await db["hackathons"].find_one(query)
+    if not hackathon:
+        hackathon = await db["hackathons"].find_one({"id": id})
+    if not hackathon:
+        raise HTTPException(status_code=404, detail="Hackathon not found")
+
+    timeline_data = hackathon.get("timeline")
+    if isinstance(timeline_data, dict):
+        phases = timeline_data.get("phases", [])
+    elif isinstance(timeline_data, list):
+        phases = timeline_data
+    else:
+        phases = [
+            {"name": "Registration", "status": "In Progress", "date": "Active Phase", "description": "Team registration and participant onboarding."},
+            {"name": "Hacking & Development", "status": "Upcoming", "date": "Sprint Phase", "description": "Core development and project builds."},
+            {"name": "Submission Deadline", "status": "Upcoming", "date": "Deliverable Intake", "description": "Final project repositories and demos."},
+            {"name": "Evaluation & Judging", "status": "Upcoming", "date": "Review Stage", "description": "Panel evaluations and scorecards."},
+            {"name": "Results & Awards", "status": "Upcoming", "date": "Ceremony", "description": "Final leaderboard and credential issuance."}
+        ]
+
+    return {"id": str(hackathon.get("_id", id)), "phases": phases}
+
+
+@router.put("/{id}/timeline")
+async def update_hackathon_timeline(
+    id: str,
+    payload: Dict[str, Any] = Body(...),
+    current_user: Dict[str, Any] = Depends(with_auth)
+):
+    """Update hackathon timeline phases"""
+    user_role = str(current_user.get("role", "")).lower()
+    if user_role not in ["organizer", "admin", "superadmin"]:
+        raise HTTPException(status_code=403, detail="Only organizers or admins can update the timeline")
+
+    db = get_db()
+    from bson import ObjectId as BsonId
+    query = {"_id": BsonId(id)} if BsonId.is_valid(id) else {"_id": id}
+    phases = payload.get("phases", payload.get("timeline", []))
+
+    result = await db["hackathons"].update_one(query, {"$set": {"timeline": phases, "updatedAt": datetime.utcnow()}})
+    if result.matched_count == 0:
+        result = await db["hackathons"].update_one({"id": id}, {"$set": {"timeline": phases, "updatedAt": datetime.utcnow()}})
+
+    return {"success": True, "message": "Timeline updated successfully", "phases": phases}

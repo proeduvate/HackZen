@@ -12,8 +12,12 @@ except ImportError:
     load_dotenv = None
 
 _ROOT_ENV = Path(__file__).resolve().parents[2] / ".env"
+_BACKEND_ENV = Path(__file__).resolve().parents[1] / ".env"
 if load_dotenv is not None:
-    load_dotenv(_ROOT_ENV, override=False)
+    if _BACKEND_ENV.exists():
+        load_dotenv(_BACKEND_ENV, override=False)
+    if _ROOT_ENV.exists():
+        load_dotenv(_ROOT_ENV, override=False)
 
 
 class Settings(BaseSettings):
@@ -41,10 +45,23 @@ class Settings(BaseSettings):
     JWT_AUDIENCE: str = "proeduvate-users"
     PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: int = 30
 
+    # SMTP / Email Service
+    SMTP_HOST: Optional[str] = os.getenv("SMTP_HOST", "")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USER: Optional[str] = os.getenv("SMTP_USER", "")
+    SMTP_PASSWORD: Optional[str] = os.getenv("SMTP_PASSWORD", "")
+    EMAIL_FROM: Optional[str] = os.getenv("EMAIL_FROM", "noreply@hackzen.com")
+
     # AI Services & Keys
     GEMINI_API_KEY: Optional[str] = os.getenv("GEMINI_API_KEY")
     OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
     NVIDIA_API_KEY: Optional[str] = os.getenv("NVIDIA_API_KEY")
+
+    # OAuth Providers
+    GOOGLE_CLIENT_ID: Optional[str] = os.getenv("GOOGLE_CLIENT_ID")
+    GOOGLE_CLIENT_SECRET: Optional[str] = os.getenv("GOOGLE_CLIENT_SECRET")
+    GITHUB_CLIENT_ID: Optional[str] = os.getenv("GITHUB_CLIENT_ID")
+    GITHUB_CLIENT_SECRET: Optional[str] = os.getenv("GITHUB_CLIENT_SECRET")
 
     # OpenRouter & AI Portal Extensions
     openrouter_api_key: str = os.getenv("OPENROUTER_API_KEY", "")

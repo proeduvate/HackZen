@@ -118,12 +118,12 @@ const MyHackathons = () => {
     };
 
     const handleEditTimeline = (id) => {
-        navigate(`/organizer/hackathons/${id}/edit-timeline`);
+        navigate(`/organizer/edit-timeline/${id}`);
     };
 
     const handleManage = (id) => {
         const selectedHackathon = hackathons.find((h) => h.id === id);
-        navigate(`/organizer/hackathons/${id}/manage`, {
+        navigate(`/organizer/manage-hackathon/${id}`, {
             state: { hackathon: selectedHackathon }
         });
     };
@@ -223,11 +223,14 @@ const MyHackathons = () => {
 
                                 {/* Top Right Badges */}
                                 <div className="absolute top-3 right-3 flex gap-2">
-                                    <span className={`px-2 py-1 text-xs font-semibold rounded-md backdrop-blur-md border shadow-sm ${hackathon.status === 'Active' ? 'bg-green-500/20 text-green-300 border-green-500/30' :
+                                    <span className={`px-2 py-1 text-xs font-semibold rounded-md backdrop-blur-md border shadow-sm ${
+                                        hackathon.status === 'Active' || hackathon.status === 'Registration Open' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' :
+                                        hackathon.status === 'Pending' || hackathon.status === 'Changes Requested' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' :
                                         hackathon.status === 'Draft' ? 'bg-gray-500/20 text-gray-300 border-gray-500/30' :
-                                            hackathon.status === 'Upcoming' ? 'bg-blue-500/20 text-blue-300 border-blue-500/30' :
-                                                'bg-red-500/20 text-red-300 border-red-500/30'
-                                        }`}>
+                                        hackathon.status === 'Upcoming' ? 'bg-blue-500/20 text-blue-300 border-blue-500/30' :
+                                        hackathon.status === 'Rejected' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' :
+                                        'bg-purple-500/20 text-purple-300 border-purple-500/30'
+                                    }`}>
                                         {hackathon.status}
                                     </span>
                                 </div>

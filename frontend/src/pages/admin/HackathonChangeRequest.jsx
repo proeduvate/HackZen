@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { 
     fetchHackathonChangeRequest, 
     sendReminderNotification, 
@@ -11,6 +11,7 @@ import {
 
 const HackathonChangeRequest = () => {
     const navigate = useNavigate();
+    const { requestId } = useParams();
     const [requestData, setRequestData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(null);
@@ -20,12 +21,15 @@ const HackathonChangeRequest = () => {
     const [messageContent, setMessageContent] = useState('');
     const [messageSending, setMessageSending] = useState(false);
     const [messageError, setMessageError] = useState('');
+    const [reminderFeedback, setReminderFeedback] = useState(null);
+
+    const targetId = requestId || requestData?.id || requestData?._id;
 
     useEffect(() => {
         const loadRequests = async () => {
             setIsLoading(true);
             try {
-                const data = await fetchHackathonChangeRequest();
+                const data = await fetchHackathonChangeRequest(requestId);
                 setRequestData(data);
             } catch (error) {
                 console.error("Failed to fetch request data:", error);
@@ -34,13 +38,14 @@ const HackathonChangeRequest = () => {
             }
         };
         loadRequests();
-    }, []);
+    }, [requestId]);
 
     const handleAction = async (actionFn, actionName) => {
+        const activeId = requestId || requestData?.id || requestData?._id;
         setActionLoading(actionName);
         try {
-            await actionFn();
-            const newData = await fetchHackathonChangeRequest();
+            await actionFn(activeId);
+            const newData = await fetchHackathonChangeRequest(activeId);
             setRequestData(newData);
             if (actionName === 'reject') {
                 navigate('/admin/dashboard');
@@ -53,17 +58,25 @@ const HackathonChangeRequest = () => {
     };
 
     const handleReminder = async () => {
+        const activeId = requestId || requestData?.id || requestData?._id;
         setActionLoading('reminder');
+        setReminderFeedback(null);
         try {
-            await sendReminderNotification();
+            const res = await sendReminderNotification(activeId);
+            setReminderFeedback(res?.message || 'Reminder notification dispatched to organizer.');
+            setTimeout(() => setReminderFeedback(null), 5000);
+        } catch (err) {
+            console.error(err);
+            setReminderFeedback('Failed to send reminder. Please try again.');
         } finally {
             setActionLoading(null);
         }
     };
 
     const handleViewSubmission = async () => {
+        const activeId = requestId || requestData?.id || requestData?._id;
         try {
-            const data = await fetchHackathonSubmissionDetails();
+            const data = await fetchHackathonSubmissionDetails(activeId);
             setSubmissionData(data);
             setShowSubmissionModal(true);
         } catch (error) {
@@ -83,13 +96,16 @@ const HackathonChangeRequest = () => {
             return;
         }
 
+        const activeId = requestId || requestData?.id || requestData?._id;
         setMessageSending(true);
         try {
-            const result = await sendMessageToOrganizer(messageContent);
+            const result = await sendMessageToOrganizer(activeId, messageContent);
             if (result.success) {
                 setShowMessageModal(false);
                 setMessageContent('');
                 setMessageError('');
+                setReminderFeedback('Message sent successfully to organizer.');
+                setTimeout(() => setReminderFeedback(null), 4000);
             } else {
                 setMessageError(result.message);
             }
@@ -111,6 +127,15 @@ const HackathonChangeRequest = () => {
 
     return (
         <div className="space-y-8 animate-fade-in pb-10">
+            {reminderFeedback && (
+                <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/30 text-blue-300 text-sm flex items-center justify-between shadow-lg backdrop-blur-md">
+                    <div className="flex items-center gap-3">
+                        <svg className="w-5 h-5 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span className="font-medium">{reminderFeedback}</span>
+                    </div>
+                    <button onClick={() => setReminderFeedback(null)} className="text-gray-400 hover:text-white text-xs font-semibold">Dismiss</button>
+                </div>
+            )}
             {/* Main Header Section */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-white/10">
                 <div className="space-y-2">

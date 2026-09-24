@@ -4,13 +4,16 @@ export const SUBMISSION_STATUSES = [
     'Pending Review',
     'Reviewed',
     'Shortlisted',
+    'Evaluated',
+    'Approved',
+    'Flagged for Investigation',
     'Rejected',
-    'Evaluated'
+    'Disqualified'
 ];
 
 export const fetchSubmissions = async () => {
     const { data } = await apiClient.get('/submissions/organizer/all');
-    return data.map(submission => ({
+    return (data || []).map(submission => ({
         id: submission.id || submission._id,
         team: submission.team || 'Unknown Team',
         logo: submission.logo || (submission.team || 'T')[0],
@@ -24,17 +27,23 @@ export const fetchSubmissions = async () => {
         time: submission.time || 'N/A',
         submittedAt: submission.submittedAt,
         score: submission.score ? `${submission.score}/100` : null,
+        plagiarismScore: submission.plagiarismScore !== undefined ? submission.plagiarismScore : (submission.similarityScore !== undefined ? submission.similarityScore : (submission.similarity || 12)),
         track: submission.track || 'General',
         fileUrl: submission.fileUrl || '',
         version: submission.version || 1,
         evaluationCount: submission.evaluationCount || 0,
-        docs: submission.fileUrl ? ['Submission File'] : []
+        docs: submission.fileUrl ? ['Submission Deliverable'] : []
     }));
 };
 
-export const updateSubmissionStatus = async (submissionId, status) => {
-    const { data } = await apiClient.put(`/submissions/${submissionId}/status`, { status });
-    return data;
+export const updateSubmissionStatus = async (submissionId, status, reason = '') => {
+    try {
+        const { data } = await apiClient.post(`/submissions/${submissionId}/status`, { status, reason });
+        return data;
+    } catch (err) {
+        const { data } = await apiClient.put(`/submissions/${submissionId}/status`, { status, reason });
+        return data;
+    }
 };
 
 export const exportSubmissionsToCsv = (submissions, filename = 'submissions-export.csv') => {

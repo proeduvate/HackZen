@@ -823,6 +823,49 @@ const HackathonApprovals = () => {
                                                     </div>
                                                 </div>
 
+                                                {/* Compliance & Audit Badges */}
+                                                <div className="flex flex-wrap items-center gap-1.5 p-2.5 rounded-xl border bg-white/60 dark:bg-black/20 border-slate-200 dark:border-white/5">
+                                                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mr-1">Audited Items:</span>
+                                                    {currentAiReview.timelineValid !== undefined && (
+                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold border ${
+                                                            currentAiReview.timelineValid 
+                                                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' 
+                                                                : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
+                                                        }`}>
+                                                            {currentAiReview.timelineValid 
+                                                                ? `✓ Timeline Valid (${currentAiReview.timelineDetails?.durationDays ?? 'Multi'}d)` 
+                                                                : `⚠ ${currentAiReview.timelineStatus === 'INVALID_REVERSED' ? 'Reversed Timeline' : 'Timeline Incomplete'}`}
+                                                        </span>
+                                                    )}
+                                                    {currentAiReview.hasPrizePool !== undefined && (
+                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold border ${
+                                                            currentAiReview.hasPrizePool 
+                                                                ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20' 
+                                                                : 'bg-slate-500/10 text-slate-500 border-slate-500/20'
+                                                        }`}>
+                                                            {currentAiReview.hasPrizePool ? '✓ Prize Incentives' : '○ Prize Pool Missing'}
+                                                        </span>
+                                                    )}
+                                                    {currentAiReview.hasJudgingCriteria !== undefined && (
+                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold border ${
+                                                            currentAiReview.hasJudgingCriteria 
+                                                                ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20' 
+                                                                : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                                                        }`}>
+                                                            {currentAiReview.hasJudgingCriteria ? '✓ Judging Rubric' : '⚠ Rubric Missing'}
+                                                        </span>
+                                                    )}
+                                                    {currentAiReview.rulesCount !== undefined && (
+                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold border ${
+                                                            currentAiReview.rulesCount > 0 
+                                                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' 
+                                                                : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
+                                                        }`}>
+                                                            {currentAiReview.rulesCount > 0 ? `✓ ${currentAiReview.rulesCount} Rules Defined` : '⚠ Rules Missing'}
+                                                        </span>
+                                                    )}
+                                                </div>
+
                                                 {/* Metric Bars */}
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div className={`p-3 rounded-xl border ${theme.innerBg}`}>
@@ -884,7 +927,7 @@ const HackathonApprovals = () => {
                                                 {currentAiReview.suggestedFeedback && (
                                                     <div className="p-3.5 rounded-xl border bg-sky-50 dark:bg-black/30 border-sky-200 dark:border-white/5">
                                                         <span className="font-bold text-[10px] uppercase text-sky-700 dark:text-sky-400 block mb-1">Recommended Organizer Guidance</span>
-                                                        <p className="text-slate-700 dark:text-gray-300 italic mb-2">{currentAiReview.suggestedFeedback}</p>
+                                                        <p className="text-slate-700 dark:text-gray-300 italic mb-2 leading-relaxed">{currentAiReview.suggestedFeedback}</p>
                                                         <button 
                                                             onClick={() => {
                                                                 setFeedbackNote(currentAiReview.suggestedFeedback);
@@ -896,6 +939,57 @@ const HackathonApprovals = () => {
                                                         </button>
                                                     </div>
                                                 )}
+
+                                                {/* Quick Apply AI Recommendation Banner */}
+                                                <div className="p-3.5 rounded-xl border border-sky-200 dark:border-sky-500/30 bg-sky-50/60 dark:bg-sky-500/10 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+                                                    <div>
+                                                        <span className="font-black text-[10px] uppercase tracking-wider text-sky-800 dark:text-sky-300 block mb-0.5">
+                                                            Quick Apply AI Recommendation: {currentAiReview.recommendation ? currentAiReview.recommendation.replace(/_/g, ' ') : 'APPROVE'}
+                                                        </span>
+                                                        <p className="text-[11px] text-slate-600 dark:text-slate-300">
+                                                            {currentAiReview.recommendation === 'APPROVE' && "Proposal satisfies all criteria. One click applies platform approval."}
+                                                            {currentAiReview.recommendation === 'REQUEST_CHANGES' && "Sends revision guidance directly to the organizer with pre-filled feedback."}
+                                                            {currentAiReview.recommendation === 'REJECT' && "Rejects proposal and communicates identified shortcomings."}
+                                                        </p>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        {currentAiReview.recommendation === 'APPROVE' && (
+                                                            <button
+                                                                onClick={() => handleApprove(selectedHackathon.id)}
+                                                                disabled={actionLoading}
+                                                                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow transition-all active:scale-95 flex items-center gap-1.5"
+                                                            >
+                                                                <CheckIcon className="w-3.5 h-3.5" />
+                                                                Approve Proposal Now
+                                                            </button>
+                                                        )}
+                                                        {currentAiReview.recommendation === 'REQUEST_CHANGES' && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    setFeedbackNote(currentAiReview.suggestedFeedback || "Please address the itemized recommendations before resubmitting.");
+                                                                    setIsRequestChangesOpen(true);
+                                                                }}
+                                                                disabled={actionLoading}
+                                                                className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl shadow transition-all active:scale-95 flex items-center gap-1.5"
+                                                            >
+                                                                <TriangleAlertIcon className="w-3.5 h-3.5" />
+                                                                Request Changes with AI Note
+                                                            </button>
+                                                        )}
+                                                        {currentAiReview.recommendation === 'REJECT' && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    setFeedbackNote(currentAiReview.suggestedFeedback || "Proposal does not meet minimum quality criteria.");
+                                                                    setIsRejectOpen(true);
+                                                                }}
+                                                                disabled={actionLoading}
+                                                                className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl shadow transition-all active:scale-95 flex items-center gap-1.5"
+                                                            >
+                                                                Reject Proposal with AI Note
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
                                         ) : (
                                             <div className="p-8 text-center text-slate-500 text-xs flex flex-col items-center justify-center space-y-3">

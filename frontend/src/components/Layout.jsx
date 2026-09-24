@@ -88,6 +88,8 @@ const DashboardLayout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
+    const [showOrganizerActionMenu, setShowOrganizerActionMenu] = useState(false);
+    const organizerActionRef = React.useRef(null);
     const [showNotifications, setShowNotifications] = useState(false);
     const [selectedMessage, setSelectedMessage] = useState(null);
     const [toastPopup, setToastPopup] = useState(null);
@@ -223,9 +225,13 @@ const DashboardLayout = () => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setShowNotifications(false);
+                setShowProfileMenu(false);
             }
             if (searchRef.current && !searchRef.current.contains(event.target)) {
                 setIsSearchOpen(false);
+            }
+            if (organizerActionRef.current && !organizerActionRef.current.contains(event.target)) {
+                setShowOrganizerActionMenu(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -437,48 +443,58 @@ const DashboardLayout = () => {
 
     const organizerNav = [
         {
-            name: 'Dashboard', path: '/organizer/dashboard', icon: (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+            name: 'Dashboard', 
+            path: '/organizer/dashboard', 
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
             )
         },
         {
-            name: 'Create Hackathon', path: '/organizer/create-hackathon', icon: (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
+            name: 'Create Hackathon', 
+            path: '/organizer/create-hackathon', 
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
             )
         },
         {
-            name: 'My Hackathons', path: '/organizer/my-hackathons', icon: (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+            name: 'Registration', 
+            path: '/organizer/teams-mentors', 
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
             )
         },
         {
-            name: 'Teams & Mentors', path: '/organizer/teams-mentors', icon: (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            name: 'Timeline', 
+            path: '/organizer/edit-timeline', 
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
             )
         },
         {
-            name: 'Submissions', path: '/organizer/submissions', icon: (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            name: 'Mentors & Judges', 
+            path: '/organizer/evaluation', 
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
             )
         },
         {
-            name: 'Evaluation Panel', path: '/organizer/evaluation', icon: (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-            )
-        },
-        {
-            name: 'Results & Certificates', path: '/organizer/results', icon: (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
-            )
-        },
-        {
-            name: 'Analytics', path: '/organizer/analytics', icon: (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-            )
-        },
-        {
-            name: 'Settings', path: '/organizer/settings', icon: (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            name: 'Settings', 
+            path: '/organizer/settings', 
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
             )
         },
     ];
@@ -548,7 +564,7 @@ const DashboardLayout = () => {
                     <div className="h-16 flex items-center justify-between px-4 border-b border-[#e2e8f0] dark:border-white/10 shrink-0">
                         {/* Left: Brand Logo (No Tooltip) */}
                         <Link to="/" className="flex items-center gap-2.5 focus:outline-none select-none">
-                            <Logo size="sm" />
+                            <Logo size="sm" showSubtext={isOrganizer} />
                         </Link>
 
                         {/* Right: Sidebar Toggle Button (Collapse Sidebar) */}
@@ -607,12 +623,16 @@ const DashboardLayout = () => {
                 )}
                 
                 {/* Navigation Links with Hover Tooltips */}
-                <nav className="flex-1 py-4 px-3 space-y-1 scrollbar-hide">
+                <nav className="flex-1 py-4 px-3 space-y-1.5 scrollbar-hide">
                     {navItems.map((item) => {
                         const isDashboardRoot = item.path.endsWith('/dashboard');
                         const isActive = isDashboardRoot
                             ? location.pathname === item.path
                             : location.pathname.startsWith(item.path);
+
+                        const activeClass = isOrganizer
+                            ? (isActive ? 'bg-[#7C65F6] text-white shadow-md shadow-[#7C65F6]/25' : 'text-slate-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5')
+                            : (isActive ? 'bg-sky-50 text-[#0ea5e9] dark:bg-sky-500/10 dark:text-sky-400' : 'text-[#64748b] dark:text-gray-400 hover:bg-[#f1f5f9] dark:hover:bg-white/5');
 
                         return (
                             <div key={item.name} className="relative group">
@@ -621,18 +641,18 @@ const DashboardLayout = () => {
                                         navigate(item.path);
                                         setSidebarOpen(false);
                                     }}
-                                    className={`w-full flex items-center ${isSidebarExpanded ? 'px-3 justify-start' : 'justify-center'} py-2.5 rounded-2xl text-sm font-bold transition-all duration-300 ${
-                                        isActive 
-                                        ? 'bg-sky-50 text-[#0ea5e9] dark:bg-sky-500/10 dark:text-sky-400' 
-                                        : 'text-[#64748b] dark:text-gray-400 hover:bg-[#f1f5f9] dark:hover:bg-white/5'
-                                    }`}
+                                    className={`w-full flex items-center ${isSidebarExpanded ? 'px-3.5 justify-start' : 'justify-center'} py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${activeClass}`}
                                 >
-                                    <span className={`shrink-0 ${isActive ? 'opacity-100 text-[#0ea5e9] dark:text-sky-400' : 'opacity-70'} ${isSidebarExpanded ? 'mr-3' : ''}`}>
+                                    <span className={`shrink-0 ${
+                                        isActive 
+                                            ? (isOrganizer ? 'opacity-100 text-white' : 'opacity-100 text-[#0ea5e9] dark:text-sky-400') 
+                                            : 'opacity-70'
+                                    } ${isSidebarExpanded ? 'mr-3' : ''}`}>
                                         {item.icon}
                                     </span>
                                     
                                     {/* Text (Visible only when expanded) */}
-                                    {isSidebarExpanded && <span className="truncate">{item.name}</span>}
+                                    {isSidebarExpanded && <span className="truncate uppercase tracking-wider text-[11px]">{item.name}</span>}
                                 </button>
 
                                 {/* Tooltip rendered ONLY when sidebar is collapsed (icon-only mode) */}
@@ -650,34 +670,113 @@ const DashboardLayout = () => {
                     })}
                 </nav>
 
-                {/* Compact Profile at Bottom */}
-                <div className="p-3 border-t border-[#e2e8f0] dark:border-white/10 shrink-0 relative group">
-                    <button 
-                        onClick={() => navigate(`/${currentRole.path}/profile`)}
-                        className={`flex items-center gap-3 w-full p-2 rounded-full hover:bg-[#f1f5f9] dark:hover:bg-white/5 transition-colors ${isSidebarExpanded ? 'justify-start' : 'justify-center'}`}
-                    >
-                        <div className="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-200/80 dark:border-sky-500/30 flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
-                            {currentRole.name.charAt(0).toUpperCase()}
-                        </div>
-                        {isSidebarExpanded && (
-                            <div className="flex flex-col text-left overflow-hidden">
-                                <span className="text-xs font-bold text-[#1e293b] dark:text-white truncate">{currentRole.roleName}</span>
-                                <span className="text-[10px] text-[#64748b] dark:text-gray-400 truncate">{currentRole.fullName}</span>
-                            </div>
-                        )}
-                    </button>
-
-                    {/* Tooltip rendered ONLY when sidebar is collapsed (icon-only mode) */}
-                    {!isSidebarExpanded && (
-                        <span 
-                            style={{ color: '#ffffff' }}
-                            className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-4 py-2 text-sm font-medium !text-white bg-[#1A1F2C] backdrop-blur-sm rounded-lg shadow-2xl border border-neutral-800/20 pointer-events-none opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200 ease-in-out whitespace-nowrap z-[9999]"
+                {/* Organizer Specific + Create Project Button */}
+                {isOrganizer && (
+                    <div className="px-3 pb-3">
+                        <button
+                            onClick={() => navigate('/organizer/create-hackathon')}
+                            className={`w-full py-2.5 px-3 rounded-xl bg-[#7C65F6] hover:bg-[#6851ec] text-white font-bold text-xs flex items-center ${isSidebarExpanded ? 'justify-center gap-2' : 'justify-center'} shadow-md shadow-[#7C65F6]/30 transition-all duration-200 active:scale-95 cursor-pointer`}
+                            title="Create Hackathon"
                         >
-                            {currentRole.roleName} ({currentRole.fullName})
-                            <span className="absolute w-2 h-2 bg-[#1A1F2C] transform rotate-45 left-[-4px] top-1/2 -translate-y-1/2 border-l border-b border-neutral-800/20"></span>
-                        </span>
-                    )}
-                </div>
+                            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            {isSidebarExpanded && <span>+ Create Project</span>}
+                        </button>
+                    </div>
+                )}
+
+                {/* Bottom Profile Section */}
+                {isOrganizer ? (
+                    <div className="p-3 border-t border-[#e2e8f0] dark:border-white/10 shrink-0 relative" ref={organizerActionRef}>
+                        <div className={`flex items-center ${isSidebarExpanded ? 'justify-between' : 'justify-center'} w-full`}>
+                            <div 
+                                className="flex items-center gap-2.5 min-w-0 cursor-pointer p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                                onClick={() => navigate('/organizer/profile')}
+                            >
+                                <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-500/20 text-[#7C65F6] border border-purple-200 dark:border-purple-500/30 flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
+                                    {(currentRole.fullName || 'Alex Morgan').charAt(0).toUpperCase()}
+                                </div>
+                                {isSidebarExpanded && (
+                                    <div className="flex flex-col text-left overflow-hidden">
+                                        <span className="text-xs font-bold text-[#1e293b] dark:text-white truncate">
+                                            {currentRole.fullName || 'Alex Morgan'}
+                                        </span>
+                                        <span className="text-[10px] text-[#7C65F6] font-bold tracking-wide uppercase">
+                                            Organizer
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                            {isSidebarExpanded && (
+                                <div className="relative">
+                                    <button 
+                                        onClick={() => setShowOrganizerActionMenu(prev => !prev)}
+                                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                                        aria-label="Organizer options"
+                                    >
+                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="5" r="2" />
+                                            <circle cx="12" cy="12" r="2" />
+                                            <circle cx="12" cy="19" r="2" />
+                                        </svg>
+                                    </button>
+                                    {showOrganizerActionMenu && (
+                                        <div className="absolute right-0 bottom-full mb-2 w-44 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in duration-150">
+                                            <button 
+                                                onClick={() => { navigate('/organizer/profile'); setShowOrganizerActionMenu(false); }} 
+                                                className="w-full text-left px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-500/10 hover:text-[#7C65F6] transition-colors"
+                                            >
+                                                Profile
+                                            </button>
+                                            <button 
+                                                onClick={() => { navigate('/organizer/settings'); setShowOrganizerActionMenu(false); }} 
+                                                className="w-full text-left px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-500/10 hover:text-[#7C65F6] transition-colors"
+                                            >
+                                                Settings
+                                            </button>
+                                            <div className="h-px bg-slate-100 dark:bg-white/10 my-1"></div>
+                                            <button 
+                                                onClick={() => { handleLogout(); setShowOrganizerActionMenu(false); }} 
+                                                className="w-full text-left px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                                            >
+                                                Sign Out
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ) : (
+                    <div className="p-3 border-t border-[#e2e8f0] dark:border-white/10 shrink-0 relative group">
+                        <button 
+                            onClick={() => navigate(`/${currentRole.path}/profile`)}
+                            className={`flex items-center gap-3 w-full p-2 rounded-full hover:bg-[#f1f5f9] dark:hover:bg-white/5 transition-colors ${isSidebarExpanded ? 'justify-start' : 'justify-center'}`}
+                        >
+                            <div className="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-200/80 dark:border-sky-500/30 flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
+                                {currentRole.name.charAt(0).toUpperCase()}
+                            </div>
+                            {isSidebarExpanded && (
+                                <div className="flex flex-col text-left overflow-hidden">
+                                    <span className="text-xs font-bold text-[#1e293b] dark:text-white truncate">{currentRole.roleName}</span>
+                                    <span className="text-[10px] text-[#64748b] dark:text-gray-400 truncate">{currentRole.fullName}</span>
+                                </div>
+                            )}
+                        </button>
+
+                        {/* Tooltip rendered ONLY when sidebar is collapsed (icon-only mode) */}
+                        {!isSidebarExpanded && (
+                            <span 
+                                style={{ color: '#ffffff' }}
+                                className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-4 py-2 text-sm font-medium !text-white bg-[#1A1F2C] backdrop-blur-sm rounded-lg shadow-2xl border border-neutral-800/20 pointer-events-none opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200 ease-in-out whitespace-nowrap z-[9999]"
+                            >
+                                {currentRole.roleName} ({currentRole.fullName})
+                                <span className="absolute w-2 h-2 bg-[#1A1F2C] transform rotate-45 left-[-4px] top-1/2 -translate-y-1/2 border-l border-b border-neutral-800/20"></span>
+                            </span>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Main Content Area */}
@@ -711,8 +810,8 @@ const DashboardLayout = () => {
                                         if (globalSearchQuery.trim().length > 0) setIsSearchOpen(true);
                                     }}
                                     onKeyDown={handleSearchKeyDown}
-                                    placeholder={isAdmin ? "SEARCH USERS, HACKATHONS, SUBMISSIONS..." : "SEARCH..."}
-                                    className="w-full pl-9 pr-9 py-2 bg-slate-100 dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-2xl text-[11px] font-bold text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-[#0ea5e9] focus:ring-2 focus:ring-sky-500/20 transition-all shadow-sm"
+                                    placeholder={isOrganizer ? "Search..." : (isAdmin ? "SEARCH USERS, HACKATHONS, SUBMISSIONS..." : "SEARCH...")}
+                                    className={`w-full pl-9 pr-9 py-2 bg-slate-100 dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-2xl text-[11px] font-bold text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none transition-all shadow-sm ${isOrganizer ? 'focus:border-[#7C65F6] focus:ring-2 focus:ring-purple-500/20' : 'focus:border-[#0ea5e9] focus:ring-2 focus:ring-sky-500/20'}`}
                                 />
                                 {globalSearchQuery && (
                                     <button 
@@ -797,6 +896,22 @@ const DashboardLayout = () => {
                             <ThemeToggle />
                         </div>
 
+                        {/* Help Guide for Organizer */}
+                        {isOrganizer && (
+                            <div className="relative flex items-center justify-center">
+                                <button
+                                    onClick={() => navigate('/organizer/settings')}
+                                    className="relative w-9 h-9 flex items-center justify-center text-slate-600 dark:text-gray-300 hover:text-[#7C65F6] hover:bg-purple-50 dark:hover:bg-purple-500/10 rounded-full transition-colors cursor-pointer"
+                                    title="Help & Guides"
+                                    aria-label="Help"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        )}
+
                         {/* Notification Bell */}
                         <div className="relative flex items-center justify-center">
                             <button
@@ -816,14 +931,27 @@ const DashboardLayout = () => {
                         <div className="relative flex items-center justify-center">
                             <button
                                 onClick={() => setShowProfileMenu(!showProfileMenu)}
-                                className="flex items-center justify-center gap-2 p-1 pr-3 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-full transition-colors border border-slate-200 dark:border-white/10"
+                                className={`flex items-center justify-center gap-2 p-1 pr-3 rounded-full transition-colors border cursor-pointer ${
+                                    isOrganizer 
+                                        ? 'bg-purple-50/50 dark:bg-purple-950/20 hover:bg-purple-100/50 border-purple-200 dark:border-purple-500/20' 
+                                        : 'bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border-slate-200 dark:border-white/10'
+                                }`}
                             >
-                                <div className="w-7 h-7 rounded-full bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-200/80 dark:border-sky-500/30 flex items-center justify-center font-bold text-[10px] shrink-0 shadow-sm">
+                                <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 shadow-sm ${
+                                    isOrganizer
+                                        ? 'bg-purple-100 dark:bg-purple-500/20 text-[#7C65F6] border border-purple-200 dark:border-purple-500/30'
+                                        : 'bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-200/80 dark:border-sky-500/30'
+                                }`}>
                                     {currentRole.name.charAt(0).toUpperCase()}
                                 </div>
-                                <span className="hidden md:block text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider leading-none">
-                                    {currentRole.name}
-                                </span>
+                                <div className="hidden md:flex flex-col text-left leading-none">
+                                    <span className="text-[11px] font-bold text-slate-800 dark:text-white leading-tight">
+                                        {currentRole.fullName}
+                                    </span>
+                                    <span className="text-[9px] text-[#7C65F6] font-semibold leading-none">
+                                        {currentRole.roleName}
+                                    </span>
+                                </div>
                                 <svg className={`w-3.5 h-3.5 text-slate-500 dark:text-gray-400 transition-transform duration-200 shrink-0 ${showProfileMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="m6 9 6 6 6-6" />
                                 </svg>

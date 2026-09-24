@@ -20,9 +20,11 @@ export const fetchAdminSubmissions = async (filters = {}) => {
     }
 };
 
-export const updateSubmissionStatus = async (id, newStatus) => {
+export const updateSubmissionStatus = async (id, newStatus, reason = '') => {
     try {
-        const { data } = await apiClient.put(`/submissions/${id}/status`, { status: newStatus });
+        const payload = { status: newStatus };
+        if (reason) payload.reason = reason;
+        const { data } = await apiClient.put(`/submissions/${id}/status`, payload);
         return data;
     } catch (error) {
         console.error('Failed to update submission status:', error);

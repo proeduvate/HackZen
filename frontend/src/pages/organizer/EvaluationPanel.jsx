@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchCriteria, submitEvaluation, fetchSubmissionsForEvaluation } from '../../services/organizer/evaluationApi';
+import { updateTeamShortlistStatus } from '../../services/organizer/evaluationPanelApi';
 
 
 const EvaluationPanel = () => {
@@ -140,9 +141,17 @@ const EvaluationPanel = () => {
 
     };
 
-    const handleShortlistToggle = () => {
-        setIsShortlisted(!isShortlisted);
-        // We could also trigger a direct API call here
+    const handleShortlistToggle = async () => {
+        const nextState = !isShortlisted;
+        setIsShortlisted(nextState);
+        if (activeTeam) {
+            try {
+                await updateTeamShortlistStatus(activeTeam.submissionId || activeTeam.id, nextState);
+                setTeams(prev => prev.map(t => t.id === activeTeam.id ? { ...t, shortlisted: nextState } : t));
+            } catch (err) {
+                console.error("Failed to toggle shortlist:", err);
+            }
+        }
     };
 
     // --- Icons Component ---

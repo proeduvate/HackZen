@@ -68,6 +68,7 @@ async def with_auth(
 
     # Ensure backward compatibility with code expecting 'sub'
     user["sub"] = str(user["_id"])
+    user["role"] = str(user.get("role", "student")).lower()
     return user
 
 

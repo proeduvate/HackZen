@@ -217,40 +217,28 @@ const AdminDashboard = () => {
         aiBanner: isLightTheme ? 'border border-sky-200 bg-gradient-to-r from-sky-50/80 via-slate-50 to-indigo-50/50 text-slate-800 shadow-sm rounded-2xl' : 'border border-sky-500/30 bg-gradient-to-r from-sky-900/20 to-navy-900/40 text-white rounded-2xl'
     };
 
-    // Derived Action Center items
+    // Derived Action Center items strictly from live DB
     const actionCenterItems = useMemo(() => {
-        if (dashboardData && dashboardData.actionCenter) {
+        if (dashboardData && Array.isArray(dashboardData.actionCenter)) {
             return dashboardData.actionCenter;
         }
-        const counts = dashboardData?.quickActionCounts || {};
-        return [
-            { icon: <TriangleAlertIcon className="w-3.5 h-3.5 text-rose-500" />, text: `${counts.organizerApprovals || 3} Organizer approvals pending`, link: '/admin/organizer-approvals', btn: 'Review' },
-            { icon: <TriangleAlertIcon className="w-3.5 h-3.5 text-amber-500" />, text: `${counts.hackathonApprovals || 2} Hackathons awaiting approval`, link: '/admin/hackathon-approvals?filter=pending', btn: 'Review' },
-            { icon: <TriangleAlertIcon className="w-3.5 h-3.5 text-amber-400" />, text: `${counts.pendingSubmissions || 17} Submissions require review`, link: '/admin/submissions?filter=pending', btn: 'Review' },
-            { icon: <TriangleAlertIcon className="w-3.5 h-3.5 text-amber-400" />, text: '5 Mentor assignments pending', link: '/admin/users?role=MENTOR&filter=unassigned', btn: 'Assign' },
-            { icon: <CertificateIcon className="w-3.5 h-3.5 text-sky-500" />, text: '4 Certificate requests', link: '/admin/certificates?filter=pending', btn: 'Issue' },
-            { icon: <SirenIcon className="w-3.5 h-3.5 text-rose-500" />, text: `${counts.pendingDisputes || 3} Open participant disputes`, link: '/admin/disputes', btn: 'Resolve' }
-        ];
+        return [];
     }, [dashboardData]);
 
-    // Derived Deadlines items with exact hackathon routing
+    // Derived Deadlines items with exact hackathon routing strictly from live DB
     const deadlineItems = useMemo(() => {
-        if (dashboardData && dashboardData.deadlines && dashboardData.deadlines.length > 0) {
+        if (dashboardData && Array.isArray(dashboardData.deadlines)) {
             return dashboardData.deadlines.map(dl => ({
                 ...dl,
                 link: dl.link || `/admin/hackathon-approvals?id=${dl.id || ''}&search=${encodeURIComponent(dl.title || '')}&filter=all`
             }));
         }
-        return [
-            { time: 'TODAY', title: 'Global AI Summit 2026', desc: 'Final Submission Phase', remaining: '5h 32m remaining', color: 'text-rose-500', dot: 'bg-rose-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]', link: '/admin/hackathon-approvals?search=Global+AI+Summit&filter=all' },
-            { time: 'TOMORROW', title: 'Smart Campus Hackathon', desc: 'Registration closes', remaining: '23h remaining', color: 'text-amber-500', dot: 'bg-amber-500', link: '/admin/hackathon-approvals?search=Smart+Campus&filter=all' },
-            { time: 'FRIDAY', title: 'CyberKnights Shield', desc: 'Results publication', remaining: '2 days remaining', color: isLightTheme ? 'text-sky-600' : 'text-sky-400', dot: 'bg-sky-500', link: '/admin/hackathon-approvals?search=CyberKnights&filter=all' },
-        ];
+        return [];
     }, [dashboardData, isLightTheme]);
 
-    // Derived Exceptions items with exact intended destinations
+    // Derived Exceptions items with exact intended destinations strictly from live DB
     const exceptionItems = useMemo(() => {
-        if (dashboardData && dashboardData.exceptions && dashboardData.exceptions.length > 0) {
+        if (dashboardData && Array.isArray(dashboardData.exceptions)) {
             return dashboardData.exceptions.map(ex => {
                 const text = (typeof ex === 'string' ? ex : ex.text || '').toLowerCase();
                 let link = '/admin/users';
@@ -283,30 +271,8 @@ const AdminDashboard = () => {
                 };
             });
         }
-        return [
-            { text: "4 teams haven't selected mentors", link: '/admin/users?role=Mentor&filter=unassigned', category: 'Mentors', badgeColor: 'text-purple-600 dark:text-purple-400 bg-purple-500/10 border-purple-500/20' },
-            { text: "3 submissions are incomplete (Flagged by AI)", link: '/admin/submissions?filter=flagged', category: 'Submissions', badgeColor: 'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20' },
-            { text: "2 hackathons have no judges assigned", link: '/admin/hackathon-approvals?filter=needs_revision', category: 'Hackathons', badgeColor: 'text-sky-600 dark:text-sky-400 bg-sky-500/10 border-sky-500/20' },
-            { text: "5 teams haven't submitted milestones", link: '/admin/submissions?filter=pending', category: 'Submissions', badgeColor: 'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20' },
-            { text: "1 organizer has exceeded approval SLA (>48h)", link: '/admin/organizer-approvals?filter=pending', category: 'Organizers', badgeColor: 'text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/20' }
-        ];
+        return [];
     }, [dashboardData, isLightTheme]);
-
-    // Default rich activity stream dataset categorized for real-time operations
-    const defaultActivities = [
-        { time: '19:42', category: 'SUBMISSIONS', categoryColor: 'emerald', description: 'Team Alpha submitted final repository package for AI Summit 2026' },
-        { time: '19:40', category: 'USERS', categoryColor: 'blue', description: 'Mentor Dr. Ramesh Kumar accepted supervision for Team CyberKnights' },
-        { time: '19:37', category: 'HACKATHONS', categoryColor: 'emerald', description: 'Organizer Priya Kumar published Stage 2 guidelines for Global AI Summit' },
-        { time: '19:35', category: 'CERTIFICATES', categoryColor: 'amber', description: 'Official Winner Credential CERT-2026-0182 generated for Alex Johnson' },
-        { time: '19:28', category: 'USERS', categoryColor: 'red', description: 'Plagiarism dispute flagged for Team Delta code repository' },
-        { time: '19:15', category: 'TEAMS', categoryColor: 'blue', description: 'New team "CodeMatrix" formed with 4 student members' },
-        { time: '18:50', category: 'HACKATHONS', categoryColor: 'blue', description: 'Smart Campus Hackathon entered submission review stage' },
-        { time: '18:30', category: 'SUBMISSIONS', categoryColor: 'amber', description: 'Milestone 2 deliverable received from Team QuantumLeap' },
-        { time: '18:10', category: 'CERTIFICATES', categoryColor: 'emerald', description: '12 participant certificates signed and verified on ledger' },
-        { time: '17:45', category: 'USERS', categoryColor: 'purple', description: 'New mentor Dr. Priya Nair onboarded and assigned to CS track' },
-        { time: '17:20', category: 'TEAMS', categoryColor: 'blue', description: 'Team NeuralPulse finalized mentor session request' },
-        { time: '16:55', category: 'SUBMISSIONS', categoryColor: 'emerald', description: 'Evaluation scores submitted for 8 finalist submissions' }
-    ];
 
     // Helper for Activity link destination
     const getActivityLink = (act) => {
@@ -320,23 +286,14 @@ const AdminDashboard = () => {
         return '/admin/analytics';
     };
 
-    // Live Activity Stream Filter Logic - combines live events and default operational streams
+    // Live Activity Stream strictly from live DB
     const allCombinedActivities = useMemo(() => {
-        const apiActivities = (dashboardData?.activities || []).map(a => ({
+        return (dashboardData?.activities || []).map(a => ({
             ...a,
-            category: a.category || 'USERS',
-            categoryColor: a.categoryColor || 'amber',
-            description: a.description || a.text || ''
+            category: a.category || 'SYSTEM',
+            categoryColor: a.categoryColor || 'blue',
+            description: a.description || a.text || a.title || ''
         }));
-
-        // Combine live broadcasts/events from backend with the rich operational platform activity stream
-        const combined = [
-            ...apiActivities,
-            ...defaultActivities.filter(da => 
-                !apiActivities.some(aa => (aa.description || aa.text) === da.description)
-            )
-        ];
-        return combined;
     }, [dashboardData]);
 
     const filteredActivities = useMemo(() => {
@@ -415,19 +372,19 @@ const AdminDashboard = () => {
                 <span className={`text-[10px] font-black uppercase tracking-widest mr-1 shrink-0 whitespace-nowrap ${theme.mutedText}`}>Quick Actions:</span>
                 
                 <button onClick={() => navigate('/admin/organizer-approvals')} className="px-3 py-1.5 bg-sky-50 dark:bg-emerald-500/10 border border-sky-200 dark:border-emerald-500/20 text-sky-600 dark:text-emerald-400 rounded-2xl text-[11px] font-bold transition-all hover:bg-sky-100 flex items-center gap-1.5 shrink-0 shadow-sm">
-                    <CheckIcon className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> Approve Organizers ({dashboardData?.quickActionCounts?.organizerApprovals || 3})
+                    <CheckIcon className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> Approve Organizers ({dashboardData?.quickActionCounts?.organizerApprovals ?? 0})
                 </button>
                 <button onClick={() => navigate('/admin/users?role=MENTOR&filter=pending_mentors')} className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded-2xl text-[11px] font-bold transition-all hover:bg-emerald-100 flex items-center gap-1.5 shrink-0 shadow-sm">
-                    <CheckIcon className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> Approve Mentors (2)
+                    <CheckIcon className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> Approve Mentors ({dashboardData?.quickActionCounts?.mentorApprovals ?? 0})
                 </button>
                 <button onClick={() => navigate('/admin/submissions?filter=pending')} className="px-3 py-1.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/20 text-amber-800 dark:text-amber-500 rounded-2xl text-[11px] font-bold transition-all hover:bg-amber-100 flex items-center gap-1.5 shrink-0 shadow-sm">
-                    <TriangleAlertIcon className="w-3.5 h-3.5 text-amber-600 dark:text-amber-500" /> Submissions ({dashboardData?.quickActionCounts?.pendingSubmissions || 17})
+                    <TriangleAlertIcon className="w-3.5 h-3.5 text-amber-600 dark:text-amber-500" /> Submissions ({dashboardData?.quickActionCounts?.pendingSubmissions ?? 0})
                 </button>
                 <button onClick={() => navigate('/admin/disputes')} className="px-3 py-1.5 bg-rose-50 dark:bg-red-500/10 border border-rose-300 dark:border-red-500/20 text-rose-700 dark:text-red-500 rounded-2xl text-[11px] font-bold transition-all hover:bg-rose-100 flex items-center gap-1.5 shrink-0 shadow-sm">
-                    <SirenIcon className="w-3.5 h-3.5 text-rose-600 dark:text-red-500" /> Disputes ({dashboardData?.quickActionCounts?.pendingDisputes || 3})
+                    <SirenIcon className="w-3.5 h-3.5 text-rose-600 dark:text-red-500" /> Disputes ({dashboardData?.quickActionCounts?.pendingDisputes ?? 0})
                 </button>
                 <button onClick={() => navigate('/admin/certificates?filter=pending')} className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-700 dark:text-indigo-400 rounded-2xl text-[11px] font-bold transition-all hover:bg-indigo-100 flex items-center gap-1.5 shrink-0 shadow-sm">
-                    <CertificateIcon className="w-3.5 h-3.5" /> Certificates (4)
+                    <CertificateIcon className="w-3.5 h-3.5" /> Certificates ({dashboardData?.quickActionCounts?.certificateRequests ?? 0})
                 </button>
                 <button 
                     onClick={() => setIsAnnouncementOpen(true)} 
@@ -446,14 +403,14 @@ const AdminDashboard = () => {
                 isLightTheme={isLightTheme}
             />
 
-            {/* 3. CORE KPI GRID (Uiverse.io by adamgiebl 3D Inset Shadow Cards) */}
+            {/* 3. CORE KPI GRID (100% Real-Time Database State) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-5 pt-1">
                 {[
-                    { title: 'Active Hackathons', value: dashboardData?.stats?.[0]?.value || 8, trend: '+2 this month', icon: <RocketIcon className="w-4 h-4 text-sky-500" />, badge: '8 Live', link: '/admin/hackathon-approvals?filter=active' },
-                    { title: 'Total Users', value: dashboardData?.stats?.[1]?.value || 1240, trend: '↑ 18.4% vs July', icon: <UsersIcon className="w-4 h-4 text-sky-500" />, badge: '1.2k Active', link: '/admin/users' },
-                    { title: 'Active Teams', value: dashboardData?.stats?.[2]?.value || 412, trend: '↑ 8.7% growth', icon: <ZapIcon className="w-4 h-4 text-sky-500" />, badge: '412 Formed', link: '/admin/users?role=Student' },
-                    { title: 'Submissions', value: dashboardData?.stats?.[3]?.value || 284, trend: '↑ 18.2% rate', icon: <BoxIcon className="w-4 h-4 text-sky-500" />, badge: '284 Total', link: '/admin/submissions?filter=all' },
-                    { title: 'Certificates', value: dashboardData?.stats?.[4]?.value || 168, trend: '↑ 31% issued', icon: <CertificateIcon className="w-4 h-4 text-sky-500" />, badge: '168 Issued', link: '/admin/certificates?filter=issued' },
+                    { title: 'Active Hackathons', value: dashboardData?.stats?.[0]?.value ?? 0, trend: dashboardData?.stats?.[0]?.change || 'Live Events', icon: <RocketIcon className="w-4 h-4 text-sky-500" />, badge: `${dashboardData?.stats?.[0]?.value ?? 0} Live`, link: '/admin/hackathon-approvals?filter=active' },
+                    { title: 'Total Users', value: dashboardData?.stats?.[1]?.value ?? 0, trend: dashboardData?.stats?.[1]?.change || 'Verified Accounts', icon: <UsersIcon className="w-4 h-4 text-sky-500" />, badge: `${dashboardData?.stats?.[1]?.value ?? 0} Active`, link: '/admin/users' },
+                    { title: 'Active Teams', value: dashboardData?.stats?.[2]?.value ?? 0, trend: dashboardData?.stats?.[2]?.change || 'Formed Squads', icon: <ZapIcon className="w-4 h-4 text-sky-500" />, badge: `${dashboardData?.stats?.[2]?.value ?? 0} Formed`, link: '/admin/users?role=Student' },
+                    { title: 'Submissions', value: dashboardData?.stats?.[3]?.value ?? 0, trend: dashboardData?.stats?.[3]?.change || 'Project Repos', icon: <BoxIcon className="w-4 h-4 text-sky-500" />, badge: `${dashboardData?.stats?.[3]?.value ?? 0} Total`, link: '/admin/submissions?filter=all' },
+                    { title: 'Certificates', value: dashboardData?.stats?.[4]?.value ?? 0, trend: dashboardData?.stats?.[4]?.change || 'Issued Ledger', icon: <CertificateIcon className="w-4 h-4 text-sky-500" />, badge: `${dashboardData?.stats?.[4]?.value ?? 0} Issued`, link: '/admin/certificates?filter=issued' },
                 ].map((kpi, idx) => (
                     <div key={idx} onClick={() => navigate(kpi.link)} className="adamgiebl-card group cursor-pointer transition-all hover:-translate-y-1">
                         {/* Top Header: Title Left, Icon Right */}

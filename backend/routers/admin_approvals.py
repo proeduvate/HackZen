@@ -334,6 +334,9 @@ async def get_hackathon_ai_review(
         "rules": rules,
         "minTeamSize": hackathon.get("minTeamSize", 1),
         "maxTeamSize": hackathon.get("maxTeamSize", 4),
+        "guidelines": hackathon.get("guidelines") or hackathon.get("participantGuidelines") or "",
+        "judgingCriteria": hackathon.get("judgingCriteria") or hackathon.get("evaluationCriteria") or "",
+        "prizePool": hackathon.get("prizePool") or hackathon.get("prizes") or "",
         "organizer": {
             "name": (org_user.get("name") if org_user else None) or hackathon.get("organizerName", "Platform Organizer"),
             "org": (org_user.get("organization") or org_user.get("college") if org_user else None) or hackathon.get("organization", "Educational Institution"),
@@ -343,8 +346,51 @@ async def get_hackathon_ai_review(
         "dates": {
             "start": str(hackathon.get("hackathonStart") or hackathon.get("startDate") or ""),
             "end": str(hackathon.get("hackathonEnd") or hackathon.get("endDate") or "")
-        }
+        },
+        "hackathonStart": str(hackathon.get("hackathonStart") or hackathon.get("startDate") or ""),
+        "hackathonEnd": str(hackathon.get("hackathonEnd") or hackathon.get("endDate") or ""),
+        "registrationStart": str(hackathon.get("registrationStart") or ""),
+        "registrationEnd": str(hackathon.get("registrationEnd") or "")
     }
 
     review = await ai_service.review_hackathon_proposal(enriched_hackathon)
     return {"success": True, "review": review}
+
+
+@router.post("/hackathons/{hackathon_id}/reminder")
+async def send_hackathon_revision_reminder(
+    hackathon_id: str,
+    current_user: dict = Depends(RequireRole(["admin", "superadmin"]))
+):
+    """Dispatch high-priority revision reminder to organizer for pending hackathon change request"""
+    db = get_db()
+    query = {"_id": ObjectId(hackathon_id)} if ObjectId.is_valid(hackathon_id) else {"_id": hackathon_id}
+    hackathon = await db["hackathons"].find_one(query)
+    if not hackathon:
+        raise HTTPException(status_code=404, detail="Hackathon not found")
+
+    organizer_id = str(hackathon.get("organizerId", ""))
+    hack_title = hackathon.get("title", "Hackathon Event")
+
+    if organizer_id:
+        await db["notifications"].insert_one({
+            "userId": organizer_id,
+            "target_audience": "organizer",
+            "type": "HACKATHON_REVISION_REMINDER",
+            "title": f"Action Required: Revision Reminder for '{hack_title}'",
+            "message": f"Administrator reminder: Your hackathon proposal '{hack_title}' currently has pending change requests awaiting your update.",
+            "hackathonId": str(hackathon["_id"]),
+            "read": False,
+            "priority": "high",
+            "createdAt": datetime.utcnow()
+        })
+
+    await db["audit_logs"].insert_one({
+        "action": "Revision Reminder Sent",
+        "module": "Hackathon Approvals",
+        "details": f"Revision reminder sent to organizer of hackathon '{hack_title}'.",
+        "adminName": current_user.get("name", "Admin"),
+        "createdAt": datetime.utcnow()
+    })
+
+    return {"success": True, "message": f"Revision reminder dispatched to organizer for '{hack_title}'."}

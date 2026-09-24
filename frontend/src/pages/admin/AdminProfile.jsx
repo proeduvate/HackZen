@@ -15,6 +15,7 @@ import {
     TriangleAlertIcon,
     CertificateIcon
 } from '../../components/AdminIcons';
+import { revokeSession, revokeAllOtherSessions } from '../../services/admin/adminSettingsApi';
 
 const AdminProfile = () => {
     const navigate = useNavigate();
@@ -101,13 +102,20 @@ const AdminProfile = () => {
     };
 
     // Action Handlers
-    const handleSignOutSession = (sessionId) => {
+    const handleSignOutSession = async (sessionId) => {
         if (!controlData) return;
-        setControlData(prev => ({
-            ...prev,
-            activeSessions: prev.activeSessions.filter(s => s.id !== sessionId)
-        }));
-        alert("Device session terminated successfully.");
+        try {
+            await revokeSession(sessionId);
+            setControlData(prev => ({
+                ...prev,
+                activeSessions: prev.activeSessions.filter(s => s.id !== sessionId)
+            }));
+            fetchControlCenterData();
+            alert("Device session terminated successfully.");
+        } catch (err) {
+            console.error("Failed to revoke session:", err);
+            alert("Failed to terminate session. Please try again.");
+        }
     };
 
     const handleSignOutAllOther = () => {
@@ -120,7 +128,7 @@ const AdminProfile = () => {
         setShowVerificationModal(true);
     };
 
-    const handleConfirmVerification = () => {
+    const handleConfirmVerification = async () => {
         if (!verificationPassword) {
             alert("Please enter your current admin password to verify identity.");
             return;
@@ -130,11 +138,18 @@ const AdminProfile = () => {
         setVerificationCode('');
         
         if (verificationTargetAction === 'SIGN_OUT_OTHER_SESSIONS') {
-            setControlData(prev => ({
-                ...prev,
-                activeSessions: prev.activeSessions.filter(s => s.isCurrent)
-            }));
-            alert("All secondary active device sessions have been revoked.");
+            try {
+                await revokeAllOtherSessions();
+                setControlData(prev => ({
+                    ...prev,
+                    activeSessions: prev.activeSessions.filter(s => s.isCurrent)
+                }));
+                fetchControlCenterData();
+                alert("All secondary active device sessions have been revoked.");
+            } catch (err) {
+                console.error("Failed to revoke all other sessions:", err);
+                alert("Failed to revoke remote sessions. Please try again.");
+            }
         } else {
             alert(`Emergency action executed: ${verificationTargetAction}. Security protocol updated.`);
         }

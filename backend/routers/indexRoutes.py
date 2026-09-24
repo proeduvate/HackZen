@@ -21,11 +21,13 @@ from routers import (
     admin_analytics,
     admin_settings,
     settingsRoutes,
+    oauth,
 )
 
 router = APIRouter()
 
 router.include_router(userRoutes.router, prefix="/auth", tags=["Authentication"])
+router.include_router(oauth.router, prefix="/auth", tags=["OAuth"])
 router.include_router(profileRoutes.router, prefix="/profile", tags=["Profiles"])
 router.include_router(hackathonRoutes.router, prefix="/hackathon", tags=["Hackathons"])
 router.include_router(hackathonRoutes.router, prefix="/hackathons", tags=["Hackathons"])

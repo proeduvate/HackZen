@@ -13,7 +13,8 @@ import {
     uploadPlatformLogo,
     sendTestNotification,
     broadcastPlatformAnnouncement,
-    fetchNotificationHistory
+    fetchNotificationHistory,
+    testSmtpConnection
 } from '../../services/admin/adminSettingsApi';
 
 import { 
@@ -80,13 +81,6 @@ const ActionModal = ({ isOpen, onClose, title, subtitle, children, maxWidth = "m
     );
 };
 
-// Initial Fallback Administrator Dataset
-const initialAdminsFallback = [
-    { id: 'adm-01', name: 'Super Admin', email: 'admin@proeduvate.com', role: 'Super Admin', status: 'Active', permissions: { users: true, hackathons: true, submissions: true, certificates: true, disputes: true, analytics: true, settings: true } },
-    { id: 'adm-02', name: 'P Saravanan', email: 'psaravanan@gmail.com', role: 'Admin', status: 'Active', permissions: { users: true, hackathons: true, submissions: true, certificates: true, disputes: true, analytics: true, settings: false } },
-    { id: 'adm-03', name: 'Sarah Chen', email: 'sarah@example.com', role: 'Moderator', status: 'Active', permissions: { users: true, hackathons: false, submissions: true, certificates: false, disputes: true, analytics: false, settings: false } }
-];
-
 const Settings = () => {
     const { theme: currentTheme } = useTheme();
     const { broadcastSettingsUpdate } = usePlatformSettings();
@@ -149,7 +143,13 @@ const Settings = () => {
             newDisputeNotif: true,
             certVerifNotif: false,
             sysErrorNotif: true,
-            secAlertNotif: true
+            secAlertNotif: true,
+            smtpHost: 'smtp.gmail.com',
+            smtpPort: 587,
+            smtpUser: 'notifications@hackzen.org',
+            smtpPassword: '••••••••••••',
+            smtpFrom: 'HackZen Platform <notifications@hackzen.org>',
+            smtpUseTls: true
         },
         hackathons: {
             maxTeamSize: 4,
@@ -175,7 +175,7 @@ const Settings = () => {
     });
 
     // Administrators State (RBAC)
-    const [admins, setAdmins] = useState(initialAdminsFallback);
+    const [admins, setAdmins] = useState([]);
     const [isAddAdminOpen, setIsAddAdminOpen] = useState(false);
     const [newAdminForm, setNewAdminForm] = useState({
         name: '',
@@ -212,6 +212,12 @@ const Settings = () => {
         audience: 'all',
         priority: 'high'
     });
+
+    // SMTP Gateway Test State
+    const [smtpTesting, setSmtpTesting] = useState(false);
+    const [smtpTestRecipient, setSmtpTestRecipient] = useState('');
+    const [smtpTestResult, setSmtpTestResult] = useState(null);
+
 
     // Initial Data Fetch
     const loadAllData = async () => {
@@ -365,6 +371,40 @@ const Settings = () => {
             showToast("Failed to broadcast announcement.", "error");
         } finally {
             setIsBroadcasting(false);
+        }
+    };
+
+    // Test Outbound SMTP Connection
+    const handleTestSmtp = async () => {
+        setSmtpTesting(true);
+        setSmtpTestResult(null);
+        try {
+            const payload = {
+                smtpHost: config.notifications.smtpHost,
+                smtpPort: Number(config.notifications.smtpPort) || 587,
+                smtpUser: config.notifications.smtpUser,
+                smtpPassword: config.notifications.smtpPassword,
+                smtpFrom: config.notifications.smtpFrom,
+                smtpUseTls: config.notifications.smtpUseTls !== false,
+                testRecipient: smtpTestRecipient.trim() || undefined
+            };
+            const result = await testSmtpConnection(payload);
+            setSmtpTestResult(result);
+            if (result.success) {
+                showToast(result.message || "SMTP Connection Test Succeeded!", "success");
+            } else {
+                showToast(result.message || "SMTP Connection Test Encountered Issue", "warning");
+            }
+        } catch (err) {
+            console.error("SMTP test error:", err);
+            setSmtpTestResult({
+                success: false,
+                message: err.response?.data?.detail || err.message || "SMTP Connection Failed",
+                details: "Check your SMTP host, port, credentials, and network connectivity."
+            });
+            showToast("SMTP Test Failed", "error");
+        } finally {
+            setSmtpTesting(false);
         }
     };
 
@@ -1109,6 +1149,140 @@ const Settings = () => {
 
                                     </div>
                                 </form>
+                            </div>
+
+                            {/* Outbound SMTP Mail Gateway & Verification */}
+                            <div className="pt-4 border-t border-slate-200 dark:border-white/10">
+                                <div className="flex justify-between items-center mb-3">
+                                    <div>
+                                        <h3 className={`text-xs font-black uppercase tracking-wider ${theme.headingText}`}>
+                                            Outbound SMTP Mail Gateway & Verification
+                                        </h3>
+                                        <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">
+                                            Configure enterprise SMTP credentials for automated applicant notifications, team invitations, and password resets.
+                                        </p>
+                                    </div>
+                                    <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full border ${
+                                        config.notifications.smtpHost ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                                    }`}>
+                                        {config.notifications.smtpHost ? 'Configured' : 'Needs Setup'}
+                                    </span>
+                                </div>
+
+                                <div className={`p-4 rounded-xl border space-y-3.5 ${theme.innerBg}`}>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        <div className="sm:col-span-2">
+                                            <label className="text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-1 block">SMTP Host / Server *</label>
+                                            <input 
+                                                type="text" 
+                                                placeholder="e.g. smtp.gmail.com or smtp.sendgrid.net" 
+                                                value={config.notifications.smtpHost || ''}
+                                                onChange={(e) => handleInputChange('notifications', 'smtpHost', e.target.value)}
+                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none ${theme.inputBg}`} 
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-1 block">Port *</label>
+                                            <input 
+                                                type="number" 
+                                                placeholder="587" 
+                                                value={config.notifications.smtpPort || 587}
+                                                onChange={(e) => handleInputChange('notifications', 'smtpPort', e.target.value)}
+                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none ${theme.inputBg}`} 
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-1 block">Username / Account Email *</label>
+                                            <input 
+                                                type="text" 
+                                                placeholder="notifications@hackzen.org" 
+                                                value={config.notifications.smtpUser || ''}
+                                                onChange={(e) => handleInputChange('notifications', 'smtpUser', e.target.value)}
+                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none ${theme.inputBg}`} 
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-1 block">SMTP Password / App Key *</label>
+                                            <input 
+                                                type="password" 
+                                                placeholder="••••••••••••" 
+                                                value={config.notifications.smtpPassword || ''}
+                                                onChange={(e) => handleInputChange('notifications', 'smtpPassword', e.target.value)}
+                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none ${theme.inputBg}`} 
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        <div className="sm:col-span-2">
+                                            <label className="text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-1 block">Sender Address ('From')</label>
+                                            <input 
+                                                type="text" 
+                                                placeholder="HackZen Platform <notifications@hackzen.org>" 
+                                                value={config.notifications.smtpFrom || ''}
+                                                onChange={(e) => handleInputChange('notifications', 'smtpFrom', e.target.value)}
+                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none ${theme.inputBg}`} 
+                                            />
+                                        </div>
+                                        <div className="flex flex-col justify-end">
+                                            <div className="flex items-center justify-between p-2 rounded-xl border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-black/20">
+                                                <span className="text-[11px] font-semibold text-slate-700 dark:text-gray-300">STARTTLS</span>
+                                                <Toggle 
+                                                    enabled={config.notifications.smtpUseTls !== false} 
+                                                    onChange={() => handleToggle('notifications', 'smtpUseTls')} 
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Live Test Connection & Dispatch Sub-Panel */}
+                                    <div className="pt-3 border-t border-slate-200/60 dark:border-white/5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                                        <div className="flex-1 max-w-sm">
+                                            <input 
+                                                type="email" 
+                                                placeholder="Test recipient email (defaults to admin)"
+                                                value={smtpTestRecipient}
+                                                onChange={(e) => setSmtpTestRecipient(e.target.value)}
+                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none ${theme.inputBg}`}
+                                            />
+                                        </div>
+                                        <button 
+                                            type="button"
+                                            onClick={handleTestSmtp}
+                                            disabled={smtpTesting || !config.notifications.smtpHost}
+                                            className="px-4 py-2 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white rounded-xl text-xs font-bold shadow-md shadow-sky-500/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                                        >
+                                            {smtpTesting ? (
+                                                <>
+                                                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                                    <span>Connecting & Testing...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                                    <span>Test Connection & Dispatch Email</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+
+                                    {smtpTestResult && (
+                                        <div className={`p-3 rounded-xl border text-xs flex items-start gap-2.5 ${
+                                            smtpTestResult.success 
+                                                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500 dark:text-emerald-400' 
+                                                : 'bg-rose-500/10 border-rose-500/30 text-rose-500 dark:text-rose-400'
+                                        }`}>
+                                            <span className="font-bold text-sm leading-none mt-0.5">{smtpTestResult.success ? '✓' : '⚠️'}</span>
+                                            <div>
+                                                <p className="font-semibold">{smtpTestResult.message}</p>
+                                                {smtpTestResult.details && <p className="text-[11px] opacity-80 mt-0.5">{smtpTestResult.details}</p>}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Recent Notification Dispatches Feed */}

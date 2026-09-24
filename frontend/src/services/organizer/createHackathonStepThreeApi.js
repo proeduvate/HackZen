@@ -11,8 +11,8 @@ export const getStepThreeReview = async (draft) => {
         endDate: draft.endDate,
         description: draft.description,
         location: draft.location,
-        posterPreview: draft.posterPreview,
-        posterName: draft.posterFile?.name || '',
+        posterPreview: draft.posterPreview || draft.posterDataUrl || '',
+        posterName: draft.posterFile?.name || draft.posterName || 'Poster Uploaded',
         tracks: draft.tracks || [],
         minTeamSize: draft.minTeamSize,
         maxTeamSize: draft.maxTeamSize,
@@ -24,7 +24,7 @@ export const getStepThreeReview = async (draft) => {
             draft.location &&
             draft.startDate &&
             draft.endDate &&
-            draft.posterFile &&
+            (draft.posterFile || draft.posterDataUrl || draft.posterPreview) &&
             draft.tracks?.length > 0 &&
             draft.minTeamSize <= draft.maxTeamSize
         ),

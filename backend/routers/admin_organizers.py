@@ -284,6 +284,13 @@ async def get_organizer_ai_review(
     }) or {}
     
     past_events = await db["hackathons"].count_documents({"$or": [{"organizerId": u_id}, {"organizerEmail": email}]})
+    past_event_docs = await db["hackathons"].find(
+        {"$or": [{"organizerId": u_id}, {"organizerEmail": email}]},
+        {"title": 1}
+    ).to_list(10)
+    past_event_names = [d.get("title") for d in past_event_docs if d.get("title")]
+    
+    real_website = org_profile.get("website") or user.get("website") or ""
     
     application_data = {
         "applicantName": user.get("name") or org_profile.get("name") or email.split("@")[0].capitalize(),
@@ -291,9 +298,11 @@ async def get_organizer_ai_review(
         "organization": org_profile.get("institutionName") or org_profile.get("orgName") or user.get("organization") or user.get("college") or "Not Specified",
         "designation": org_profile.get("designation") or org_profile.get("position") or user.get("designation") or "Event Lead / Organizer",
         "orgType": org_profile.get("institutionType") or user.get("orgType") or "College / University",
-        "website": org_profile.get("website") or user.get("website") or f"https://{email.split('@')[1] if '@' in email else 'org.edu'}",
+        "website": real_website,
         "bio": org_profile.get("bio") or user.get("bio") or "",
-        "experience": f"Past Events on platform: {past_events}"
+        "experience": f"Past Events on platform: {past_events}",
+        "pastEventNames": past_event_names,
+        "pastEventsCount": past_events
     }
 
     review = await ai_service.review_organizer_application(application_data)

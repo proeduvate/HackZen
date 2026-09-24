@@ -32,6 +32,8 @@ class RequestInfoRequest(BaseModel):
     message: str = ""
     deadlineHours: int = 48
 
+@router.get("")
+@router.get("/")
 @router.get("/all")
 async def get_all_disputes(current_user: dict = Depends(RequireRole(["admin", "superadmin"]))):
     """Fetch all dispute cases enriched with case assessments, evidence integrity, similarity scores, COI detection, and audit histories"""

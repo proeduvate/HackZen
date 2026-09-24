@@ -118,6 +118,24 @@ const Submissions = () => {
         }
     };
 
+    const handleFlag = async (submissionId) => {
+        setActionLoading(prev => ({ ...prev, [submissionId]: true }));
+        setErrorMessage('');
+
+        try {
+            const item = submissions.find(s => s.id === submissionId);
+            const nextStatus = item?.status === 'Flagged for Investigation' ? 'Pending Review' : 'Flagged for Investigation';
+            await updateSubmissionStatus(submissionId, nextStatus, 'Similarity analysis review flag');
+            setSubmissions(prev => prev.map(s => s.id === submissionId ? { ...s, status: nextStatus } : s));
+            setSelectedSubmission(prev => prev?.id === submissionId ? { ...prev, status: nextStatus } : prev);
+        } catch (error) {
+            console.error('Failed to update flag status:', error);
+            setErrorMessage(error.response?.data?.detail || 'Failed to update flag status.');
+        } finally {
+            setActionLoading(prev => ({ ...prev, [submissionId]: false }));
+        }
+    };
+
     const handleOpenFile = (fileUrl) => {
         if (!fileUrl) return;
         window.open(fileUrl, '_blank', 'noopener,noreferrer');
@@ -128,8 +146,11 @@ const Submissions = () => {
             case 'Pending Review': return 'bg-amber-500/10 text-amber-400 border-amber-500/20 shadow-amber-500/5 shadow-lg';
             case 'Reviewed': return 'bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-blue-500/5 shadow-lg';
             case 'Shortlisted': return 'bg-purple-500/10 text-purple-400 border-purple-500/20 shadow-purple-500/5 shadow-lg';
-            case 'Rejected': return 'bg-red-500/10 text-red-400 border-red-500/20 shadow-red-500/5 shadow-lg';
+            case 'Rejected': return 'bg-rose-500/10 text-rose-400 border-rose-500/20 shadow-rose-500/5 shadow-lg';
             case 'Evaluated': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-emerald-500/5 shadow-lg';
+            case 'Approved': return 'bg-teal-500/10 text-teal-400 border-teal-500/20';
+            case 'Flagged for Investigation': return 'bg-amber-500/20 text-amber-300 border-amber-500/40 animate-pulse';
+            case 'Disqualified': return 'bg-red-500/20 text-red-300 border-red-500/40';
             default: return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
         }
     };
@@ -245,6 +266,7 @@ const Submissions = () => {
                                     <th className="px-6 py-4">Hackathon</th>
                                     <th className="px-6 py-4">Track</th>
                                     <th className="px-6 py-4">Status</th>
+                                    <th className="px-6 py-4">Similarity</th>
                                     <th className="px-6 py-4 text-right">Action</th>
                                 </tr>
                             </thead>
@@ -282,8 +304,40 @@ const Submissions = () => {
                                             </span>
                                         </td>
 
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-12 bg-white/10 rounded-full h-1.5 overflow-hidden">
+                                                    <div
+                                                        className={`h-full ${
+                                                            (item.plagiarismScore || 0) > 40 ? 'bg-rose-500' :
+                                                            (item.plagiarismScore || 0) > 20 ? 'bg-amber-500' : 'bg-emerald-500'
+                                                        }`}
+                                                        style={{ width: `${Math.min(100, item.plagiarismScore || 8)}%` }}
+                                                    />
+                                                </div>
+                                                <span className={`text-xs font-semibold ${
+                                                    (item.plagiarismScore || 0) > 40 ? 'text-rose-400' :
+                                                    (item.plagiarismScore || 0) > 20 ? 'text-amber-400' : 'text-emerald-400'
+                                                }`}>
+                                                    {item.plagiarismScore !== null ? `${item.plagiarismScore}%` : '8%'}
+                                                </span>
+                                            </div>
+                                        </td>
+
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex justify-end items-center gap-2">
+                                                <button
+                                                    onClick={() => handleFlag(item.id)}
+                                                    disabled={actionLoading[item.id]}
+                                                    className={`p-2 rounded-lg transition-colors ${
+                                                        item.status === 'Flagged for Investigation'
+                                                            ? 'text-amber-400 bg-amber-500/20'
+                                                            : 'text-gray-400 hover:text-amber-400 hover:bg-amber-500/10'
+                                                    }`}
+                                                    title={item.status === 'Flagged for Investigation' ? 'Flagged for Investigation' : 'Flag for Investigation'}
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" /></svg>
+                                                </button>
                                                 <button
                                                     onClick={() => setSelectedSubmission(item)}
                                                     className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"

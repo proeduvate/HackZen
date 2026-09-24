@@ -1,80 +1,23 @@
 import apiClient from '../../api/api';
 
 /**
- * Admin Settings Mock & Real API
-
- * Connected to localStorage for managing platform config and admin access without a backend,
- * but simulates real API network latency to trigger UI loading states correctly.
+ * Admin Settings API Service
+ * Directly synchronized with live backend endpoints, MongoDB settings, and audit logs.
  */
 
-const INITIAL_SETTINGS = {
-    platformName: 'Hackathon Command Center',
-    supportEmail: 'support@hackathon.com',
-    publicRegistrations: false,
-    maintenanceMode: false
-};
-
-const INITIAL_ADMINS = [
-    { id: '1', user: 'Admin One', email: 'admin1@test.com', role: 'Super Admin', avatar: 'A1' },
-    { id: '2', user: 'Admin Two', email: 'admin2@test.com', role: 'Moderator', avatar: 'A2' }
-];
-
-const getStorage = (key, defaultData) => {
-    const data = localStorage.getItem(key);
-    if (data) return JSON.parse(data);
-    localStorage.setItem(key, JSON.stringify(defaultData));
-    return defaultData;
-};
-
-const setStorage = (key, data) => {
-    localStorage.setItem(key, JSON.stringify(data));
-};
-
-// Re-introducing latency to simulate real API behavior
-const simulateDelay = (ms = 500) => new Promise(resolve => setTimeout(resolve, ms));
-
-export const getPlatformSettings = async () => {
+export const testSmtpConnection = async (payload = {}) => {
     try {
-        return await fetchPlatformSettings();
-    } catch {
-        return getStorage('mock_admin_settings', INITIAL_SETTINGS);
+        const { data } = await apiClient.post('/admin/settings/smtp/test', payload);
+        return data;
+    } catch (error) {
+        console.error('Failed to test SMTP connection:', error);
+        return {
+            success: false,
+            message: error?.response?.data?.detail || error.message || 'SMTP Connection Test Failed'
+        };
     }
 };
 
-
-export const getAdmins = async () => {
-    await simulateDelay(600);
-    return getStorage('mock_admin_list', INITIAL_ADMINS);
-};
-
-export const addAdmin = async (adminData) => {
-    await simulateDelay(800);
-    const admins = getStorage('mock_admin_list', INITIAL_ADMINS);
-    const newAdmin = {
-        id: Math.random().toString(36).substr(2, 9),
-        user: adminData.user || 'New Admin',
-        email: adminData.email || 'new@test.com',
-        role: adminData.role || 'Moderator',
-        avatar: (adminData.user || 'NA').substring(0, 2).toUpperCase()
-    };
-    admins.push(newAdmin);
-    setStorage('mock_admin_list', admins);
-    return { success: true, admin: newAdmin };
-};
-
-export const removeAdmin = async (id) => {
-    await simulateDelay(600);
-    let admins = getStorage('mock_admin_list', INITIAL_ADMINS);
-    admins = admins.filter(admin => admin.id !== id);
-    setStorage('mock_admin_list', admins);
-    return { success: true, admins };
-};
-
-/**
- * Admin Settings API
-
- * Connected to live backend endpoints for managing platform configuration, RBAC, sessions, and audit logs.
- */
 
 export const fetchPlatformSettings = async () => {
     try {

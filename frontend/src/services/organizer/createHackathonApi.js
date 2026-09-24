@@ -56,7 +56,29 @@ export const saveHackathonDraft = async (draft) => {
 };
 
 /**
- * Publishes the hackathon to the live backend.
+ * Converts a dataURL to a File object for multipart form upload.
+ */
+export const dataURLtoFile = (dataurl, filename = 'poster.png') => {
+    if (!dataurl || typeof dataurl !== 'string' || !dataurl.startsWith('data:')) return null;
+    try {
+        const arr = dataurl.split(',');
+        const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new File([u8arr], filename, { type: mime });
+    } catch (e) {
+        console.warn("Failed to convert dataURL to File:", e);
+        return null;
+    }
+};
+
+/**
+ * Publishes the hackathon to the backend.
+ * Submits with status: 'Pending' for administrative approval.
  */
 export const publishHackathon = async (draft) => {
     // Map the frontend UI draft data to match the backend HackathonCreate schema
@@ -77,16 +99,20 @@ export const publishHackathon = async (draft) => {
         minTeamSize: draft.minTeamSize || 1,
         maxTeamSize: draft.maxTeamSize || 4,
         isPublic: draft.isPublic !== undefined ? draft.isPublic : true,
-        status: "Registration Open"
+        status: "Pending" // Route to Admin Approvals review
     };
 
     try {
         let response;
+        let posterFile = draft.posterFile;
+        if (!posterFile && draft.posterDataUrl) {
+            posterFile = dataURLtoFile(draft.posterDataUrl, draft.posterName || 'hackathon_poster.png');
+        }
 
-        if (draft.posterFile) {
+        if (posterFile) {
             const formData = new FormData();
             formData.append('data', JSON.stringify(payload));
-            formData.append('poster', draft.posterFile);
+            formData.append('poster', posterFile);
 
             response = await apiClient.post('/hackathon/', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },

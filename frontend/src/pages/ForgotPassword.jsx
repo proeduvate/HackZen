@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import ThemeToggle from '../components/ThemeToggle';
 import Logo from '../components/Logo';
 import { forgotPassword } from '../api/userApi';
 import { usePlatformSettings } from '../context/PlatformSettingsContext';
@@ -13,6 +12,12 @@ const ForgotPassword = () => {
     const [error, setError] = useState('');
     const [statusMessage, setStatusMessage] = useState('');
 
+    const [openFaq, setOpenFaq] = useState(null);
+
+    const toggleFaq = (index) => {
+        setOpenFaq(openFaq === index ? null : index);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -20,7 +25,7 @@ const ForgotPassword = () => {
 
         try {
             const response = await forgotPassword({ email });
-            setStatusMessage(response.message || 'Reset link has been dispatched to your email!');
+            setStatusMessage(response.message || 'Reset link has been dispatched to your email address!');
             setIsSubmitted(true);
         } catch (err) {
             setError(err.detail || err.message || 'Unable to request password reset. Please try again.');
@@ -30,108 +35,226 @@ const ForgotPassword = () => {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen px-4 py-8 bg-navy-900 bg-radial">
-            <div className="w-full max-w-md">
-                {/* Top Navigation Row */}
-                <div className="flex items-center justify-between mb-6">
-                    <Link
-                        to="/login"
-                        className="flex items-center gap-2 text-gray-300 transition hover:text-white group"
-                    >
-                        <svg
-                            className="w-4 h-4 transition transform group-hover:-translate-x-1"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
-                        <span className="text-sm">Back to Login</span>
+        <div className="min-h-screen w-full flex flex-col lg:flex-row bg-white dark:bg-navy-900 transition-colors duration-300">
+            {/* LEFT HERO / SECURITY PANEL */}
+            <div className="lg:w-1/2 relative flex flex-col justify-between p-8 sm:p-12 lg:p-16 bg-[#F0F3FC] dark:bg-navy-950 border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-800">
+                {/* Brand Logo */}
+                <div className="relative z-10">
+                    <Link to="/" className="inline-block">
+                        <Logo size="md" showSubtext={false} />
                     </Link>
-                    <ThemeToggle />
                 </div>
 
-                {/* Logo & Title */}
-                <div className="mb-8 text-center">
-                    <img src="/proeduvatee-removebg-preview.png" alt={platformName || "ProEduvate"} className="h-20 mx-auto mb-4" />
-                    <h2 className="mb-2 text-3xl font-bold sm:text-4xl gradient-text">Reset Password</h2>
-                    <p className="text-gray-400">
-                        {isSubmitted
-                            ? "Check your email for reset instructions"
-                            : `Enter your email to receive a reset link for ${platformName || 'ProEduvate'}`}
-                    </p>
+                {/* 3D Security Lock Card */}
+                <div className="my-8 lg:my-0 flex items-center justify-center relative z-10">
+                    <div className="w-full max-w-sm bg-white/70 dark:bg-navy-900/70 backdrop-blur-md rounded-2xl p-2.5 shadow-xl border border-white/80 dark:border-slate-700/50 transition-transform duration-500 hover:scale-[1.02]">
+                        <img 
+                            src="/assets/auth/reset-lock.png" 
+                            alt="Security Lock & Key" 
+                            className="w-full h-auto rounded-xl object-cover"
+                            onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = "https://images.unsplash.com/photo-1614064641938-3bbee52942c7?auto=format&fit=crop&w=600&q=80";
+                            }}
+                        />
+                    </div>
                 </div>
 
-                {/* Forgot Password Form - Glass Effect */}
-                <div className="p-6 glass-strong rounded-xl sm:p-8 glow-purple-hover">
-                    {error && (
-                        <div className="p-3 mb-4 text-sm text-center text-red-400 border border-red-500/30 rounded-lg bg-red-500/10">
-                            {error}
+                {/* Security Best Practices Card */}
+                <div className="relative z-10 max-w-md bg-white/95 dark:bg-navy-900/90 backdrop-blur-sm border border-slate-200/60 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+                    <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-semibold text-sm mb-3">
+                        <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        <span>Security Best Practices</span>
+                    </div>
+                    <ul className="space-y-2.5 text-xs text-slate-600 dark:text-slate-400">
+                        <li className="flex items-center gap-2.5">
+                            <span className="w-4 h-4 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 text-[10px] font-bold">
+                                ✓
+                            </span>
+                            <span>Use a strong password containing numbers and symbols.</span>
+                        </li>
+                        <li className="flex items-center gap-2.5">
+                            <span className="w-4 h-4 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 text-[10px] font-bold">
+                                ✓
+                            </span>
+                            <span>Never share your password or reuse it across sites.</span>
+                        </li>
+                        <li className="flex items-center gap-2.5">
+                            <span className="w-4 h-4 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 text-[10px] font-bold">
+                                ✓
+                            </span>
+                            <span>Enable Two-Factor Authentication (2FA) when possible.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            {/* RIGHT FORM PANEL */}
+            <div className="lg:w-1/2 flex items-center justify-center p-6 sm:p-10 lg:p-16 bg-white dark:bg-navy-900">
+                <div className="w-full max-w-[420px] mx-auto py-6">
+                    {/* Header */}
+                    <div className="mb-7">
+                        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+                            Reset Your Password
+                        </h1>
+                        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                            Enter your registered email address and we'll send you a password reset link.
+                        </p>
+                    </div>
+
+                    {/* Success Message */}
+                    {isSubmitted ? (
+                        <div className="p-6 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40 text-center space-y-4">
+                            <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <h3 className="font-semibold text-slate-900 dark:text-white text-base">Check Your Inbox</h3>
+                            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                {statusMessage}
+                            </p>
+                            <Link
+                                to="/login"
+                                className="inline-block px-5 py-2.5 rounded-xl bg-[#4338ca] hover:bg-[#3730a3] text-white text-xs font-semibold shadow transition"
+                            >
+                                Back to Sign In
+                            </Link>
                         </div>
-                    )}
-                    {!isSubmitted ? (
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            {/* Email Field */}
+                    ) : (
+                        /* Form */
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                            {error && (
+                                <div className="p-3.5 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40 rounded-xl flex items-start gap-2">
+                                    <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <circle cx="12" cy="12" r="10" strokeWidth="2" />
+                                        <path strokeLinecap="round" strokeWidth="2" d="M12 8v4m0 4h.01" />
+                                    </svg>
+                                    <span>{error}</span>
+                                </div>
+                            )}
+
                             <div>
-                                <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-300">
+                                <label htmlFor="email" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                                     Email Address
                                 </label>
-                                <input
-                                    type="email"
-                                    id="email"
-                                    name="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                    className="w-full px-4 py-3 text-white placeholder-gray-500 transition border border-gray-600 rounded-lg bg-navy-900/50 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
-                                    placeholder="you@example.com"
-                                />
+                                <div className="relative">
+                                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                    </span>
+                                    <input
+                                        type="email"
+                                        id="email"
+                                        name="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="name@company.com"
+                                        required
+                                        className="w-full pl-10 pr-4 py-2.5 text-sm text-slate-900 dark:text-white bg-white dark:bg-navy-950 border border-slate-200 dark:border-slate-700 rounded-xl placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition"
+                                    />
+                                </div>
                             </div>
 
-                            {/* Submit Button */}
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className={`w-full py-3 font-semibold text-white rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 btn-hover animate-gradient flex items-center justify-center gap-2 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                className={`w-full py-3 px-4 font-semibold text-sm text-white rounded-xl bg-[#4338ca] hover:bg-[#3730a3] shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 ${
+                                    loading ? 'opacity-70 cursor-not-allowed' : ''
+                                }`}
                             >
                                 {loading ? (
                                     <>
-                                        <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                        <svg className="w-4 h-4 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                         </svg>
-                                        <span>Sending Instructions...</span>
+                                        <span>Sending Link...</span>
                                     </>
                                 ) : (
-                                    'Send Reset Link'
+                                    <>
+                                        <span>Send Reset Link</span>
+                                        <span>&rarr;</span>
+                                    </>
                                 )}
                             </button>
-                        </form>
-                    ) : (
-                        <div className="text-center py-4">
-                            <div className="w-16 h-16 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/30">
-                                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                            </div>
-                            <p className="text-gray-200 mb-6 font-medium text-sm leading-relaxed">{statusMessage}</p>
-                            <button
-                                onClick={() => { setIsSubmitted(false); setError(''); }}
-                                className="text-sm text-purple-400 hover:text-purple-300 underline underline-offset-4"
-                            >
-                                Didn't receive it? Try again
-                            </button>
-                        </div>
-                    )}
-                </div>
 
-                {/* Additional Info */}
-                <p className="mt-8 text-center text-sm text-gray-500">
-                    If you still have trouble logging in, please contact our{' '}
-                    <a href={`mailto:${supportEmail || 'support@proeduvate.com'}`} className="text-gray-400 hover:text-white underline">
-                        Support Team
-                    </a>
-                </p>
+                            <div className="text-center pt-1">
+                                <Link
+                                    to="/login"
+                                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition"
+                                >
+                                    <span>&larr;</span>
+                                    <span>Back to Sign In</span>
+                                </Link>
+                            </div>
+                        </form>
+                    )}
+
+                    {/* Need More Help Accordion */}
+                    <div className="mt-10 pt-6">
+                        <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                            Need more help?
+                        </h4>
+                        <div className="space-y-2">
+                            <div className="border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden">
+                                <button
+                                    type="button"
+                                    onClick={() => toggleFaq(1)}
+                                    className="w-full flex items-center justify-between p-3.5 text-left text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition"
+                                >
+                                    <span>Didn't receive the email?</span>
+                                    <svg 
+                                        className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${openFaq === 1 ? 'transform rotate-180' : ''}`}
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                {openFaq === 1 && (
+                                    <div className="p-3.5 pt-0 text-xs text-slate-500 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-navy-950/50">
+                                        Please check your spam or junk folder. If you still do not see it after 5 minutes, ensure the email address matches your registered account or contact support at {supportEmail || 'support@proeduvate.com'}.
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden">
+                                <button
+                                    type="button"
+                                    onClick={() => toggleFaq(2)}
+                                    className="w-full flex items-center justify-between p-3.5 text-left text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition"
+                                >
+                                    <span>Account locked?</span>
+                                    <svg 
+                                        className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${openFaq === 2 ? 'transform rotate-180' : ''}`}
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                {openFaq === 2 && (
+                                    <div className="p-3.5 pt-0 text-xs text-slate-500 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-navy-950/50">
+                                        Accounts are temporarily locked after multiple consecutive failed attempts. They unlock automatically after 30 minutes, or you can contact platform administrators to reset your session.
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="mt-12 text-center text-[11px] text-slate-400 flex items-center justify-center gap-4">
+                        <span>&copy; 2024 {platformName || 'ProEduvate'} Inc.</span>
+                        <Link to="/terms" className="hover:text-slate-600 dark:hover:text-slate-300 transition">Terms of Service</Link>
+                        <Link to="/privacy" className="hover:text-slate-600 dark:hover:text-slate-300 transition">Privacy Policy</Link>
+                    </div>
+                </div>
             </div>
         </div>
     );

@@ -96,7 +96,16 @@ const CodeComparisonModal = ({ isOpen, onClose, isLightTheme }) => {
 
 // --- AI Dispute Assessment Modal ---
 const AIDisputeAssessmentModal = ({ isOpen, onClose, assessment, isLoading, onApplyResolution, isLightTheme }) => {
+    const [isCopied, setIsCopied] = useState(false);
     if (!isOpen) return null;
+
+    const handleCopyNotice = () => {
+        if (assessment?.suggestedCommunication) {
+            navigator.clipboard.writeText(assessment.suggestedCommunication);
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000);
+        }
+    };
     return (
         <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-in fade-in duration-200">
 
@@ -164,11 +173,19 @@ const AIDisputeAssessmentModal = ({ isOpen, onClose, assessment, isLoading, onAp
                             <p className="text-slate-700 dark:text-slate-300">{assessment.recommendationReason}</p>
                         </div>
 
-                        {/* Suggested Notice */}
+                        {/* Suggested Notice with Copy Action */}
                         {assessment.suggestedCommunication && (
                             <div className={`p-4 rounded-xl border ${isLightTheme ? 'bg-slate-50 border-slate-200' : 'bg-black/30 border-white/5'}`}>
-                                <span className="font-black uppercase tracking-wider text-[10px] text-slate-500 block mb-1">Draft Official Notice to Team</span>
-                                <pre className="whitespace-pre-wrap font-sans text-slate-700 dark:text-slate-300 text-[11px] bg-slate-100 dark:bg-black/40 p-3 rounded-lg border border-slate-200 dark:border-white/5">
+                                <div className="flex justify-between items-center mb-1.5">
+                                    <span className="font-black uppercase tracking-wider text-[10px] text-slate-500">Draft Official Notice to Team</span>
+                                    <button 
+                                        onClick={handleCopyNotice}
+                                        className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-sky-50 dark:bg-sky-500/20 hover:bg-sky-100 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-500/40 transition-all flex items-center gap-1 active:scale-95"
+                                    >
+                                        {isCopied ? '✓ Copied Notice' : 'Copy Draft Notice'}
+                                    </button>
+                                </div>
+                                <pre className="whitespace-pre-wrap font-sans text-slate-700 dark:text-slate-300 text-[11px] bg-slate-100 dark:bg-black/40 p-3 rounded-lg border border-slate-200 dark:border-white/5 leading-relaxed">
                                     {assessment.suggestedCommunication}
                                 </pre>
                             </div>
@@ -200,42 +217,7 @@ const AIDisputeAssessmentModal = ({ isOpen, onClose, assessment, isLoading, onAp
     );
 };
 
-const initialDisputes = [
-    {
-        id: 'DSP-2026-00421',
-        disputeCode: 'DSP-2026-00421',
-        type: 'Plagiarism',
-        category: 'Plagiarism',
-        severity: 'CRITICAL',
-        status: 'Under Investigation',
-        created: 'Aug 12, 2026',
-        hackathonTitle: 'Global AI Summit 2026',
-        reporter: { name: 'John Doe', email: 'johndoe@mit.edu', role: 'Participant', previousReports: 0, accuracyRating: '100%' },
-        reportedTeam: { name: 'CyberKnights', college: 'ABC Engineering College', previousCases: 2, confirmedViolations: 1, warnings: 1 },
-        assessment: { riskLevel: 'CRITICAL', evidenceVerified: '3 / 4', aiConfidence: 91, slaRemaining: '17h 42m remaining', recommendation: 'INVESTIGATE & REQUEST EXPLANATION' },
-        similarityAnalysis: { overallSimilarity: 94, sourceCode: 97, documentation: 82, readme: 91, matchedSourceUrl: 'https://github.com/open-ai/reference-health-llm' },
-        evidence: [
-            { id: 'ev_1', type: 'Original Repository', source: 'GitHub', uploaded: 'Aug 12, 10:21 AM', verified: true },
-            { id: 'ev_2', type: 'Plagiarism Analysis Report', source: 'AI Scanner', uploaded: 'Aug 12, 10:25 AM', verified: true },
-            { id: 'ev_3', type: 'Git Commit History Log', source: 'GitHub API', uploaded: 'Aug 12, 11:00 AM', verified: true },
-            { id: 'ev_4', type: 'Reporter Screenshot', source: 'Upload', uploaded: 'Aug 12, 10:12 AM', verified: false }
-        ],
-        evidenceIntegrity: { sourceVerified: true, hashVerified: true, versionMatched: true, timestampVerified: true, modified: false },
-        investigationChecklist: { complaintReviewed: true, reporterVerified: true, reportedTeamIdentified: true, submissionInspected: true, evidenceVerified: true, similarityChecked: true, teamResponseReceived: false, finalDecisionRecorded: false },
-        coi: { detected: true, relationship: 'Mentor', message: 'Assigned investigator Dr. Kumar is currently assigned as team mentor.' },
-        assignedInvestigator: { name: 'Dr. S. Kumar', assignedAt: 'Aug 12, 10:45 AM' },
-        timeline: [
-            { date: 'Aug 12, 10:12 AM', event: 'Report received from John Doe' },
-            { date: 'Aug 12, 10:45 AM', event: 'Investigator Dr. Kumar assigned' },
-            { date: 'Aug 12, 11:35 AM', event: 'Evidence chain verified (94% similarity)' }
-        ],
-        communications: [
-            { author: 'System', role: 'Automated', text: 'Plagiarism flag auto-triggered by AI evaluation.', isInternal: false, date: 'Aug 12, 10:12 AM' },
-            { author: 'Admin Alex', role: 'Internal Note', text: 'Internal: Similarity confirmed against reference repo. Team explanation requested.', isInternal: true, date: 'Aug 12, 11:40 AM' }
-        ],
-        appeal: { eligible: true, windowHours: 48, status: 'No appeal submitted' }
-    }
-];
+const initialDisputes = [];
 
 const Disputes = () => {
     const { theme: currentTheme } = useTheme();
@@ -261,9 +243,9 @@ const Disputes = () => {
         tableBorder: isLightTheme ? 'divide-slate-200' : 'divide-white/5'
     };
 
-    const [disputes, setDisputes] = useState(initialDisputes);
-    const [selectedDispute, setSelectedDispute] = useState(initialDisputes[0]);
-    const [isLoading, setIsLoading] = useState(false);
+    const [disputes, setDisputes] = useState([]);
+    const [selectedDispute, setSelectedDispute] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     // Filters
     const [activeTab, setActiveTab] = useState('All');
@@ -389,9 +371,11 @@ const Disputes = () => {
             const matchesSeverity = severityFilter === 'ALL' ? true : d.severity === severityFilter;
             const query = searchQuery.toLowerCase();
             const matchesSearch = 
-                d.disputeCode.toLowerCase().includes(query) ||
-                d.reportedTeam.name.toLowerCase().includes(query) ||
-                d.reporter.name.toLowerCase().includes(query);
+                (d.disputeCode || '').toLowerCase().includes(query) ||
+                (d.reportedTeam?.name || '').toLowerCase().includes(query) ||
+                (d.reporter?.name || '').toLowerCase().includes(query) ||
+                (d.title || '').toLowerCase().includes(query) ||
+                (d.type || '').toLowerCase().includes(query);
 
             return matchesTab && matchesSeverity && matchesSearch;
         });
