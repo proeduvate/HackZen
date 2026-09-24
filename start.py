@@ -41,20 +41,24 @@ RESET = "\033[0m"
 
 processes = []
 
+
 def print_banner():
     print(f"\n{CYAN}{BOLD}{'=' * 65}{RESET}")
     print(f"{CYAN}{BOLD}   PROEDUVATE / HACKZEN FULL-STACK PLATFORM LAUNCHER{RESET}")
     print(f"{CYAN}{BOLD}{'=' * 65}{RESET}")
     print(f"  {GREEN}>> Frontend UI:{RESET}     {BOLD}http://localhost:5173{RESET}")
     print(f"  {CYAN}>> Backend API:{RESET}     {BOLD}http://localhost:8000{RESET}")
-    print(f"  {YELLOW}>> API Docs (Swagger):{RESET} {BOLD}http://localhost:8000/docs{RESET}")
+    print(
+        f"  {YELLOW}>> API Docs (Swagger):{RESET} {BOLD}http://localhost:8000/docs{RESET}"
+    )
     print(f"  {MAGENTA}>> Python Interpreter:{RESET} {PYTHON_EXEC}")
     print(f"{CYAN}{BOLD}{'=' * 65}{RESET}")
     print(f"  {YELLOW}Press Ctrl+C anytime to stop both servers safely.{RESET}\n")
 
+
 def stream_logs(pipe, prefix, color):
     try:
-        for line in iter(pipe.readline, ''):
+        for line in iter(pipe.readline, ""):
             if not line:
                 break
             clean_line = line.rstrip()
@@ -62,6 +66,7 @@ def stream_logs(pipe, prefix, color):
                 print(f"{color}{BOLD}[{prefix}]{RESET} {clean_line}")
     except Exception:
         pass
+
 
 def kill_proc_tree(pid):
     """Cleanly terminate child processes and their trees on Windows/Unix"""
@@ -71,7 +76,7 @@ def kill_proc_tree(pid):
                 ["taskkill", "/F", "/T", "/PID", str(pid)],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
-                check=False
+                check=False,
             )
         except Exception:
             pass
@@ -80,6 +85,7 @@ def kill_proc_tree(pid):
             os.killpg(os.getpgid(pid), signal.SIGTERM)
         except Exception:
             pass
+
 
 def cleanup():
     print(f"\n{YELLOW}{BOLD}[LAUNCHER] Shutting down servers...{RESET}")
@@ -92,11 +98,14 @@ def cleanup():
                 pass
     print(f"{GREEN}{BOLD}[LAUNCHER] Both servers stopped cleanly. Goodbye!{RESET}\n")
 
+
 def main():
     print_banner()
 
     # 1. Start Backend Server
-    print(f"{CYAN}[BACKEND]{RESET} Starting FastAPI backend on http://localhost:8000...")
+    print(
+        f"{CYAN}[BACKEND]{RESET} Starting FastAPI backend on http://localhost:8000..."
+    )
     backend_proc = subprocess.Popen(
         [PYTHON_EXEC, "main.py"],
         cwd=str(BACKEND_DIR),
@@ -104,14 +113,12 @@ def main():
         stderr=subprocess.STDOUT,
         text=True,
         bufsize=1,
-        universal_newlines=True
+        universal_newlines=True,
     )
     processes.append(backend_proc)
 
     t_backend = threading.Thread(
-        target=stream_logs,
-        args=(backend_proc.stdout, "BACKEND", CYAN),
-        daemon=True
+        target=stream_logs, args=(backend_proc.stdout, "BACKEND", CYAN), daemon=True
     )
     t_backend.start()
 
@@ -126,14 +133,14 @@ def main():
         stderr=subprocess.STDOUT,
         text=True,
         bufsize=1,
-        universal_newlines=True
+        universal_newlines=True,
     )
     processes.append(frontend_proc)
 
     t_frontend = threading.Thread(
         target=stream_logs,
         args=(frontend_proc.stdout, "FRONTEND", MAGENTA),
-        daemon=True
+        daemon=True,
     )
     t_frontend.start()
 
@@ -142,16 +149,21 @@ def main():
         while True:
             # If any process dies unexpectedly
             if backend_proc.poll() is not None:
-                print(f"{RED}[BACKEND] Server exited with code {backend_proc.poll()}{RESET}")
+                print(
+                    f"{RED}[BACKEND] Server exited with code {backend_proc.poll()}{RESET}"
+                )
                 break
             if frontend_proc.poll() is not None:
-                print(f"{RED}[FRONTEND] Server exited with code {frontend_proc.poll()}{RESET}")
+                print(
+                    f"{RED}[FRONTEND] Server exited with code {frontend_proc.poll()}{RESET}"
+                )
                 break
             time.sleep(0.5)
     except KeyboardInterrupt:
         pass
     finally:
         cleanup()
+
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, lambda s, f: sys.exit(0))

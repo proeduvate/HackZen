@@ -10,9 +10,15 @@ class HackathonBase(BaseModel):
     description: str = Field(..., min_length=20, max_length=2000)
     location: Optional[str] = None
     problemStatement: Optional[str] = Field(None, alias="problemStatement")
-    themes: List[Union[HackathonTheme, str]] = Field(default_factory=lambda: ["Web Dev"])
-    registrationStart: Optional[Union[datetime, str]] = Field(None, alias="registrationStart")
-    registrationEnd: Optional[Union[datetime, str]] = Field(None, alias="registrationEnd")
+    themes: List[Union[HackathonTheme, str]] = Field(
+        default_factory=lambda: ["Web Dev"]
+    )
+    registrationStart: Optional[Union[datetime, str]] = Field(
+        None, alias="registrationStart"
+    )
+    registrationEnd: Optional[Union[datetime, str]] = Field(
+        None, alias="registrationEnd"
+    )
     hackathonStart: Optional[Union[datetime, str]] = Field(None, alias="hackathonStart")
     hackathonEnd: Optional[Union[datetime, str]] = Field(None, alias="hackathonEnd")
     startDate: Optional[Union[datetime, str]] = Field(None, alias="startDate")
@@ -28,7 +34,6 @@ class HackathonBase(BaseModel):
     model_config = {"populate_by_name": True, "from_attributes": True, "extra": "allow"}
 
 
-
 class HackathonCreate(HackathonBase):
     pass
 
@@ -39,8 +44,12 @@ class HackathonUpdate(BaseModel):
     location: Optional[str] = None
     problemStatement: Optional[str] = Field(None, alias="problemStatement")
     themes: Optional[List[HackathonTheme]] = None
-    registrationStart: Optional[Union[datetime, str]] = Field(None, alias="registrationStart")
-    registrationEnd: Optional[Union[datetime, str]] = Field(None, alias="registrationEnd")
+    registrationStart: Optional[Union[datetime, str]] = Field(
+        None, alias="registrationStart"
+    )
+    registrationEnd: Optional[Union[datetime, str]] = Field(
+        None, alias="registrationEnd"
+    )
     hackathonStart: Optional[Union[datetime, str]] = Field(None, alias="hackathonStart")
     hackathonEnd: Optional[Union[datetime, str]] = Field(None, alias="hackathonEnd")
     startDate: Optional[Union[datetime, str]] = Field(None, alias="startDate")

@@ -21,4 +21,3 @@ class ChatRequest(BaseModel):
 
 class ChatQueryRequest(ChatRequest):
     pass
-

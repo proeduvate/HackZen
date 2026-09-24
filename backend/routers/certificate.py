@@ -1,4 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Body, Response, UploadFile, File, Form
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    status,
+    Body,
+    Response,
+    UploadFile,
+    File,
+    Form,
+)
 from typing import List, Optional
 from bson import ObjectId
 from datetime import datetime
@@ -32,7 +42,9 @@ async def _build_certificate_payload(
     certificate_url = None
 
     if upload_file:
-        file_path, certificate_url = await file_upload_service.save_certificate(upload_file)
+        file_path, certificate_url = await file_upload_service.save_certificate(
+            upload_file
+        )
     elif existing_file_path:
         certificate_url = file_upload_service.get_file_url(existing_file_path)
 
@@ -71,9 +83,15 @@ async def issue_certificate(
 
     db = get_db()
     settings = await db["settings"].find_one({"key": "global_config"}) or {}
-    prefix = str(settings.get("prefix") or settings.get("certificatePrefix") or "PROEDU").strip().upper() or "PROEDU"
+    prefix = (
+        str(settings.get("prefix") or settings.get("certificatePrefix") or "PROEDU")
+        .strip()
+        .upper()
+        or "PROEDU"
+    )
     year = datetime.utcnow().year
     import uuid
+
     validation_id = f"{prefix}-{year}-{str(uuid.uuid4())[:8].upper()}"
 
     cert_data = {
@@ -110,11 +128,13 @@ async def get_certificate(certificate_id: str):
     """Get certificate details"""
     db = get_db()
     settings = await db["settings"].find_one({"key": "global_config"}) or {}
-    is_public_enabled = settings.get("publicVerification", settings.get("publicQrVerification", True))
+    is_public_enabled = settings.get(
+        "publicVerification", settings.get("publicQrVerification", True)
+    )
     if is_public_enabled is False:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Public certificate verification is disabled by platform policy."
+            detail="Public certificate verification is disabled by platform policy.",
         )
 
     collection = get_certificates_collection()
@@ -128,7 +148,11 @@ async def get_certificate(certificate_id: str):
     return CertificateResponse(**cert)
 
 
-@router.post("/student/upload", response_model=CertificateResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/student/upload",
+    response_model=CertificateResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def upload_student_certificate(
     title: str = Form(...),
     completion_date: str = Form(...),
@@ -140,12 +164,19 @@ async def upload_student_certificate(
     description = description.strip()
 
     if not title:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Title is required")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Title is required"
+        )
 
     collection = get_certificates_collection()
-    existing = await collection.find_one({"userId": str(current_user["_id"]), "title": title})
+    existing = await collection.find_one(
+        {"userId": str(current_user["_id"]), "title": title}
+    )
     if existing:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Certificate with this title already exists")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Certificate with this title already exists",
+        )
 
     payload = await _build_certificate_payload(
         user_id=str(current_user["_id"]),
@@ -173,12 +204,18 @@ async def update_student_certificate(
     description = description.strip()
 
     if not title:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Title is required")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Title is required"
+        )
 
     collection = get_certificates_collection()
-    existing = await collection.find_one({"_id": ObjectId(certificate_id), "userId": str(current_user["_id"])} )
+    existing = await collection.find_one(
+        {"_id": ObjectId(certificate_id), "userId": str(current_user["_id"])}
+    )
     if not existing:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Certificate not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Certificate not found"
+        )
 
     duplicate = await collection.find_one(
         {
@@ -188,7 +225,10 @@ async def update_student_certificate(
         }
     )
     if duplicate:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Certificate with this title already exists")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Certificate with this title already exists",
+        )
 
     old_file_path = existing.get("filePath")
     payload = await _build_certificate_payload(
@@ -206,7 +246,11 @@ async def update_student_certificate(
             {"$set": payload},
         )
     except Exception:
-        if file and payload.get("filePath") and payload.get("filePath") != old_file_path:
+        if (
+            file
+            and payload.get("filePath")
+            and payload.get("filePath") != old_file_path
+        ):
             await _delete_existing_certificate_file(payload.get("filePath"))
         raise
 
@@ -223,9 +267,13 @@ async def delete_student_certificate(
     current_user: dict = Depends(with_auth),
 ):
     collection = get_certificates_collection()
-    existing = await collection.find_one({"_id": ObjectId(certificate_id), "userId": str(current_user["_id"])} )
+    existing = await collection.find_one(
+        {"_id": ObjectId(certificate_id), "userId": str(current_user["_id"])}
+    )
     if not existing:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Certificate not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Certificate not found"
+        )
 
     await _delete_existing_certificate_file(existing.get("filePath"))
     await collection.delete_one({"_id": ObjectId(certificate_id)})
@@ -346,19 +394,29 @@ async def revoke_certificate(
 @router.get("/hackathon/{hackathon_id}")
 async def get_hackathon_certificates(
     hackathon_id: str,
-    current_user: dict = Depends(RequireRole(["organizer", "admin", "superadmin"]))
+    current_user: dict = Depends(RequireRole(["organizer", "admin", "superadmin"])),
 ):
     """Retrieve all issued certificates for a specific hackathon."""
     db = get_db()
     user_role = str(current_user.get("role", "")).lower()
-    user_id = str(current_user.get("_id") or current_user.get("sub") or current_user.get("id"))
+    user_id = str(
+        current_user.get("_id") or current_user.get("sub") or current_user.get("id")
+    )
 
     if user_role == "organizer":
-        hack_q = {"_id": ObjectId(hackathon_id)} if ObjectId.is_valid(hackathon_id) else {"_id": hackathon_id}
+        hack_q = (
+            {"_id": ObjectId(hackathon_id)}
+            if ObjectId.is_valid(hackathon_id)
+            else {"_id": hackathon_id}
+        )
         hack = await db["hackathons"].find_one(hack_q)
         if not hack:
             hack = await db["hackathons"].find_one({"id": hackathon_id})
-        if hack and str(hack.get("organizerId")) != user_id and str(hack.get("organizer_id")) != user_id:
+        if (
+            hack
+            and str(hack.get("organizerId")) != user_id
+            and str(hack.get("organizer_id")) != user_id
+        ):
             pass  # Allow organizer to view results/certs for collaborative visibility
 
     cursor = db["certificates"].find({"hackathonId": hackathon_id}).sort("issuedAt", -1)
@@ -368,22 +426,35 @@ async def get_hackathon_certificates(
     for c in certs:
         c_id = str(c["_id"])
         issued_at = c.get("issuedAt")
-        date_str = issued_at.strftime("%b %d, %Y") if isinstance(issued_at, datetime) else str(issued_at or "Recently")
-        result.append({
-            "id": c_id,
-            "certificateId": c_id,
-            "userId": str(c.get("userId", "")),
-            "recipientName": c.get("recipientName") or c.get("studentName") or "Participant",
-            "teamId": str(c.get("teamId", "")),
-            "teamName": c.get("teamName", "Team"),
-            "hackathonId": str(c.get("hackathonId", hackathon_id)),
-            "hackathonTitle": c.get("hackathonTitle", "Hackathon"),
-            "certificateType": c.get("certificateType") or c.get("title") or "Participation",
-            "validationId": c.get("validationId", ""),
-            "certificateUrl": c.get("certificateUrl", f"/api/certificates/view/{c.get('userId')}_{hackathon_id}"),
-            "issuedAt": date_str,
-            "status": c.get("status", "Issued")
-        })
+        date_str = (
+            issued_at.strftime("%b %d, %Y")
+            if isinstance(issued_at, datetime)
+            else str(issued_at or "Recently")
+        )
+        result.append(
+            {
+                "id": c_id,
+                "certificateId": c_id,
+                "userId": str(c.get("userId", "")),
+                "recipientName": c.get("recipientName")
+                or c.get("studentName")
+                or "Participant",
+                "teamId": str(c.get("teamId", "")),
+                "teamName": c.get("teamName", "Team"),
+                "hackathonId": str(c.get("hackathonId", hackathon_id)),
+                "hackathonTitle": c.get("hackathonTitle", "Hackathon"),
+                "certificateType": c.get("certificateType")
+                or c.get("title")
+                or "Participation",
+                "validationId": c.get("validationId", ""),
+                "certificateUrl": c.get(
+                    "certificateUrl",
+                    f"/api/certificates/view/{c.get('userId')}_{hackathon_id}",
+                ),
+                "issuedAt": date_str,
+                "status": c.get("status", "Issued"),
+            }
+        )
 
     return result
 
@@ -391,13 +462,18 @@ async def get_hackathon_certificates(
 @router.post("/auto-issue/{hackathon_id}")
 async def auto_issue_hackathon_certificates(
     hackathon_id: str,
-    current_user: dict = Depends(RequireRole(["organizer", "admin", "superadmin"]))
+    current_user: dict = Depends(RequireRole(["organizer", "admin", "superadmin"])),
 ):
     """Auto-issue winner and participant certificates for a hackathon without requiring admin elevation."""
     import uuid
+
     db = get_db()
-    
-    hack_q = {"_id": ObjectId(hackathon_id)} if ObjectId.is_valid(hackathon_id) else {"_id": hackathon_id}
+
+    hack_q = (
+        {"_id": ObjectId(hackathon_id)}
+        if ObjectId.is_valid(hackathon_id)
+        else {"_id": hackathon_id}
+    )
     hack = await db["hackathons"].find_one(hack_q)
     if not hack:
         hack = await db["hackathons"].find_one({"id": hackathon_id})
@@ -405,7 +481,12 @@ async def auto_issue_hackathon_certificates(
         raise HTTPException(status_code=404, detail="Hackathon not found")
 
     settings = await db["settings"].find_one({"key": "global_config"}) or {}
-    prefix = str(settings.get("prefix") or settings.get("certificatePrefix") or "PROEDU").strip().upper() or "PROEDU"
+    prefix = (
+        str(settings.get("prefix") or settings.get("certificatePrefix") or "PROEDU")
+        .strip()
+        .upper()
+        or "PROEDU"
+    )
     year = datetime.utcnow().year
 
     # Fetch submissions for leaderboard mapping
@@ -414,6 +495,7 @@ async def auto_issue_hackathon_certificates(
 
     def get_sub_score(s):
         return s.get("averageScore") or s.get("score") or s.get("finalScore") or 0
+
     submissions.sort(key=get_sub_score, reverse=True)
 
     issued_count = 0
@@ -423,12 +505,21 @@ async def auto_issue_hackathon_certificates(
     teams_to_certify = []
     if submissions:
         for idx, sub in enumerate(submissions, 1):
-            teams_to_certify.append((idx, str(sub.get("teamId") or ""), sub.get("teamName") or f"Team {idx}", sub.get("userId")))
+            teams_to_certify.append(
+                (
+                    idx,
+                    str(sub.get("teamId") or ""),
+                    sub.get("teamName") or f"Team {idx}",
+                    sub.get("userId"),
+                )
+            )
     else:
         teams_cursor = db["teams"].find({"hackathonId": hackathon_id})
         reg_teams = await teams_cursor.to_list(50)
         for idx, t in enumerate(reg_teams, 1):
-            teams_to_certify.append((idx, str(t["_id"]), t.get("name") or f"Team {idx}", t.get("leaderId")))
+            teams_to_certify.append(
+                (idx, str(t["_id"]), t.get("name") or f"Team {idx}", t.get("leaderId"))
+            )
 
     for rank_idx, team_id, team_name, direct_user_id in teams_to_certify:
         if rank_idx == 1:
@@ -442,11 +533,19 @@ async def auto_issue_hackathon_certificates(
 
         members = []
         if team_id:
-            team_q = {"_id": ObjectId(team_id)} if ObjectId.is_valid(team_id) else {"_id": team_id}
+            team_q = (
+                {"_id": ObjectId(team_id)}
+                if ObjectId.is_valid(team_id)
+                else {"_id": team_id}
+            )
             team_doc = await db["teams"].find_one(team_q)
             if team_doc:
                 for m in team_doc.get("members", []):
-                    m_id = str(m.get("userId") or m.get("id") or m) if isinstance(m, dict) else str(m)
+                    m_id = (
+                        str(m.get("userId") or m.get("id") or m)
+                        if isinstance(m, dict)
+                        else str(m)
+                    )
                     if m_id and m_id not in members:
                         members.append(m_id)
                 leader_id = str(team_doc.get("leaderId") or "")
@@ -460,14 +559,20 @@ async def auto_issue_hackathon_certificates(
             members.append(f"participant_{rank_idx}")
 
         for m_id in members:
-            existing = await db["certificates"].find_one({"userId": m_id, "hackathonId": hackathon_id})
+            existing = await db["certificates"].find_one(
+                {"userId": m_id, "hackathonId": hackathon_id}
+            )
             if not existing:
                 u_doc = None
                 if ObjectId.is_valid(m_id):
                     u_doc = await db["users"].find_one({"_id": ObjectId(m_id)})
                 if not u_doc:
                     u_doc = await db["users"].find_one({"_id": m_id})
-                recip_name = u_doc.get("name") if u_doc else f"Participant {m_id[-4:] if len(m_id) > 4 else m_id}"
+                recip_name = (
+                    u_doc.get("name")
+                    if u_doc
+                    else f"Participant {m_id[-4:] if len(m_id) > 4 else m_id}"
+                )
 
                 validation_id = f"{prefix}-{year}-{str(uuid.uuid4())[:8].upper()}"
                 cert_doc = {
@@ -482,32 +587,37 @@ async def auto_issue_hackathon_certificates(
                     "validationId": validation_id,
                     "certificateUrl": f"/api/certificates/view/{m_id}_{hackathon_id}",
                     "issuedAt": now_dt,
-                    "status": "Issued"
+                    "status": "Issued",
                 }
                 await db["certificates"].insert_one(cert_doc)
                 issued_count += 1
 
-                await db["notifications"].insert_one({
-                    "userId": m_id,
-                    "type": "CERTIFICATE_ISSUED",
-                    "title": f"Certificate Issued: {cert_type}",
-                    "message": f"Congratulations! Your certificate for '{hack.get('title')}' has been issued. Verification ID: {validation_id}",
-                    "validationId": validation_id,
-                    "hackathonId": hackathon_id,
-                    "read": False,
-                    "createdAt": now_dt
-                })
+                await db["notifications"].insert_one(
+                    {
+                        "userId": m_id,
+                        "type": "CERTIFICATE_ISSUED",
+                        "title": f"Certificate Issued: {cert_type}",
+                        "message": f"Congratulations! Your certificate for '{hack.get('title')}' has been issued. Verification ID: {validation_id}",
+                        "validationId": validation_id,
+                        "hackathonId": hackathon_id,
+                        "read": False,
+                        "createdAt": now_dt,
+                    }
+                )
 
-    await db["audit_logs"].insert_one({
-        "action": "Certificates Auto-Issued",
-        "module": "Certificates",
-        "details": f"Issued {issued_count} certificates for hackathon '{hack.get('title')}'.",
-        "adminName": current_user.get("name") or current_user.get("email", "Organizer"),
-        "createdAt": now_dt
-    })
+    await db["audit_logs"].insert_one(
+        {
+            "action": "Certificates Auto-Issued",
+            "module": "Certificates",
+            "details": f"Issued {issued_count} certificates for hackathon '{hack.get('title')}'.",
+            "adminName": current_user.get("name")
+            or current_user.get("email", "Organizer"),
+            "createdAt": now_dt,
+        }
+    )
 
     return {
         "success": True,
         "message": f"Successfully issued {issued_count} certificates for '{hack.get('title')}'.",
-        "issuedCount": issued_count
+        "issuedCount": issued_count,
     }

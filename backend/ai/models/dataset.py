@@ -28,4 +28,3 @@ class DatasetUploadRequest(BaseModel):
     hackathon_id: str = Field(..., min_length=1, max_length=128)
     file_name: str = Field(..., min_length=1, max_length=256)
     content: str = Field(..., min_length=1)
-

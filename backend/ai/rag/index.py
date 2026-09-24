@@ -12,10 +12,14 @@ import re
 from backend.ai.config import AIConfig
 from backend.ai.models.dataset import DatasetInfo
 from backend.ai.models.response import SourceItem
-from backend.ai.rag.loader import LoadedDataset, build_chunks, iter_txt_files, load_dataset
+from backend.ai.rag.loader import (
+    LoadedDataset,
+    build_chunks,
+    iter_txt_files,
+    load_dataset,
+)
 from backend.ai.utils.text import normalize_text
 from backend.core.security import secure_filename
-
 
 TOKEN_RE = re.compile(r"[A-Za-z0-9_]+")
 
@@ -89,7 +93,9 @@ class RAGIndex:
         chunk_texts: list[str] = []
         chunk_records: list[tuple[LoadedDataset, int, str]] = []
         for document in documents:
-            chunks = build_chunks(document.text, self.config.chunk_size, self.config.chunk_overlap)
+            chunks = build_chunks(
+                document.text, self.config.chunk_size, self.config.chunk_overlap
+            )
             for index, chunk in enumerate(chunks):
                 normalized_chunk = normalize_text(chunk)
                 chunk_texts.append(normalized_chunk)
@@ -100,8 +106,12 @@ class RAGIndex:
         self._datasets = {}
 
         for document in documents:
-            chunks = build_chunks(document.text, self.config.chunk_size, self.config.chunk_overlap)
-            updated_at = datetime.fromtimestamp(document.path.stat().st_mtime, tz=timezone.utc)
+            chunks = build_chunks(
+                document.text, self.config.chunk_size, self.config.chunk_overlap
+            )
+            updated_at = datetime.fromtimestamp(
+                document.path.stat().st_mtime, tz=timezone.utc
+            )
             dataset_info = DatasetInfo(
                 hackathon_id=document.hackathon_id,
                 file_name=document.file_name,
@@ -121,19 +131,29 @@ class RAGIndex:
                     text=chunk,
                     vector=vector,
                     norm=self._vector_norm(vector),
-                    updated_at=datetime.fromtimestamp(document.path.stat().st_mtime, tz=timezone.utc),
+                    updated_at=datetime.fromtimestamp(
+                        document.path.stat().st_mtime, tz=timezone.utc
+                    ),
                 )
             )
 
-    async def add_dataset(self, path: Path, hackathon_id: str | None = None) -> DatasetInfo:
+    async def add_dataset(
+        self, path: Path, hackathon_id: str | None = None
+    ) -> DatasetInfo:
         async with self._lock:
             secure_name = secure_filename(path.name)
             target_path = self.config.datasets_dir / secure_name
             if target_path != path:
-                target_path.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+                target_path.write_text(
+                    path.read_text(encoding="utf-8"), encoding="utf-8"
+                )
             document = load_dataset(target_path, hackathon_id=hackathon_id)
             existing_documents = list(self._documents.values())
-            documents = [doc for doc in existing_documents if doc.hackathon_id != document.hackathon_id]
+            documents = [
+                doc
+                for doc in existing_documents
+                if doc.hackathon_id != document.hackathon_id
+            ]
             documents.append(document)
             self._rebuild_from_documents(documents)
             return self._datasets[document.hackathon_id]
@@ -153,7 +173,9 @@ class RAGIndex:
         denominator = self._vector_norm(query_vector) * chunk.norm
         return numerator / denominator if denominator else 0.0
 
-    def search(self, query: str, hackathon_id: str | None = None, top_k: int | None = None) -> list[SourceItem]:
+    def search(
+        self, query: str, hackathon_id: str | None = None, top_k: int | None = None
+    ) -> list[SourceItem]:
         normalized = normalize_text(query)
         if not normalized:
             return []

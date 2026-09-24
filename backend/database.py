@@ -18,7 +18,10 @@ class MongoDB:
                 "minPoolSize": 10,
                 "serverSelectionTimeoutMS": 5000,
             }
-            if any(k in settings.MONGO_URI.lower() for k in ["mongodb+srv", "ssl=true", "tls=true"]):
+            if any(
+                k in settings.MONGO_URI.lower()
+                for k in ["mongodb+srv", "ssl=true", "tls=true"]
+            ):
                 client_kwargs["tlsCAFile"] = certifi.where()
 
             cls.client = AsyncIOMotorClient(settings.MONGO_URI, **client_kwargs)

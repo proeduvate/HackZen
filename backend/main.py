@@ -18,7 +18,6 @@ UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 print(f"[Uploads] Directory: {UPLOADS_DIR}")
 
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup

@@ -9,15 +9,20 @@ from datetime import datetime
 from core.config import settings
 from database import get_ai_embeddings_collection, get_hackathon_collection, get_db
 
+
 class AICoMentorService:
     def __init__(self):
-        self.nvidia_api_key = getattr(settings, "NVIDIA_API_KEY", None) or os.getenv("NVIDIA_API_KEY")
-        self.openai_api_key = getattr(settings, "OPENAI_API_KEY", None) or os.getenv("OPENAI_API_KEY")
+        self.nvidia_api_key = getattr(settings, "NVIDIA_API_KEY", None) or os.getenv(
+            "NVIDIA_API_KEY"
+        )
+        self.openai_api_key = getattr(settings, "OPENAI_API_KEY", None) or os.getenv(
+            "OPENAI_API_KEY"
+        )
         self.client = None
         self.primary_model = "meta/llama-3.2-11b-vision-instruct"
         self.fallback_models = [
             "meta/llama-3.2-11b-vision-instruct",
-            "meta/llama-3.2-90b-vision-instruct"
+            "meta/llama-3.2-90b-vision-instruct",
         ]
         self.executor = ThreadPoolExecutor(max_workers=5)
         self._init_client()
@@ -30,7 +35,7 @@ class AICoMentorService:
                     base_url="https://integrate.api.nvidia.com/v1",
                     api_key=key,
                     timeout=25.0,
-                    max_retries=1
+                    max_retries=1,
                 )
             except Exception as e:
                 print(f"[AI Service] Error configuring NVIDIA AI client: {e}")
@@ -38,7 +43,7 @@ class AICoMentorService:
             try:
                 self.client = OpenAI(
                     api_key=self.openai_api_key or os.getenv("OPENAI_API_KEY"),
-                    timeout=25.0
+                    timeout=25.0,
                 )
                 self.primary_model = "gpt-4o-mini"
                 self.fallback_models = ["gpt-4o-mini", "gpt-3.5-turbo"]
@@ -55,21 +60,24 @@ class AICoMentorService:
         if not text:
             return None
         clean = text.strip()
-        
+
         # Strip markdown fences if present
         if "```" in clean:
             match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", clean)
             if match:
                 clean = match.group(1).strip()
-        
+
         try:
             return json.loads(clean)
         except Exception:
             try:
-                first_brace = min([i for i in [clean.find('{'), clean.find('[')] if i != -1], default=-1)
-                last_brace = max([clean.rfind('}'), clean.rfind(']')], default=-1)
+                first_brace = min(
+                    [i for i in [clean.find("{"), clean.find("[")] if i != -1],
+                    default=-1,
+                )
+                last_brace = max([clean.rfind("}"), clean.rfind("]")], default=-1)
                 if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
-                    candidate = clean[first_brace:last_brace + 1]
+                    candidate = clean[first_brace : last_brace + 1]
                     return json.loads(candidate)
             except Exception:
                 pass
@@ -80,7 +88,7 @@ class AICoMentorService:
         prompt: str,
         system_role: str = "You are a specialized AI system that strictly responds with valid JSON. Do not include markdown code block backticks, preamble, or commentary. Return only the raw JSON object.",
         temperature: float = 0.2,
-        max_tokens: int = 800
+        max_tokens: int = 800,
     ) -> Optional[str]:
         """Synchronously invoke LLM with fallback models"""
         client = self._get_active_client()
@@ -94,10 +102,10 @@ class AICoMentorService:
                     model=model,
                     messages=[
                         {"role": "system", "content": system_role},
-                        {"role": "user", "content": prompt}
+                        {"role": "user", "content": prompt},
                     ],
                     temperature=temperature,
-                    max_tokens=max_tokens
+                    max_tokens=max_tokens,
                 )
                 if response and response.choices and len(response.choices) > 0:
                     content = response.choices[0].message.content
@@ -111,40 +119,47 @@ class AICoMentorService:
             print(f"[AI Service] LLM generation notice: {last_error}")
         return None
 
-    async def review_hackathon_proposal(self, hackathon: Dict[str, Any]) -> Dict[str, Any]:
+    async def review_hackathon_proposal(
+        self, hackathon: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Critically evaluate a hackathon proposal based on actual field completeness & quality"""
-        title = hackathon.get('title', '').strip()
-        tagline = hackathon.get('tagline', '').strip()
-        desc = (hackathon.get('description') or '').strip()
-        prob = (hackathon.get('problemStatement') or '').strip()
-        themes = hackathon.get('themes') or []
-        tracks = hackathon.get('tracks') or []
-        rules = hackathon.get('rules') or []
-        min_team = hackathon.get('minTeamSize', 1)
-        max_team = hackathon.get('maxTeamSize', 4)
-        organizer = hackathon.get('organizer', {})
+        title = hackathon.get("title", "").strip()
+        tagline = hackathon.get("tagline", "").strip()
+        desc = (hackathon.get("description") or "").strip()
+        prob = (hackathon.get("problemStatement") or "").strip()
+        themes = hackathon.get("themes") or []
+        tracks = hackathon.get("tracks") or []
+        rules = hackathon.get("rules") or []
+        min_team = hackathon.get("minTeamSize", 1)
+        max_team = hackathon.get("maxTeamSize", 4)
+        organizer = hackathon.get("organizer", {})
 
         # Timeline Extraction & Verification
-        dates = hackathon.get('dates', {})
+        dates = hackathon.get("dates", {})
         start_raw = (
-            dates.get('start', '') 
-            or str(hackathon.get('hackathonStart') or '') 
-            or str(hackathon.get('startDate') or '')
+            dates.get("start", "")
+            or str(hackathon.get("hackathonStart") or "")
+            or str(hackathon.get("startDate") or "")
         ).strip()
         end_raw = (
-            dates.get('end', '') 
-            or str(hackathon.get('hackathonEnd') or '') 
-            or str(hackathon.get('endDate') or '')
+            dates.get("end", "")
+            or str(hackathon.get("hackathonEnd") or "")
+            or str(hackathon.get("endDate") or "")
         ).strip()
-        reg_start = str(hackathon.get('registrationStart') or '').strip()
-        reg_end = str(hackathon.get('registrationEnd') or '').strip()
+        reg_start = str(hackathon.get("registrationStart") or "").strip()
+        reg_end = str(hackathon.get("registrationEnd") or "").strip()
 
         def _parse_date(s: str) -> Optional[datetime]:
             if not s or s.lower() in ["none", "null", "undefined", ""]:
                 return None
             for fmt in [
-                "%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%S.%fZ",
-                "%b %d, %Y", "%d/%m/%Y", "%m/%d/%Y", "%Y/%m/%d"
+                "%Y-%m-%d",
+                "%Y-%m-%dT%H:%M:%S",
+                "%Y-%m-%dT%H:%M:%S.%fZ",
+                "%b %d, %Y",
+                "%d/%m/%Y",
+                "%m/%d/%Y",
+                "%Y/%m/%d",
             ]:
                 try:
                     return datetime.strptime(str(s)[:19], fmt)
@@ -174,17 +189,30 @@ class AICoMentorService:
             timeline_status = "EXCESSIVE_DURATION"
 
         # Prize Pool Evaluation
-        prize_raw = hackathon.get('prizePool') or hackathon.get('prizes') or ''
-        has_prize = bool(prize_raw and str(prize_raw).strip() not in ["", "0", "None", "TBD", "[]", "{}"])
+        prize_raw = hackathon.get("prizePool") or hackathon.get("prizes") or ""
+        has_prize = bool(
+            prize_raw
+            and str(prize_raw).strip() not in ["", "0", "None", "TBD", "[]", "{}"]
+        )
         prize_str = str(prize_raw).strip() if has_prize else "None Specified"
 
         # Judging Criteria
-        judging_raw = hackathon.get('judgingCriteria') or hackathon.get('evaluationCriteria') or ''
-        has_judging = bool(judging_raw and str(judging_raw).strip() not in ["", "None", "[]", "{}"])
+        judging_raw = (
+            hackathon.get("judgingCriteria")
+            or hackathon.get("evaluationCriteria")
+            or ""
+        )
+        has_judging = bool(
+            judging_raw and str(judging_raw).strip() not in ["", "None", "[]", "{}"]
+        )
 
         # Participant Guidelines
-        guidelines_raw = hackathon.get('guidelines') or hackathon.get('participantGuidelines') or ''
-        has_guidelines = bool(guidelines_raw and str(guidelines_raw).strip() not in ["", "None", "[]"])
+        guidelines_raw = (
+            hackathon.get("guidelines") or hackathon.get("participantGuidelines") or ""
+        )
+        has_guidelines = bool(
+            guidelines_raw and str(guidelines_raw).strip() not in ["", "None", "[]"]
+        )
 
         # Python Data Completeness Audit
         desc_words = len(desc.split()) if desc else 0
@@ -192,8 +220,20 @@ class AICoMentorService:
         rules_count = len(rules) if isinstance(rules, list) else (1 if rules else 0)
         tracks_count = len(tracks) if isinstance(tracks, list) else (1 if tracks else 0)
 
-        is_desc_vague = desc_words < 15 or desc.lower() in ["create projects", "test", "hackathon", "build projects", "placeholder"]
-        is_prob_vague = prob_words < 15 or prob.lower() in ["create projects", "test", "hackathon", "build projects", "placeholder"]
+        is_desc_vague = desc_words < 15 or desc.lower() in [
+            "create projects",
+            "test",
+            "hackathon",
+            "build projects",
+            "placeholder",
+        ]
+        is_prob_vague = prob_words < 15 or prob.lower() in [
+            "create projects",
+            "test",
+            "hackathon",
+            "build projects",
+            "placeholder",
+        ]
         is_rules_empty = rules_count == 0
 
         audit_summary = f"""
@@ -268,9 +308,9 @@ Return ONLY a valid JSON object strictly matching this schema with dynamically c
             text = await asyncio.wait_for(
                 loop.run_in_executor(
                     self.executor,
-                    lambda: self._call_llm(prompt, temperature=0.2, max_tokens=1000)
+                    lambda: self._call_llm(prompt, temperature=0.2, max_tokens=1000),
                 ),
-                timeout=25.0
+                timeout=25.0,
             )
 
             parsed = self._clean_json(text)
@@ -288,7 +328,7 @@ Return ONLY a valid JSON object strictly matching this schema with dynamically c
                     "end": end_raw,
                     "durationDays": timeline_gap_days,
                     "isValid": timeline_ok,
-                    "status": timeline_status
+                    "status": timeline_status,
                 }
                 parsed["hasJudgingCriteria"] = has_judging
                 parsed["hasPrizePool"] = has_prize
@@ -297,12 +337,15 @@ Return ONLY a valid JSON object strictly matching this schema with dynamically c
                 return parsed
         except Exception as e:
             import traceback
+
             print(f"[AI Service] Hackathon review notice: {repr(e)}")
             traceback.print_exc()
 
         # Dynamic heuristic fallback calculating scores directly from data audit
-        calc_clarity = 25 if (is_desc_vague or is_prob_vague) else (60 if desc_words < 30 else 88)
-        
+        calc_clarity = (
+            25 if (is_desc_vague or is_prob_vague) else (60 if desc_words < 30 else 88)
+        )
+
         calc_feasibility = 85
         if timeline_status in ["INVALID_REVERSED", "NOT_SPECIFIED"]:
             calc_feasibility -= 40
@@ -322,8 +365,12 @@ Return ONLY a valid JSON object strictly matching this schema with dynamically c
         if has_guidelines:
             calc_completeness += 15
 
-        calc_overall = int((calc_clarity * 0.35) + (calc_feasibility * 0.40) + (calc_completeness * 0.25))
-        
+        calc_overall = int(
+            (calc_clarity * 0.35)
+            + (calc_feasibility * 0.40)
+            + (calc_completeness * 0.25)
+        )
+
         # Stricter recommendation: Must have valid timeline, non-empty rules, and score >= 75
         if timeline_status == "INVALID_REVERSED" or is_rules_empty or calc_overall < 72:
             calc_rec = "REQUEST_CHANGES"
@@ -332,35 +379,59 @@ Return ONLY a valid JSON object strictly matching this schema with dynamically c
 
         concerns = []
         if timeline_status == "INVALID_REVERSED":
-            concerns.append(f"Event timeline is invalid: end date ('{end_raw}') cannot be before start date ('{start_raw}').")
+            concerns.append(
+                f"Event timeline is invalid: end date ('{end_raw}') cannot be before start date ('{start_raw}')."
+            )
         elif timeline_status == "NOT_SPECIFIED":
             concerns.append("Event start and end dates have not been configured.")
         elif timeline_gap_days < 1 and timeline_ok:
-            concerns.append(f"Event duration is less than 24 hours ({timeline_gap_days} days). Ensure adequate building time.")
+            concerns.append(
+                f"Event duration is less than 24 hours ({timeline_gap_days} days). Ensure adequate building time."
+            )
 
         if is_desc_vague or is_prob_vague:
-            concerns.append(f"Problem statement and description are too brief ({prob_words} words) — specify technical challenges, target personas, and expected deliverables.")
+            concerns.append(
+                f"Problem statement and description are too brief ({prob_words} words) — specify technical challenges, target personas, and expected deliverables."
+            )
         if is_rules_empty:
-            concerns.append("Official submission rules, eligibility criteria, and code originality terms are missing.")
+            concerns.append(
+                "Official submission rules, eligibility criteria, and code originality terms are missing."
+            )
         if not has_judging:
-            concerns.append("Transparent evaluation and judging criteria are not defined for participants.")
+            concerns.append(
+                "Transparent evaluation and judging criteria are not defined for participants."
+            )
         if not has_prize:
-            concerns.append("Prize pool or participant incentive details are unconfigured.")
+            concerns.append(
+                "Prize pool or participant incentive details are unconfigured."
+            )
         if tracks_count <= 1 and (not tracks or "general" in str(tracks).lower()):
-            concerns.append("Tracks are generic — consider defining distinct problem challenge tracks.")
+            concerns.append(
+                "Tracks are generic — consider defining distinct problem challenge tracks."
+            )
 
         strengths = []
         if timeline_ok:
-            strengths.append(f"Structured event timeline spanning {timeline_gap_days} days ({start_raw} to {end_raw}).")
+            strengths.append(
+                f"Structured event timeline spanning {timeline_gap_days} days ({start_raw} to {end_raw})."
+            )
         if tracks_count > 1:
-            strengths.append(f"Multi-track challenge scope featuring {', '.join([str(t) for t in tracks[:3]])}.")
+            strengths.append(
+                f"Multi-track challenge scope featuring {', '.join([str(t) for t in tracks[:3]])}."
+            )
         else:
-            strengths.append(f"Open-format hackathon theme allowing cross-disciplinary submissions.")
+            strengths.append(
+                "Open-format hackathon theme allowing cross-disciplinary submissions."
+            )
         if has_prize:
             strengths.append(f"Incentive pool established: {prize_str}.")
         if has_judging:
-            strengths.append("Structured evaluation criteria provided for participants.")
-        strengths.append(f"Balanced team participation bounds configured ({min_team}-{max_team} members).")
+            strengths.append(
+                "Structured evaluation criteria provided for participants."
+            )
+        strengths.append(
+            f"Balanced team participation bounds configured ({min_team}-{max_team} members)."
+        )
 
         feedback_items = []
         if timeline_status in ["INVALID_REVERSED", "NOT_SPECIFIED"]:
@@ -368,12 +439,16 @@ Return ONLY a valid JSON object strictly matching this schema with dynamically c
         if is_rules_empty:
             feedback_items.append("add clear submission and code originality rules")
         if is_desc_vague:
-            feedback_items.append("expand the problem statement with specific technical deliverables")
+            feedback_items.append(
+                "expand the problem statement with specific technical deliverables"
+            )
         if not has_judging:
             feedback_items.append("specify the judging rubric criteria")
 
         if feedback_items:
-            feedback = f"Before publishing '{title}', please: {', '.join(feedback_items)}."
+            feedback = (
+                f"Before publishing '{title}', please: {', '.join(feedback_items)}."
+            )
         else:
             feedback = f"Proposal for '{title}' demonstrates solid feasibility, verified timeline ({timeline_gap_days} days), and clear track structure."
 
@@ -390,42 +465,78 @@ Return ONLY a valid JSON object strictly matching this schema with dynamically c
                 "end": end_raw,
                 "durationDays": timeline_gap_days,
                 "isValid": timeline_ok,
-                "status": timeline_status
+                "status": timeline_status,
             },
             "hasJudgingCriteria": has_judging,
             "hasPrizePool": has_prize,
             "hasGuidelines": has_guidelines,
             "rulesCount": rules_count,
             "strengths": strengths,
-            "concerns": concerns if concerns else ["Ensure starter repository templates and judging rubric are shared with teams."],
+            "concerns": (
+                concerns
+                if concerns
+                else [
+                    "Ensure starter repository templates and judging rubric are shared with teams."
+                ]
+            ),
             "suggestedFeedback": feedback,
-            "source": "heuristic"
+            "source": "heuristic",
         }
 
-    async def review_organizer_application(self, application: Dict[str, Any]) -> Dict[str, Any]:
+    async def review_organizer_application(
+        self, application: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Review an organizer application with data-driven risk and credibility assessment"""
-        name = application.get('applicantName', application.get('name', 'Applicant')).strip()
-        email = application.get('email', '').strip()
-        org = application.get('organization', 'Organization').strip()
-        designation = application.get('designation', '').strip()
-        org_type = application.get('orgType', '').strip()
-        website = application.get('website', '').strip()
-        bio = application.get('bio', '').strip()
-        experience = application.get('experience', '').strip()
-        past_event_names = application.get('pastEventNames', [])
+        name = application.get(
+            "applicantName", application.get("name", "Applicant")
+        ).strip()
+        email = application.get("email", "").strip()
+        org = application.get("organization", "Organization").strip()
+        designation = application.get("designation", "").strip()
+        org_type = application.get("orgType", "").strip()
+        website = application.get("website", "").strip()
+        bio = application.get("bio", "").strip()
+        experience = application.get("experience", "").strip()
+        past_event_names = application.get("pastEventNames", [])
 
         # Audit Domain Authenticity
         domain = ""
         if "@" in email:
             domain = email.split("@")[1].lower()
 
-        free_domains = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com", "live.com", "rediffmail.com", "protonmail.com"]
-        is_free_mail = any(domain == f or domain.endswith("." + f) for f in free_domains)
-        is_edu = domain.endswith(".edu") or domain.endswith(".ac.in") or domain.endswith(".edu.in")
-        is_corporate = not is_free_mail and not is_edu and ("." in domain) and not domain.endswith("org.edu")
+        free_domains = [
+            "gmail.com",
+            "yahoo.com",
+            "hotmail.com",
+            "outlook.com",
+            "icloud.com",
+            "live.com",
+            "rediffmail.com",
+            "protonmail.com",
+        ]
+        is_free_mail = any(
+            domain == f or domain.endswith("." + f) for f in free_domains
+        )
+        is_edu = (
+            domain.endswith(".edu")
+            or domain.endswith(".ac.in")
+            or domain.endswith(".edu.in")
+        )
+        is_corporate = (
+            not is_free_mail
+            and not is_edu
+            and ("." in domain)
+            and not domain.endswith("org.edu")
+        )
         is_edu_or_corp = is_edu or is_corporate
 
-        domain_trust = "INSTITUTIONAL (.EDU/.AC.IN)" if is_edu else ("CORPORATE/CUSTOM DOMAIN" if is_corporate else "FREE WEBMAIL (PUBLIC)")
+        domain_trust = (
+            "INSTITUTIONAL (.EDU/.AC.IN)"
+            if is_edu
+            else (
+                "CORPORATE/CUSTOM DOMAIN" if is_corporate else "FREE WEBMAIL (PUBLIC)"
+            )
+        )
 
         # Audit Past Events
         past_events = 0
@@ -441,9 +552,24 @@ Return ONLY a valid JSON object strictly matching this schema with dynamically c
         # Audit Profile Depth
         bio_words = len(bio.split()) if bio else 0
         is_bio_substantial = bio_words >= 25
-        has_website = bool(website and len(website) > 8 and "http" in website and not website.endswith("org.edu"))
-        org_specific = bool(org and len(org) > 3 and org.lower() not in ["not specified", "organization", "test", "company", "none", "n/a"])
-        designation_credible = bool(designation and len(designation) >= 3 and designation.lower() not in ["none", "test", "na", "n/a", "not specified"])
+        has_website = bool(
+            website
+            and len(website) > 8
+            and "http" in website
+            and not website.endswith("org.edu")
+        )
+        org_specific = bool(
+            org
+            and len(org) > 3
+            and org.lower()
+            not in ["not specified", "organization", "test", "company", "none", "n/a"]
+        )
+        designation_credible = bool(
+            designation
+            and len(designation) >= 3
+            and designation.lower()
+            not in ["none", "test", "na", "n/a", "not specified"]
+        )
 
         audit_summary = f"""
 [ORGANIZER PROFILE AUDIT]:
@@ -498,15 +624,17 @@ Return ONLY a valid JSON object matching this schema with dynamic values (DO NOT
             text = await asyncio.wait_for(
                 loop.run_in_executor(
                     self.executor,
-                    lambda: self._call_llm(prompt, temperature=0.1, max_tokens=850)
+                    lambda: self._call_llm(prompt, temperature=0.1, max_tokens=850),
                 ),
-                timeout=25.0
+                timeout=25.0,
             )
 
             parsed = self._clean_json(text)
             if isinstance(parsed, dict) and "riskTier" in parsed:
                 if isinstance(parsed.get("aiSummary"), dict):
-                    parsed["aiSummary"] = f"Applicant {name} representing '{org}' evaluated. Risk score {parsed.get('riskScore', 20)}%."
+                    parsed["aiSummary"] = (
+                        f"Applicant {name} representing '{org}' evaluated. Risk score {parsed.get('riskScore', 20)}%."
+                    )
                 parsed["source"] = "nvidia-llama"
                 parsed["riskScore"] = int(parsed.get("riskScore", 20))
                 parsed["confidenceScore"] = int(parsed.get("confidenceScore", 90))
@@ -540,14 +668,32 @@ Return ONLY a valid JSON object matching this schema with dynamic values (DO NOT
             calc_risk = max(10, calc_risk - 10)
 
         calc_risk = max(8, min(92, calc_risk))
-        calc_tier = "LOW" if calc_risk < 30 else ("MEDIUM" if calc_risk <= 60 else "HIGH")
-        calc_rec = "APPROVE" if calc_tier == "LOW" else ("REQUEST_CHANGES" if calc_tier == "MEDIUM" else "REJECT")
+        calc_tier = (
+            "LOW" if calc_risk < 30 else ("MEDIUM" if calc_risk <= 60 else "HIGH")
+        )
+        calc_rec = (
+            "APPROVE"
+            if calc_tier == "LOW"
+            else ("REQUEST_CHANGES" if calc_tier == "MEDIUM" else "REJECT")
+        )
 
         risk_factors = [
-            {"factor": f"Email domain standing ({domain or 'unspecified'})", "impact": "CLEAN" if is_edu else ("LOW" if is_corporate else "MEDIUM")},
-            {"factor": f"Institutional representation for '{org}'", "impact": "CLEAN" if org_specific else "MEDIUM"},
-            {"factor": f"Event leadership dossier ({bio_words} words)", "impact": "CLEAN" if is_bio_substantial else "LOW"},
-            {"factor": f"Past platform events ({past_events} hosted)", "impact": "CLEAN" if past_events > 0 else "LOW"}
+            {
+                "factor": f"Email domain standing ({domain or 'unspecified'})",
+                "impact": "CLEAN" if is_edu else ("LOW" if is_corporate else "MEDIUM"),
+            },
+            {
+                "factor": f"Institutional representation for '{org}'",
+                "impact": "CLEAN" if org_specific else "MEDIUM",
+            },
+            {
+                "factor": f"Event leadership dossier ({bio_words} words)",
+                "impact": "CLEAN" if is_bio_substantial else "LOW",
+            },
+            {
+                "factor": f"Past platform events ({past_events} hosted)",
+                "impact": "CLEAN" if past_events > 0 else "LOW",
+            },
         ]
 
         verified_badges = []
@@ -583,23 +729,40 @@ Return ONLY a valid JSON object matching this schema with dynamic values (DO NOT
             "bioWordCount": bio_words,
             "pastEventsCount": past_events,
             "orgSpecific": org_specific,
-            "source": "heuristic"
+            "source": "heuristic",
         }
 
-    async def review_project_submission(self, submission: Dict[str, Any]) -> Dict[str, Any]:
+    async def review_project_submission(
+        self, submission: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Critically review a hackathon project submission using dynamic technical rubric evaluation"""
-        title = submission.get('projectTitle', submission.get('title', 'Project')).strip()
-        track = submission.get('category', submission.get('track', 'General')).strip()
-        tagline = submission.get('tagline', '').strip()
-        desc = (submission.get('desc') or submission.get('description') or '').strip()
-        repo_url = submission.get('repoUrl', submission.get('githubUrl', '')).strip()
-        demo_url = submission.get('demoUrl', submission.get('videoUrl', '')).strip()
-        tech_stack = submission.get('techStack', [])
+        title = submission.get(
+            "projectTitle", submission.get("title", "Project")
+        ).strip()
+        track = submission.get("category", submission.get("track", "General")).strip()
+        tagline = submission.get("tagline", "").strip()
+        desc = (submission.get("desc") or submission.get("description") or "").strip()
+        repo_url = submission.get("repoUrl", submission.get("githubUrl", "")).strip()
+        demo_url = submission.get("demoUrl", submission.get("videoUrl", "")).strip()
+        tech_stack = submission.get("techStack", [])
         if isinstance(tech_stack, str):
             tech_stack = [t.strip() for t in tech_stack.split(",") if t.strip()]
 
-        has_repo = any(h in repo_url.lower() for h in ["github.com", "gitlab.com", "bitbucket.org"]) and len(repo_url) > 15
-        has_demo = bool(demo_url and len(demo_url) > 8 and any(h in demo_url.lower() for h in ["http", "youtu", "loom", "vercel", "netlify", "vimeo"]))
+        has_repo = (
+            any(
+                h in repo_url.lower()
+                for h in ["github.com", "gitlab.com", "bitbucket.org"]
+            )
+            and len(repo_url) > 15
+        )
+        has_demo = bool(
+            demo_url
+            and len(demo_url) > 8
+            and any(
+                h in demo_url.lower()
+                for h in ["http", "youtu", "loom", "vercel", "netlify", "vimeo"]
+            )
+        )
         desc_words = len(desc.split()) if desc else 0
         tech_str = ", ".join(tech_stack) if tech_stack else "Unspecified Stack"
 
@@ -608,13 +771,55 @@ Return ONLY a valid JSON object matching this schema with dynamic values (DO NOT
         tech_lower = [t.lower() for t in tech_stack]
         coherent_signals = []
         if any(w in track_lower for w in ["ai", "machine learning", "ml", "data"]):
-            if any(t in " ".join(tech_lower) for t in ["python", "pytorch", "tensorflow", "opencv", "scikit", "llm", "openai", "gemini", "langchain", "huggingface", "pandas"]):
+            if any(
+                t in " ".join(tech_lower)
+                for t in [
+                    "python",
+                    "pytorch",
+                    "tensorflow",
+                    "opencv",
+                    "scikit",
+                    "llm",
+                    "openai",
+                    "gemini",
+                    "langchain",
+                    "huggingface",
+                    "pandas",
+                ]
+            ):
                 coherent_signals.append("AI/Data Stack Alignment")
         if any(w in track_lower for w in ["web", "fullstack", "saas", "app"]):
-            if any(t in " ".join(tech_lower) for t in ["react", "next", "vue", "node", "express", "fastapi", "tailwind", "typescript", "javascript", "mongo", "postgres"]):
+            if any(
+                t in " ".join(tech_lower)
+                for t in [
+                    "react",
+                    "next",
+                    "vue",
+                    "node",
+                    "express",
+                    "fastapi",
+                    "tailwind",
+                    "typescript",
+                    "javascript",
+                    "mongo",
+                    "postgres",
+                ]
+            ):
                 coherent_signals.append("Modern Web/Fullstack Stack Alignment")
         if any(w in track_lower for w in ["web3", "blockchain", "crypto", "defi"]):
-            if any(t in " ".join(tech_lower) for t in ["solidity", "ethereum", "web3", "rust", "polygon", "hardhat", "ethers", "ipfs"]):
+            if any(
+                t in " ".join(tech_lower)
+                for t in [
+                    "solidity",
+                    "ethereum",
+                    "web3",
+                    "rust",
+                    "polygon",
+                    "hardhat",
+                    "ethers",
+                    "ipfs",
+                ]
+            ):
                 coherent_signals.append("Web3/Smart Contract Architecture Alignment")
 
         is_track_coherent = len(coherent_signals) > 0 or not tech_stack
@@ -679,9 +884,9 @@ Return ONLY a valid JSON object matching this schema with dynamically calculated
             text = await asyncio.wait_for(
                 loop.run_in_executor(
                     self.executor,
-                    lambda: self._call_llm(prompt, temperature=0.2, max_tokens=850)
+                    lambda: self._call_llm(prompt, temperature=0.2, max_tokens=850),
                 ),
-                timeout=25.0
+                timeout=25.0,
             )
 
             parsed = self._clean_json(text)
@@ -689,7 +894,9 @@ Return ONLY a valid JSON object matching this schema with dynamically calculated
                 parsed["source"] = "nvidia-llama"
                 parsed["overallScore"] = int(parsed.get("overallScore", 80))
                 parsed["problemFit"] = int(parsed.get("problemFit", 80))
-                parsed["technicalFeasibility"] = int(parsed.get("technicalFeasibility", 80))
+                parsed["technicalFeasibility"] = int(
+                    parsed.get("technicalFeasibility", 80)
+                )
                 parsed["codeQualityScore"] = int(parsed.get("codeQualityScore", 80))
                 parsed["hasRepo"] = has_repo
                 parsed["hasDemo"] = has_demo
@@ -702,27 +909,48 @@ Return ONLY a valid JSON object matching this schema with dynamically calculated
 
         # Dynamic heuristic fallback
         calc_code = 85 if (has_repo and has_demo) else (70 if has_repo else 35)
-        calc_fit = 88 if is_track_coherent and desc_words >= 25 else (70 if desc_words >= 15 else 50)
+        calc_fit = (
+            88
+            if is_track_coherent and desc_words >= 25
+            else (70 if desc_words >= 15 else 50)
+        )
         calc_tech = 85 if len(tech_stack) >= 3 else 70
         calc_innov = 80 if desc_words >= 25 else 65
-        calc_overall = int((calc_code * 0.35) + (calc_fit * 0.35) + (calc_tech * 0.15) + (calc_innov * 0.15))
-        calc_rec = "RECOMMEND APPROVAL" if (calc_overall >= 75 and has_repo) else "REQUEST CHANGES"
+        calc_overall = int(
+            (calc_code * 0.35)
+            + (calc_fit * 0.35)
+            + (calc_tech * 0.15)
+            + (calc_innov * 0.15)
+        )
+        calc_rec = (
+            "RECOMMEND APPROVAL"
+            if (calc_overall >= 75 and has_repo)
+            else "REQUEST CHANGES"
+        )
 
         concerns = []
         if not has_repo:
-            concerns.append("Active source code repository (GitHub/GitLab) is missing or unverified.")
+            concerns.append(
+                "Active source code repository (GitHub/GitLab) is missing or unverified."
+            )
         if not has_demo:
             concerns.append("Working demo URL or video walkthrough was not provided.")
         if desc_words < 20:
-            concerns.append(f"Project documentation is brief ({desc_words} words) — elaborate on system architecture.")
+            concerns.append(
+                f"Project documentation is brief ({desc_words} words) — elaborate on system architecture."
+            )
 
         strengths = []
         if has_repo:
-            strengths.append(f"Verified source code repository linked on recognized Git host.")
+            strengths.append(
+                "Verified source code repository linked on recognized Git host."
+            )
         if len(tech_stack) >= 2:
             strengths.append(f"Structured multi-tier technology stack ({tech_str}).")
         if coherent_signals:
-            strengths.append(f"Direct architectural fit for {track} track ({', '.join(coherent_signals)}).")
+            strengths.append(
+                f"Direct architectural fit for {track} track ({', '.join(coherent_signals)})."
+            )
 
         return {
             "overallScore": calc_overall,
@@ -732,42 +960,69 @@ Return ONLY a valid JSON object matching this schema with dynamically calculated
             "innovationScore": calc_innov,
             "codeQualityScore": calc_code,
             "summary": f"'{title}' demonstrates {'cohesive deliverable completeness' if has_repo else 'missing active repository deliverable'} in the {track} track, utilizing {tech_str}.",
-            "strengths": strengths if strengths else ["Project submission initialized within track bounds."],
-            "concerns": concerns if concerns else ["Ensure automated test coverage and deploy demo environment prior to judging."],
+            "strengths": (
+                strengths
+                if strengths
+                else ["Project submission initialized within track bounds."]
+            ),
+            "concerns": (
+                concerns
+                if concerns
+                else [
+                    "Ensure automated test coverage and deploy demo environment prior to judging."
+                ]
+            ),
             "suggestedFeedback": f"Demonstrate user workflow and highlight problem metrics solved by '{title}' during presentation.",
             "hasRepo": has_repo,
             "hasDemo": has_demo,
             "techStackCount": len(tech_stack),
             "descWordCount": desc_words,
             "trackCoherent": is_track_coherent,
-            "source": "heuristic"
+            "source": "heuristic",
         }
 
     async def analyze_dispute_case(self, dispute: Dict[str, Any]) -> Dict[str, Any]:
         """Critically analyze a plagiarism or dispute case tied to real similarity percentage"""
-        sim_data = dispute.get('similarityAnalysis', dispute.get('similarity_analysis', {}))
+        sim_data = dispute.get(
+            "similarityAnalysis", dispute.get("similarity_analysis", {})
+        )
         if not isinstance(sim_data, dict):
             sim_data = {}
 
-        overall_sim = int(sim_data.get('overallSimilarity', 75))
-        source_sim = int(sim_data.get('sourceCode', sim_data.get('sourceCodeSimilarity', overall_sim)))
-        doc_sim = int(sim_data.get('documentation', sim_data.get('docSimilarity', 70)))
-        matched_repo = sim_data.get('matchedSourceUrl', sim_data.get('matchedRepo', 'External open-source repository'))
-        
-        team = dispute.get('reportedTeam', {})
-        team_name = team.get('name', 'Reported Team') if isinstance(team, dict) else str(team)
-        hackathon = dispute.get('hackathonTitle', 'Hackathon')
-        category = dispute.get('type', dispute.get('category', 'Code Plagiarism'))
-        evidence = dispute.get('evidence', [])
+        overall_sim = int(sim_data.get("overallSimilarity", 75))
+        source_sim = int(
+            sim_data.get(
+                "sourceCode", sim_data.get("sourceCodeSimilarity", overall_sim)
+            )
+        )
+        doc_sim = int(sim_data.get("documentation", sim_data.get("docSimilarity", 70)))
+        matched_repo = sim_data.get(
+            "matchedSourceUrl",
+            sim_data.get("matchedRepo", "External open-source repository"),
+        )
+
+        team = dispute.get("reportedTeam", {})
+        team_name = (
+            team.get("name", "Reported Team") if isinstance(team, dict) else str(team)
+        )
+        hackathon = dispute.get("hackathonTitle", "Hackathon")
+        category = dispute.get("type", dispute.get("category", "Code Plagiarism"))
+        evidence = dispute.get("evidence", [])
 
         evidence_str_list = []
         if isinstance(evidence, list):
             for i, item in enumerate(evidence, 1):
                 if isinstance(item, dict):
-                    evidence_str_list.append(f"  {i}. {item.get('title', item.get('description', str(item)))}")
+                    evidence_str_list.append(
+                        f"  {i}. {item.get('title', item.get('description', str(item)))}"
+                    )
                 else:
                     evidence_str_list.append(f"  {i}. {str(item)}")
-        evidence_text = "\n".join(evidence_str_list) if evidence_str_list else "  - Automated AST Code Similarity Analysis Report"
+        evidence_text = (
+            "\n".join(evidence_str_list)
+            if evidence_str_list
+            else "  - Automated AST Code Similarity Analysis Report"
+        )
 
         prompt = f"""You are the ProEduvate Platform AI Dispute & Plagiarism Investigator.
 Analyze this specific hackathon dispute case based on empirical similarity data:
@@ -816,9 +1071,9 @@ Return ONLY a valid JSON object matching this schema with dynamic values (DO NOT
             text = await asyncio.wait_for(
                 loop.run_in_executor(
                     self.executor,
-                    lambda: self._call_llm(prompt, temperature=0.1, max_tokens=900)
+                    lambda: self._call_llm(prompt, temperature=0.1, max_tokens=900),
                 ),
-                timeout=25.0
+                timeout=25.0,
             )
 
             parsed = self._clean_json(text)
@@ -832,9 +1087,25 @@ Return ONLY a valid JSON object matching this schema with dynamic values (DO NOT
             print(f"[AI Service] Dispute analysis notice: {e}")
 
         # Dynamic fallback
-        sev = "CRITICAL" if overall_sim > 80 else ("HIGH" if overall_sim > 50 else ("MEDIUM" if overall_sim > 30 else "LOW"))
-        dec = "DISQUALIFICATION" if overall_sim > 85 else ("REQUEST_EXPLANATION" if overall_sim > 50 else ("ISSUE_WARNING" if overall_sim > 30 else "DISMISS"))
-        
+        sev = (
+            "CRITICAL"
+            if overall_sim > 80
+            else (
+                "HIGH"
+                if overall_sim > 50
+                else ("MEDIUM" if overall_sim > 30 else "LOW")
+            )
+        )
+        dec = (
+            "DISQUALIFICATION"
+            if overall_sim > 85
+            else (
+                "REQUEST_EXPLANATION"
+                if overall_sim > 50
+                else ("ISSUE_WARNING" if overall_sim > 30 else "DISMISS")
+            )
+        )
+
         drafted_notice = (
             f"Subject: Official Notice - Originality Clarification Request: [{hackathon}]\n\n"
             f"Dear Team {team_name},\n\n"
@@ -853,33 +1124,47 @@ Return ONLY a valid JSON object matching this schema with dynamic values (DO NOT
             "keyFindings": [
                 f"Automated AST scanner identified {overall_sim}% similarity ({source_sim}% code, {doc_sim}% documentation).",
                 f"Benchmark target matched: {matched_repo}.",
-                f"Dispute investigated under {category} guidelines with {len(evidence_str_list)} recorded evidence items."
+                f"Dispute investigated under {category} guidelines with {len(evidence_str_list)} recorded evidence items.",
             ],
             "recommendedDecision": dec,
             "recommendationReason": f"Similarity metric of {overall_sim}% exceeds acceptable independent originality thresholds.",
             "suggestedCommunication": drafted_notice,
             "overallSimilarity": overall_sim,
             "matchedRepo": matched_repo,
-            "source": "heuristic"
+            "source": "heuristic",
         }
 
-    async def generate_admin_insights(self, stats: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def generate_admin_insights(
+        self, stats: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """Generate platform analytics insights calculated from live database counts"""
-        total_users = stats.get('total_users', 0)
-        running_hacks = stats.get('running_hacks', 0)
-        completed_hacks = stats.get('completed_hacks', 0)
-        total_teams = stats.get('total_teams', 0)
-        total_subs = stats.get('total_subs', 0)
-        certs_minted = stats.get('certs_minted', 0)
-        pending_approvals = stats.get('pending_approvals', 0)
+        total_users = stats.get("total_users", 0)
+        running_hacks = stats.get("running_hacks", 0)
+        completed_hacks = stats.get("completed_hacks", 0)
+        total_teams = stats.get("total_teams", 0)
+        total_subs = stats.get("total_subs", 0)
+        certs_minted = stats.get("certs_minted", 0)
+        pending_approvals = stats.get("pending_approvals", 0)
 
         # Derived dynamic analytics metrics
         total_active_events = running_hacks + completed_hacks
-        completion_rate = round((completed_hacks / total_active_events * 100), 1) if total_active_events > 0 else 0.0
+        completion_rate = (
+            round((completed_hacks / total_active_events * 100), 1)
+            if total_active_events > 0
+            else 0.0
+        )
         subs_per_team = round(total_subs / total_teams, 2) if total_teams > 0 else 0.0
-        subs_per_hack = round(total_subs / running_hacks, 1) if running_hacks > 0 else 0.0
-        cert_coverage = round(certs_minted / total_subs * 100, 1) if total_subs > 0 else 0.0
-        backlog_severity = "high" if pending_approvals >= 5 else ("moderate" if pending_approvals > 0 else "clear")
+        subs_per_hack = (
+            round(total_subs / running_hacks, 1) if running_hacks > 0 else 0.0
+        )
+        cert_coverage = (
+            round(certs_minted / total_subs * 100, 1) if total_subs > 0 else 0.0
+        )
+        backlog_severity = (
+            "high"
+            if pending_approvals >= 5
+            else ("moderate" if pending_approvals > 0 else "clear")
+        )
 
         prompt = f"""You are the ProEduvate Platform AI Analytics Engine.
 Analyze these EXACT live platform metrics and derived operational rates:
@@ -906,9 +1191,9 @@ Return ONLY a valid JSON array of 6 objects with keys:
             text = await asyncio.wait_for(
                 loop.run_in_executor(
                     self.executor,
-                    lambda: self._call_llm(prompt, temperature=0.2, max_tokens=850)
+                    lambda: self._call_llm(prompt, temperature=0.2, max_tokens=850),
                 ),
-                timeout=25.0
+                timeout=25.0,
             )
 
             parsed = self._clean_json(text)
@@ -922,48 +1207,60 @@ Return ONLY a valid JSON array of 6 objects with keys:
             {
                 "title": "Community Scale & Builder Trajectory",
                 "content": f"Platform engagement encompasses {total_users} registered builders collaborating across {total_teams} teams ({round(total_users / max(1, total_teams), 1)} builders per team average).",
-                "type": "positive"
+                "type": "positive",
             },
             {
                 "title": "Arena Operational Cadence",
                 "content": f"{running_hacks} hackathons currently active alongside {completed_hacks} completed events, reflecting a {completion_rate}% arena completion rate.",
-                "type": "info"
+                "type": "info",
             },
             {
                 "title": "Governance & Approvals Queue",
                 "content": f"{pending_approvals} organizer and hackathon requests awaiting review (queue state: {backlog_severity}).",
-                "type": "warning" if pending_approvals > 0 else "positive"
+                "type": "warning" if pending_approvals > 0 else "positive",
             },
             {
                 "title": "Project Submission Yield",
                 "content": f"Submissions aggregate to {total_subs} projects across tracks, achieving {subs_per_team} deliverables per registered team.",
-                "type": "purple"
+                "type": "purple",
             },
             {
                 "title": "Verifiable Credential Index",
                 "content": f"{certs_minted} tamper-proof verifiable certificates issued to date ({cert_coverage}% coverage of submitted deliverables).",
-                "type": "positive"
+                "type": "positive",
             },
             {
                 "title": "Operational Evaluation Bandwidth",
                 "content": f"Active arenas average {subs_per_hack} submissions per event. Ensure judge rubrics and panel allocations are confirmed prior to deadlines.",
-                "type": "danger" if pending_approvals > 3 else "info"
-            }
+                "type": "danger" if pending_approvals > 3 else "info",
+            },
         ]
 
     async def generate_response(
-        self, query: str, context: List[str] = None, hackathon_id: Optional[str] = None, objective: Optional[str] = None
+        self,
+        query: str,
+        context: List[str] = None,
+        hackathon_id: Optional[str] = None,
+        objective: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Generate AI response with hackathon context"""
         try:
             hackathon_info = await self._get_hackathon_context(hackathon_id)
-            relevant_docs = await self._retrieve_relevant_documents(query, hackathon_id) if hackathon_id else []
-            
+            relevant_docs = (
+                await self._retrieve_relevant_documents(query, hackathon_id)
+                if hackathon_id
+                else []
+            )
+
             context_str = ""
             if context and len(context) > 0:
                 context_str = "\nAdditional Context: " + "\n".join(context)
 
-            objective_str = f"Student Objective: {objective}" if objective else "Stage: General Mentorship & Guidance"
+            objective_str = (
+                f"Student Objective: {objective}"
+                if objective
+                else "Stage: General Mentorship & Guidance"
+            )
 
             user_prompt = f"""Hackathon Context:
 {hackathon_info}
@@ -983,9 +1280,14 @@ Provide concise, actionable, and architecturally sound advice formatted in clean
             text = await asyncio.wait_for(
                 loop.run_in_executor(
                     self.executor,
-                    lambda: self._call_llm(user_prompt, system_role=system_role, temperature=0.4, max_tokens=1000)
+                    lambda: self._call_llm(
+                        user_prompt,
+                        system_role=system_role,
+                        temperature=0.4,
+                        max_tokens=1000,
+                    ),
                 ),
-                timeout=30.0
+                timeout=30.0,
             )
 
             if text:
@@ -993,14 +1295,14 @@ Provide concise, actionable, and architecturally sound advice formatted in clean
                     "response": text,
                     "sources": relevant_docs[:3],
                     "model_used": self.primary_model,
-                    "source": "nvidia-llama"
+                    "source": "nvidia-llama",
                 }
         except Exception as e:
             print(f"[AI Service] generate_response notice: {e}")
 
         return {
             "response": f"### Mentorship Guidance\n\nFor your question regarding *'{query[:60]}...'*, focus on the following key pillars:\n- **MVP First:** Implement your core end-to-end functionality before polishing the UI.\n- **Modular Architecture:** Keep business logic separated from presentation layers.\n- **Testing & Pitch:** Prepare a clear demo script highlighting the problem solved.",
-            "source": "heuristic"
+            "source": "heuristic",
         }
 
     async def _retrieve_relevant_documents(
@@ -1011,7 +1313,7 @@ Provide concise, actionable, and architecturally sound advice formatted in clean
             embeddings_collection = get_ai_embeddings_collection()
             if not embeddings_collection:
                 return []
-            
+
             query_filter = {}
             if hackathon_id and hackathon_id != "general":
                 query_filter["hackathon_id"] = hackathon_id
@@ -1031,18 +1333,23 @@ Provide concise, actionable, and architecturally sound advice formatted in clean
             hackathon = None
             try:
                 from bson import ObjectId
+
                 if ObjectId.is_valid(hackathon_id):
-                    hackathon = await db["hackathons"].find_one({"_id": ObjectId(hackathon_id)})
+                    hackathon = await db["hackathons"].find_one(
+                        {"_id": ObjectId(hackathon_id)}
+                    )
             except Exception:
                 pass
 
             if not hackathon:
-                hackathon = await db["hackathons"].find_one({
-                    "$or": [
-                        {"hackathonId": hackathon_id},
-                        {"title": {"$regex": hackathon_id, "$options": "i"}}
-                    ]
-                })
+                hackathon = await db["hackathons"].find_one(
+                    {
+                        "$or": [
+                            {"hackathonId": hackathon_id},
+                            {"title": {"$regex": hackathon_id, "$options": "i"}},
+                        ]
+                    }
+                )
 
             if not hackathon:
                 return f"Hackathon Track: {hackathon_id}"
@@ -1079,30 +1386,26 @@ Provide structured feedback in Markdown with:
             text = await asyncio.wait_for(
                 loop.run_in_executor(
                     self.executor,
-                    lambda: self._call_llm(prompt, system_role=system_role, temperature=0.3, max_tokens=700)
+                    lambda: self._call_llm(
+                        prompt, system_role=system_role, temperature=0.3, max_tokens=700
+                    ),
                 ),
-                timeout=25.0
+                timeout=25.0,
             )
 
             if text:
                 return {
                     "feedback": text,
-                    "analysis": {
-                        "themes_alignment": 4.5,
-                        "feasibility_score": 4.2
-                    },
-                    "source": "nvidia-llama"
+                    "analysis": {"themes_alignment": 4.5, "feasibility_score": 4.2},
+                    "source": "nvidia-llama",
                 }
         except Exception as e:
             print(f"[AI Service] Idea feedback notice: {e}")
 
         return {
             "feedback": f"### Idea Evaluation for '{idea[:40]}...'\n\n- **Strengths:** Directly aligns with {', '.join(hackathon_themes) if hackathon_themes else 'core hackathon tracks'}.\n- **Feasibility:** High potential for rapid prototyping within hackathon timeframes.\n- **Recommended Next Step:** Build a working prototype focusing on core user value.",
-            "analysis": {
-                "themes_alignment": 4.5,
-                "feasibility_score": 4.0
-            },
-            "source": "heuristic"
+            "analysis": {"themes_alignment": 4.5, "feasibility_score": 4.0},
+            "source": "heuristic",
         }
 
     async def suggest_mentor_match(
@@ -1123,9 +1426,9 @@ Format as JSON array with items {{"priority": 1, "criteria": "...", "recommended
             text = await asyncio.wait_for(
                 loop.run_in_executor(
                     self.executor,
-                    lambda: self._call_llm(prompt, temperature=0.1, max_tokens=400)
+                    lambda: self._call_llm(prompt, temperature=0.1, max_tokens=400),
                 ),
-                timeout=25.0
+                timeout=25.0,
             )
 
             parsed = self._clean_json(text)
@@ -1134,12 +1437,25 @@ Format as JSON array with items {{"priority": 1, "criteria": "...", "recommended
         except Exception as e:
             print(f"[AI Service] Mentor match notice: {e}")
 
-        tech = ", ".join(team_requirements.get('tech_stack', [])) or "FullStack & Cloud"
+        tech = ", ".join(team_requirements.get("tech_stack", [])) or "FullStack & Cloud"
         return [
-            {"priority": 1, "criteria": f"Specialized guidance in {tech}", "recommendedRole": "Technical Architect"},
-            {"priority": 2, "criteria": "Product Demo & Pitch Mentorship", "recommendedRole": "Product Lead"},
-            {"priority": 3, "criteria": "Deployment & Scalability Verification", "recommendedRole": "DevOps Specialist"}
+            {
+                "priority": 1,
+                "criteria": f"Specialized guidance in {tech}",
+                "recommendedRole": "Technical Architect",
+            },
+            {
+                "priority": 2,
+                "criteria": "Product Demo & Pitch Mentorship",
+                "recommendedRole": "Product Lead",
+            },
+            {
+                "priority": 3,
+                "criteria": "Deployment & Scalability Verification",
+                "recommendedRole": "DevOps Specialist",
+            },
         ]
+
 
 # Singleton instance
 ai_service = AICoMentorService()

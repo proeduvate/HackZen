@@ -52,7 +52,12 @@ async def create_hackathon(
         )
 
     db = get_db()
-    organizer_id = str(current_user.get("_id") or current_user.get("sub") or current_user.get("id") or "org_default")
+    organizer_id = str(
+        current_user.get("_id")
+        or current_user.get("sub")
+        or current_user.get("id")
+        or "org_default"
+    )
 
     try:
         content_type = request.headers.get("content-type", "")
@@ -416,10 +421,15 @@ async def contact_admin(
     if not hackathon:
         raise HTTPException(status_code=404, detail="Hackathon not found")
 
-    if current_user["role"] != "admin" and hackathon.get("organizerId") != current_user["sub"]:
+    if (
+        current_user["role"] != "admin"
+        and hackathon.get("organizerId") != current_user["sub"]
+    ):
         raise HTTPException(status_code=403, detail="Not authorized for this hackathon")
 
-    admins = await db["users"].find({"role": {"$in": ["admin", "superadmin"]}}).to_list(100)
+    admins = (
+        await db["users"].find({"role": {"$in": ["admin", "superadmin"]}}).to_list(100)
+    )
     if not admins:
         await db["supportRequests"].insert_one(
             {
@@ -450,10 +460,13 @@ async def contact_admin(
 
 
 @router.get("/{id}/timeline")
-async def get_hackathon_timeline(id: str, current_user: Dict[str, Any] = Depends(with_auth)):
+async def get_hackathon_timeline(
+    id: str, current_user: Dict[str, Any] = Depends(with_auth)
+):
     """Get hackathon timeline phases"""
     db = get_db()
     from bson import ObjectId as BsonId
+
     query = {"_id": BsonId(id)} if BsonId.is_valid(id) else {"_id": id}
     hackathon = await db["hackathons"].find_one(query)
     if not hackathon:
@@ -468,11 +481,36 @@ async def get_hackathon_timeline(id: str, current_user: Dict[str, Any] = Depends
         phases = timeline_data
     else:
         phases = [
-            {"name": "Registration", "status": "In Progress", "date": "Active Phase", "description": "Team registration and participant onboarding."},
-            {"name": "Hacking & Development", "status": "Upcoming", "date": "Sprint Phase", "description": "Core development and project builds."},
-            {"name": "Submission Deadline", "status": "Upcoming", "date": "Deliverable Intake", "description": "Final project repositories and demos."},
-            {"name": "Evaluation & Judging", "status": "Upcoming", "date": "Review Stage", "description": "Panel evaluations and scorecards."},
-            {"name": "Results & Awards", "status": "Upcoming", "date": "Ceremony", "description": "Final leaderboard and credential issuance."}
+            {
+                "name": "Registration",
+                "status": "In Progress",
+                "date": "Active Phase",
+                "description": "Team registration and participant onboarding.",
+            },
+            {
+                "name": "Hacking & Development",
+                "status": "Upcoming",
+                "date": "Sprint Phase",
+                "description": "Core development and project builds.",
+            },
+            {
+                "name": "Submission Deadline",
+                "status": "Upcoming",
+                "date": "Deliverable Intake",
+                "description": "Final project repositories and demos.",
+            },
+            {
+                "name": "Evaluation & Judging",
+                "status": "Upcoming",
+                "date": "Review Stage",
+                "description": "Panel evaluations and scorecards.",
+            },
+            {
+                "name": "Results & Awards",
+                "status": "Upcoming",
+                "date": "Ceremony",
+                "description": "Final leaderboard and credential issuance.",
+            },
         ]
 
     return {"id": str(hackathon.get("_id", id)), "phases": phases}
@@ -482,20 +520,31 @@ async def get_hackathon_timeline(id: str, current_user: Dict[str, Any] = Depends
 async def update_hackathon_timeline(
     id: str,
     payload: Dict[str, Any] = Body(...),
-    current_user: Dict[str, Any] = Depends(with_auth)
+    current_user: Dict[str, Any] = Depends(with_auth),
 ):
     """Update hackathon timeline phases"""
     user_role = str(current_user.get("role", "")).lower()
     if user_role not in ["organizer", "admin", "superadmin"]:
-        raise HTTPException(status_code=403, detail="Only organizers or admins can update the timeline")
+        raise HTTPException(
+            status_code=403, detail="Only organizers or admins can update the timeline"
+        )
 
     db = get_db()
     from bson import ObjectId as BsonId
+
     query = {"_id": BsonId(id)} if BsonId.is_valid(id) else {"_id": id}
     phases = payload.get("phases", payload.get("timeline", []))
 
-    result = await db["hackathons"].update_one(query, {"$set": {"timeline": phases, "updatedAt": datetime.utcnow()}})
+    result = await db["hackathons"].update_one(
+        query, {"$set": {"timeline": phases, "updatedAt": datetime.utcnow()}}
+    )
     if result.matched_count == 0:
-        result = await db["hackathons"].update_one({"id": id}, {"$set": {"timeline": phases, "updatedAt": datetime.utcnow()}})
+        result = await db["hackathons"].update_one(
+            {"id": id}, {"$set": {"timeline": phases, "updatedAt": datetime.utcnow()}}
+        )
 
-    return {"success": True, "message": "Timeline updated successfully", "phases": phases}
+    return {
+        "success": True,
+        "message": "Timeline updated successfully",
+        "phases": phases,
+    }

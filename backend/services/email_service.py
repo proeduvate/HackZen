@@ -160,7 +160,11 @@ class EmailService:
     ) -> bool:
         """Send a mentor invitation email from an organizer."""
         subject = f"Invitation to join ProEduvate as {role}"
-        signup_url = f"{settings.FRONTEND_URL.rstrip('/')}/signup?role=mentor" if settings.FRONTEND_URL else "/signup?role=mentor"
+        signup_url = (
+            f"{settings.FRONTEND_URL.rstrip('/')}/signup?role=mentor"
+            if settings.FRONTEND_URL
+            else "/signup?role=mentor"
+        )
 
         html_content = f"""
         <!DOCTYPE html>

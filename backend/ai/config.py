@@ -43,4 +43,3 @@ def get_ai_config() -> AIConfig:
         history_limit=settings.history_limit,
         max_upload_size_bytes=settings.max_upload_size_mb * 1024 * 1024,
     )
-

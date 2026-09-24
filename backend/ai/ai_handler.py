@@ -15,9 +15,31 @@ class AIHandler:
         text = (user_message or "").lower()
         if any(token in text for token in ("ppt", "slides", "presentation", "deck")):
             return "ppt"
-        if any(token in text for token in ("code", "python", "fastapi", "flask", "react", "html", "css", "javascript")):
+        if any(
+            token in text
+            for token in (
+                "code",
+                "python",
+                "fastapi",
+                "flask",
+                "react",
+                "html",
+                "css",
+                "javascript",
+            )
+        ):
             return "code"
-        if any(token in text for token in ("problem statement", "rules", "theme", "prize", "timeline", "dataset")):
+        if any(
+            token in text
+            for token in (
+                "problem statement",
+                "rules",
+                "theme",
+                "prize",
+                "timeline",
+                "dataset",
+            )
+        ):
             return "facts"
         if any(token in text for token in ("review", "evaluate", "judge")):
             return "review"
@@ -133,11 +155,18 @@ class AIHandler:
         ]
 
         if context:
-            messages.append({"role": "system", "content": f"Retrieved hackathon context:\n{context}"})
+            messages.append(
+                {
+                    "role": "system",
+                    "content": f"Retrieved hackathon context:\n{context}",
+                }
+            )
 
         for item in recent_history[-8:]:
             if item.get("role") in ("user", "assistant"):
-                messages.append({"role": item["role"], "content": item.get("content", "")})
+                messages.append(
+                    {"role": item["role"], "content": item.get("content", "")}
+                )
 
         messages.append({"role": "user", "content": user_message})
 
@@ -149,7 +178,12 @@ class AIHandler:
         }
 
         try:
-            response = requests.post(self.base_url, json=payload, headers=self._headers(), timeout=self.timeout)
+            response = requests.post(
+                self.base_url,
+                json=payload,
+                headers=self._headers(),
+                timeout=self.timeout,
+            )
             response.raise_for_status()
             data = response.json()
             return data["choices"][0]["message"]["content"].strip()
@@ -160,7 +194,9 @@ class AIHandler:
                 "- Check the OpenRouter key or try again."
             )
 
-    def generate_review(self, hackathon: str, role: str, stage: str, uploaded_text: str, base_text: str) -> str:
+    def generate_review(
+        self, hackathon: str, role: str, stage: str, uploaded_text: str, base_text: str
+    ) -> str:
         if not self.api_key:
             return "**Configuration error**\n- Missing `OPENROUTER_API_KEY` in `.env`"
 
@@ -188,7 +224,12 @@ class AIHandler:
         }
 
         try:
-            response = requests.post(self.base_url, json=payload, headers=self._headers(), timeout=self.timeout)
+            response = requests.post(
+                self.base_url,
+                json=payload,
+                headers=self._headers(),
+                timeout=self.timeout,
+            )
             response.raise_for_status()
             data = response.json()
             return data["choices"][0]["message"]["content"].strip()

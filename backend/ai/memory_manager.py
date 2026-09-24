@@ -5,7 +5,12 @@ from datetime import datetime, timezone
 
 
 class MemoryManager:
-    def __init__(self, storage_path: str, max_messages_per_hackathon: int = 50, max_notes: int = 10):
+    def __init__(
+        self,
+        storage_path: str,
+        max_messages_per_hackathon: int = 50,
+        max_notes: int = 10,
+    ):
         self.storage_path = storage_path
         self.max_messages_per_hackathon = max_messages_per_hackathon
         self.max_notes = max_notes
@@ -76,13 +81,19 @@ class MemoryManager:
 
     def get_history(self, client_id: str, hackathon_norm: str) -> list[dict]:
         with self._lock:
-            return list(self._hackathon_bucket(client_id, hackathon_norm).get("history", []))
+            return list(
+                self._hackathon_bucket(client_id, hackathon_norm).get("history", [])
+            )
 
     def get_notes(self, client_id: str, hackathon_norm: str) -> list[str]:
         with self._lock:
-            return list(self._hackathon_bucket(client_id, hackathon_norm).get("notes", []))
+            return list(
+                self._hackathon_bucket(client_id, hackathon_norm).get("notes", [])
+            )
 
-    def remember_upload(self, client_id: str, hackathon_norm: str, filename: str) -> None:
+    def remember_upload(
+        self, client_id: str, hackathon_norm: str, filename: str
+    ) -> None:
         with self._lock:
             bucket = self._hackathon_bucket(client_id, hackathon_norm)
             uploads = bucket.setdefault("uploads", [])
@@ -96,10 +107,18 @@ class MemoryManager:
         with self._lock:
             bucket = self._hackathon_bucket(client_id, hackathon_norm)
             bucket["uploads"] = []
-            self._append_note_locked(bucket, "Uploaded files were cleared after review.")
+            self._append_note_locked(
+                bucket, "Uploaded files were cleared after review."
+            )
             self._save()
 
-    def append_turn(self, client_id: str, hackathon_norm: str, user_message: str, assistant_message: str) -> list[dict]:
+    def append_turn(
+        self,
+        client_id: str,
+        hackathon_norm: str,
+        user_message: str,
+        assistant_message: str,
+    ) -> list[dict]:
         timestamp = datetime.now(timezone.utc).isoformat()
         with self._lock:
             bucket = self._hackathon_bucket(client_id, hackathon_norm)
@@ -107,7 +126,11 @@ class MemoryManager:
             history.extend(
                 [
                     {"role": "user", "content": user_message, "timestamp": timestamp},
-                    {"role": "assistant", "content": assistant_message, "timestamp": timestamp},
+                    {
+                        "role": "assistant",
+                        "content": assistant_message,
+                        "timestamp": timestamp,
+                    },
                 ]
             )
             bucket["history"] = history[-self.max_messages_per_hackathon :]
@@ -128,20 +151,32 @@ class MemoryManager:
                 lines.extend(notes[-self.max_notes :])
             return "\n".join(f"- {line}" for line in lines)
 
-    def _remember_from_messages_locked(self, bucket: dict, user_message: str, assistant_message: str) -> None:
+    def _remember_from_messages_locked(
+        self, bucket: dict, user_message: str, assistant_message: str
+    ) -> None:
         lowered = user_message.lower()
-        if any(token in lowered for token in ("code", "build", "api", "fastapi", "react", "backend")):
-            self._append_note_locked(bucket, "User is asking for implementation or code.")
+        if any(
+            token in lowered
+            for token in ("code", "build", "api", "fastapi", "react", "backend")
+        ):
+            self._append_note_locked(
+                bucket, "User is asking for implementation or code."
+            )
         if any(token in lowered for token in ("ppt", "slides", "deck", "presentation")):
             self._append_note_locked(bucket, "User asked for presentation content.")
-        if any(token in lowered for token in ("problem statement", "rules", "prize", "timeline", "theme")):
+        if any(
+            token in lowered
+            for token in ("problem statement", "rules", "prize", "timeline", "theme")
+        ):
             self._append_note_locked(bucket, "User is asking about hackathon facts.")
         preview = user_message.strip()
         if preview:
             self._append_note_locked(bucket, f"Recent user goal: {preview[:140]}")
         answer_preview = assistant_message.strip()
         if answer_preview:
-            self._append_note_locked(bucket, f"Recent assistant reply: {answer_preview[:140]}")
+            self._append_note_locked(
+                bucket, f"Recent assistant reply: {answer_preview[:140]}"
+            )
 
     def _append_note_locked(self, bucket: dict, note: str) -> None:
         notes = bucket.setdefault("notes", [])

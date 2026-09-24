@@ -4,7 +4,11 @@ import asyncio
 from pathlib import Path
 
 from backend.ai.config import AIConfig
-from backend.ai.models.dataset import DatasetInfo, DatasetListResponse, DatasetUploadResponse
+from backend.ai.models.dataset import (
+    DatasetInfo,
+    DatasetListResponse,
+    DatasetUploadResponse,
+)
 from backend.ai.rag.index import RAGIndex
 from backend.core.security import secure_filename
 
@@ -15,9 +19,13 @@ class DatasetService:
         self.rag_index = rag_index
 
     async def list_datasets(self) -> DatasetListResponse:
-        return DatasetListResponse(success=True, datasets=self.rag_index.list_dataset_info())
+        return DatasetListResponse(
+            success=True, datasets=self.rag_index.list_dataset_info()
+        )
 
-    async def upload_dataset(self, hackathon_id: str, file_name: str, content: str) -> DatasetUploadResponse:
+    async def upload_dataset(
+        self, hackathon_id: str, file_name: str, content: str
+    ) -> DatasetUploadResponse:
         safe_name = secure_filename(file_name)
         if not safe_name.lower().endswith(".txt"):
             raise ValueError("Only text files are supported")
@@ -26,7 +34,9 @@ class DatasetService:
 
         target = self.config.datasets_dir / f"{secure_filename(hackathon_id)}.txt"
         await self._write_text(target, content)
-        dataset_info = await self.rag_index.add_dataset(target, hackathon_id=hackathon_id)
+        dataset_info = await self.rag_index.add_dataset(
+            target, hackathon_id=hackathon_id
+        )
         return DatasetUploadResponse(
             success=True,
             message="Dataset uploaded successfully",

@@ -33,7 +33,7 @@ async def main():
             "isVerified": True,
             "phone": "+91 98765 00001",
             "adminId": "ADM-2026-0000",
-            "updatedAt": now
+            "updatedAt": now,
         },
         {
             "email": "gsgssarath2005@gmail.com",
@@ -46,7 +46,7 @@ async def main():
             "emailVerified": True,
             "isVerified": True,
             "phone": "+91 98765 00002",
-            "updatedAt": now
+            "updatedAt": now,
         },
         {
             "email": "msailesh@gmail.com",
@@ -59,7 +59,7 @@ async def main():
             "emailVerified": True,
             "isVerified": True,
             "phone": "+91 98765 00003",
-            "updatedAt": now
+            "updatedAt": now,
         },
         {
             "email": "psaravanan@gmail.com",
@@ -73,7 +73,7 @@ async def main():
             "emailVerified": True,
             "isVerified": True,
             "phone": "+91 98765 00004",
-            "updatedAt": now
+            "updatedAt": now,
         },
         {
             "email": "ananya.rao@microsoft.com",
@@ -87,8 +87,8 @@ async def main():
             "isVerified": True,
             "phone": "+91 98765 00005",
             "assignedTeamsCount": 3,
-            "updatedAt": now
-        }
+            "updatedAt": now,
+        },
     ]
 
     for u in existing_user_updates:
@@ -110,24 +110,27 @@ async def main():
     # Link existing organizer to organizers profile collection
     await db["organizers"].update_one(
         {"contactEmail": "psaravanan@gmail.com"},
-        {"$set": {
-            "institutionName": "IIT Madras",
-            "organizationName": "IITM FinTech & AI Lab",
-            "contactEmail": "psaravanan@gmail.com",
-            "contactPhone": "+91 98765 00004",
-            "officialWebsite": "https://www.iitm.ac.in",
-            "proofDocument": "https://credentials.proeduvate.com/proofs/iitm_saravanan_endorsement.pdf",
-            "status": "Approved",
-            "experienceYears": 8,
-            "pastEventsHosted": 11,
-            "updatedAt": now
-        }},
-        upsert=True
+        {
+            "$set": {
+                "institutionName": "IIT Madras",
+                "organizationName": "IITM FinTech & AI Lab",
+                "contactEmail": "psaravanan@gmail.com",
+                "contactPhone": "+91 98765 00004",
+                "officialWebsite": "https://www.iitm.ac.in",
+                "proofDocument": "https://credentials.proeduvate.com/proofs/iitm_saravanan_endorsement.pdf",
+                "status": "Approved",
+                "experienceYears": 8,
+                "pastEventsHosted": 11,
+                "updatedAt": now,
+            }
+        },
+        upsert=True,
     )
 
     total_users = await db["users"].count_documents({})
     print(f"\n[TOTAL ACTIVE USERS IN DATABASE]: {total_users}")
     print("=" * 60)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     asyncio.run(main())

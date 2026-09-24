@@ -81,7 +81,9 @@ class OrganizerProfileCreate(BaseModel):
     phoneNumber: Optional[str] = Field(None, alias="phoneNumber")
     linkedinUrl: Optional[str] = Field(None, alias="linkedinUrl")
     emailReports: Optional[str] = Field(default="weekly", alias="emailReports")
-    autoApproveMentors: Optional[bool] = Field(default=False, alias="autoApproveMentors")
+    autoApproveMentors: Optional[bool] = Field(
+        default=False, alias="autoApproveMentors"
+    )
 
     model_config = {"populate_by_name": True, "from_attributes": True}
 

@@ -31,7 +31,7 @@ async def login_google():
     if not settings.GOOGLE_CLIENT_ID:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Google Client ID is not configured on the server."
+            detail="Google Client ID is not configured on the server.",
         )
 
     redirect_uri = f"{settings.BACKEND_URL}/api/auth/oauth/google/callback"
@@ -41,18 +41,14 @@ async def login_google():
         "response_type": "code",
         "scope": "openid email profile",
         "access_type": "offline",
-        "prompt": "select_account"
+        "prompt": "select_account",
     }
     auth_url = f"{GOOGLE_AUTH_URL}?{urlencode(params)}"
     return RedirectResponse(url=auth_url)
 
 
 @router.get("/oauth/google/callback")
-async def google_callback(
-    code: str = None,
-    error: str = None,
-    request: Request = None
-):
+async def google_callback(code: str = None, error: str = None, request: Request = None):
     """Google OAuth 2.0 callback handler."""
     frontend_callback = f"{settings.FRONTEND_URL}/oauth/callback"
 
@@ -71,7 +67,7 @@ async def google_callback(
                 "client_id": settings.GOOGLE_CLIENT_ID,
                 "client_secret": settings.GOOGLE_CLIENT_SECRET,
                 "redirect_uri": redirect_uri,
-                "grant_type": "authorization_code"
+                "grant_type": "authorization_code",
             }
             token_res = await client.post(GOOGLE_TOKEN_URL, data=token_data)
             token_json = token_res.json()
@@ -86,8 +82,7 @@ async def google_callback(
 
             # 2. Fetch user profile from Google
             userinfo_res = await client.get(
-                GOOGLE_USERINFO_URL,
-                headers={"Authorization": f"Bearer {access_token}"}
+                GOOGLE_USERINFO_URL, headers={"Authorization": f"Bearer {access_token}"}
             )
             if userinfo_res.status_code != 200:
                 logger.error(f"[OAuth Google] Userinfo failed: {userinfo_res.text}")
@@ -112,14 +107,20 @@ async def google_callback(
                 provider_id=google_id,
                 email=email,
                 name=name,
-                avatar=avatar
+                avatar=avatar,
             )
 
             # 4. Create active session record
             db = get_db()
             session_id = f"sess-{uuid4().hex[:8]}"
-            user_agent = request.headers.get("user-agent", "Browser / Desktop") if request else "Browser"
-            client_ip = request.client.host if request and request.client else "127.0.0.1"
+            user_agent = (
+                request.headers.get("user-agent", "Browser / Desktop")
+                if request
+                else "Browser"
+            )
+            client_ip = (
+                request.client.host if request and request.client else "127.0.0.1"
+            )
 
             session_doc = {
                 "sessionId": session_id,
@@ -130,7 +131,7 @@ async def google_callback(
                 "ip": client_ip,
                 "lastActive": datetime.utcnow(),
                 "revoked": False,
-                "createdAt": datetime.utcnow()
+                "createdAt": datetime.utcnow(),
             }
             await db["admin_sessions"].insert_one(session_doc)
 
@@ -140,7 +141,7 @@ async def google_callback(
                 "sub": str(user["_id"]),
                 "email": user["email"],
                 "role": user_role,
-                "sessionId": session_id
+                "sessionId": session_id,
             }
             token = create_access_token(token_payload, expires_delta=timedelta(days=7))
 
@@ -157,25 +158,21 @@ async def login_github():
     if not settings.GITHUB_CLIENT_ID:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="GitHub Client ID is not configured on the server."
+            detail="GitHub Client ID is not configured on the server.",
         )
 
     redirect_uri = f"{settings.BACKEND_URL}/api/auth/oauth/github/callback"
     params = {
         "client_id": settings.GITHUB_CLIENT_ID,
         "redirect_uri": redirect_uri,
-        "scope": "read:user user:email"
+        "scope": "read:user user:email",
     }
     auth_url = f"{GITHUB_AUTH_URL}?{urlencode(params)}"
     return RedirectResponse(url=auth_url)
 
 
 @router.get("/oauth/github/callback")
-async def github_callback(
-    code: str = None,
-    error: str = None,
-    request: Request = None
-):
+async def github_callback(code: str = None, error: str = None, request: Request = None):
     """GitHub OAuth callback handler."""
     frontend_callback = f"{settings.FRONTEND_URL}/oauth/callback"
 
@@ -193,12 +190,12 @@ async def github_callback(
                 "client_id": settings.GITHUB_CLIENT_ID,
                 "client_secret": settings.GITHUB_CLIENT_SECRET,
                 "code": code,
-                "redirect_uri": redirect_uri
+                "redirect_uri": redirect_uri,
             }
             token_res = await client.post(
                 GITHUB_TOKEN_URL,
                 data=token_data,
-                headers={"Accept": "application/json"}
+                headers={"Accept": "application/json"},
             )
             token_json = token_res.json()
 
@@ -216,8 +213,8 @@ async def github_callback(
                 headers={
                     "Authorization": f"Bearer {access_token}",
                     "Accept": "application/json",
-                    "User-Agent": "HackZen-Platform"
-                }
+                    "User-Agent": "HackZen-Platform",
+                },
             )
             if user_res.status_code != 200:
                 logger.error(f"[OAuth GitHub] User fetch failed: {user_res.text}")
@@ -238,8 +235,8 @@ async def github_callback(
                     headers={
                         "Authorization": f"Bearer {access_token}",
                         "Accept": "application/json",
-                        "User-Agent": "HackZen-Platform"
-                    }
+                        "User-Agent": "HackZen-Platform",
+                    },
                 )
                 if emails_res.status_code == 200:
                     emails_data = emails_res.json()
@@ -268,13 +265,15 @@ async def github_callback(
                 provider_id=github_id,
                 email=email,
                 name=name,
-                avatar=avatar
+                avatar=avatar,
             )
 
             # 5. Create active session record
             db = get_db()
             session_id = f"sess-{uuid4().hex[:8]}"
-            client_ip = request.client.host if request and request.client else "127.0.0.1"
+            client_ip = (
+                request.client.host if request and request.client else "127.0.0.1"
+            )
 
             session_doc = {
                 "sessionId": session_id,
@@ -285,7 +284,7 @@ async def github_callback(
                 "ip": client_ip,
                 "lastActive": datetime.utcnow(),
                 "revoked": False,
-                "createdAt": datetime.utcnow()
+                "createdAt": datetime.utcnow(),
             }
             await db["admin_sessions"].insert_one(session_doc)
 
@@ -295,7 +294,7 @@ async def github_callback(
                 "sub": str(user["_id"]),
                 "email": user["email"],
                 "role": user_role,
-                "sessionId": session_id
+                "sessionId": session_id,
             }
             token = create_access_token(token_payload, expires_delta=timedelta(days=7))
 

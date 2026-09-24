@@ -4,6 +4,7 @@ from database import MongoDB, get_db
 from services.userService import UserService
 from core.security import create_access_token
 
+
 async def inspect():
     await MongoDB.connect()
     db = get_db()
@@ -19,32 +20,44 @@ async def inspect():
     print("\n=== 2. HACKATHONS SAMPLES ===")
     hackathons = await db.hackathons.find({}).to_list(10)
     for h in hackathons:
-        print(f"  ID: {h.get('_id')} | Title: {h.get('title')} | Status: {h.get('status')} | OrgId: {h.get('organizerId')} | Dates: {h.get('startDate')} - {h.get('endDate')}")
+        print(
+            f"  ID: {h.get('_id')} | Title: {h.get('title')} | Status: {h.get('status')} | OrgId: {h.get('organizerId')} | Dates: {h.get('startDate')} - {h.get('endDate')}"
+        )
 
     print("\n=== 3. ORGANIZERS SAMPLES ===")
     organizers = await db.organizers.find({}).to_list(10)
     for o in organizers:
-        print(f"  ID: {o.get('_id')} | Name: {o.get('name')} | Org: {o.get('orgName') or o.get('institutionName')} | UserId: {o.get('userId')} | Status: {o.get('status')}")
+        print(
+            f"  ID: {o.get('_id')} | Name: {o.get('name')} | Org: {o.get('orgName') or o.get('institutionName')} | UserId: {o.get('userId')} | Status: {o.get('status')}"
+        )
 
     print("\n=== 4. TEAMS SAMPLES ===")
     teams = await db.teams.find({}).to_list(10)
     for t in teams:
-        print(f"  ID: {t.get('_id')} | Name: {t.get('name')} | Hackathon: {t.get('hackathonId')} | Mentor: {t.get('mentorId')}")
+        print(
+            f"  ID: {t.get('_id')} | Name: {t.get('name')} | Hackathon: {t.get('hackathonId')} | Mentor: {t.get('mentorId')}"
+        )
 
     print("\n=== 5. SUBMISSIONS SAMPLES ===")
     subs = await db.submissions.find({}).to_list(10)
     for s in subs:
-        print(f"  ID: {s.get('_id')} | Title: {s.get('title') or s.get('projectName')} | Status: {s.get('status')} | Team: {s.get('teamId')} | Hackathon: {s.get('hackathonId')}")
+        print(
+            f"  ID: {s.get('_id')} | Title: {s.get('title') or s.get('projectName')} | Status: {s.get('status')} | Team: {s.get('teamId')} | Hackathon: {s.get('hackathonId')}"
+        )
 
     print("\n=== 6. DISPUTES SAMPLES ===")
     disputes = await db.disputes.find({}).to_list(10)
     for d in disputes:
-        print(f"  ID: {d.get('_id')} | Reason: {d.get('reason') or d.get('title')} | Status: {d.get('status')} | Target: {d.get('targetType')}")
+        print(
+            f"  ID: {d.get('_id')} | Reason: {d.get('reason') or d.get('title')} | Status: {d.get('status')} | Target: {d.get('targetType')}"
+        )
 
     print("\n=== 7. CERTIFICATES SAMPLES ===")
     certs = await db.certificates.find({}).to_list(10)
     for c in certs:
-        print(f"  ID: {c.get('_id')} | Recipient: {c.get('recipientName') or c.get('userName')} | Hackathon: {c.get('hackathonTitle')} | Status: {c.get('status')}")
+        print(
+            f"  ID: {c.get('_id')} | Recipient: {c.get('recipientName') or c.get('userName')} | Hackathon: {c.get('hackathonTitle')} | Status: {c.get('status')}"
+        )
 
     print("\n=== 8. TESTING API ENDPOINTS WITH ADMIN TOKEN ===")
     user = await UserService.authenticate_user("ghariraajan@gmail.com", "Password@123")
@@ -52,7 +65,9 @@ async def inspect():
         print("Admin user authentication failed!")
         return
 
-    token = create_access_token({"sub": str(user["_id"]), "email": user["email"], "role": user["role"]})
+    token = create_access_token(
+        {"sub": str(user["_id"]), "email": user["email"], "role": user["role"]}
+    )
     headers = {"Authorization": f"Bearer {token}"}
 
     endpoints = [
@@ -92,6 +107,7 @@ async def inspect():
                 print(f"    Failed: {e}")
 
     await MongoDB.disconnect()
+
 
 if __name__ == "__main__":
     asyncio.run(inspect())

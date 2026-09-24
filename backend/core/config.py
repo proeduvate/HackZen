@@ -82,9 +82,17 @@ class Settings(BaseSettings):
     history_limit: int = 12
 
     # Storage Paths
-    datasets_dir: Path = Path(os.getenv("DATASETS_DIR", Path(__file__).resolve().parents[1] / "data" / "datasets"))
-    memory_dir: Path = Path(os.getenv("MEMORY_DIR", Path(__file__).resolve().parents[1] / "data" / "memory"))
-    logs_dir: Path = Path(os.getenv("LOGS_DIR", Path(__file__).resolve().parents[1] / "logs"))
+    datasets_dir: Path = Path(
+        os.getenv(
+            "DATASETS_DIR", Path(__file__).resolve().parents[1] / "data" / "datasets"
+        )
+    )
+    memory_dir: Path = Path(
+        os.getenv("MEMORY_DIR", Path(__file__).resolve().parents[1] / "data" / "memory")
+    )
+    logs_dir: Path = Path(
+        os.getenv("LOGS_DIR", Path(__file__).resolve().parents[1] / "logs")
+    )
 
     # CORS Origins
     cors_origins: List[str] = [

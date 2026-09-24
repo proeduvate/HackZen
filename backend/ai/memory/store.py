@@ -88,7 +88,11 @@ class MemoryStore:
 
     async def list_sessions(self) -> list[SessionMemory]:
         async with self._lock:
-            return sorted(self._sessions.values(), key=lambda session: session.updated_at, reverse=True)
+            return sorted(
+                self._sessions.values(),
+                key=lambda session: session.updated_at,
+                reverse=True,
+            )
 
     async def save_message(
         self,
@@ -152,7 +156,11 @@ class MemoryStore:
 
     async def clear_user(self, user_id: str) -> int:
         async with self._lock:
-            to_delete = [session_id for session_id, session in self._sessions.items() if session.user_id == user_id]
+            to_delete = [
+                session_id
+                for session_id, session in self._sessions.items()
+                if session.user_id == user_id
+            ]
             for session_id in to_delete:
                 self._sessions.pop(session_id, None)
             await self._persist()
@@ -169,4 +177,3 @@ class MemoryStore:
             snippet = message.content[:120].strip()
             summary_parts.append(f"{message.role}: {snippet}")
         return " | ".join(summary_parts)
-

@@ -16,6 +16,7 @@ CERT_UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 router = APIRouter(prefix="/admin/certificates", tags=["Admin Certificates"])
 
+
 class IssueCertRequest(BaseModel):
     recipientName: str
     recipientEmail: str
@@ -25,9 +26,11 @@ class IssueCertRequest(BaseModel):
     template: str = "Winner Certificate"
     customMessage: Optional[str] = None
 
+
 class RevokeCertRequest(BaseModel):
     reason: str
     notes: Optional[str] = None
+
 
 class ReplacementCertRequest(BaseModel):
     originalValidationId: str
@@ -36,18 +39,22 @@ class ReplacementCertRequest(BaseModel):
     type: str = "Winner"
     reason: str = "Typo correction"
 
+
 class BulkIssueRequest(BaseModel):
     recipients: List[Dict[str, Any]]
     template: str = "Achievement Certificate"
 
+
 @router.get("/all")
 @router.get("/")
 @router.get("")
-async def get_all_certificates(current_user: dict = Depends(RequireRole(["admin", "superadmin"]))):
+async def get_all_certificates(
+    current_user: dict = Depends(RequireRole(["admin", "superadmin"]))
+):
     """Fetch all certificates with delivery tracking and audit history"""
     db = get_db()
     certs = await db["certificates"].find().sort("createdAt", -1).to_list(200)
-    
+
     formatted = []
     for c in certs:
         cert_type = str(c.get("type") or c.get("certType") or "WINNER").upper()
@@ -55,40 +62,74 @@ async def get_all_certificates(current_user: dict = Depends(RequireRole(["admin"
         if status == "Issued":
             status = "Active"
 
-        formatted.append({
-            "id": str(c["_id"]),
-            "recipientName": c.get("recipientName") or c.get("recipient", {}).get("name") or "Participant",
-            "recipientEmail": c.get("recipientEmail") or c.get("recipient", {}).get("email") or "user@example.com",
-            "hackathon": c.get("eventTitle") or c.get("event") or "Global AI Summit 2026",
-            "type": cert_type,
-            "validationId": c.get("validationId") or f"CERT-2026-{str(c['_id'])[-6:].upper()}",
-            "dateIssued": c.get("dateIssued") or datetime.utcnow().strftime("%b %d, %Y"),
-            "issuedBy": c.get("issuedBy", "ProEduvate Official"),
-            "status": status,
-            "revokeReason": c.get("revokeReason"),
-            "replacesValidationId": c.get("replacesValidationId"),
-            "replacedBy": c.get("replacedBy"),
-            "deliveryStatus": c.get("deliveryStatus", {
-                "issued": True, "emailSent": True, "emailOpened": True,
-                "downloaded": True, "downloadsCount": 2, "verificationCount": 5
-            }),
-            "template": c.get("template", "Winner Certificate"),
-            "checklist": c.get("checklist", {
-                "registered": True, "teamVerified": True, "hackathonCompleted": True,
-                "submissionCompleted": True, "evaluationCompleted": True,
-                "resultFinalized": True, "notPreviouslyIssued": True, "userActive": True
-            }),
-            "auditHistory": c.get("auditHistory", [
-                {"date": "Recently", "event": "Certificate registered in platform ledger"}
-            ])
-        })
+        formatted.append(
+            {
+                "id": str(c["_id"]),
+                "recipientName": c.get("recipientName")
+                or c.get("recipient", {}).get("name")
+                or "Participant",
+                "recipientEmail": c.get("recipientEmail")
+                or c.get("recipient", {}).get("email")
+                or "user@example.com",
+                "hackathon": c.get("eventTitle")
+                or c.get("event")
+                or "Global AI Summit 2026",
+                "type": cert_type,
+                "validationId": c.get("validationId")
+                or f"CERT-2026-{str(c['_id'])[-6:].upper()}",
+                "dateIssued": c.get("dateIssued")
+                or datetime.utcnow().strftime("%b %d, %Y"),
+                "issuedBy": c.get("issuedBy", "ProEduvate Official"),
+                "status": status,
+                "revokeReason": c.get("revokeReason"),
+                "replacesValidationId": c.get("replacesValidationId"),
+                "replacedBy": c.get("replacedBy"),
+                "deliveryStatus": c.get(
+                    "deliveryStatus",
+                    {
+                        "issued": True,
+                        "emailSent": True,
+                        "emailOpened": True,
+                        "downloaded": True,
+                        "downloadsCount": 2,
+                        "verificationCount": 5,
+                    },
+                ),
+                "template": c.get("template", "Winner Certificate"),
+                "checklist": c.get(
+                    "checklist",
+                    {
+                        "registered": True,
+                        "teamVerified": True,
+                        "hackathonCompleted": True,
+                        "submissionCompleted": True,
+                        "evaluationCompleted": True,
+                        "resultFinalized": True,
+                        "notPreviouslyIssued": True,
+                        "userActive": True,
+                    },
+                ),
+                "auditHistory": c.get(
+                    "auditHistory",
+                    [
+                        {
+                            "date": "Recently",
+                            "event": "Certificate registered in platform ledger",
+                        }
+                    ],
+                ),
+            }
+        )
     return formatted
 
+
 @router.get("/eligibility-queue")
-async def get_certificate_eligibility_queue(current_user: dict = Depends(RequireRole(["admin", "superadmin"]))):
+async def get_certificate_eligibility_queue(
+    current_user: dict = Depends(RequireRole(["admin", "superadmin"]))
+):
     """Fetch eligible participants queue with 8-point requirement checklists"""
     db = get_db()
-    
+
     submissions_col = db["submissions"]
     teams_col = db["teams"]
     users_col = db["users"]
@@ -96,44 +137,76 @@ async def get_certificate_eligibility_queue(current_user: dict = Depends(Require
     certs_col = db["certificates"]
 
     queue = []
-    
+
     # Check live approved submissions
     subs = await submissions_col.find().to_list(50)
     for sub in subs:
         team_id = str(sub.get("teamId", ""))
-        team = await teams_col.find_one({"_id": ObjectId(team_id)}) if ObjectId.is_valid(team_id) else None
+        team = (
+            await teams_col.find_one({"_id": ObjectId(team_id)})
+            if ObjectId.is_valid(team_id)
+            else None
+        )
         hack_id = (team.get("hackathonId") if team else None) or sub.get("hackathonId")
-        hackathon = await hackathons_col.find_one({"_id": ObjectId(str(hack_id))}) if ObjectId.is_valid(str(hack_id)) else None
-        event_name = hackathon.get("title", "Global AI Hackathon 2026") if hackathon else "Global AI Hackathon 2026"
+        hackathon = (
+            await hackathons_col.find_one({"_id": ObjectId(str(hack_id))})
+            if ObjectId.is_valid(str(hack_id))
+            else None
+        )
+        event_name = (
+            hackathon.get("title", "Global AI Hackathon 2026")
+            if hackathon
+            else "Global AI Hackathon 2026"
+        )
 
         team_members = await db["teamMembers"].find({"teamId": team_id}).to_list(10)
         for tm in team_members:
             u_id = tm.get("userId")
-            u_doc = await users_col.find_one({"_id": ObjectId(str(u_id))}) if ObjectId.is_valid(str(u_id)) else None
+            u_doc = (
+                await users_col.find_one({"_id": ObjectId(str(u_id))})
+                if ObjectId.is_valid(str(u_id))
+                else None
+            )
             if u_doc:
                 email = u_doc.get("email", "")
-                existing_cert = await certs_col.find_one({"recipientEmail": email, "eventTitle": event_name, "status": {"$ne": "Revoked"}})
+                existing_cert = await certs_col.find_one(
+                    {
+                        "recipientEmail": email,
+                        "eventTitle": event_name,
+                        "status": {"$ne": "Revoked"},
+                    }
+                )
                 if not existing_cert:
                     is_approved = sub.get("status") == "Approved"
-                    queue.append({
-                        "id": f"elig_{str(u_doc['_id'])}",
-                        "name": u_doc.get("name", "Team Member"),
-                        "email": email,
-                        "event": event_name,
-                        "achievement": "Winner" if is_approved else "Participant",
-                        "template": "Winner Certificate" if is_approved else "Participant Certificate",
-                        "checklist": {
-                            "registered": True,
-                            "teamVerified": True,
-                            "hackathonCompleted": True,
-                            "submissionCompleted": True,
-                            "evaluationCompleted": is_approved,
-                            "resultFinalized": is_approved,
-                            "notPreviouslyIssued": True,
-                            "userActive": True
-                        },
-                        "status": "READY TO ISSUE" if is_approved else "PENDING EVALUATION"
-                    })
+                    queue.append(
+                        {
+                            "id": f"elig_{str(u_doc['_id'])}",
+                            "name": u_doc.get("name", "Team Member"),
+                            "email": email,
+                            "event": event_name,
+                            "achievement": "Winner" if is_approved else "Participant",
+                            "template": (
+                                "Winner Certificate"
+                                if is_approved
+                                else "Participant Certificate"
+                            ),
+                            "checklist": {
+                                "registered": True,
+                                "teamVerified": True,
+                                "hackathonCompleted": True,
+                                "submissionCompleted": True,
+                                "evaluationCompleted": is_approved,
+                                "resultFinalized": is_approved,
+                                "notPreviouslyIssued": True,
+                                "userActive": True,
+                            },
+                            "status": (
+                                "READY TO ISSUE"
+                                if is_approved
+                                else "PENDING EVALUATION"
+                            ),
+                        }
+                    )
 
     # Supplementary robust queue entries if live database is sparse
     if len(queue) < 3:
@@ -146,11 +219,16 @@ async def get_certificate_eligibility_queue(current_user: dict = Depends(Require
                 "achievement": "Winner",
                 "template": "Winner Certificate",
                 "checklist": {
-                    "registered": True, "teamVerified": True, "hackathonCompleted": True,
-                    "submissionCompleted": True, "evaluationCompleted": True,
-                    "resultFinalized": True, "notPreviouslyIssued": True, "userActive": True
+                    "registered": True,
+                    "teamVerified": True,
+                    "hackathonCompleted": True,
+                    "submissionCompleted": True,
+                    "evaluationCompleted": True,
+                    "resultFinalized": True,
+                    "notPreviouslyIssued": True,
+                    "userActive": True,
                 },
-                "status": "READY TO ISSUE"
+                "status": "READY TO ISSUE",
             },
             {
                 "id": "elig_seed_2",
@@ -160,11 +238,16 @@ async def get_certificate_eligibility_queue(current_user: dict = Depends(Require
                 "achievement": "Runner Up",
                 "template": "Runner-up Certificate",
                 "checklist": {
-                    "registered": True, "teamVerified": True, "hackathonCompleted": True,
-                    "submissionCompleted": True, "evaluationCompleted": True,
-                    "resultFinalized": True, "notPreviouslyIssued": True, "userActive": True
+                    "registered": True,
+                    "teamVerified": True,
+                    "hackathonCompleted": True,
+                    "submissionCompleted": True,
+                    "evaluationCompleted": True,
+                    "resultFinalized": True,
+                    "notPreviouslyIssued": True,
+                    "userActive": True,
                 },
-                "status": "READY TO ISSUE"
+                "status": "READY TO ISSUE",
             },
             {
                 "id": "elig_seed_3",
@@ -174,12 +257,17 @@ async def get_certificate_eligibility_queue(current_user: dict = Depends(Require
                 "achievement": "Participant",
                 "template": "Participant Certificate",
                 "checklist": {
-                    "registered": True, "teamVerified": True, "hackathonCompleted": True,
-                    "submissionCompleted": True, "evaluationCompleted": False,
-                    "resultFinalized": False, "notPreviouslyIssued": True, "userActive": True
+                    "registered": True,
+                    "teamVerified": True,
+                    "hackathonCompleted": True,
+                    "submissionCompleted": True,
+                    "evaluationCompleted": False,
+                    "resultFinalized": False,
+                    "notPreviouslyIssued": True,
+                    "userActive": True,
                 },
-                "status": "PENDING EVALUATION"
-            }
+                "status": "PENDING EVALUATION",
+            },
         ]
         queue.extend(seed_queue)
 
@@ -193,33 +281,44 @@ async def get_certificate_eligibility_queue(current_user: dict = Depends(Require
             "eligible": ready_count,
             "pendingEligibility": pending_count,
             "issued": total_certs,
-            "notEligible": 0
+            "notEligible": 0,
         },
-        "queue": queue
+        "queue": queue,
     }
 
+
 @router.post("/issue")
-async def issue_certificate(data: IssueCertRequest, current_user: dict = Depends(RequireRole(["admin", "superadmin"]))):
+async def issue_certificate(
+    data: IssueCertRequest,
+    current_user: dict = Depends(RequireRole(["admin", "superadmin"])),
+):
     db = get_db()
-    
+
     # Check duplicate
-    existing = await db["certificates"].find_one({
-        "recipientEmail": data.recipientEmail,
-        "eventTitle": data.eventTitle,
-        "type": data.type,
-        "status": {"$ne": "Revoked"}
-    })
+    existing = await db["certificates"].find_one(
+        {
+            "recipientEmail": data.recipientEmail,
+            "eventTitle": data.eventTitle,
+            "type": data.type,
+            "status": {"$ne": "Revoked"},
+        }
+    )
     if existing:
         return {
             "success": False,
             "isDuplicate": True,
             "existingValidationId": existing.get("validationId", "CERT-SEED-001"),
-            "message": f"Duplicate Certificate Warning: {data.recipientName} already holds an active {data.type} certificate for {data.eventTitle}."
+            "message": f"Duplicate Certificate Warning: {data.recipientName} already holds an active {data.type} certificate for {data.eventTitle}.",
         }
 
     # Read dynamic certificate prefix from platform settings
     settings = await db["settings"].find_one({"key": "global_config"}) or {}
-    prefix = str(settings.get("prefix") or settings.get("certificatePrefix") or "PROEDU").strip().upper() or "PROEDU"
+    prefix = (
+        str(settings.get("prefix") or settings.get("certificatePrefix") or "PROEDU")
+        .strip()
+        .upper()
+        or "PROEDU"
+    )
     year = datetime.utcnow().year
     validation_id = f"{prefix}-{year}-{str(uuid.uuid4())[:8].upper()}"
 
@@ -239,60 +338,105 @@ async def issue_certificate(data: IssueCertRequest, current_user: dict = Depends
             "emailOpened": True,
             "downloaded": False,
             "downloadsCount": 0,
-            "verificationCount": 0
+            "verificationCount": 0,
         },
         "checklist": {
-            "registered": True, "teamVerified": True, "hackathonCompleted": True,
-            "submissionCompleted": True, "evaluationCompleted": True,
-            "resultFinalized": True, "notPreviouslyIssued": True, "userActive": True
+            "registered": True,
+            "teamVerified": True,
+            "hackathonCompleted": True,
+            "submissionCompleted": True,
+            "evaluationCompleted": True,
+            "resultFinalized": True,
+            "notPreviouslyIssued": True,
+            "userActive": True,
         },
         "issuedBy": current_user.get("name", "ProEduvate Superadmin"),
         "dateIssued": datetime.utcnow().strftime("%b %d, %Y"),
         "createdAt": datetime.utcnow(),
         "auditHistory": [
-            {"date": datetime.utcnow().strftime("%b %d, %I:%M %p"), "event": f"Certificate generated & signed ({validation_id})"},
-            {"date": datetime.utcnow().strftime("%b %d, %I:%M %p"), "event": f"Delivery email dispatched to {data.recipientEmail}"}
-        ]
+            {
+                "date": datetime.utcnow().strftime("%b %d, %I:%M %p"),
+                "event": f"Certificate generated & signed ({validation_id})",
+            },
+            {
+                "date": datetime.utcnow().strftime("%b %d, %I:%M %p"),
+                "event": f"Delivery email dispatched to {data.recipientEmail}",
+            },
+        ],
     }
 
     result = await db["certificates"].insert_one(cert_doc)
 
-    await db["audit_logs"].insert_one({
-        "action": "Certificate Issued",
-        "category": "Certificates",
-        "details": f"Issued {data.type} certificate to {data.recipientName} ({validation_id})",
-        "adminName": current_user.get("name", "Admin"),
-        "timestamp": datetime.utcnow()
-    })
+    await db["audit_logs"].insert_one(
+        {
+            "action": "Certificate Issued",
+            "category": "Certificates",
+            "details": f"Issued {data.type} certificate to {data.recipientName} ({validation_id})",
+            "adminName": current_user.get("name", "Admin"),
+            "timestamp": datetime.utcnow(),
+        }
+    )
 
-    return {"success": True, "validationId": validation_id, "message": "Certificate issued & delivered successfully."}
+    return {
+        "success": True,
+        "validationId": validation_id,
+        "message": "Certificate issued & delivered successfully.",
+    }
+
 
 @router.post("/resend")
-async def resend_certificate(payload: dict = Body(...), current_user: dict = Depends(RequireRole(["admin", "superadmin"]))):
+async def resend_certificate(
+    payload: dict = Body(...),
+    current_user: dict = Depends(RequireRole(["admin", "superadmin"])),
+):
     cert_id = payload.get("certId")
     db = get_db()
-    query = {"_id": ObjectId(cert_id)} if ObjectId.is_valid(cert_id) else {"validationId": cert_id}
-    
+    query = (
+        {"_id": ObjectId(cert_id)}
+        if ObjectId.is_valid(cert_id)
+        else {"validationId": cert_id}
+    )
+
     cert = await db["certificates"].find_one(query)
     if not cert:
         raise HTTPException(status_code=404, detail="Certificate not found")
 
-    new_log = {"date": datetime.utcnow().strftime("%b %d, %I:%M %p"), "event": "Certificate email resent by Admin"}
-    await db["certificates"].update_one(query, {
-        "$set": {"deliveryStatus.emailSent": True},
-        "$push": {"auditHistory": new_log}
-    })
+    new_log = {
+        "date": datetime.utcnow().strftime("%b %d, %I:%M %p"),
+        "event": "Certificate email resent by Admin",
+    }
+    await db["certificates"].update_one(
+        query,
+        {
+            "$set": {"deliveryStatus.emailSent": True},
+            "$push": {"auditHistory": new_log},
+        },
+    )
 
-    return {"success": True, "message": f"Certificate {cert.get('validationId')} email resent to recipient."}
+    return {
+        "success": True,
+        "message": f"Certificate {cert.get('validationId')} email resent to recipient.",
+    }
+
 
 @router.post("/issue-replacement")
-async def issue_replacement_certificate(data: ReplacementCertRequest, current_user: dict = Depends(RequireRole(["admin", "superadmin"]))):
+async def issue_replacement_certificate(
+    data: ReplacementCertRequest,
+    current_user: dict = Depends(RequireRole(["admin", "superadmin"])),
+):
     db = get_db()
-    orig_cert = await db["certificates"].find_one({"validationId": data.originalValidationId})
-    
+    orig_cert = await db["certificates"].find_one(
+        {"validationId": data.originalValidationId}
+    )
+
     # Read dynamic certificate prefix from platform settings
     settings = await db["settings"].find_one({"key": "global_config"}) or {}
-    prefix = str(settings.get("prefix") or settings.get("certificatePrefix") or "PROEDU").strip().upper() or "PROEDU"
+    prefix = (
+        str(settings.get("prefix") or settings.get("certificatePrefix") or "PROEDU")
+        .strip()
+        .upper()
+        or "PROEDU"
+    )
     year = datetime.utcnow().year
     new_validation_id = f"{prefix}-{year}-{str(uuid.uuid4())[:8].upper()}"
     if orig_cert:
@@ -302,80 +446,131 @@ async def issue_replacement_certificate(data: ReplacementCertRequest, current_us
                 "$set": {
                     "status": "Replaced",
                     "replacedBy": new_validation_id,
-                    "replacementReason": data.reason
+                    "replacementReason": data.reason,
                 },
                 "$push": {
                     "auditHistory": {
                         "date": datetime.utcnow().strftime("%b %d, %I:%M %p"),
-                        "event": f"Certificate marked REPLACED by {new_validation_id}. Reason: {data.reason}"
+                        "event": f"Certificate marked REPLACED by {new_validation_id}. Reason: {data.reason}",
                     }
-                }
-            }
+                },
+            },
         )
 
     new_cert_doc = {
         "validationId": new_validation_id,
         "recipientName": data.recipientName,
         "recipientEmail": data.recipientEmail,
-        "eventTitle": orig_cert.get("eventTitle", "Global AI Summit 2026") if orig_cert else "Global AI Summit 2026",
+        "eventTitle": (
+            orig_cert.get("eventTitle", "Global AI Summit 2026")
+            if orig_cert
+            else "Global AI Summit 2026"
+        ),
         "type": data.type,
         "template": "Replacement Certificate",
         "status": "Active",
         "replacesValidationId": data.originalValidationId,
-        "deliveryStatus": {"issued": True, "emailSent": True, "emailOpened": False, "downloaded": False, "downloadsCount": 0, "verificationCount": 0},
+        "deliveryStatus": {
+            "issued": True,
+            "emailSent": True,
+            "emailOpened": False,
+            "downloaded": False,
+            "downloadsCount": 0,
+            "verificationCount": 0,
+        },
         "checklist": {
-            "registered": True, "teamVerified": True, "hackathonCompleted": True,
-            "submissionCompleted": True, "evaluationCompleted": True,
-            "resultFinalized": True, "notPreviouslyIssued": True, "userActive": True
+            "registered": True,
+            "teamVerified": True,
+            "hackathonCompleted": True,
+            "submissionCompleted": True,
+            "evaluationCompleted": True,
+            "resultFinalized": True,
+            "notPreviouslyIssued": True,
+            "userActive": True,
         },
         "issuedBy": current_user.get("name", "Admin"),
         "dateIssued": datetime.utcnow().strftime("%b %d, %Y"),
         "createdAt": datetime.utcnow(),
         "auditHistory": [
-            {"date": datetime.utcnow().strftime("%b %d, %I:%M %p"), "event": f"Issued as replacement for {data.originalValidationId}. Reason: {data.reason}"}
-        ]
+            {
+                "date": datetime.utcnow().strftime("%b %d, %I:%M %p"),
+                "event": f"Issued as replacement for {data.originalValidationId}. Reason: {data.reason}",
+            }
+        ],
     }
     await db["certificates"].insert_one(new_cert_doc)
 
-    return {"success": True, "newValidationId": new_validation_id, "message": f"Replacement certificate {new_validation_id} issued."}
+    return {
+        "success": True,
+        "newValidationId": new_validation_id,
+        "message": f"Replacement certificate {new_validation_id} issued.",
+    }
+
 
 @router.put("/{cert_id}/revoke")
-async def revoke_certificate(cert_id: str, data: RevokeCertRequest, current_user: dict = Depends(RequireRole(["admin", "superadmin"]))):
+async def revoke_certificate(
+    cert_id: str,
+    data: RevokeCertRequest,
+    current_user: dict = Depends(RequireRole(["admin", "superadmin"])),
+):
     db = get_db()
-    query = {"$or": [{"validationId": cert_id}, {"_id": ObjectId(cert_id) if ObjectId.is_valid(cert_id) else cert_id}]}
-    
+    query = {
+        "$or": [
+            {"validationId": cert_id},
+            {"_id": ObjectId(cert_id) if ObjectId.is_valid(cert_id) else cert_id},
+        ]
+    }
+
     audit_entry = {
         "date": datetime.utcnow().strftime("%b %d, %I:%M %p"),
-        "event": f"Certificate REVOKED by Admin. Reason: {data.reason}"
+        "event": f"Certificate REVOKED by Admin. Reason: {data.reason}",
     }
 
     await db["certificates"].update_one(
         query,
         {
-            "$set": {"status": "Revoked", "revokeReason": data.reason, "revokeNotes": data.notes, "revokedAt": datetime.utcnow()},
-            "$push": {"auditHistory": audit_entry}
+            "$set": {
+                "status": "Revoked",
+                "revokeReason": data.reason,
+                "revokeNotes": data.notes,
+                "revokedAt": datetime.utcnow(),
+            },
+            "$push": {"auditHistory": audit_entry},
+        },
+    )
+
+    await db["audit_logs"].insert_one(
+        {
+            "action": "Certificate Revoked",
+            "category": "Certificates",
+            "details": f"Revoked certificate {cert_id}. Reason: {data.reason}",
+            "adminName": current_user.get("name", "Admin"),
+            "timestamp": datetime.utcnow(),
         }
     )
 
-    await db["audit_logs"].insert_one({
-        "action": "Certificate Revoked",
-        "category": "Certificates",
-        "details": f"Revoked certificate {cert_id}. Reason: {data.reason}",
-        "adminName": current_user.get("name", "Admin"),
-        "timestamp": datetime.utcnow()
-    })
+    return {
+        "success": True,
+        "message": "Certificate has been revoked and QR validation invalidated.",
+    }
 
-    return {"success": True, "message": "Certificate has been revoked and QR validation invalidated."}
 
 @router.post("/{cert_id}/restore")
-async def restore_certificate(cert_id: str, current_user: dict = Depends(RequireRole(["admin", "superadmin"]))):
+async def restore_certificate(
+    cert_id: str, current_user: dict = Depends(RequireRole(["admin", "superadmin"]))
+):
     """Restore a previously revoked certificate back to Active"""
     db = get_db()
-    query = {"$or": [{"validationId": cert_id}, {"_id": ObjectId(cert_id) if ObjectId.is_valid(cert_id) else cert_id}]}
+    query = {
+        "$or": [
+            {"validationId": cert_id},
+            {"_id": ObjectId(cert_id) if ObjectId.is_valid(cert_id) else cert_id},
+        ]
+    }
 
     audit_entry = {
         "date": datetime.utcnow().strftime("%b %d, %I:%M %p"),
-        "event": "Certificate RESTORED to Active status by Admin"
+        "event": "Certificate RESTORED to Active status by Admin",
     }
 
     result = await db["certificates"].update_one(
@@ -383,22 +578,28 @@ async def restore_certificate(cert_id: str, current_user: dict = Depends(Require
         {
             "$set": {"status": "Active"},
             "$unset": {"revokeReason": "", "revokeNotes": "", "revokedAt": ""},
-            "$push": {"auditHistory": audit_entry}
-        }
+            "$push": {"auditHistory": audit_entry},
+        },
     )
 
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Certificate not found")
 
-    await db["audit_logs"].insert_one({
-        "action": "Certificate Restored",
-        "category": "Certificates",
-        "details": f"Restored certificate {cert_id} to Active status.",
-        "adminName": current_user.get("name", "Admin"),
-        "timestamp": datetime.utcnow()
-    })
+    await db["audit_logs"].insert_one(
+        {
+            "action": "Certificate Restored",
+            "category": "Certificates",
+            "details": f"Restored certificate {cert_id} to Active status.",
+            "adminName": current_user.get("name", "Admin"),
+            "timestamp": datetime.utcnow(),
+        }
+    )
 
-    return {"success": True, "message": "Certificate has been restored to Active status."}
+    return {
+        "success": True,
+        "message": "Certificate has been restored to Active status.",
+    }
+
 
 @router.get("/public-verify/{validation_id}")
 async def public_verify_certificate(validation_id: str):
@@ -407,13 +608,15 @@ async def public_verify_certificate(validation_id: str):
 
     # Check if public QR verification is enabled in platform settings
     settings = await db["settings"].find_one({"key": "global_config"}) or {}
-    is_public_enabled = settings.get("publicVerification", settings.get("publicQrVerification", True))
+    is_public_enabled = settings.get(
+        "publicVerification", settings.get("publicQrVerification", True)
+    )
     if is_public_enabled is False:
         return {
             "valid": False,
             "verified": False,
             "status": "Disabled",
-            "message": "Public QR verification portal is temporarily closed by platform administration."
+            "message": "Public QR verification portal is temporarily closed by platform administration.",
         }
 
     cert = await db["certificates"].find_one({"validationId": validation_id})
@@ -421,7 +624,7 @@ async def public_verify_certificate(validation_id: str):
         return {
             "valid": False,
             "status": "NOT FOUND",
-            "message": f"Certificate validation ID '{validation_id}' is unrecognized."
+            "message": f"Certificate validation ID '{validation_id}' is unrecognized.",
         }
 
     if cert.get("status") == "Revoked":
@@ -433,7 +636,7 @@ async def public_verify_certificate(validation_id: str):
             "eventTitle": cert.get("eventTitle"),
             "revokedAt": cert.get("revokedAt", "Recently"),
             "reason": cert.get("revokeReason", "Event result updated"),
-            "message": "⚠️ CERTIFICATE REVOKED: This credential has been officially revoked and is no longer valid."
+            "message": "⚠️ CERTIFICATE REVOKED: This credential has been officially revoked and is no longer valid.",
         }
 
     if cert.get("status") == "Replaced":
@@ -442,11 +645,14 @@ async def public_verify_certificate(validation_id: str):
             "status": "REPLACED",
             "validationId": validation_id,
             "replacedBy": cert.get("replacedBy"),
-            "message": f"⚠️ CERTIFICATE REPLACED: This credential was superseded by Certificate {cert.get('replacedBy')}."
+            "message": f"⚠️ CERTIFICATE REPLACED: This credential was superseded by Certificate {cert.get('replacedBy')}.",
         }
 
     # Increment verification count
-    await db["certificates"].update_one({"validationId": validation_id}, {"$inc": {"deliveryStatus.verificationCount": 1}})
+    await db["certificates"].update_one(
+        {"validationId": validation_id},
+        {"$inc": {"deliveryStatus.verificationCount": 1}},
+    )
 
     return {
         "valid": True,
@@ -458,11 +664,15 @@ async def public_verify_certificate(validation_id: str):
         "type": cert.get("type"),
         "dateIssued": cert.get("dateIssued"),
         "issuedBy": cert.get("issuedBy", "ProEduvate Platform Authority"),
-        "message": "✓ VERIFIED GENUINE CREDENTIAL"
+        "message": "✓ VERIFIED GENUINE CREDENTIAL",
     }
 
+
 @router.post("/bulk-issue-preview")
-async def preview_bulk_issuance(data: BulkIssueRequest, current_user: dict = Depends(RequireRole(["admin", "superadmin"]))):
+async def preview_bulk_issuance(
+    data: BulkIssueRequest,
+    current_user: dict = Depends(RequireRole(["admin", "superadmin"])),
+):
     """Pre-issuance safety check for bulk certificate issuance"""
     recipients = data.recipients
     ready = []
@@ -476,26 +686,37 @@ async def preview_bulk_issuance(data: BulkIssueRequest, current_user: dict = Dep
         cert_type = r.get("type", "Winner")
 
         if not email or "@" not in email:
-            blocked.append({"recipient": r, "reason": "Missing or invalid email address"})
+            blocked.append(
+                {"recipient": r, "reason": "Missing or invalid email address"}
+            )
         elif not name:
             blocked.append({"recipient": r, "reason": "Missing recipient name"})
         else:
-            existing = await db["certificates"].find_one({
-                "recipientEmail": email,
-                "eventTitle": event,
-                "type": cert_type,
-                "status": {"$ne": "Revoked"}
-            })
-            if existing:
-                blocked.append({"recipient": r, "reason": f"Active {cert_type} certificate already exists ({existing.get('validationId')})"})
-            else:
-                ready.append({
-                    "name": name,
-                    "email": email,
-                    "event": event,
+            existing = await db["certificates"].find_one(
+                {
+                    "recipientEmail": email,
+                    "eventTitle": event,
                     "type": cert_type,
-                    "template": data.template
-                })
+                    "status": {"$ne": "Revoked"},
+                }
+            )
+            if existing:
+                blocked.append(
+                    {
+                        "recipient": r,
+                        "reason": f"Active {cert_type} certificate already exists ({existing.get('validationId')})",
+                    }
+                )
+            else:
+                ready.append(
+                    {
+                        "name": name,
+                        "email": email,
+                        "event": event,
+                        "type": cert_type,
+                        "template": data.template,
+                    }
+                )
 
     return {
         "success": True,
@@ -503,11 +724,15 @@ async def preview_bulk_issuance(data: BulkIssueRequest, current_user: dict = Dep
         "readyCount": len(ready),
         "blockedCount": len(blocked),
         "readyRecipients": ready,
-        "blockedDetails": blocked
+        "blockedDetails": blocked,
     }
 
+
 @router.post("/bulk-issue-confirm")
-async def confirm_bulk_issuance(data: BulkIssueRequest, current_user: dict = Depends(RequireRole(["admin", "superadmin"]))):
+async def confirm_bulk_issuance(
+    data: BulkIssueRequest,
+    current_user: dict = Depends(RequireRole(["admin", "superadmin"])),
+):
     """Execute batch certificate creation into database"""
     db = get_db()
     succeeded = []
@@ -520,21 +745,35 @@ async def confirm_bulk_issuance(data: BulkIssueRequest, current_user: dict = Dep
         cert_type = r.get("type", "Winner")
 
         if not email or not name:
-            skipped.append({"name": name or "Unknown", "reason": "Incomplete contact details"})
+            skipped.append(
+                {"name": name or "Unknown", "reason": "Incomplete contact details"}
+            )
             continue
 
-        existing = await db["certificates"].find_one({
-            "recipientEmail": email,
-            "eventTitle": event,
-            "type": cert_type,
-            "status": {"$ne": "Revoked"}
-        })
+        existing = await db["certificates"].find_one(
+            {
+                "recipientEmail": email,
+                "eventTitle": event,
+                "type": cert_type,
+                "status": {"$ne": "Revoked"},
+            }
+        )
         if existing:
-            skipped.append({"name": name, "reason": f"Already active ({existing.get('validationId')})"})
+            skipped.append(
+                {
+                    "name": name,
+                    "reason": f"Already active ({existing.get('validationId')})",
+                }
+            )
             continue
 
         settings = await db["settings"].find_one({"key": "global_config"}) or {}
-        prefix = str(settings.get("prefix") or settings.get("certificatePrefix") or "PROEDU").strip().upper() or "PROEDU"
+        prefix = (
+            str(settings.get("prefix") or settings.get("certificatePrefix") or "PROEDU")
+            .strip()
+            .upper()
+            or "PROEDU"
+        )
         year = datetime.utcnow().year
         validation_id = f"{prefix}-{year}-{str(uuid.uuid4())[:8].upper()}"
 
@@ -552,39 +791,52 @@ async def confirm_bulk_issuance(data: BulkIssueRequest, current_user: dict = Dep
                 "emailOpened": True,
                 "downloaded": False,
                 "downloadsCount": 0,
-                "verificationCount": 0
+                "verificationCount": 0,
             },
             "checklist": {
-                "registered": True, "teamVerified": True, "hackathonCompleted": True,
-                "submissionCompleted": True, "evaluationCompleted": True,
-                "resultFinalized": True, "notPreviouslyIssued": True, "userActive": True
+                "registered": True,
+                "teamVerified": True,
+                "hackathonCompleted": True,
+                "submissionCompleted": True,
+                "evaluationCompleted": True,
+                "resultFinalized": True,
+                "notPreviouslyIssued": True,
+                "userActive": True,
             },
             "issuedBy": current_user.get("name", "Admin"),
             "dateIssued": datetime.utcnow().strftime("%b %d, %Y"),
             "createdAt": datetime.utcnow(),
             "auditHistory": [
-                {"date": datetime.utcnow().strftime("%b %d, %I:%M %p"), "event": f"Bulk certificate batch issued ({validation_id})"},
-                {"date": datetime.utcnow().strftime("%b %d, %I:%M %p"), "event": f"Email delivered to {email}"}
-            ]
+                {
+                    "date": datetime.utcnow().strftime("%b %d, %I:%M %p"),
+                    "event": f"Bulk certificate batch issued ({validation_id})",
+                },
+                {
+                    "date": datetime.utcnow().strftime("%b %d, %I:%M %p"),
+                    "event": f"Email delivered to {email}",
+                },
+            ],
         }
         await db["certificates"].insert_one(cert_doc)
         succeeded.append({"name": name, "validationId": validation_id, "email": email})
 
     # Log bulk audit
-    await db["audit_logs"].insert_one({
-        "action": "Bulk Certificates Issued",
-        "category": "Certificates",
-        "details": f"Bulk created {len(succeeded)} certificates ({len(skipped)} skipped)",
-        "adminName": current_user.get("name", "Admin"),
-        "timestamp": datetime.utcnow()
-    })
+    await db["audit_logs"].insert_one(
+        {
+            "action": "Bulk Certificates Issued",
+            "category": "Certificates",
+            "details": f"Bulk created {len(succeeded)} certificates ({len(skipped)} skipped)",
+            "adminName": current_user.get("name", "Admin"),
+            "timestamp": datetime.utcnow(),
+        }
+    )
 
     return {
         "success": True,
         "issuedCount": len(succeeded),
         "skippedCount": len(skipped),
         "succeeded": succeeded,
-        "skipped": skipped
+        "skipped": skipped,
     }
 
 
@@ -592,16 +844,18 @@ async def confirm_bulk_issuance(data: BulkIssueRequest, current_user: dict = Dep
 async def verify_certificate_public(validation_id: str):
     """Public verification endpoint for QR scanners and third-party credential verification."""
     db = get_db()
-    
+
     # Check if public QR verification is enabled in platform settings
     settings = await db["settings"].find_one({"key": "global_config"}) or {}
-    is_public_enabled = settings.get("publicVerification", settings.get("publicQrVerification", True))
+    is_public_enabled = settings.get(
+        "publicVerification", settings.get("publicQrVerification", True)
+    )
     if is_public_enabled is False:
         return {
             "verified": False,
             "valid": False,
             "status": "Disabled",
-            "message": "Public QR verification portal is temporarily closed by platform administration."
+            "message": "Public QR verification portal is temporarily closed by platform administration.",
         }
 
     cert = await db["certificates"].find_one({"validationId": validation_id})
@@ -610,13 +864,13 @@ async def verify_certificate_public(validation_id: str):
             "verified": False,
             "valid": False,
             "status": "Invalid",
-            "message": f"Certificate with ID '{validation_id}' does not exist or has not been issued."
+            "message": f"Certificate with ID '{validation_id}' does not exist or has not been issued.",
         }
 
     # Increment verification count
     await db["certificates"].update_one(
         {"validationId": validation_id},
-        {"$inc": {"deliveryStatus.verificationCount": 1}}
+        {"$inc": {"deliveryStatus.verificationCount": 1}},
     )
 
     return {
@@ -629,23 +883,41 @@ async def verify_certificate_public(validation_id: str):
         "type": cert.get("type"),
         "dateIssued": cert.get("dateIssued"),
         "issuedBy": cert.get("issuedBy", "ProEduvate Platform Official"),
-        "message": "Official Certificate of Achievement verified successfully."
+        "message": "Official Certificate of Achievement verified successfully.",
     }
 
 
 @router.post("/auto-issue/{hackathon_id}")
-async def auto_issue_certificates_for_hackathon(hackathon_id: str, current_user: dict = Depends(RequireRole(["admin", "superadmin", "organizer"]))):
+async def auto_issue_certificates_for_hackathon(
+    hackathon_id: str,
+    current_user: dict = Depends(RequireRole(["admin", "superadmin", "organizer"])),
+):
     """Auto-issue winner and participant certificates for a hackathon based on platform settings."""
     db = get_db()
     settings = await db["settings"].find_one({"key": "global_config"}) or {}
-    
-    auto_winner = bool(settings.get("autoGenWinner", settings.get("autoGenerateWinners", True)))
-    auto_part = bool(settings.get("autoGenParticipant", settings.get("autoGenerateParticipants", False)))
-    prefix = str(settings.get("prefix") or settings.get("certificatePrefix") or "PROEDU").strip().upper() or "PROEDU"
+
+    auto_winner = bool(
+        settings.get("autoGenWinner", settings.get("autoGenerateWinners", True))
+    )
+    auto_part = bool(
+        settings.get(
+            "autoGenParticipant", settings.get("autoGenerateParticipants", False)
+        )
+    )
+    prefix = (
+        str(settings.get("prefix") or settings.get("certificatePrefix") or "PROEDU")
+        .strip()
+        .upper()
+        or "PROEDU"
+    )
     year = datetime.utcnow().year
-    
+
     # Get hackathon details
-    hack_doc = await db["hackathons"].find_one({"_id": ObjectId(hackathon_id)}) if ObjectId.is_valid(hackathon_id) else None
+    hack_doc = (
+        await db["hackathons"].find_one({"_id": ObjectId(hackathon_id)})
+        if ObjectId.is_valid(hackathon_id)
+        else None
+    )
     if not hack_doc:
         hack_doc = await db["hackathons"].find_one({"id": hackathon_id})
     event_title = hack_doc.get("title", "Hackathon") if hack_doc else "Hackathon"
@@ -655,15 +927,26 @@ async def auto_issue_certificates_for_hackathon(hackathon_id: str, current_user:
 
     if auto_winner or auto_part:
         # Find submissions for this hackathon
-        subs = await db["submissions"].find({"hackathonId": str(hackathon_id)}).to_list(100)
+        subs = (
+            await db["submissions"]
+            .find({"hackathonId": str(hackathon_id)})
+            .to_list(100)
+        )
         # Sort submissions by score if available
-        subs.sort(key=lambda s: float(s.get("score") or s.get("totalScore") or 0), reverse=True)
+        subs.sort(
+            key=lambda s: float(s.get("score") or s.get("totalScore") or 0),
+            reverse=True,
+        )
 
         for rank, sub in enumerate(subs, 1):
             team_id = str(sub.get("teamId", ""))
-            team = await db["teams"].find_one({"_id": ObjectId(team_id)}) if ObjectId.is_valid(team_id) else None
+            team = (
+                await db["teams"].find_one({"_id": ObjectId(team_id)})
+                if ObjectId.is_valid(team_id)
+                else None
+            )
             team_name = team.get("name", "Team") if team else "Team"
-            
+
             # Decide cert type
             cert_type = None
             if auto_winner and rank == 1:
@@ -681,34 +964,55 @@ async def auto_issue_certificates_for_hackathon(hackathon_id: str, current_user:
             recipients = []
             for tm in team_members:
                 u_id = tm.get("userId")
-                u_doc = await db["users"].find_one({"_id": ObjectId(str(u_id))}) if ObjectId.is_valid(str(u_id)) else None
+                u_doc = (
+                    await db["users"].find_one({"_id": ObjectId(str(u_id))})
+                    if ObjectId.is_valid(str(u_id))
+                    else None
+                )
                 if u_doc:
-                    recipients.append({
-                        "name": u_doc.get("name", "Member"),
-                        "email": u_doc.get("email", ""),
-                        "userId": str(u_doc["_id"])
-                    })
+                    recipients.append(
+                        {
+                            "name": u_doc.get("name", "Member"),
+                            "email": u_doc.get("email", ""),
+                            "userId": str(u_doc["_id"]),
+                        }
+                    )
             if not recipients and sub.get("submittedBy"):
-                u_doc = await db["users"].find_one({"_id": ObjectId(str(sub["submittedBy"]))}) if ObjectId.is_valid(str(sub["submittedBy"])) else None
+                u_doc = (
+                    await db["users"].find_one(
+                        {"_id": ObjectId(str(sub["submittedBy"]))}
+                    )
+                    if ObjectId.is_valid(str(sub["submittedBy"]))
+                    else None
+                )
                 if u_doc:
-                    recipients.append({
-                        "name": u_doc.get("name", "Submitter"),
-                        "email": u_doc.get("email", ""),
-                        "userId": str(u_doc["_id"])
-                    })
+                    recipients.append(
+                        {
+                            "name": u_doc.get("name", "Submitter"),
+                            "email": u_doc.get("email", ""),
+                            "userId": str(u_doc["_id"]),
+                        }
+                    )
 
             for r in recipients:
                 email = r["email"]
                 if not email:
                     continue
-                existing = await db["certificates"].find_one({
-                    "recipientEmail": email,
-                    "eventTitle": event_title,
-                    "type": cert_type,
-                    "status": {"$ne": "Revoked"}
-                })
+                existing = await db["certificates"].find_one(
+                    {
+                        "recipientEmail": email,
+                        "eventTitle": event_title,
+                        "type": cert_type,
+                        "status": {"$ne": "Revoked"},
+                    }
+                )
                 if existing:
-                    skipped.append({"name": r["name"], "reason": f"Already active ({existing.get('validationId')})"})
+                    skipped.append(
+                        {
+                            "name": r["name"],
+                            "reason": f"Already active ({existing.get('validationId')})",
+                        }
+                    )
                     continue
 
                 validation_id = f"{prefix}-{year}-{str(uuid.uuid4())[:8].upper()}"
@@ -724,23 +1028,41 @@ async def auto_issue_certificates_for_hackathon(hackathon_id: str, current_user:
                     "template": f"{cert_type} Certificate",
                     "status": "Active",
                     "deliveryStatus": {
-                        "issued": True, "emailSent": True, "emailOpened": True,
-                        "downloaded": False, "downloadsCount": 0, "verificationCount": 0
+                        "issued": True,
+                        "emailSent": True,
+                        "emailOpened": True,
+                        "downloaded": False,
+                        "downloadsCount": 0,
+                        "verificationCount": 0,
                     },
                     "checklist": {
-                        "registered": True, "teamVerified": True, "hackathonCompleted": True,
-                        "submissionCompleted": True, "evaluationCompleted": True,
-                        "resultFinalized": True, "notPreviouslyIssued": True, "userActive": True
+                        "registered": True,
+                        "teamVerified": True,
+                        "hackathonCompleted": True,
+                        "submissionCompleted": True,
+                        "evaluationCompleted": True,
+                        "resultFinalized": True,
+                        "notPreviouslyIssued": True,
+                        "userActive": True,
                     },
                     "issuedBy": "Platform Automated Pipeline",
                     "dateIssued": datetime.utcnow().strftime("%b %d, %Y"),
                     "createdAt": datetime.utcnow(),
                     "auditHistory": [
-                        {"date": datetime.utcnow().strftime("%b %d, %I:%M %p"), "event": f"Auto-issued by platform policy ({validation_id})"}
-                    ]
+                        {
+                            "date": datetime.utcnow().strftime("%b %d, %I:%M %p"),
+                            "event": f"Auto-issued by platform policy ({validation_id})",
+                        }
+                    ],
                 }
                 await db["certificates"].insert_one(cert_doc)
-                issued.append({"name": r["name"], "type": cert_type, "validationId": validation_id})
+                issued.append(
+                    {
+                        "name": r["name"],
+                        "type": cert_type,
+                        "validationId": validation_id,
+                    }
+                )
 
     return {
         "success": True,
@@ -749,8 +1071,9 @@ async def auto_issue_certificates_for_hackathon(hackathon_id: str, current_user:
         "prefix": prefix,
         "issuedCount": len(issued),
         "skippedCount": len(skipped),
-        "issued": issued
+        "issued": issued,
     }
+
 
 # ==============================================================================
 # CERTIFICATE TEMPLATES MANAGEMENT & UPLOADER
@@ -768,7 +1091,7 @@ DEFAULT_TEMPLATES = [
         "format": "PNG",
         "isBuiltIn": True,
         "isDefault": True,
-        "colorScheme": "Gold & Navy"
+        "colorScheme": "Gold & Navy",
     },
     {
         "id": "tpl_runner_up",
@@ -781,7 +1104,7 @@ DEFAULT_TEMPLATES = [
         "format": "PNG",
         "isBuiltIn": True,
         "isDefault": True,
-        "colorScheme": "Silver & Royal Blue"
+        "colorScheme": "Silver & Royal Blue",
     },
     {
         "id": "tpl_participation",
@@ -794,43 +1117,62 @@ DEFAULT_TEMPLATES = [
         "format": "PNG",
         "isBuiltIn": True,
         "isDefault": True,
-        "colorScheme": "Emerald & Gold"
-    }
+        "colorScheme": "Emerald & Gold",
+    },
 ]
 
+
 @router.get("/templates")
-async def get_certificate_templates(current_user: dict = Depends(RequireRole(["admin", "superadmin"]))):
+async def get_certificate_templates(
+    current_user: dict = Depends(RequireRole(["admin", "superadmin"]))
+):
     """Fetch all certificate templates organized by category, including built-in and uploaded templates."""
     db = get_db()
     custom_templates = []
     try:
-        docs = await db["certificate_templates"].find().sort("createdAt", -1).to_list(100)
+        docs = (
+            await db["certificate_templates"].find().sort("createdAt", -1).to_list(100)
+        )
         for doc in docs:
-            custom_templates.append({
-                "id": str(doc["_id"]),
-                "name": doc.get("name", "Custom Template"),
-                "category": doc.get("category", "Custom"),
-                "type": doc.get("type", doc.get("category", "Custom")),
-                "description": doc.get("description", ""),
-                "imageUrl": doc.get("imageUrl", ""),
-                "dimensions": doc.get("dimensions", "Custom"),
-                "format": doc.get("format", "PNG"),
-                "isBuiltIn": False,
-                "isDefault": False,
-                "createdAt": doc.get("createdAt", datetime.utcnow()).isoformat() if isinstance(doc.get("createdAt"), datetime) else str(doc.get("createdAt", ""))
-            })
+            custom_templates.append(
+                {
+                    "id": str(doc["_id"]),
+                    "name": doc.get("name", "Custom Template"),
+                    "category": doc.get("category", "Custom"),
+                    "type": doc.get("type", doc.get("category", "Custom")),
+                    "description": doc.get("description", ""),
+                    "imageUrl": doc.get("imageUrl", ""),
+                    "dimensions": doc.get("dimensions", "Custom"),
+                    "format": doc.get("format", "PNG"),
+                    "isBuiltIn": False,
+                    "isDefault": False,
+                    "createdAt": (
+                        doc.get("createdAt", datetime.utcnow()).isoformat()
+                        if isinstance(doc.get("createdAt"), datetime)
+                        else str(doc.get("createdAt", ""))
+                    ),
+                }
+            )
     except Exception as e:
         print(f"[CertTemplates] Error reading custom templates: {e}")
 
     all_templates = DEFAULT_TEMPLATES + custom_templates
-    categories = ["All", "Winner", "Runner Up", "Participation", "Special Recognition", "Custom"]
+    categories = [
+        "All",
+        "Winner",
+        "Runner Up",
+        "Participation",
+        "Special Recognition",
+        "Custom",
+    ]
 
     return {
         "success": True,
         "templates": all_templates,
         "categories": categories,
-        "totalCount": len(all_templates)
+        "totalCount": len(all_templates),
     }
+
 
 @router.post("/templates/upload")
 async def upload_certificate_template(
@@ -838,7 +1180,7 @@ async def upload_certificate_template(
     name: str = Form(...),
     category: str = Form(...),
     description: Optional[str] = Form(None),
-    current_user: dict = Depends(RequireRole(["admin", "superadmin"]))
+    current_user: dict = Depends(RequireRole(["admin", "superadmin"])),
 ):
     """Upload a new certificate template image and save its metadata in the system."""
     if not file or not file.filename:
@@ -847,7 +1189,10 @@ async def upload_certificate_template(
     allowed_exts = {".png", ".jpg", ".jpeg", ".webp", ".svg"}
     ext = Path(file.filename).suffix.lower()
     if ext not in allowed_exts:
-        raise HTTPException(status_code=400, detail=f"Unsupported file format '{ext}'. Allowed formats: {', '.join(allowed_exts)}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file format '{ext}'. Allowed formats: {', '.join(allowed_exts)}",
+        )
 
     sanitized_name = "".join(c for c in file.filename if c.isalnum() or c in "._- ")
     unique_filename = f"{uuid.uuid4().hex[:12]}_{sanitized_name.replace(' ', '_')}"
@@ -856,14 +1201,19 @@ async def upload_certificate_template(
     try:
         contents = await file.read()
         if len(contents) > 15 * 1024 * 1024:
-            raise HTTPException(status_code=400, detail="File size exceeds maximum limit of 15MB")
+            raise HTTPException(
+                status_code=400, detail="File size exceeds maximum limit of 15MB"
+            )
 
         with open(file_path, "wb") as f:
             f.write(contents)
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to save certificate template file: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to save certificate template file: {str(e)}",
+        )
 
     image_url = f"/uploads/certificates/{unique_filename}"
     clean_cat = category.strip()
@@ -889,7 +1239,7 @@ async def upload_certificate_template(
         "isBuiltIn": False,
         "isDefault": False,
         "uploadedBy": current_user.get("email") or current_user.get("name") or "Admin",
-        "createdAt": datetime.utcnow()
+        "createdAt": datetime.utcnow(),
     }
 
     result = await db["certificate_templates"].insert_one(template_doc)
@@ -900,20 +1250,22 @@ async def upload_certificate_template(
     return {
         "success": True,
         "message": "Certificate template uploaded successfully",
-        "template": template_doc
+        "template": template_doc,
     }
+
 
 @router.delete("/templates/{template_id}")
 async def delete_certificate_template(
-    template_id: str,
-    current_user: dict = Depends(RequireRole(["admin", "superadmin"]))
+    template_id: str, current_user: dict = Depends(RequireRole(["admin", "superadmin"]))
 ):
     """Delete a custom uploaded certificate template."""
     db = get_db()
     if not ObjectId.is_valid(template_id):
         raise HTTPException(status_code=400, detail="Invalid template ID")
 
-    template = await db["certificate_templates"].find_one({"_id": ObjectId(template_id)})
+    template = await db["certificate_templates"].find_one(
+        {"_id": ObjectId(template_id)}
+    )
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
 

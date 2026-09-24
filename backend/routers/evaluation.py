@@ -16,11 +16,46 @@ def get_evaluation_collection():
 
 
 DEFAULT_CRITERIA = [
-    {"id": "innovation", "label": "Innovation & Originality", "description": "Is the idea unique and novel?", "weight": 10, "minScore": 0, "maxScore": 10},
-    {"id": "technical", "label": "Technical Implementation", "description": "Code quality and complexity.", "weight": 10, "minScore": 0, "maxScore": 10},
-    {"id": "design", "label": "Design & User Experience", "description": "UI/UX and ease of use.", "weight": 10, "minScore": 0, "maxScore": 10},
-    {"id": "presentation", "label": "Presentation Quality", "description": "Clarity of the pitch/demo.", "weight": 10, "minScore": 0, "maxScore": 10},
-    {"id": "feasibility", "label": "Business Feasibility", "description": "Market potential and viability.", "weight": 10, "minScore": 0, "maxScore": 10},
+    {
+        "id": "innovation",
+        "label": "Innovation & Originality",
+        "description": "Is the idea unique and novel?",
+        "weight": 10,
+        "minScore": 0,
+        "maxScore": 10,
+    },
+    {
+        "id": "technical",
+        "label": "Technical Implementation",
+        "description": "Code quality and complexity.",
+        "weight": 10,
+        "minScore": 0,
+        "maxScore": 10,
+    },
+    {
+        "id": "design",
+        "label": "Design & User Experience",
+        "description": "UI/UX and ease of use.",
+        "weight": 10,
+        "minScore": 0,
+        "maxScore": 10,
+    },
+    {
+        "id": "presentation",
+        "label": "Presentation Quality",
+        "description": "Clarity of the pitch/demo.",
+        "weight": 10,
+        "minScore": 0,
+        "maxScore": 10,
+    },
+    {
+        "id": "feasibility",
+        "label": "Business Feasibility",
+        "description": "Market potential and viability.",
+        "weight": 10,
+        "minScore": 0,
+        "maxScore": 10,
+    },
 ]
 
 

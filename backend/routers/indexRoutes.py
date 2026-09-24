@@ -51,4 +51,3 @@ router.include_router(admin_disputes.router)
 router.include_router(admin_organizers.router)
 router.include_router(admin_analytics.router)
 router.include_router(admin_settings.router)
-

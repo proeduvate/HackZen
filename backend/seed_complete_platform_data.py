@@ -2,8 +2,8 @@ import asyncio
 import os
 import sys
 
-if hasattr(sys.stdout, 'reconfigure'):
-    sys.stdout.reconfigure(encoding='utf-8')
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 from datetime import datetime, timedelta
 from bson import ObjectId
@@ -11,6 +11,7 @@ from bson import ObjectId
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from database import MongoDB, get_db
 from core.security import get_password_hash
+
 
 async def seed_complete_platform():
     await MongoDB.connect()
@@ -47,7 +48,7 @@ async def seed_complete_platform():
             "isVerified": True,
             "status": "Active",
             "createdAt": now - timedelta(days=60),
-            "permissions": ["ALL"]
+            "permissions": ["ALL"],
         },
         {
             "_id": ObjectId("65e010000000000000000001"),
@@ -59,7 +60,7 @@ async def seed_complete_platform():
             "isVerified": True,
             "status": "Active",
             "createdAt": now - timedelta(days=90),
-            "permissions": ["ALL"]
+            "permissions": ["ALL"],
         },
         # Organizers
         {
@@ -77,7 +78,7 @@ async def seed_complete_platform():
             "is_active": True,
             "isVerified": True,
             "status": "Active",
-            "createdAt": now - timedelta(days=45)
+            "createdAt": now - timedelta(days=45),
         },
         {
             "_id": ObjectId("65e020000000000000000002"),
@@ -94,7 +95,7 @@ async def seed_complete_platform():
             "is_active": True,
             "isVerified": True,
             "status": "Pending",
-            "createdAt": now - timedelta(days=2)
+            "createdAt": now - timedelta(days=2),
         },
         {
             "_id": ObjectId("65e020000000000000000003"),
@@ -111,7 +112,7 @@ async def seed_complete_platform():
             "is_active": True,
             "isVerified": True,
             "status": "Active",
-            "createdAt": now - timedelta(days=60)
+            "createdAt": now - timedelta(days=60),
         },
         {
             "_id": ObjectId("6a70c0666425dafef71c73c5"),
@@ -128,7 +129,7 @@ async def seed_complete_platform():
             "is_active": True,
             "isVerified": True,
             "status": "Active",
-            "createdAt": now - timedelta(days=30)
+            "createdAt": now - timedelta(days=30),
         },
         {
             "_id": ObjectId("65e020000000000000000004"),
@@ -145,7 +146,7 @@ async def seed_complete_platform():
             "is_active": True,
             "isVerified": False,
             "status": "Pending",
-            "createdAt": now - timedelta(days=3)
+            "createdAt": now - timedelta(days=3),
         },
         {
             "_id": ObjectId("65e020000000000000000005"),
@@ -162,7 +163,7 @@ async def seed_complete_platform():
             "is_active": True,
             "isVerified": False,
             "status": "Pending",
-            "createdAt": now - timedelta(days=1)
+            "createdAt": now - timedelta(days=1),
         },
         {
             "_id": ObjectId("65e020000000000000000006"),
@@ -180,7 +181,7 @@ async def seed_complete_platform():
             "isVerified": False,
             "status": "Needs Changes",
             "createdAt": now - timedelta(days=5),
-            "changeRequest": "Please provide your official university authorization letter and departmental NOC."
+            "changeRequest": "Please provide your official university authorization letter and departmental NOC.",
         },
         {
             "_id": ObjectId("65e020000000000000000007"),
@@ -195,7 +196,7 @@ async def seed_complete_platform():
             "isVerified": False,
             "status": "Rejected",
             "createdAt": now - timedelta(days=12),
-            "rejectionReason": "Unable to verify organizational affiliation and accreditation."
+            "rejectionReason": "Unable to verify organizational affiliation and accreditation.",
         },
         # Mentors
         {
@@ -210,7 +211,7 @@ async def seed_complete_platform():
             "is_active": True,
             "isVerified": True,
             "status": "Active",
-            "createdAt": now - timedelta(days=50)
+            "createdAt": now - timedelta(days=50),
         },
         {
             "_id": ObjectId("65e030000000000000000001"),
@@ -224,7 +225,7 @@ async def seed_complete_platform():
             "is_active": True,
             "isVerified": True,
             "status": "Active",
-            "createdAt": now - timedelta(days=55)
+            "createdAt": now - timedelta(days=55),
         },
         {
             "_id": ObjectId("65e030000000000000000002"),
@@ -239,7 +240,7 @@ async def seed_complete_platform():
             "is_active": True,
             "isVerified": True,
             "status": "Active",
-            "createdAt": now - timedelta(days=40)
+            "createdAt": now - timedelta(days=40),
         },
         {
             "_id": ObjectId("65e030000000000000000003"),
@@ -254,7 +255,7 @@ async def seed_complete_platform():
             "is_active": True,
             "isVerified": True,
             "status": "Active",
-            "createdAt": now - timedelta(days=42)
+            "createdAt": now - timedelta(days=42),
         },
         {
             "_id": ObjectId("65e030000000000000000004"),
@@ -268,7 +269,7 @@ async def seed_complete_platform():
             "is_active": True,
             "isVerified": True,
             "status": "Active",
-            "createdAt": now - timedelta(days=35)
+            "createdAt": now - timedelta(days=35),
         },
         {
             "_id": ObjectId("65e030000000000000000005"),
@@ -282,7 +283,7 @@ async def seed_complete_platform():
             "is_active": True,
             "isVerified": True,
             "status": "Active",
-            "createdAt": now - timedelta(days=38)
+            "createdAt": now - timedelta(days=38),
         },
         {
             "_id": ObjectId("65e030000000000000000006"),
@@ -296,7 +297,7 @@ async def seed_complete_platform():
             "is_active": True,
             "isVerified": False,
             "status": "Pending",
-            "createdAt": now - timedelta(days=1)
+            "createdAt": now - timedelta(days=1),
         },
         {
             "_id": ObjectId("65e030000000000000000007"),
@@ -310,7 +311,7 @@ async def seed_complete_platform():
             "is_active": True,
             "isVerified": False,
             "status": "Pending",
-            "createdAt": now - timedelta(days=2)
+            "createdAt": now - timedelta(days=2),
         },
         # Students
         {
@@ -323,7 +324,7 @@ async def seed_complete_platform():
             "is_active": True,
             "isVerified": True,
             "status": "Active",
-            "createdAt": now - timedelta(days=30)
+            "createdAt": now - timedelta(days=30),
         },
         {
             "_id": ObjectId("6a79cd04982015cf9acebe9d"),
@@ -335,7 +336,7 @@ async def seed_complete_platform():
             "is_active": True,
             "isVerified": True,
             "status": "Active",
-            "createdAt": now - timedelta(days=32)
+            "createdAt": now - timedelta(days=32),
         },
         {
             "_id": ObjectId("65e040000000000000000001"),
@@ -347,7 +348,7 @@ async def seed_complete_platform():
             "is_active": True,
             "isVerified": True,
             "status": "Active",
-            "createdAt": now - timedelta(days=35)
+            "createdAt": now - timedelta(days=35),
         },
         {
             "_id": ObjectId("65e040000000000000000002"),
@@ -359,7 +360,7 @@ async def seed_complete_platform():
             "is_active": True,
             "isVerified": True,
             "status": "Active",
-            "createdAt": now - timedelta(days=34)
+            "createdAt": now - timedelta(days=34),
         },
         {
             "_id": ObjectId("65e040000000000000000003"),
@@ -371,7 +372,7 @@ async def seed_complete_platform():
             "is_active": True,
             "isVerified": True,
             "status": "Active",
-            "createdAt": now - timedelta(days=33)
+            "createdAt": now - timedelta(days=33),
         },
         {
             "_id": ObjectId("65e040000000000000000004"),
@@ -383,7 +384,7 @@ async def seed_complete_platform():
             "is_active": True,
             "isVerified": True,
             "status": "Active",
-            "createdAt": now - timedelta(days=30)
+            "createdAt": now - timedelta(days=30),
         },
         {
             "_id": ObjectId("65e040000000000000000005"),
@@ -395,7 +396,7 @@ async def seed_complete_platform():
             "is_active": True,
             "isVerified": True,
             "status": "Active",
-            "createdAt": now - timedelta(days=28)
+            "createdAt": now - timedelta(days=28),
         },
         {
             "_id": ObjectId("65e040000000000000000006"),
@@ -407,7 +408,7 @@ async def seed_complete_platform():
             "is_active": True,
             "isVerified": True,
             "status": "Active",
-            "createdAt": now - timedelta(days=25)
+            "createdAt": now - timedelta(days=25),
         },
         {
             "_id": ObjectId("65e040000000000000000007"),
@@ -419,7 +420,7 @@ async def seed_complete_platform():
             "is_active": True,
             "isVerified": True,
             "status": "Active",
-            "createdAt": now - timedelta(days=22)
+            "createdAt": now - timedelta(days=22),
         },
         {
             "_id": ObjectId("65e040000000000000000008"),
@@ -431,7 +432,7 @@ async def seed_complete_platform():
             "is_active": True,
             "isVerified": True,
             "status": "Active",
-            "createdAt": now - timedelta(days=20)
+            "createdAt": now - timedelta(days=20),
         },
         {
             "_id": ObjectId("65e040000000000000000009"),
@@ -443,7 +444,7 @@ async def seed_complete_platform():
             "is_active": True,
             "isVerified": True,
             "status": "Active",
-            "createdAt": now - timedelta(days=18)
+            "createdAt": now - timedelta(days=18),
         },
         {
             "_id": ObjectId("65e040000000000000000010"),
@@ -458,7 +459,7 @@ async def seed_complete_platform():
             "isVerified": True,
             "status": "Active",
             "createdAt": now - timedelta(days=15),
-            "lastLogin": now - timedelta(hours=8)
+            "lastLogin": now - timedelta(hours=8),
         },
         # ==========================================
         # 12 Additional Authentic Platform Users
@@ -479,7 +480,7 @@ async def seed_complete_platform():
             "isVerified": True,
             "status": "Active",
             "createdAt": now - timedelta(days=58),
-            "lastLogin": now - timedelta(minutes=15)
+            "lastLogin": now - timedelta(minutes=15),
         },
         {
             "_id": ObjectId("65e030000000000000000012"),
@@ -497,7 +498,7 @@ async def seed_complete_platform():
             "isVerified": True,
             "status": "Active",
             "createdAt": now - timedelta(days=45),
-            "lastLogin": now - timedelta(hours=2)
+            "lastLogin": now - timedelta(hours=2),
         },
         {
             "_id": ObjectId("65e030000000000000000013"),
@@ -515,7 +516,7 @@ async def seed_complete_platform():
             "isVerified": True,
             "status": "Active",
             "createdAt": now - timedelta(days=36),
-            "lastLogin": now - timedelta(hours=5)
+            "lastLogin": now - timedelta(hours=5),
         },
         {
             "_id": ObjectId("65e030000000000000000014"),
@@ -533,7 +534,7 @@ async def seed_complete_platform():
             "isVerified": True,
             "status": "Active",
             "createdAt": now - timedelta(days=33),
-            "lastLogin": now - timedelta(hours=12)
+            "lastLogin": now - timedelta(hours=12),
         },
         {
             "_id": ObjectId("65e040000000000000000015"),
@@ -548,7 +549,7 @@ async def seed_complete_platform():
             "isVerified": True,
             "status": "Active",
             "createdAt": now - timedelta(days=40),
-            "lastLogin": now - timedelta(minutes=45)
+            "lastLogin": now - timedelta(minutes=45),
         },
         {
             "_id": ObjectId("65e040000000000000000016"),
@@ -563,7 +564,7 @@ async def seed_complete_platform():
             "isVerified": True,
             "status": "Active",
             "createdAt": now - timedelta(days=32),
-            "lastLogin": now - timedelta(hours=1)
+            "lastLogin": now - timedelta(hours=1),
         },
         {
             "_id": ObjectId("65e040000000000000000017"),
@@ -578,7 +579,7 @@ async def seed_complete_platform():
             "isVerified": True,
             "status": "Active",
             "createdAt": now - timedelta(days=29),
-            "lastLogin": now - timedelta(hours=4)
+            "lastLogin": now - timedelta(hours=4),
         },
         {
             "_id": ObjectId("65e040000000000000000018"),
@@ -593,7 +594,7 @@ async def seed_complete_platform():
             "isVerified": True,
             "status": "Active",
             "createdAt": now - timedelta(days=27),
-            "lastLogin": now - timedelta(hours=6)
+            "lastLogin": now - timedelta(hours=6),
         },
         {
             "_id": ObjectId("65e040000000000000000019"),
@@ -608,7 +609,7 @@ async def seed_complete_platform():
             "isVerified": True,
             "status": "Active",
             "createdAt": now - timedelta(days=24),
-            "lastLogin": now - timedelta(hours=3)
+            "lastLogin": now - timedelta(hours=3),
         },
         {
             "_id": ObjectId("65e010000000000000000020"),
@@ -625,7 +626,7 @@ async def seed_complete_platform():
             "isVerified": True,
             "status": "Active",
             "createdAt": now - timedelta(days=70),
-            "lastLogin": now - timedelta(minutes=5)
+            "lastLogin": now - timedelta(minutes=5),
         },
         {
             "_id": ObjectId("65e040000000000000000021"),
@@ -640,7 +641,7 @@ async def seed_complete_platform():
             "isVerified": False,
             "status": "Suspended",
             "createdAt": now - timedelta(days=12),
-            "lastLogin": now - timedelta(days=2)
+            "lastLogin": now - timedelta(days=2),
         },
         {
             "_id": ObjectId("65e040000000000000000022"),
@@ -655,7 +656,7 @@ async def seed_complete_platform():
             "isVerified": False,
             "status": "Banned",
             "createdAt": now - timedelta(days=8),
-            "lastLogin": now - timedelta(days=4)
+            "lastLogin": now - timedelta(days=4),
         },
         # ==========================================
         # Platform Administrative & RBAC Accounts
@@ -675,7 +676,7 @@ async def seed_complete_platform():
             "isVerified": True,
             "status": "Active",
             "createdAt": now - timedelta(days=80),
-            "lastLogin": now - timedelta(hours=1)
+            "lastLogin": now - timedelta(hours=1),
         },
         {
             "_id": ObjectId("65e010000000000000000024"),
@@ -692,7 +693,7 @@ async def seed_complete_platform():
             "isVerified": True,
             "status": "Active",
             "createdAt": now - timedelta(days=65),
-            "lastLogin": now - timedelta(hours=3)
+            "lastLogin": now - timedelta(hours=3),
         },
         {
             "_id": ObjectId("65e010000000000000000025"),
@@ -709,7 +710,7 @@ async def seed_complete_platform():
             "isVerified": True,
             "status": "Active",
             "createdAt": now - timedelta(days=50),
-            "lastLogin": now - timedelta(hours=4)
+            "lastLogin": now - timedelta(hours=4),
         },
         {
             "_id": ObjectId("65e010000000000000000026"),
@@ -726,7 +727,7 @@ async def seed_complete_platform():
             "isVerified": True,
             "status": "Active",
             "createdAt": now - timedelta(days=48),
-            "lastLogin": now - timedelta(hours=6)
+            "lastLogin": now - timedelta(hours=6),
         },
         {
             "_id": ObjectId("65e010000000000000000027"),
@@ -743,12 +744,19 @@ async def seed_complete_platform():
             "isVerified": True,
             "status": "Active",
             "createdAt": now - timedelta(days=42),
-            "lastLogin": now - timedelta(hours=7)
-        }
+            "lastLogin": now - timedelta(hours=7),
+        },
     ]
 
     # Clean up obsolete temporary test accounts so DB count matches exactly 47
-    await db["users"].delete_many({"email": {"$regex": "^test.*@proeduvate\\.com|^test_moderator", "$options": "i"}})
+    await db["users"].delete_many(
+        {
+            "email": {
+                "$regex": "^test.*@proeduvate\\.com|^test_moderator",
+                "$options": "i",
+            }
+        }
+    )
 
     for u in users_data:
         u["role"] = str(u.get("role", "student")).lower()
@@ -761,28 +769,63 @@ async def seed_complete_platform():
         if role_lower == "student":
             await db["students"].update_one(
                 {"userId": u_id},
-                {"$set": {"userId": u_id, "name": u.get("name"), "email": u.get("email"), "college": u.get("college"), "createdAt": u.get("createdAt", now)}},
-                upsert=True
+                {
+                    "$set": {
+                        "userId": u_id,
+                        "name": u.get("name"),
+                        "email": u.get("email"),
+                        "college": u.get("college"),
+                        "createdAt": u.get("createdAt", now),
+                    }
+                },
+                upsert=True,
             )
         elif role_lower == "mentor":
             await db["mentors"].update_one(
                 {"userId": u_id},
-                {"$set": {"userId": u_id, "name": u.get("name"), "email": u.get("email"), "organization": u.get("organization"), "availability": "Available", "createdAt": u.get("createdAt", now)}},
-                upsert=True
+                {
+                    "$set": {
+                        "userId": u_id,
+                        "name": u.get("name"),
+                        "email": u.get("email"),
+                        "organization": u.get("organization"),
+                        "availability": "Available",
+                        "createdAt": u.get("createdAt", now),
+                    }
+                },
+                upsert=True,
             )
         elif role_lower == "organizer":
             await db["organizers"].update_one(
                 {"userId": u_id},
-                {"$set": {"userId": u_id, "name": u.get("name"), "contactEmail": u.get("email"), "institutionName": u.get("organization") or u.get("college"), "createdAt": u.get("createdAt", now)}},
-                upsert=True
+                {
+                    "$set": {
+                        "userId": u_id,
+                        "name": u.get("name"),
+                        "contactEmail": u.get("email"),
+                        "institutionName": u.get("organization") or u.get("college"),
+                        "createdAt": u.get("createdAt", now),
+                    }
+                },
+                upsert=True,
             )
         elif role_lower in ["admin", "superadmin"]:
             await db["admins"].update_one(
                 {"userId": u_id},
-                {"$set": {"userId": u_id, "name": u.get("name"), "email": u.get("email"), "institution": u.get("college", "ProEduvate Central Authority"), "createdAt": u.get("createdAt", now)}},
-                upsert=True
+                {
+                    "$set": {
+                        "userId": u_id,
+                        "name": u.get("name"),
+                        "email": u.get("email"),
+                        "institution": u.get("college", "ProEduvate Central Authority"),
+                        "createdAt": u.get("createdAt", now),
+                    }
+                },
+                upsert=True,
             )
-    print(f"[SEED]   [OK] Upserted {len(users_data)} users and synchronized profile collections.")
+    print(
+        f"[SEED]   [OK] Upserted {len(users_data)} users and synchronized profile collections."
+    )
 
     # =========================================================================
     # 2. ORGANIZERS & APPLICATIONS COLLECTION
@@ -803,7 +846,7 @@ async def seed_complete_platform():
             "pastEventsHosted": 12,
             "proofDocument": "https://credentials.proeduvate.com/proofs/srm_approval_letter.pdf",
             "status": "Approved",
-            "createdAt": now - timedelta(days=45)
+            "createdAt": now - timedelta(days=45),
         },
         {
             "_id": ObjectId("65e050000000000000000002"),
@@ -819,7 +862,7 @@ async def seed_complete_platform():
             "pastEventsHosted": 3,
             "proofDocument": "https://credentials.proeduvate.com/proofs/vit_cyber_charter.pdf",
             "status": "Pending",
-            "createdAt": now - timedelta(days=2)
+            "createdAt": now - timedelta(days=2),
         },
         {
             "_id": ObjectId("65e050000000000000000003"),
@@ -835,7 +878,7 @@ async def seed_complete_platform():
             "pastEventsHosted": 14,
             "proofDocument": "https://credentials.proeduvate.com/proofs/iitm_institute_endorsement.pdf",
             "status": "Approved",
-            "createdAt": now - timedelta(days=60)
+            "createdAt": now - timedelta(days=60),
         },
         {
             "_id": ObjectId("6a83dfc93f62c242d7a0c58e"),
@@ -851,7 +894,7 @@ async def seed_complete_platform():
             "pastEventsHosted": 11,
             "proofDocument": "https://credentials.proeduvate.com/proofs/iitm_saravanan_endorsement.pdf",
             "status": "Approved",
-            "createdAt": now - timedelta(days=30)
+            "createdAt": now - timedelta(days=30),
         },
         {
             "_id": ObjectId("65e050000000000000000004"),
@@ -867,7 +910,7 @@ async def seed_complete_platform():
             "pastEventsHosted": 5,
             "proofDocument": "https://credentials.proeduvate.com/proofs/annauniv_dean_endorsement.pdf",
             "status": "Pending",
-            "createdAt": now - timedelta(days=3)
+            "createdAt": now - timedelta(days=3),
         },
         {
             "_id": ObjectId("65e050000000000000000005"),
@@ -883,7 +926,7 @@ async def seed_complete_platform():
             "pastEventsHosted": 4,
             "proofDocument": "https://credentials.proeduvate.com/proofs/bits_pilani_charter.pdf",
             "status": "Pending",
-            "createdAt": now - timedelta(days=1)
+            "createdAt": now - timedelta(days=1),
         },
         {
             "_id": ObjectId("65e050000000000000000006"),
@@ -899,27 +942,45 @@ async def seed_complete_platform():
             "pastEventsHosted": 2,
             "proofDocument": "https://credentials.proeduvate.com/proofs/nitk_authorization.pdf",
             "status": "Needs Changes",
-            "createdAt": now - timedelta(days=5)
-        }
+            "createdAt": now - timedelta(days=5),
+        },
     ]
 
-    await db["organizers"].delete_many({"$or": [{"_id": {"$in": [o["_id"] for o in organizers_records]}}, {"userId": {"$in": [o["userId"] for o in organizers_records]}}]})
-    await db["applications"].delete_many({"$or": [{"_id": {"$in": [o["_id"] for o in organizers_records]}}, {"userId": {"$in": [o["userId"] for o in organizers_records]}}]})
+    await db["organizers"].delete_many(
+        {
+            "$or": [
+                {"_id": {"$in": [o["_id"] for o in organizers_records]}},
+                {"userId": {"$in": [o["userId"] for o in organizers_records]}},
+            ]
+        }
+    )
+    await db["applications"].delete_many(
+        {
+            "$or": [
+                {"_id": {"$in": [o["_id"] for o in organizers_records]}},
+                {"userId": {"$in": [o["userId"] for o in organizers_records]}},
+            ]
+        }
+    )
 
     for org in organizers_records:
         await db["organizers"].insert_one(org)
-        await db["applications"].insert_one({
-            "_id": org["_id"],
-            "userId": org["userId"],
-            "applicantName": org["name"],
-            "email": org["contactEmail"],
-            "organization": org["institutionName"],
-            "type": "ORGANIZER_APPLICATION",
-            "status": org["status"],
-            "createdAt": org["createdAt"],
-            "updatedAt": now
-        })
-    print(f"[SEED]   [OK] Upserted {len(organizers_records)} organizers and applications.")
+        await db["applications"].insert_one(
+            {
+                "_id": org["_id"],
+                "userId": org["userId"],
+                "applicantName": org["name"],
+                "email": org["contactEmail"],
+                "organization": org["institutionName"],
+                "type": "ORGANIZER_APPLICATION",
+                "status": org["status"],
+                "createdAt": org["createdAt"],
+                "updatedAt": now,
+            }
+        )
+    print(
+        f"[SEED]   [OK] Upserted {len(organizers_records)} organizers and applications."
+    )
 
     # =========================================================================
     # 3. HACKATHONS COLLECTION
@@ -932,11 +993,28 @@ async def seed_complete_platform():
             "tagline": "Architecting multimodal generative agents and autonomous systems",
             "description": "Join elite student engineers worldwide to build real-time agentic workflows, multimodal medical AI, and decentralized computing infrastructure.",
             "problemStatement": "Develop scalable autonomous AI software pipelines with explainable outputs and low-latency API integration.",
-            "themes": ["Artificial Intelligence", "Autonomous Agents", "Healthcare AI", "Vector Computing"],
+            "themes": [
+                "Artificial Intelligence",
+                "Autonomous Agents",
+                "Healthcare AI",
+                "Vector Computing",
+            ],
             "tracks": [
-                {"id": 1, "title": "Multimodal Agentic Workflows", "description": "Autonomous agents reasoning across text, code, audio, and visual streams."},
-                {"id": 2, "title": "Diagnostic & Precision Health AI", "description": "High-accuracy medical image analysis and preventative health telemetry."},
-                {"id": 3, "title": "Decentralized AI Infrastructure", "description": "Fault-tolerant peer-to-peer compute layers and verifiable models."}
+                {
+                    "id": 1,
+                    "title": "Multimodal Agentic Workflows",
+                    "description": "Autonomous agents reasoning across text, code, audio, and visual streams.",
+                },
+                {
+                    "id": 2,
+                    "title": "Diagnostic & Precision Health AI",
+                    "description": "High-accuracy medical image analysis and preventative health telemetry.",
+                },
+                {
+                    "id": 3,
+                    "title": "Decentralized AI Infrastructure",
+                    "description": "Fault-tolerant peer-to-peer compute layers and verifiable models.",
+                },
             ],
             "registrationStart": (now - timedelta(days=20)).isoformat(),
             "registrationEnd": (now - timedelta(days=2)).isoformat(),
@@ -957,10 +1035,10 @@ async def seed_complete_platform():
             "rules": [
                 "All project source code must be committed to GitHub during the sprint.",
                 "Teams must include a working public URL demonstration or video walkthrough.",
-                "Plagiarism checks must pass with less than 20% similarity."
+                "Plagiarism checks must pass with less than 20% similarity.",
             ],
             "posterUrl": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
-            "createdAt": now - timedelta(days=25)
+            "createdAt": now - timedelta(days=25),
         },
         {
             "_id": ObjectId("65e060000000000000000002"),
@@ -968,10 +1046,23 @@ async def seed_complete_platform():
             "tagline": "Next-generation IoT, sustainability, and automated educational hubs",
             "description": "Transform higher education campuses through computer vision, automated microgrids, smart navigation, and accessibility tools.",
             "problemStatement": "Design and prototype interconnected hardware/software systems addressing energy conservation, security, or learning enhancement on college campuses.",
-            "themes": ["Smart Cities", "IoT & Embedded Systems", "Sustainability", "Green Energy"],
+            "themes": [
+                "Smart Cities",
+                "IoT & Embedded Systems",
+                "Sustainability",
+                "Green Energy",
+            ],
             "tracks": [
-                {"id": 1, "title": "Autonomous Campus Microgrids", "description": "Decentralized energy distribution and real-time load shedding algorithms."},
-                {"id": 2, "title": "Zero-Touch Attendance & Safety", "description": "Privacy-preserving edge biometrics and anomaly detection."}
+                {
+                    "id": 1,
+                    "title": "Autonomous Campus Microgrids",
+                    "description": "Decentralized energy distribution and real-time load shedding algorithms.",
+                },
+                {
+                    "id": 2,
+                    "title": "Zero-Touch Attendance & Safety",
+                    "description": "Privacy-preserving edge biometrics and anomaly detection.",
+                },
             ],
             "registrationStart": (now - timedelta(days=10)).isoformat(),
             "registrationEnd": (now + timedelta(hours=23)).isoformat(),
@@ -991,10 +1082,10 @@ async def seed_complete_platform():
             "judges": ["arun.selvam@vit.ac.in"],
             "rules": [
                 "Submissions must include open-source CAD/schematic diagrams if hardware is involved.",
-                "Simulated environments using WebSockets or MQTT brokers are permissible."
+                "Simulated environments using WebSockets or MQTT brokers are permissible.",
             ],
             "posterUrl": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80",
-            "createdAt": now - timedelta(days=8)
+            "createdAt": now - timedelta(days=8),
         },
         {
             "_id": ObjectId("65e060000000000000000003"),
@@ -1002,10 +1093,23 @@ async def seed_complete_platform():
             "tagline": "Zero-trust architecture, automated penetration defenses, and cryptographic shields",
             "description": "Defend high-consequence platforms against advanced persistent threats, credential stuffing, and cryptographic vulnerabilities.",
             "problemStatement": "Build resilient enterprise security architectures capable of real-time threat containment and tamper-evident audit trails.",
-            "themes": ["Cybersecurity", "Zero Trust", "Quantum Cryptography", "Cloud Security"],
+            "themes": [
+                "Cybersecurity",
+                "Zero Trust",
+                "Quantum Cryptography",
+                "Cloud Security",
+            ],
             "tracks": [
-                {"id": 1, "title": "Zero-Trust Service Mesh", "description": "Mutual TLS dynamic policy enforcement across microservices."},
-                {"id": 2, "title": "Post-Quantum Cryptographic Tools", "description": "Implementation of lattice-based signature algorithms for digital ledgers."}
+                {
+                    "id": 1,
+                    "title": "Zero-Trust Service Mesh",
+                    "description": "Mutual TLS dynamic policy enforcement across microservices.",
+                },
+                {
+                    "id": 2,
+                    "title": "Post-Quantum Cryptographic Tools",
+                    "description": "Implementation of lattice-based signature algorithms for digital ledgers.",
+                },
             ],
             "registrationStart": (now - timedelta(days=15)).isoformat(),
             "registrationEnd": (now - timedelta(days=5)).isoformat(),
@@ -1025,10 +1129,10 @@ async def seed_complete_platform():
             "judges": ["arun.selvam@vit.ac.in", "divya.k@google.com"],
             "rules": [
                 "Adherence to responsible disclosure guidelines is mandatory.",
-                "No live DDoS attacks against public platforms; sandboxed testing environments only."
+                "No live DDoS attacks against public platforms; sandboxed testing environments only.",
             ],
             "posterUrl": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1200&q=80",
-            "createdAt": now - timedelta(days=18)
+            "createdAt": now - timedelta(days=18),
         },
         {
             "_id": ObjectId("65e060000000000000000004"),
@@ -1038,8 +1142,16 @@ async def seed_complete_platform():
             "problemStatement": "Engineers are invited to eliminate settlement delays and lower payment processing fees for unbanked micro-enterprises.",
             "themes": ["FinTech", "Blockchain", "Identity", "Micro-Finance"],
             "tracks": [
-                {"id": 1, "title": "Micro-Lending Autonomous Scoring", "description": "Alternative telemetry credit scoring models for small business owners."},
-                {"id": 2, "title": "Zero-Knowledge KYC Verifier", "description": "Privacy-preserving identity validation without revealing PII."}
+                {
+                    "id": 1,
+                    "title": "Micro-Lending Autonomous Scoring",
+                    "description": "Alternative telemetry credit scoring models for small business owners.",
+                },
+                {
+                    "id": 2,
+                    "title": "Zero-Knowledge KYC Verifier",
+                    "description": "Privacy-preserving identity validation without revealing PII.",
+                },
             ],
             "registrationStart": (now - timedelta(days=4)).isoformat(),
             "registrationEnd": (now + timedelta(days=6)).isoformat(),
@@ -1059,10 +1171,10 @@ async def seed_complete_platform():
             "judges": ["divya.k@google.com"],
             "rules": [
                 "Strict adherence to simulated monetary testnets only.",
-                "PCI-DSS mock tokenization rules apply."
+                "PCI-DSS mock tokenization rules apply.",
             ],
             "posterUrl": "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=1200&q=80",
-            "createdAt": now - timedelta(days=5)
+            "createdAt": now - timedelta(days=5),
         },
         {
             "_id": ObjectId("65e060000000000000000005"),
@@ -1072,7 +1184,11 @@ async def seed_complete_platform():
             "problemStatement": "Propose edge-ready neural models compliant with medical data isolation regulations.",
             "themes": ["HealthTech", "Edge AI", "Bioinformatics"],
             "tracks": [
-                {"id": 1, "title": "Continuous Vital Telemetry Anomaly", "description": "Wearable sensor algorithms predicting septic shock early."}
+                {
+                    "id": 1,
+                    "title": "Continuous Vital Telemetry Anomaly",
+                    "description": "Wearable sensor algorithms predicting septic shock early.",
+                }
             ],
             "registrationStart": (now - timedelta(days=7)).isoformat(),
             "registrationEnd": (now + timedelta(days=10)).isoformat(),
@@ -1092,9 +1208,11 @@ async def seed_complete_platform():
             "maxTeamSize": 3,
             "isPublic": True,
             "judges": [],
-            "rules": ["All clinical datasets used must be pre-approved public anonymized benchmarks."],
+            "rules": [
+                "All clinical datasets used must be pre-approved public anonymized benchmarks."
+            ],
             "posterUrl": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=80",
-            "createdAt": now - timedelta(days=6)
+            "createdAt": now - timedelta(days=6),
         },
         {
             "_id": ObjectId("6a7d574ff72d9eabaaf9084d"),
@@ -1104,7 +1222,11 @@ async def seed_complete_platform():
             "problemStatement": "Develop models predicting hourly renewable energy generation spikes with minimal variance.",
             "themes": ["CleanTech", "Climate AI", "Renewables", "Energy Grid"],
             "tracks": [
-                {"id": 1, "title": "Grid Balancing Engine", "description": "Machine learning optimization for solar and wind microgrids."}
+                {
+                    "id": 1,
+                    "title": "Grid Balancing Engine",
+                    "description": "Machine learning optimization for solar and wind microgrids.",
+                }
             ],
             "registrationStart": (now - timedelta(days=12)).isoformat(),
             "registrationEnd": (now - timedelta(days=1)).isoformat(),
@@ -1122,9 +1244,11 @@ async def seed_complete_platform():
             "maxTeamSize": 4,
             "isPublic": True,
             "judges": ["dr.ramesh@microsoft.com", "mohan.das@amazon.com"],
-            "rules": ["Open APIs and standard weather telemetry datasets must be cited."],
+            "rules": [
+                "Open APIs and standard weather telemetry datasets must be cited."
+            ],
             "posterUrl": "https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?auto=format&fit=crop&w=1200&q=80",
-            "createdAt": now - timedelta(days=14)
+            "createdAt": now - timedelta(days=14),
         },
         {
             "_id": ObjectId("6a869a8ce0f7daca84219479"),
@@ -1134,7 +1258,11 @@ async def seed_complete_platform():
             "problemStatement": "Build vision-based obstacle avoidance pipelines running efficiently on resource-constrained compute hardware.",
             "themes": ["Robotics", "Computer Vision", "Autonomous Systems"],
             "tracks": [
-                {"id": 1, "title": "Lightweight SLAM Engine", "description": "Simultaneous localization and mapping on low-power ARM architecture."}
+                {
+                    "id": 1,
+                    "title": "Lightweight SLAM Engine",
+                    "description": "Simultaneous localization and mapping on low-power ARM architecture.",
+                }
             ],
             "registrationStart": (now - timedelta(days=14)).isoformat(),
             "registrationEnd": (now + timedelta(days=3)).isoformat(),
@@ -1156,7 +1284,7 @@ async def seed_complete_platform():
             "judges": [],
             "rules": ["Simulation results must be validated in Gazebo or ROS2."],
             "posterUrl": "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=1200&q=80",
-            "createdAt": now - timedelta(days=15)
+            "createdAt": now - timedelta(days=15),
         },
         {
             "_id": ObjectId("65e060000000000000000008"),
@@ -1166,7 +1294,11 @@ async def seed_complete_platform():
             "problemStatement": "Create tamper-evident academic achievement ledgers with verifiable credentials.",
             "themes": ["Web3", "Cryptography", "Decentralized Identity"],
             "tracks": [
-                {"id": 1, "title": "Verifiable Academic Ledger", "description": "Cryptographically signed achievement verification."}
+                {
+                    "id": 1,
+                    "title": "Verifiable Academic Ledger",
+                    "description": "Cryptographically signed achievement verification.",
+                }
             ],
             "registrationStart": (now - timedelta(days=90)).isoformat(),
             "registrationEnd": (now - timedelta(days=75)).isoformat(),
@@ -1186,19 +1318,21 @@ async def seed_complete_platform():
             "judges": ["ananya.rao@microsoft.com", "divya.k@google.com"],
             "rules": ["Contracts must be verified on testnets with audit reports."],
             "posterUrl": "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=1200&q=80",
-            "createdAt": now - timedelta(days=95)
-        }
+            "createdAt": now - timedelta(days=95),
+        },
     ]
 
     # Delete malformed or test hackathons that lack descriptions or valid schema
-    await db["hackathons"].delete_many({
-        "$or": [
-            {"description": {"$exists": False}},
-            {"description": None},
-            {"description": ""},
-            {"title": "Settings Policy Hackathon"}
-        ]
-    })
+    await db["hackathons"].delete_many(
+        {
+            "$or": [
+                {"description": {"$exists": False}},
+                {"description": None},
+                {"description": ""},
+                {"title": "Settings Policy Hackathon"},
+            ]
+        }
+    )
 
     for h in hackathons_records:
         await db["hackathons"].replace_one({"_id": h["_id"]}, h, upsert=True)
@@ -1220,12 +1354,32 @@ async def seed_complete_platform():
             "mentorId": "6a70c0656425dafef71c73c1",
             "mentorName": "Ananya Rao",
             "members": [
-                {"userId": "65e040000000000000000001", "name": "Sarath G", "role": "Team Lead", "email": "sarath.g@abccollege.edu"},
-                {"userId": "65e040000000000000000002", "name": "M Sailesh", "role": "Full Stack Engineer", "email": "sailesh.m@vitstudent.ac.in"},
-                {"userId": "65e040000000000000000003", "name": "Harini V", "role": "ML Engineer", "email": "harini.v@srmstudent.edu"},
-                {"userId": "65e040000000000000000004", "name": "Rohit Sharma", "role": "DevOps Architect", "email": "rohit.sharma@iitb.ac.in"}
+                {
+                    "userId": "65e040000000000000000001",
+                    "name": "Sarath G",
+                    "role": "Team Lead",
+                    "email": "sarath.g@abccollege.edu",
+                },
+                {
+                    "userId": "65e040000000000000000002",
+                    "name": "M Sailesh",
+                    "role": "Full Stack Engineer",
+                    "email": "sailesh.m@vitstudent.ac.in",
+                },
+                {
+                    "userId": "65e040000000000000000003",
+                    "name": "Harini V",
+                    "role": "ML Engineer",
+                    "email": "harini.v@srmstudent.edu",
+                },
+                {
+                    "userId": "65e040000000000000000004",
+                    "name": "Rohit Sharma",
+                    "role": "DevOps Architect",
+                    "email": "rohit.sharma@iitb.ac.in",
+                },
             ],
-            "createdAt": now - timedelta(days=15)
+            "createdAt": now - timedelta(days=15),
         },
         {
             "_id": ObjectId("65e070000000000000000002"),
@@ -1238,11 +1392,26 @@ async def seed_complete_platform():
             "mentorId": "65e030000000000000000001",
             "mentorName": "Dr. Ramesh Kumar",
             "members": [
-                {"userId": "6a70c0666425dafef71c73c3", "name": "M Sailesh", "role": "Team Lead", "email": "msailesh@gmail.com"},
-                {"userId": "65e040000000000000000005", "name": "Sneha Patel", "role": "Data Scientist", "email": "sneha.patel@nitt.edu"},
-                {"userId": "65e040000000000000000006", "name": "Vikram Aditya", "role": "Backend Architect", "email": "vikram.aditya@annauniv.edu"}
+                {
+                    "userId": "6a70c0666425dafef71c73c3",
+                    "name": "M Sailesh",
+                    "role": "Team Lead",
+                    "email": "msailesh@gmail.com",
+                },
+                {
+                    "userId": "65e040000000000000000005",
+                    "name": "Sneha Patel",
+                    "role": "Data Scientist",
+                    "email": "sneha.patel@nitt.edu",
+                },
+                {
+                    "userId": "65e040000000000000000006",
+                    "name": "Vikram Aditya",
+                    "role": "Backend Architect",
+                    "email": "vikram.aditya@annauniv.edu",
+                },
             ],
-            "createdAt": now - timedelta(days=14)
+            "createdAt": now - timedelta(days=14),
         },
         {
             "_id": ObjectId("65e070000000000000000003"),
@@ -1255,11 +1424,26 @@ async def seed_complete_platform():
             "mentorId": "65e030000000000000000002",
             "mentorName": "Dr. Priya Nair",
             "members": [
-                {"userId": "65e040000000000000000003", "name": "Harini V", "role": "Team Lead", "email": "harini.v@srmstudent.edu"},
-                {"userId": "65e040000000000000000007", "name": "Anita Deshmukh", "role": "Cryptography Engineer", "email": "anita.deshmukh@bitsstudent.edu"},
-                {"userId": "65e040000000000000000008", "name": "Kavya M", "role": "Systems Engineer", "email": "kavya.m@psgtech.edu"}
+                {
+                    "userId": "65e040000000000000000003",
+                    "name": "Harini V",
+                    "role": "Team Lead",
+                    "email": "harini.v@srmstudent.edu",
+                },
+                {
+                    "userId": "65e040000000000000000007",
+                    "name": "Anita Deshmukh",
+                    "role": "Cryptography Engineer",
+                    "email": "anita.deshmukh@bitsstudent.edu",
+                },
+                {
+                    "userId": "65e040000000000000000008",
+                    "name": "Kavya M",
+                    "role": "Systems Engineer",
+                    "email": "kavya.m@psgtech.edu",
+                },
             ],
-            "createdAt": now - timedelta(days=12)
+            "createdAt": now - timedelta(days=12),
         },
         {
             "_id": ObjectId("65e070000000000000000004"),
@@ -1272,11 +1456,26 @@ async def seed_complete_platform():
             "mentorId": "65e030000000000000000003",
             "mentorName": "Prof. Arun Selvam",
             "members": [
-                {"userId": "65e040000000000000000004", "name": "Rohit Sharma", "role": "Team Lead", "email": "rohit.sharma@iitb.ac.in"},
-                {"userId": "65e040000000000000000009", "name": "Rahul Verma", "role": "Security Researcher", "email": "rahul.verma@delhitechinstitute.edu"},
-                {"userId": "65e040000000000000000010", "name": "Swathi R", "role": "Frontend Specialist", "email": "swathi.r@ssn.edu.in"}
+                {
+                    "userId": "65e040000000000000000004",
+                    "name": "Rohit Sharma",
+                    "role": "Team Lead",
+                    "email": "rohit.sharma@iitb.ac.in",
+                },
+                {
+                    "userId": "65e040000000000000000009",
+                    "name": "Rahul Verma",
+                    "role": "Security Researcher",
+                    "email": "rahul.verma@delhitechinstitute.edu",
+                },
+                {
+                    "userId": "65e040000000000000000010",
+                    "name": "Swathi R",
+                    "role": "Frontend Specialist",
+                    "email": "swathi.r@ssn.edu.in",
+                },
             ],
-            "createdAt": now - timedelta(days=10)
+            "createdAt": now - timedelta(days=10),
         },
         {
             "_id": ObjectId("65e070000000000000000005"),
@@ -1289,10 +1488,20 @@ async def seed_complete_platform():
             "mentorId": "65e030000000000000000004",
             "mentorName": "Divya Krishnan",
             "members": [
-                {"userId": "65e040000000000000000008", "name": "Kavya M", "role": "Team Lead", "email": "kavya.m@psgtech.edu"},
-                {"userId": "65e040000000000000000006", "name": "Vikram Aditya", "role": "Embedded C Developer", "email": "vikram.aditya@annauniv.edu"}
+                {
+                    "userId": "65e040000000000000000008",
+                    "name": "Kavya M",
+                    "role": "Team Lead",
+                    "email": "kavya.m@psgtech.edu",
+                },
+                {
+                    "userId": "65e040000000000000000006",
+                    "name": "Vikram Aditya",
+                    "role": "Embedded C Developer",
+                    "email": "vikram.aditya@annauniv.edu",
+                },
             ],
-            "createdAt": now - timedelta(days=9)
+            "createdAt": now - timedelta(days=9),
         },
         {
             "_id": ObjectId("65e070000000000000000006"),
@@ -1305,10 +1514,20 @@ async def seed_complete_platform():
             "mentorId": "65e030000000000000000005",
             "mentorName": "Mohan Das",
             "members": [
-                {"userId": "65e040000000000000000009", "name": "Rahul Verma", "role": "Team Lead", "email": "rahul.verma@delhitechinstitute.edu"},
-                {"userId": "65e040000000000000000005", "name": "Sneha Patel", "role": "Biomedical Specialist", "email": "sneha.patel@nitt.edu"}
+                {
+                    "userId": "65e040000000000000000009",
+                    "name": "Rahul Verma",
+                    "role": "Team Lead",
+                    "email": "rahul.verma@delhitechinstitute.edu",
+                },
+                {
+                    "userId": "65e040000000000000000005",
+                    "name": "Sneha Patel",
+                    "role": "Biomedical Specialist",
+                    "email": "sneha.patel@nitt.edu",
+                },
             ],
-            "createdAt": now - timedelta(days=8)
+            "createdAt": now - timedelta(days=8),
         },
         {
             "_id": ObjectId("65e070000000000000000007"),
@@ -1321,10 +1540,20 @@ async def seed_complete_platform():
             "mentorId": "6a70c0656425dafef71c73c1",
             "mentorName": "Ananya Rao",
             "members": [
-                {"userId": "65e040000000000000000003", "name": "Harini V", "role": "Team Lead", "email": "harini.v@srmstudent.edu"},
-                {"userId": "65e040000000000000000004", "name": "Rohit Sharma", "role": "Solidity Engineer", "email": "rohit.sharma@iitb.ac.in"}
+                {
+                    "userId": "65e040000000000000000003",
+                    "name": "Harini V",
+                    "role": "Team Lead",
+                    "email": "harini.v@srmstudent.edu",
+                },
+                {
+                    "userId": "65e040000000000000000004",
+                    "name": "Rohit Sharma",
+                    "role": "Solidity Engineer",
+                    "email": "rohit.sharma@iitb.ac.in",
+                },
             ],
-            "createdAt": now - timedelta(days=70)
+            "createdAt": now - timedelta(days=70),
         },
         # Teams pending mentor assignment
         {
@@ -1338,9 +1567,14 @@ async def seed_complete_platform():
             "mentorId": None,
             "mentorName": None,
             "members": [
-                {"userId": "6a79cd04982015cf9acebe9d", "name": "Sarath G", "role": "Team Lead", "email": "gsgssarath2005@gmail.com"}
+                {
+                    "userId": "6a79cd04982015cf9acebe9d",
+                    "name": "Sarath G",
+                    "role": "Team Lead",
+                    "email": "gsgssarath2005@gmail.com",
+                }
             ],
-            "createdAt": now - timedelta(days=4)
+            "createdAt": now - timedelta(days=4),
         },
         {
             "_id": ObjectId("65e070000000000000000009"),
@@ -1353,9 +1587,14 @@ async def seed_complete_platform():
             "mentorId": None,
             "mentorName": None,
             "members": [
-                {"userId": "65e040000000000000000006", "name": "Vikram Aditya", "role": "Team Lead", "email": "vikram.aditya@annauniv.edu"}
+                {
+                    "userId": "65e040000000000000000006",
+                    "name": "Vikram Aditya",
+                    "role": "Team Lead",
+                    "email": "vikram.aditya@annauniv.edu",
+                }
             ],
-            "createdAt": now - timedelta(days=3)
+            "createdAt": now - timedelta(days=3),
         },
         {
             "_id": ObjectId("65e070000000000000000010"),
@@ -1368,9 +1607,14 @@ async def seed_complete_platform():
             "mentorId": None,
             "mentorName": None,
             "members": [
-                {"userId": "65e040000000000000000002", "name": "M Sailesh", "role": "Team Lead", "email": "sailesh.m@vitstudent.ac.in"}
+                {
+                    "userId": "65e040000000000000000002",
+                    "name": "M Sailesh",
+                    "role": "Team Lead",
+                    "email": "sailesh.m@vitstudent.ac.in",
+                }
             ],
-            "createdAt": now - timedelta(days=2)
+            "createdAt": now - timedelta(days=2),
         },
         # Teams for Dr. Ramesh Kumar (7 Active, 5 Past)
         {
@@ -1387,7 +1631,7 @@ async def seed_complete_platform():
             "members": [
                 {"name": "Aditya Rao", "role": "Lead", "email": "aditya@microsoft.com"}
             ],
-            "createdAt": now - timedelta(days=20)
+            "createdAt": now - timedelta(days=20),
         },
         {
             "_id": ObjectId("65e070000000000000000022"),
@@ -1403,7 +1647,7 @@ async def seed_complete_platform():
             "members": [
                 {"name": "Priya Sharma", "role": "Lead", "email": "priya.s@iitm.ac.in"}
             ],
-            "createdAt": now - timedelta(days=18)
+            "createdAt": now - timedelta(days=18),
         },
         {
             "_id": ObjectId("65e070000000000000000023"),
@@ -1419,7 +1663,7 @@ async def seed_complete_platform():
             "members": [
                 {"name": "Rohan Gupta", "role": "Lead", "email": "rohan@bits.edu"}
             ],
-            "createdAt": now - timedelta(days=16)
+            "createdAt": now - timedelta(days=16),
         },
         {
             "_id": ObjectId("65e070000000000000000024"),
@@ -1435,7 +1679,7 @@ async def seed_complete_platform():
             "members": [
                 {"name": "Karthik V", "role": "Lead", "email": "karthik.v@annauniv.edu"}
             ],
-            "createdAt": now - timedelta(days=14)
+            "createdAt": now - timedelta(days=14),
         },
         {
             "_id": ObjectId("65e070000000000000000025"),
@@ -1451,7 +1695,7 @@ async def seed_complete_platform():
             "members": [
                 {"name": "Meera S", "role": "Lead", "email": "meera.s@srm.edu"}
             ],
-            "createdAt": now - timedelta(days=12)
+            "createdAt": now - timedelta(days=12),
         },
         {
             "_id": ObjectId("65e070000000000000000026"),
@@ -1467,7 +1711,7 @@ async def seed_complete_platform():
             "members": [
                 {"name": "Arun K", "role": "Lead", "email": "arun.k@vit.ac.in"}
             ],
-            "createdAt": now - timedelta(days=10)
+            "createdAt": now - timedelta(days=10),
         },
         {
             "_id": ObjectId("65e070000000000000000027"),
@@ -1483,7 +1727,7 @@ async def seed_complete_platform():
             "members": [
                 {"name": "Siddharth N", "role": "Lead", "email": "sid@microsoft.com"}
             ],
-            "createdAt": now - timedelta(days=8)
+            "createdAt": now - timedelta(days=8),
         },
         # Past Completed Teams for Dr. Ramesh Kumar (5 Past Teams)
         {
@@ -1499,7 +1743,7 @@ async def seed_complete_platform():
             "status": "Completed",
             "outcome": "1st Runner Up",
             "members": [{"name": "Aman S", "role": "Lead"}],
-            "createdAt": now - timedelta(days=120)
+            "createdAt": now - timedelta(days=120),
         },
         {
             "_id": ObjectId("65e070000000000000000029"),
@@ -1514,7 +1758,7 @@ async def seed_complete_platform():
             "status": "Completed",
             "outcome": "Top 5 Finalist",
             "members": [{"name": "Pooja V", "role": "Lead"}],
-            "createdAt": now - timedelta(days=115)
+            "createdAt": now - timedelta(days=115),
         },
         {
             "_id": ObjectId("65e070000000000000000030"),
@@ -1529,7 +1773,7 @@ async def seed_complete_platform():
             "status": "Completed",
             "outcome": "Graduated",
             "members": [{"name": "Deepak M", "role": "Lead"}],
-            "createdAt": now - timedelta(days=110)
+            "createdAt": now - timedelta(days=110),
         },
         {
             "_id": ObjectId("65e070000000000000000031"),
@@ -1544,7 +1788,7 @@ async def seed_complete_platform():
             "status": "Completed",
             "outcome": "Grand Prize Winner",
             "members": [{"name": "Varun T", "role": "Lead"}],
-            "createdAt": now - timedelta(days=105)
+            "createdAt": now - timedelta(days=105),
         },
         {
             "_id": ObjectId("65e070000000000000000032"),
@@ -1559,11 +1803,18 @@ async def seed_complete_platform():
             "status": "Completed",
             "outcome": "Graduated",
             "members": [{"name": "Shreya K", "role": "Lead"}],
-            "createdAt": now - timedelta(days=100)
-        }
+            "createdAt": now - timedelta(days=100),
+        },
     ]
 
-    await db["teams"].delete_many({"$or": [{"_id": {"$in": [t["_id"] for t in teams_records]}}, {"teamName": {"$in": [t["name"] for t in teams_records]}}]})
+    await db["teams"].delete_many(
+        {
+            "$or": [
+                {"_id": {"$in": [t["_id"] for t in teams_records]}},
+                {"teamName": {"$in": [t["name"] for t in teams_records]}},
+            ]
+        }
+    )
     for t in teams_records:
         await db["teams"].insert_one(t)
     print(f"[SEED]   [OK] Upserted {len(teams_records)} teams.")
@@ -1593,9 +1844,16 @@ async def seed_complete_platform():
             "healthScore": 98,
             "riskLevel": "LOW",
             "originality": {"similarityScore": 6, "status": "Passed"},
-            "evaluation": {"averageScore": 96, "rubric": {"problemFit": 98, "technicalFeasibility": 95, "innovation": 96}},
+            "evaluation": {
+                "averageScore": 96,
+                "rubric": {
+                    "problemFit": 98,
+                    "technicalFeasibility": 95,
+                    "innovation": 96,
+                },
+            },
             "submittedAt": now - timedelta(days=1, hours=2),
-            "createdAt": now - timedelta(days=1, hours=2)
+            "createdAt": now - timedelta(days=1, hours=2),
         },
         {
             "_id": ObjectId("65e080000000000000000003"),
@@ -1615,9 +1873,16 @@ async def seed_complete_platform():
             "healthScore": 94,
             "riskLevel": "LOW",
             "originality": {"similarityScore": 8, "status": "Passed"},
-            "evaluation": {"averageScore": 94, "rubric": {"problemFit": 92, "technicalFeasibility": 96, "innovation": 94}},
+            "evaluation": {
+                "averageScore": 94,
+                "rubric": {
+                    "problemFit": 92,
+                    "technicalFeasibility": 96,
+                    "innovation": 94,
+                },
+            },
             "submittedAt": now - timedelta(days=1, hours=8),
-            "createdAt": now - timedelta(days=1, hours=8)
+            "createdAt": now - timedelta(days=1, hours=8),
         },
         {
             "_id": ObjectId("65e080000000000000000005"),
@@ -1637,9 +1902,16 @@ async def seed_complete_platform():
             "healthScore": 92,
             "riskLevel": "LOW",
             "originality": {"similarityScore": 9, "status": "Passed"},
-            "evaluation": {"averageScore": 91, "rubric": {"problemFit": 90, "technicalFeasibility": 94, "innovation": 90}},
+            "evaluation": {
+                "averageScore": 91,
+                "rubric": {
+                    "problemFit": 90,
+                    "technicalFeasibility": 94,
+                    "innovation": 90,
+                },
+            },
             "submittedAt": now - timedelta(days=2),
-            "createdAt": now - timedelta(days=2)
+            "createdAt": now - timedelta(days=2),
         },
         {
             "_id": ObjectId("65e080000000000000000006"),
@@ -1658,9 +1930,16 @@ async def seed_complete_platform():
             "healthScore": 90,
             "riskLevel": "LOW",
             "originality": {"similarityScore": 5, "status": "Passed"},
-            "evaluation": {"averageScore": 89, "rubric": {"problemFit": 91, "technicalFeasibility": 88, "innovation": 89}},
+            "evaluation": {
+                "averageScore": 89,
+                "rubric": {
+                    "problemFit": 91,
+                    "technicalFeasibility": 88,
+                    "innovation": 89,
+                },
+            },
             "submittedAt": now - timedelta(hours=14),
-            "createdAt": now - timedelta(hours=14)
+            "createdAt": now - timedelta(hours=14),
         },
         {
             "_id": ObjectId("65e080000000000000000007"),
@@ -1679,9 +1958,16 @@ async def seed_complete_platform():
             "healthScore": 96,
             "riskLevel": "LOW",
             "originality": {"similarityScore": 4, "status": "Passed"},
-            "evaluation": {"averageScore": 95, "rubric": {"problemFit": 96, "technicalFeasibility": 95, "innovation": 95}},
+            "evaluation": {
+                "averageScore": 95,
+                "rubric": {
+                    "problemFit": 96,
+                    "technicalFeasibility": 95,
+                    "innovation": 95,
+                },
+            },
             "submittedAt": now - timedelta(hours=10),
-            "createdAt": now - timedelta(hours=10)
+            "createdAt": now - timedelta(hours=10),
         },
         {
             "_id": ObjectId("65e080000000000000000008"),
@@ -1700,9 +1986,16 @@ async def seed_complete_platform():
             "healthScore": 98,
             "riskLevel": "LOW",
             "originality": {"similarityScore": 3, "status": "Passed"},
-            "evaluation": {"averageScore": 97, "rubric": {"problemFit": 98, "technicalFeasibility": 97, "innovation": 97}},
+            "evaluation": {
+                "averageScore": 97,
+                "rubric": {
+                    "problemFit": 98,
+                    "technicalFeasibility": 97,
+                    "innovation": 97,
+                },
+            },
             "submittedAt": now - timedelta(days=62),
-            "createdAt": now - timedelta(days=62)
+            "createdAt": now - timedelta(days=62),
         },
         # Pending Review
         {
@@ -1724,7 +2017,7 @@ async def seed_complete_platform():
             "riskLevel": "LOW",
             "originality": {"similarityScore": 12, "status": "Passed"},
             "submittedAt": now - timedelta(hours=6),
-            "createdAt": now - timedelta(hours=6)
+            "createdAt": now - timedelta(hours=6),
         },
         {
             "_id": ObjectId("65e080000000000000000009"),
@@ -1744,7 +2037,7 @@ async def seed_complete_platform():
             "riskLevel": "LOW",
             "originality": {"similarityScore": 11, "status": "Passed"},
             "submittedAt": now - timedelta(hours=4),
-            "createdAt": now - timedelta(hours=4)
+            "createdAt": now - timedelta(hours=4),
         },
         {
             "_id": ObjectId("65e080000000000000000010"),
@@ -1764,7 +2057,7 @@ async def seed_complete_platform():
             "riskLevel": "LOW",
             "originality": {"similarityScore": 14, "status": "Passed"},
             "submittedAt": now - timedelta(hours=3),
-            "createdAt": now - timedelta(hours=3)
+            "createdAt": now - timedelta(hours=3),
         },
         # Changes Requested
         {
@@ -1785,7 +2078,7 @@ async def seed_complete_platform():
             "riskLevel": "MEDIUM",
             "changeRequestNotes": "Missing live demonstration video URL and unit test coverage documentation.",
             "submittedAt": now - timedelta(hours=18),
-            "createdAt": now - timedelta(hours=18)
+            "createdAt": now - timedelta(hours=18),
         },
         # Flagged
         {
@@ -1804,9 +2097,13 @@ async def seed_complete_platform():
             "fileUrl": "https://github.com/suspicious-mirror/ml-diagnostic",
             "healthScore": 34,
             "riskLevel": "HIGH",
-            "originality": {"similarityScore": 78, "status": "Flagged", "matchedRepo": "https://github.com/original-paper/torch-diagnostics"},
+            "originality": {
+                "similarityScore": 78,
+                "status": "Flagged",
+                "matchedRepo": "https://github.com/original-paper/torch-diagnostics",
+            },
             "submittedAt": now - timedelta(hours=22),
-            "createdAt": now - timedelta(hours=22)
+            "createdAt": now - timedelta(hours=22),
         },
         # Rejected
         {
@@ -1826,11 +2123,13 @@ async def seed_complete_platform():
             "riskLevel": "HIGH",
             "rejectionReason": "Violated hackathon integrity rules; zero commits generated during sprint window.",
             "submittedAt": now - timedelta(days=2),
-            "createdAt": now - timedelta(days=2)
-        }
+            "createdAt": now - timedelta(days=2),
+        },
     ]
 
-    await db["submissions"].delete_many({"_id": {"$in": [s["_id"] for s in submissions_records]}})
+    await db["submissions"].delete_many(
+        {"_id": {"$in": [s["_id"] for s in submissions_records]}}
+    )
     for s in submissions_records:
         await db["submissions"].insert_one(s)
     print(f"[SEED]   [OK] Upserted {len(submissions_records)} submissions.")
@@ -1853,7 +2152,7 @@ async def seed_complete_platform():
             "certificateUrl": "https://credentials.proeduvate.com/certs/CERT-2026-W001.pdf",
             "status": "Active",
             "issuedAt": now - timedelta(days=58),
-            "createdAt": now - timedelta(days=58)
+            "createdAt": now - timedelta(days=58),
         },
         {
             "_id": ObjectId("65e0a0000000000000000002"),
@@ -1868,7 +2167,7 @@ async def seed_complete_platform():
             "certificateUrl": "https://credentials.proeduvate.com/certs/CERT-2026-W002.pdf",
             "status": "Active",
             "issuedAt": now - timedelta(days=58),
-            "createdAt": now - timedelta(days=58)
+            "createdAt": now - timedelta(days=58),
         },
         {
             "_id": ObjectId("65e0a0000000000000000003"),
@@ -1883,13 +2182,16 @@ async def seed_complete_platform():
             "certificateUrl": "https://credentials.proeduvate.com/certs/CERT-2026-R001.pdf",
             "status": "Active",
             "issuedAt": now - timedelta(days=57),
-            "createdAt": now - timedelta(days=57)
+            "createdAt": now - timedelta(days=57),
         },
         {
             "_id": ObjectId("65e0a0000000000000000004"),
             "recipientName": "Dr. Ramesh Kumar",
             "recipientEmail": "dr.ramesh@microsoft.com",
-            "recipient": {"name": "Dr. Ramesh Kumar", "email": "dr.ramesh@microsoft.com"},
+            "recipient": {
+                "name": "Dr. Ramesh Kumar",
+                "email": "dr.ramesh@microsoft.com",
+            },
             "type": "Mentor Recognition",
             "certType": "Mentor Recognition",
             "hackathonId": "65e060000000000000000008",
@@ -1898,7 +2200,7 @@ async def seed_complete_platform():
             "certificateUrl": "https://credentials.proeduvate.com/certs/CERT-2026-M001.pdf",
             "status": "Active",
             "issuedAt": now - timedelta(days=56),
-            "createdAt": now - timedelta(days=56)
+            "createdAt": now - timedelta(days=56),
         },
         {
             "_id": ObjectId("65e0a0000000000000000005"),
@@ -1914,14 +2216,17 @@ async def seed_complete_platform():
             "status": "Revoked",
             "revocationReason": "Duplicate certificate replaced by revised ledger ID.",
             "issuedAt": now - timedelta(days=55),
-            "createdAt": now - timedelta(days=55)
+            "createdAt": now - timedelta(days=55),
         },
         # Pending Requests
         {
             "_id": ObjectId("65e0a0000000000000000006"),
             "recipientName": "Vikram Aditya",
             "recipientEmail": "vikram.aditya@annauniv.edu",
-            "recipient": {"name": "Vikram Aditya", "email": "vikram.aditya@annauniv.edu"},
+            "recipient": {
+                "name": "Vikram Aditya",
+                "email": "vikram.aditya@annauniv.edu",
+            },
             "type": "Finalist",
             "certType": "Finalist",
             "hackathonId": "65e060000000000000000001",
@@ -1929,13 +2234,16 @@ async def seed_complete_platform():
             "validationId": "CERT-REQ-8891",
             "status": "Pending",
             "requestedAt": now - timedelta(hours=5),
-            "createdAt": now - timedelta(hours=5)
+            "createdAt": now - timedelta(hours=5),
         },
         {
             "_id": ObjectId("65e0a0000000000000000007"),
             "recipientName": "Anita Deshmukh",
             "recipientEmail": "anita.deshmukh@bitsstudent.edu",
-            "recipient": {"name": "Anita Deshmukh", "email": "anita.deshmukh@bitsstudent.edu"},
+            "recipient": {
+                "name": "Anita Deshmukh",
+                "email": "anita.deshmukh@bitsstudent.edu",
+            },
             "type": "Finalist",
             "certType": "Finalist",
             "hackathonId": "65e060000000000000000001",
@@ -1943,7 +2251,7 @@ async def seed_complete_platform():
             "validationId": "CERT-REQ-8892",
             "status": "Pending",
             "requestedAt": now - timedelta(hours=4),
-            "createdAt": now - timedelta(hours=4)
+            "createdAt": now - timedelta(hours=4),
         },
         {
             "_id": ObjectId("65e0a0000000000000000008"),
@@ -1957,13 +2265,16 @@ async def seed_complete_platform():
             "validationId": "CERT-REQ-8893",
             "status": "Pending",
             "requestedAt": now - timedelta(hours=3),
-            "createdAt": now - timedelta(hours=3)
+            "createdAt": now - timedelta(hours=3),
         },
         {
             "_id": ObjectId("65e0a0000000000000000009"),
             "recipientName": "Rahul Verma",
             "recipientEmail": "rahul.verma@delhitechinstitute.edu",
-            "recipient": {"name": "Rahul Verma", "email": "rahul.verma@delhitechinstitute.edu"},
+            "recipient": {
+                "name": "Rahul Verma",
+                "email": "rahul.verma@delhitechinstitute.edu",
+            },
             "type": "Participant",
             "certType": "Participant",
             "hackathonId": "65e060000000000000000003",
@@ -1971,11 +2282,22 @@ async def seed_complete_platform():
             "validationId": "CERT-REQ-8894",
             "status": "Pending",
             "requestedAt": now - timedelta(hours=2),
-            "createdAt": now - timedelta(hours=2)
-        }
+            "createdAt": now - timedelta(hours=2),
+        },
     ]
 
-    await db["certificates"].delete_many({"$or": [{"_id": {"$in": [c["_id"] for c in certificates_records]}}, {"validationId": {"$in": [c["validationId"] for c in certificates_records]}}]})
+    await db["certificates"].delete_many(
+        {
+            "$or": [
+                {"_id": {"$in": [c["_id"] for c in certificates_records]}},
+                {
+                    "validationId": {
+                        "$in": [c["validationId"] for c in certificates_records]
+                    }
+                },
+            ]
+        }
+    )
     for c in certificates_records:
         await db["certificates"].insert_one(c)
     print(f"[SEED]   [OK] Upserted {len(certificates_records)} certificates.")
@@ -1998,19 +2320,25 @@ async def seed_complete_platform():
             "reporter": {
                 "name": "Prof. Arun Selvam",
                 "email": "arun.selvam@vit.ac.in",
-                "role": "Jury Member"
+                "role": "Jury Member",
             },
             "reportedTeam": {
                 "name": "Team NeuralKnights",
                 "members": ["msailesh@gmail.com", "sneha.patel@nitt.edu"],
-                "hackathonTitle": "Global AI Summit 2026"
+                "hackathonTitle": "Global AI Summit 2026",
             },
             "slaDeadline": now + timedelta(hours=14),
             "timeline": [
-                {"date": (now - timedelta(hours=10)).strftime("%b %d, %H:%M"), "event": "Dispute reported by Jury."},
-                {"date": (now - timedelta(hours=4)).strftime("%b %d, %H:%M"), "event": "Automated AST diff engine generated similarity report."}
+                {
+                    "date": (now - timedelta(hours=10)).strftime("%b %d, %H:%M"),
+                    "event": "Dispute reported by Jury.",
+                },
+                {
+                    "date": (now - timedelta(hours=4)).strftime("%b %d, %H:%M"),
+                    "event": "Automated AST diff engine generated similarity report.",
+                },
             ],
-            "createdAt": now - timedelta(hours=10)
+            "createdAt": now - timedelta(hours=10),
         },
         {
             "_id": ObjectId("65e090000000000000000002"),
@@ -2025,15 +2353,18 @@ async def seed_complete_platform():
             "reporter": {
                 "name": "Harini V",
                 "email": "harini.v@srmstudent.edu",
-                "role": "Participant"
+                "role": "Participant",
             },
             "reportedTeam": {
                 "name": "Team QuantumLeap",
-                "members": ["harini.v@srmstudent.edu", "anita.deshmukh@bitsstudent.edu"],
-                "hackathonTitle": "CyberKnights Defense Jam 2026"
+                "members": [
+                    "harini.v@srmstudent.edu",
+                    "anita.deshmukh@bitsstudent.edu",
+                ],
+                "hackathonTitle": "CyberKnights Defense Jam 2026",
             },
             "slaDeadline": now + timedelta(hours=22),
-            "createdAt": now - timedelta(hours=18)
+            "createdAt": now - timedelta(hours=18),
         },
         {
             "_id": ObjectId("65e090000000000000000003"),
@@ -2049,9 +2380,9 @@ async def seed_complete_platform():
             "reporter": {
                 "name": "Dr. Ramesh Kumar",
                 "email": "dr.ramesh@microsoft.com",
-                "role": "Mentor"
+                "role": "Mentor",
             },
-            "createdAt": now - timedelta(days=5)
+            "createdAt": now - timedelta(days=5),
         },
         {
             "_id": ObjectId("6a7d67289523d90b0c5bdf64"),
@@ -2064,11 +2395,19 @@ async def seed_complete_platform():
             "severity": "LOW",
             "status": "Resolved",
             "resolution": "Outlier variance adjusted with jury consensus.",
-            "createdAt": now - timedelta(days=12)
-        }
+            "createdAt": now - timedelta(days=12),
+        },
     ]
 
-    await db["disputes"].delete_many({"$or": [{"_id": {"$in": [d["_id"] for d in disputes_records]}}, {"id": {"$in": [d["id"] for d in disputes_records]}}, {"disputeCode": {"$in": [d["disputeCode"] for d in disputes_records]}}]})
+    await db["disputes"].delete_many(
+        {
+            "$or": [
+                {"_id": {"$in": [d["_id"] for d in disputes_records]}},
+                {"id": {"$in": [d["id"] for d in disputes_records]}},
+                {"disputeCode": {"$in": [d["disputeCode"] for d in disputes_records]}},
+            ]
+        }
+    )
     for d in disputes_records:
         await db["disputes"].insert_one(d)
     print(f"[SEED]   [OK] Upserted {len(disputes_records)} disputes.")
@@ -2084,7 +2423,7 @@ async def seed_complete_platform():
             "category": "SUBMISSIONS",
             "color": "emerald",
             "icon": "Ã°Å¸â€œÂ¦",
-            "timestamp": now - timedelta(minutes=15)
+            "timestamp": now - timedelta(minutes=15),
         },
         {
             "action": "Mentor Supervision Accepted",
@@ -2092,7 +2431,7 @@ async def seed_complete_platform():
             "category": "USERS",
             "color": "blue",
             "icon": "Ã°Å¸â€˜Â¤",
-            "timestamp": now - timedelta(minutes=32)
+            "timestamp": now - timedelta(minutes=32),
         },
         {
             "action": "Hackathon Proposal Submitted",
@@ -2100,7 +2439,7 @@ async def seed_complete_platform():
             "category": "HACKATHONS",
             "color": "indigo",
             "icon": "Ã°Å¸Å¡â‚¬",
-            "timestamp": now - timedelta(hours=1, minutes=10)
+            "timestamp": now - timedelta(hours=1, minutes=10),
         },
         {
             "action": "Certificate Request Queued",
@@ -2108,7 +2447,7 @@ async def seed_complete_platform():
             "category": "CERTIFICATES",
             "color": "amber",
             "icon": "Ã°Å¸â€œÅ“",
-            "timestamp": now - timedelta(hours=2, minutes=5)
+            "timestamp": now - timedelta(hours=2, minutes=5),
         },
         {
             "action": "Dispute Case Opened",
@@ -2116,7 +2455,7 @@ async def seed_complete_platform():
             "category": "DISPUTES",
             "color": "red",
             "icon": "Ã°Å¸Å¡Â¨",
-            "timestamp": now - timedelta(hours=3, minutes=20)
+            "timestamp": now - timedelta(hours=3, minutes=20),
         },
         {
             "action": "Team Formed",
@@ -2124,7 +2463,7 @@ async def seed_complete_platform():
             "category": "TEAMS",
             "color": "blue",
             "icon": "Ã°Å¸â€˜Â¥",
-            "timestamp": now - timedelta(hours=4, minutes=45)
+            "timestamp": now - timedelta(hours=4, minutes=45),
         },
         {
             "action": "Hackathon Live Status",
@@ -2132,7 +2471,7 @@ async def seed_complete_platform():
             "category": "HACKATHONS",
             "color": "emerald",
             "icon": "Ã¢Å¡Â¡",
-            "timestamp": now - timedelta(hours=6)
+            "timestamp": now - timedelta(hours=6),
         },
         {
             "action": "Milestone Delivered",
@@ -2140,7 +2479,7 @@ async def seed_complete_platform():
             "category": "SUBMISSIONS",
             "color": "amber",
             "icon": "Ã°Å¸â€œÂ¦",
-            "timestamp": now - timedelta(hours=9)
+            "timestamp": now - timedelta(hours=9),
         },
         {
             "action": "Certificates Distributed",
@@ -2148,7 +2487,7 @@ async def seed_complete_platform():
             "category": "CERTIFICATES",
             "color": "emerald",
             "icon": "✓",
-            "timestamp": now - timedelta(days=1)
+            "timestamp": now - timedelta(days=1),
         },
         # Security audit flags for risk accounts
         {
@@ -2157,7 +2496,7 @@ async def seed_complete_platform():
             "category": "Security",
             "color": "red",
             "icon": "🚨",
-            "timestamp": now - timedelta(days=2)
+            "timestamp": now - timedelta(days=2),
         },
         {
             "action": "Blocked Suspicious Payload",
@@ -2165,7 +2504,7 @@ async def seed_complete_platform():
             "category": "Security",
             "color": "red",
             "icon": "🚨",
-            "timestamp": now - timedelta(days=1)
+            "timestamp": now - timedelta(days=1),
         },
         {
             "action": "Suspicious Rapid IP Switch",
@@ -2173,7 +2512,7 @@ async def seed_complete_platform():
             "category": "Security",
             "color": "red",
             "icon": "⚠️",
-            "timestamp": now - timedelta(hours=14)
+            "timestamp": now - timedelta(hours=14),
         },
         {
             "action": "Blocked Automated Bot Script",
@@ -2181,7 +2520,7 @@ async def seed_complete_platform():
             "category": "Security",
             "color": "red",
             "icon": "🚨",
-            "timestamp": now - timedelta(days=3)
+            "timestamp": now - timedelta(days=3),
         },
         {
             "action": "Failed Auth Velocity Exceeded",
@@ -2189,7 +2528,7 @@ async def seed_complete_platform():
             "category": "Security",
             "color": "red",
             "icon": "🚨",
-            "timestamp": now - timedelta(days=1)
+            "timestamp": now - timedelta(days=1),
         },
         {
             "action": "Blocked Blacklisted Domain Activity",
@@ -2197,8 +2536,8 @@ async def seed_complete_platform():
             "category": "Security",
             "color": "red",
             "icon": "🚨",
-            "timestamp": now - timedelta(hours=8)
-        }
+            "timestamp": now - timedelta(hours=8),
+        },
     ]
 
     await db["audit_logs"].delete_many({})
@@ -2212,80 +2551,86 @@ async def seed_complete_platform():
     print("[SEED] 9. Ensuring Platform & Admin Settings...")
     await db["settings"].update_one(
         {"key": "global_config"},
-        {"$set": {
-            "key": "global_config",
-            "platformName": "ProEduvate",
-            "supportEmail": "support@proeduvate.com",
-            "supportPhone": "+91 800 123 4567",
-            "website": "https://proeduvate.com",
-            "timezone": "Asia/Kolkata (IST)",
-            "dateFormat": "MMM DD, YYYY",
-            "country": "India",
-            "publicRegistrations": True,
-            "maintenanceMode": False,
-            "t2fa": False,
-            "sessionTimeout": "30 Minutes",
-            "maxLoginAttempts": "5 Attempts",
-            "lockoutDuration": "15 Minutes",
-            "maxTeamSize": 4,
-            "minTeamSize": 1,
-            "allowedFileTypes": ["ZIP", "PDF", "PPTX", "DOCX", "MP4", "TAR.GZ"],
-            "maxUploadFileSize": "100 MB",
-            "requireGithubRepo": True,
-            "requireLiveDemo": True,
-            "gitHubRepo": True,
-            "demoUrl": True,
-            "plagiarismDetect": True,
-            "aiPlagiarismCheck": True,
-            "allowLateSubmissions": True,
-            "allowTeamChanges": True,
-            "publicLeaderboard": True,
-            "formatTemplate": "PROEDU-2026-XXXXX",
-            "validationTemplate": "PROEDU-2026-XXXXX",
-            "prefix": "PROEDU",
-            "certificatePrefix": "PROEDU",
-            "publicVerification": True,
-            "publicQrVerification": True,
-            "autoGenWinner": True,
-            "autoGenerateWinners": True,
-            "autoGenParticipant": False,
-            "autoGenerateParticipants": False,
-            "orgApprovalNotif": True,
-            "newDisputeNotif": True,
-            "secAlertNotif": True,
-            "sysErrorNotif": True,
-            "certVerifNotif": False,
-            "primaryColor": "#3B82F6",
-            "secondaryColor": "#0F172A",
-            "logoUrl": "/uploads/platform_logo_1787008770.png"
-        }},
-        upsert=True
+        {
+            "$set": {
+                "key": "global_config",
+                "platformName": "ProEduvate",
+                "supportEmail": "support@proeduvate.com",
+                "supportPhone": "+91 800 123 4567",
+                "website": "https://proeduvate.com",
+                "timezone": "Asia/Kolkata (IST)",
+                "dateFormat": "MMM DD, YYYY",
+                "country": "India",
+                "publicRegistrations": True,
+                "maintenanceMode": False,
+                "t2fa": False,
+                "sessionTimeout": "30 Minutes",
+                "maxLoginAttempts": "5 Attempts",
+                "lockoutDuration": "15 Minutes",
+                "maxTeamSize": 4,
+                "minTeamSize": 1,
+                "allowedFileTypes": ["ZIP", "PDF", "PPTX", "DOCX", "MP4", "TAR.GZ"],
+                "maxUploadFileSize": "100 MB",
+                "requireGithubRepo": True,
+                "requireLiveDemo": True,
+                "gitHubRepo": True,
+                "demoUrl": True,
+                "plagiarismDetect": True,
+                "aiPlagiarismCheck": True,
+                "allowLateSubmissions": True,
+                "allowTeamChanges": True,
+                "publicLeaderboard": True,
+                "formatTemplate": "PROEDU-2026-XXXXX",
+                "validationTemplate": "PROEDU-2026-XXXXX",
+                "prefix": "PROEDU",
+                "certificatePrefix": "PROEDU",
+                "publicVerification": True,
+                "publicQrVerification": True,
+                "autoGenWinner": True,
+                "autoGenerateWinners": True,
+                "autoGenParticipant": False,
+                "autoGenerateParticipants": False,
+                "orgApprovalNotif": True,
+                "newDisputeNotif": True,
+                "secAlertNotif": True,
+                "sysErrorNotif": True,
+                "certVerifNotif": False,
+                "primaryColor": "#3B82F6",
+                "secondaryColor": "#0F172A",
+                "logoUrl": "/uploads/platform_logo_1787008770.png",
+            }
+        },
+        upsert=True,
     )
 
     await db["admin_settings"].update_one(
         {"_id": "admin_global_config"},
-        {"$set": {
-            "_id": "admin_global_config",
-            "autoApproveSubmissions": False,
-            "autoCertificateGeneration": True,
-            "disputeSlaHours": 48,
-            "emailNotificationsEnabled": True,
-            "maintenanceMode": False,
-            "maxTeamSize": 5,
-            "mentorMaxTeams": 6,
-            "minOriginalityScore": 85,
-            "plagiarismThreshold": 75,
-            "twoFactorEnforcement": True,
-            "updatedAt": now
-        }},
-        upsert=True
+        {
+            "$set": {
+                "_id": "admin_global_config",
+                "autoApproveSubmissions": False,
+                "autoCertificateGeneration": True,
+                "disputeSlaHours": 48,
+                "emailNotificationsEnabled": True,
+                "maintenanceMode": False,
+                "maxTeamSize": 5,
+                "mentorMaxTeams": 6,
+                "minOriginalityScore": 85,
+                "plagiarismThreshold": 75,
+                "twoFactorEnforcement": True,
+                "updatedAt": now,
+            }
+        },
+        upsert=True,
     )
     print("[SEED]   [OK] Platform settings initialized.")
 
     # Disconnect
     await MongoDB.disconnect()
-    print("[SEED] Platform Database Seeding Completed Successfully! All collections fully populated.")
+    print(
+        "[SEED] Platform Database Seeding Completed Successfully! All collections fully populated."
+    )
+
 
 if __name__ == "__main__":
     asyncio.run(seed_complete_platform())
-

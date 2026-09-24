@@ -35,4 +35,3 @@ class ClearMemoryResponse(BaseModel):
     success: bool = True
     session_id: str
     cleared: bool
-

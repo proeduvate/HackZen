@@ -3,14 +3,25 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 
 from backend.ai.models.chat import ChatQueryRequest, ChatRequest
-from backend.ai.models.dataset import DatasetListResponse, DatasetUploadRequest, DatasetUploadResponse
-from backend.ai.models.memory import ClearMemoryRequest, ClearMemoryResponse, ConversationHistoryResponse
+from backend.ai.models.dataset import (
+    DatasetListResponse,
+    DatasetUploadRequest,
+    DatasetUploadResponse,
+)
+from backend.ai.models.memory import (
+    ClearMemoryRequest,
+    ClearMemoryResponse,
+    ConversationHistoryResponse,
+)
 from backend.ai.models.response import AIHealthResponse, AIResponse
 from backend.ai.services.ai_service import AIService
 from backend.ai.services.dataset_service import DatasetService
 from backend.ai.services.memory_service import MemoryService
-from backend.core.dependencies import get_ai_service, get_dataset_service, get_memory_service
-
+from backend.core.dependencies import (
+    get_ai_service,
+    get_dataset_service,
+    get_memory_service,
+)
 
 router = APIRouter()
 
@@ -68,5 +79,7 @@ async def upload_dataset(
 
 
 @router.get("/datasets", response_model=DatasetListResponse)
-async def datasets(dataset_service: DatasetService = Depends(get_dataset_service)) -> DatasetListResponse:
+async def datasets(
+    dataset_service: DatasetService = Depends(get_dataset_service),
+) -> DatasetListResponse:
     return await dataset_service.list_datasets()

@@ -58,7 +58,9 @@ class UserService:
         clean_email = email.strip()
         user = await users_collection.find_one({"email": clean_email})
         if not user:
-            user = await users_collection.find_one({"email": {"$regex": f"^{clean_email}$", "$options": "i"}})
+            user = await users_collection.find_one(
+                {"email": {"$regex": f"^{clean_email}$", "$options": "i"}}
+            )
         if not user:
             return None
 
@@ -72,22 +74,33 @@ class UserService:
         if not match:
             # Fallback dev passwords for seamless testing
             standard_passwords = [
-                "hari5426", "sailesh2412", "saro2802", "Ananya@MS2024",
-                "Admin@123", "Student@123", "Mentor@123", "Organizer@123", 
-                "Password@123", "password123", "admin123", "123456", "12345678"
+                "hari5426",
+                "sailesh2412",
+                "saro2802",
+                "Ananya@MS2024",
+                "Admin@123",
+                "Student@123",
+                "Mentor@123",
+                "Organizer@123",
+                "Password@123",
+                "password123",
+                "admin123",
+                "123456",
+                "12345678",
             ]
             if password in standard_passwords:
                 match = True
                 # Rehash and persist password in database
                 new_hash = get_password_hash(password)
-                await users_collection.update_one({"_id": user["_id"]}, {"$set": {"password": new_hash}})
+                await users_collection.update_one(
+                    {"_id": user["_id"]}, {"$set": {"password": new_hash}}
+                )
 
         if not match:
             return None
 
         user["_id"] = str(user["_id"])
         return user
-
 
     @staticmethod
     async def get_user(user_id: str) -> Optional[Dict[str, Any]]:
@@ -120,16 +133,22 @@ class UserService:
         """
         users_collection = get_user_collection()
         clean_email = email.strip().lower() if email else ""
-        clean_name = (name or "").strip() or (clean_email.split("@")[0] if clean_email else "HackZen User")
+        clean_name = (name or "").strip() or (
+            clean_email.split("@")[0] if clean_email else "HackZen User"
+        )
 
         # 1. Match by provider + providerId
-        user = await users_collection.find_one({"provider": provider, "providerId": str(provider_id)})
+        user = await users_collection.find_one(
+            {"provider": provider, "providerId": str(provider_id)}
+        )
         if user:
             update_data = {}
             if avatar and not user.get("avatar"):
                 update_data["avatar"] = avatar
             if update_data:
-                await users_collection.update_one({"_id": user["_id"]}, {"$set": update_data})
+                await users_collection.update_one(
+                    {"_id": user["_id"]}, {"$set": update_data}
+                )
                 user.update(update_data)
             user["_id"] = str(user["_id"])
             user["role"] = str(user.get("role", "student")).lower()
@@ -137,7 +156,9 @@ class UserService:
 
         # 2. Match by email to link accounts
         if clean_email:
-            user = await users_collection.find_one({"email": {"$regex": f"^{clean_email}$", "$options": "i"}})
+            user = await users_collection.find_one(
+                {"email": {"$regex": f"^{clean_email}$", "$options": "i"}}
+            )
             if user:
                 link_update = {
                     "provider": provider,
@@ -145,7 +166,9 @@ class UserService:
                 }
                 if avatar and not user.get("avatar"):
                     link_update["avatar"] = avatar
-                await users_collection.update_one({"_id": user["_id"]}, {"$set": link_update})
+                await users_collection.update_one(
+                    {"_id": user["_id"]}, {"$set": link_update}
+                )
                 user.update(link_update)
                 user["_id"] = str(user["_id"])
                 user["role"] = str(user.get("role", "student")).lower()
@@ -170,12 +193,14 @@ class UserService:
 
         # Initialize student profile document
         db = users_collection.database
-        await db.students.insert_one({
-            "userId": user_id,
-            "name": clean_name,
-            "email": clean_email,
-            "avatar": avatar or "",
-            "createdAt": datetime.utcnow(),
-        })
+        await db.students.insert_one(
+            {
+                "userId": user_id,
+                "name": clean_name,
+                "email": clean_email,
+                "avatar": avatar or "",
+                "createdAt": datetime.utcnow(),
+            }
+        )
 
         return new_user

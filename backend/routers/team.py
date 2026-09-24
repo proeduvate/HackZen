@@ -29,7 +29,9 @@ def get_team_members_collection():
     return get_db()["teamMembers"]
 
 
-async def build_organizer_team_rows(hackathon_id: str, current_user: dict) -> List[Dict[str, Any]]:
+async def build_organizer_team_rows(
+    hackathon_id: str, current_user: dict
+) -> List[Dict[str, Any]]:
     if not ObjectId.is_valid(hackathon_id):
         raise HTTPException(status_code=400, detail="Invalid hackathon id")
 
@@ -40,7 +42,9 @@ async def build_organizer_team_rows(hackathon_id: str, current_user: dict) -> Li
 
     user_id = current_user.get("id") or current_user.get("sub")
     if current_user.get("role") != "admin" and hackathon.get("organizerId") != user_id:
-        raise HTTPException(status_code=403, detail="Not authorized to view this hackathon")
+        raise HTTPException(
+            status_code=403, detail="Not authorized to view this hackathon"
+        )
 
     teams = (
         await db["teams"]
@@ -52,7 +56,7 @@ async def build_organizer_team_rows(hackathon_id: str, current_user: dict) -> Li
     results = []
     for team in teams:
         team_id = str(team["_id"])
-        
+
         # Enriched member details with avatars/initials
         members_cursor = db["teamMembers"].find({"teamId": team_id})
         members_list = await members_cursor.to_list(20)
@@ -63,22 +67,32 @@ async def build_organizer_team_rows(hackathon_id: str, current_user: dict) -> Li
             u_avatar = None
             if u_id:
                 try:
-                    q = {"_id": ObjectId(u_id)} if ObjectId.is_valid(u_id) else {"userId": u_id}
+                    q = (
+                        {"_id": ObjectId(u_id)}
+                        if ObjectId.is_valid(u_id)
+                        else {"userId": u_id}
+                    )
                     u_doc = await db["users"].find_one(q)
                     if u_doc:
                         u_name = u_doc.get("fullName", u_doc.get("name", "Team Member"))
                         u_avatar = u_doc.get("avatar")
                 except Exception:
                     pass
-            member_details.append({
-                "id": str(m.get("_id", "")),
-                "userId": str(u_id) if u_id else "",
-                "name": u_name,
-                "role": m.get("role", "member"),
-                "avatar": u_avatar
-            })
+            member_details.append(
+                {
+                    "id": str(m.get("_id", "")),
+                    "userId": str(u_id) if u_id else "",
+                    "name": u_name,
+                    "role": m.get("role", "member"),
+                    "avatar": u_avatar,
+                }
+            )
 
-        members_count = len(member_details) if member_details else await db["teamMembers"].count_documents({"teamId": team_id})
+        members_count = (
+            len(member_details)
+            if member_details
+            else await db["teamMembers"].count_documents({"teamId": team_id})
+        )
         submission = await db["submissions"].find_one(
             {"teamId": team_id}, sort=[("submittedAt", -1)]
         )
@@ -98,13 +112,29 @@ async def build_organizer_team_rows(hackathon_id: str, current_user: dict) -> Li
             team.get("track")
             or (application.get("track") if application else None)
             or (submission.get("track") if submission else None)
-            or (hackathon.get("tracks", ["AI & ML"])[0] if hackathon.get("tracks") else None)
-            or (hackathon.get("themes", ["AI & ML"])[0] if hackathon.get("themes") else "AI & ML")
+            or (
+                hackathon.get("tracks", ["AI & ML"])[0]
+                if hackathon.get("tracks")
+                else None
+            )
+            or (
+                hackathon.get("themes", ["AI & ML"])[0]
+                if hackathon.get("themes")
+                else "AI & ML"
+            )
         )
 
         created_at = team.get("createdAt")
-        date_str = created_at.strftime("%b %d, %Y") if isinstance(created_at, datetime) else "Oct 2, 2023"
-        time_str = created_at.strftime("%I:%M %p") if isinstance(created_at, datetime) else "09:41 AM"
+        date_str = (
+            created_at.strftime("%b %d, %Y")
+            if isinstance(created_at, datetime)
+            else "Oct 2, 2023"
+        )
+        time_str = (
+            created_at.strftime("%I:%M %p")
+            if isinstance(created_at, datetime)
+            else "09:41 AM"
+        )
 
         results.append(
             {
@@ -118,8 +148,14 @@ async def build_organizer_team_rows(hackathon_id: str, current_user: dict) -> Li
                 "track": track_val,
                 "registrationDate": date_str,
                 "registrationTime": time_str,
-                "createdAt": created_at.isoformat() if isinstance(created_at, datetime) else str(created_at or ""),
-                "submissionStatus": submission.get("status", "Submitted") if submission else "Pending",
+                "createdAt": (
+                    created_at.isoformat()
+                    if isinstance(created_at, datetime)
+                    else str(created_at or "")
+                ),
+                "submissionStatus": (
+                    submission.get("status", "Submitted") if submission else "Pending"
+                ),
                 "submissions": 1 if submission else 0,
             }
         )
@@ -344,10 +380,22 @@ async def get_organizer_team_rows(
                 "name": "Neural Ninjas",
                 "members": 4,
                 "memberDetails": [
-                    {"name": "Maya Lin", "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80"},
-                    {"name": "David Kim", "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80"},
-                    {"name": "Priya Nair", "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80"},
-                    {"name": "Carlos Ruiz", "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80"}
+                    {
+                        "name": "Maya Lin",
+                        "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80",
+                    },
+                    {
+                        "name": "David Kim",
+                        "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80",
+                    },
+                    {
+                        "name": "Priya Nair",
+                        "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
+                    },
+                    {
+                        "name": "Carlos Ruiz",
+                        "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80",
+                    },
                 ],
                 "leader": "Maya Lin",
                 "status": "Approved",
@@ -356,15 +404,21 @@ async def get_organizer_team_rows(
                 "registrationTime": "09:41 AM",
                 "hackathonTitle": "Global AI & Web3 Sprint",
                 "submissionStatus": "Submitted",
-                "submissions": 1
+                "submissions": 1,
             },
             {
                 "id": "team_figma_02",
                 "name": "BlockBuilders",
                 "members": 2,
                 "memberDetails": [
-                    {"name": "Devon Vance", "avatar": "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=120&auto=format&fit=crop&q=80"},
-                    {"name": "Liam Connor", "avatar": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=120&auto=format&fit=crop&q=80"}
+                    {
+                        "name": "Devon Vance",
+                        "avatar": "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=120&auto=format&fit=crop&q=80",
+                    },
+                    {
+                        "name": "Liam Connor",
+                        "avatar": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=120&auto=format&fit=crop&q=80",
+                    },
                 ],
                 "leader": "Devon Vance",
                 "status": "Pending",
@@ -373,15 +427,21 @@ async def get_organizer_team_rows(
                 "registrationTime": "14:22 PM",
                 "hackathonTitle": "Global AI & Web3 Sprint",
                 "submissionStatus": "Pending",
-                "submissions": 0
+                "submissions": 0,
             },
             {
                 "id": "team_figma_03",
                 "name": "FinFlow Dynamics",
                 "members": 2,
                 "memberDetails": [
-                    {"name": "Sarah Jenkins", "avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80"},
-                    {"name": "Tyler Brooks", "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&auto=format&fit=crop&q=80"}
+                    {
+                        "name": "Sarah Jenkins",
+                        "avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80",
+                    },
+                    {
+                        "name": "Tyler Brooks",
+                        "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&auto=format&fit=crop&q=80",
+                    },
                 ],
                 "leader": "Sarah Jenkins",
                 "status": "Approved",
@@ -390,7 +450,7 @@ async def get_organizer_team_rows(
                 "registrationTime": "11:05 AM",
                 "hackathonTitle": "Global AI & Web3 Sprint",
                 "submissionStatus": "Submitted",
-                "submissions": 1
+                "submissions": 1,
             },
             {
                 "id": "team_figma_04",
@@ -406,15 +466,21 @@ async def get_organizer_team_rows(
                 "registrationTime": "08:50 AM",
                 "hackathonTitle": "Global AI & Web3 Sprint",
                 "submissionStatus": "Pending",
-                "submissions": 0
+                "submissions": 0,
             },
             {
                 "id": "team_figma_05",
                 "name": "CyberShield X",
                 "members": 3,
                 "memberDetails": [
-                    {"name": "Alex Chen", "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80"},
-                    {"name": "Nadia Ray", "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80"}
+                    {
+                        "name": "Alex Chen",
+                        "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80",
+                    },
+                    {
+                        "name": "Nadia Ray",
+                        "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
+                    },
                 ],
                 "leader": "Alex Chen",
                 "status": "Approved",
@@ -423,15 +489,21 @@ async def get_organizer_team_rows(
                 "registrationTime": "16:30 PM",
                 "hackathonTitle": "Global AI & Web3 Sprint",
                 "submissionStatus": "Submitted",
-                "submissions": 1
+                "submissions": 1,
             },
             {
                 "id": "team_figma_06",
                 "name": "QuantumLeap Labs",
                 "members": 4,
                 "memberDetails": [
-                    {"name": "Priya Patel", "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80"},
-                    {"name": "Jordan Smith", "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80"}
+                    {
+                        "name": "Priya Patel",
+                        "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80",
+                    },
+                    {
+                        "name": "Jordan Smith",
+                        "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80",
+                    },
                 ],
                 "leader": "Priya Patel",
                 "status": "Pending",
@@ -440,14 +512,17 @@ async def get_organizer_team_rows(
                 "registrationTime": "10:15 AM",
                 "hackathonTitle": "Global AI & Web3 Sprint",
                 "submissionStatus": "Pending",
-                "submissions": 0
+                "submissions": 0,
             },
             {
                 "id": "team_figma_07",
                 "name": "EcoSense IoT",
                 "members": 3,
                 "memberDetails": [
-                    {"name": "Marcus Roe", "avatar": "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=120&auto=format&fit=crop&q=80"}
+                    {
+                        "name": "Marcus Roe",
+                        "avatar": "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=120&auto=format&fit=crop&q=80",
+                    }
                 ],
                 "leader": "Marcus Roe",
                 "status": "Approved",
@@ -456,14 +531,17 @@ async def get_organizer_team_rows(
                 "registrationTime": "12:40 PM",
                 "hackathonTitle": "Global AI & Web3 Sprint",
                 "submissionStatus": "Submitted",
-                "submissions": 1
+                "submissions": 1,
             },
             {
                 "id": "team_figma_08",
                 "name": "MediVision AI",
                 "members": 2,
                 "memberDetails": [
-                    {"name": "Elena Rostova", "avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80"}
+                    {
+                        "name": "Elena Rostova",
+                        "avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80",
+                    }
                 ],
                 "leader": "Elena Rostova",
                 "status": "Approved",
@@ -472,8 +550,8 @@ async def get_organizer_team_rows(
                 "registrationTime": "15:10 PM",
                 "hackathonTitle": "Global AI & Web3 Sprint",
                 "submissionStatus": "Submitted",
-                "submissions": 1
-            }
+                "submissions": 1,
+            },
         ]
 
     return rows
@@ -487,10 +565,14 @@ async def update_team_status(
 ):
     """Update team registration and application status (Approved, Pending, Rejected)"""
     new_status = status_payload.get("status")
-    if not new_status or str(new_status).capitalize() not in ["Approved", "Pending", "Rejected"]:
+    if not new_status or str(new_status).capitalize() not in [
+        "Approved",
+        "Pending",
+        "Rejected",
+    ]:
         raise HTTPException(
             status_code=400,
-            detail="Status must be one of 'Approved', 'Pending', or 'Rejected'"
+            detail="Status must be one of 'Approved', 'Pending', or 'Rejected'",
         )
 
     new_status_cap = str(new_status).capitalize()
@@ -504,44 +586,59 @@ async def update_team_status(
             if current_user.get("role") != "admin":
                 hackathon_id = team.get("hackathonId")
                 if hackathon_id and ObjectId.is_valid(hackathon_id):
-                    hackathon = await db["hackathons"].find_one({"_id": ObjectId(hackathon_id)})
+                    hackathon = await db["hackathons"].find_one(
+                        {"_id": ObjectId(hackathon_id)}
+                    )
                     if hackathon and hackathon.get("organizerId") != user_id:
-                        raise HTTPException(status_code=403, detail="Not authorized to manage this team")
+                        raise HTTPException(
+                            status_code=403, detail="Not authorized to manage this team"
+                        )
 
             await db["teams"].update_one(
                 {"_id": team_oid},
-                {"$set": {"status": new_status_cap, "updatedAt": datetime.utcnow()}}
+                {"$set": {"status": new_status_cap, "updatedAt": datetime.utcnow()}},
             )
 
             await db["applications"].update_many(
                 {"teamId": team_id},
-                {"$set": {"status": new_status_cap.lower(), "updatedAt": datetime.utcnow()}}
+                {
+                    "$set": {
+                        "status": new_status_cap.lower(),
+                        "updatedAt": datetime.utcnow(),
+                    }
+                },
             )
 
             try:
-                await db["audit_logs"].insert_one({
-                    "action": "UPDATE_TEAM_STATUS",
-                    "teamId": team_id,
-                    "newStatus": new_status_cap,
-                    "changedBy": user_id,
-                    "timestamp": datetime.utcnow()
-                })
+                await db["audit_logs"].insert_one(
+                    {
+                        "action": "UPDATE_TEAM_STATUS",
+                        "teamId": team_id,
+                        "newStatus": new_status_cap,
+                        "changedBy": user_id,
+                        "timestamp": datetime.utcnow(),
+                    }
+                )
             except Exception:
                 pass
 
-            team_members = await db["teamMembers"].find({"teamId": team_id}).to_list(100)
+            team_members = (
+                await db["teamMembers"].find({"teamId": team_id}).to_list(100)
+            )
             for member in team_members:
                 m_user_id = member.get("userId")
                 if m_user_id:
                     try:
-                        await db["notifications"].insert_one({
-                            "userId": m_user_id,
-                            "title": f"Team Status: {new_status_cap}",
-                            "message": f"Your team '{team.get('teamName', 'Team')}' application is now {new_status_cap}.",
-                            "type": "team_status",
-                            "read": False,
-                            "createdAt": datetime.utcnow()
-                        })
+                        await db["notifications"].insert_one(
+                            {
+                                "userId": m_user_id,
+                                "title": f"Team Status: {new_status_cap}",
+                                "message": f"Your team '{team.get('teamName', 'Team')}' application is now {new_status_cap}.",
+                                "type": "team_status",
+                                "read": False,
+                                "createdAt": datetime.utcnow(),
+                            }
+                        )
                     except Exception:
                         pass
 
@@ -549,7 +646,7 @@ async def update_team_status(
         "success": True,
         "teamId": team_id,
         "status": new_status_cap,
-        "message": f"Team status updated to {new_status_cap} successfully"
+        "message": f"Team status updated to {new_status_cap} successfully",
     }
 
 
@@ -568,7 +665,9 @@ async def get_organizer_judge_activity(
         return []
 
     roster = {}
-    mentor_profiles = await db["mentors"].find({"availability": "Available"}).to_list(500)
+    mentor_profiles = (
+        await db["mentors"].find({"availability": "Available"}).to_list(500)
+    )
     for profile in mentor_profiles:
         mentor_user_id = str(profile.get("userId", ""))
         if not mentor_user_id:
@@ -591,7 +690,11 @@ async def get_organizer_judge_activity(
             "eligible": True,
         }
 
-    evaluations = await db["evaluations"].find({"hackathonId": {"$in": hackathon_ids}}).to_list(500)
+    evaluations = (
+        await db["evaluations"]
+        .find({"hackathonId": {"$in": hackathon_ids}})
+        .to_list(500)
+    )
     for evaluation in evaluations:
         judge_id = evaluation.get("judgeId")
         if not judge_id:
@@ -630,16 +733,23 @@ async def get_organizer_judge_activity(
 
 @router.post("/mentor-invitations")
 async def create_mentor_invitations(
-    body: Dict[str, Any], current_user: dict = Depends(RequireRole(["organizer", "admin"]))
+    body: Dict[str, Any],
+    current_user: dict = Depends(RequireRole(["organizer", "admin"])),
 ):
     """Store mentor invitations, send email when SMTP is configured, and notify existing mentor users."""
     db = get_db()
-    emails = [email.strip().lower() for email in body.get("emails", []) if email.strip()]
+    emails = [
+        email.strip().lower() for email in body.get("emails", []) if email.strip()
+    ]
     if not emails:
         raise HTTPException(status_code=400, detail="At least one email is required")
 
     organizer_id = current_user.get("id") or current_user.get("sub")
-    organizer_name = current_user.get("name") or current_user.get("email") or "A ProEduvate organizer"
+    organizer_name = (
+        current_user.get("name")
+        or current_user.get("email")
+        or "A ProEduvate organizer"
+    )
     role = body.get("role", "Mentor")
     domain = body.get("domain", "General")
     message = body.get("message", "").strip()
@@ -688,7 +798,9 @@ async def create_mentor_invitations(
     failed_count = len(created) - sent_count
     message_text = f"{sent_count} email invitation(s) sent."
     if failed_count:
-        message_text += f" {failed_count} saved but email delivery failed. Check SMTP settings."
+        message_text += (
+            f" {failed_count} saved but email delivery failed. Check SMTP settings."
+        )
     return {"success": True, "message": message_text, "invitations": created}
 
 
@@ -700,7 +812,9 @@ async def get_mentor_invitations(
     db = get_db()
     user_id = current_user.get("id") or current_user.get("sub")
     query = {} if current_user.get("role") == "admin" else {"organizerId": user_id}
-    invitations = await db["mentorInvitations"].find(query).sort("sentAt", -1).to_list(200)
+    invitations = (
+        await db["mentorInvitations"].find(query).sort("sentAt", -1).to_list(200)
+    )
     for invite in invitations:
         invite["_id"] = str(invite["_id"])
     return invitations
@@ -835,20 +949,22 @@ async def join_team(team_id_or_code: str, current_user: dict = Depends(with_auth
     if not allow_team_changes:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Team composition changes are currently locked by platform policy."
+            detail="Team composition changes are currently locked by platform policy.",
         )
 
     hackathon = None
     if ObjectId.is_valid(hackathon_id):
         hackathon = await db["hackathons"].find_one({"_id": ObjectId(hackathon_id)})
 
-    hackathon_max = int(hackathon.get("maxTeamSize", platform_max)) if hackathon else platform_max
+    hackathon_max = (
+        int(hackathon.get("maxTeamSize", platform_max)) if hackathon else platform_max
+    )
     max_size = min(hackathon_max, platform_max)
 
     if current_members_count >= max_size:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, 
-            detail=f"Team is already full (Maximum team size limit is {max_size} members based on platform policy)."
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Team is already full (Maximum team size limit is {max_size} members based on platform policy).",
         )
 
     new_member = {
@@ -885,8 +1001,12 @@ async def assign_mentor(
 
     is_admin = current_user.get("role") == "admin"
     is_organizer_owner = False
-    if current_user.get("role") == "organizer" and ObjectId.is_valid(team.get("hackathonId", "")):
-        hackathon = await db["hackathons"].find_one({"_id": ObjectId(team["hackathonId"])})
+    if current_user.get("role") == "organizer" and ObjectId.is_valid(
+        team.get("hackathonId", "")
+    ):
+        hackathon = await db["hackathons"].find_one(
+            {"_id": ObjectId(team["hackathonId"])}
+        )
         is_organizer_owner = bool(hackathon and hackathon.get("organizerId") == user_id)
 
     members_collection = db["teamMembers"]
@@ -922,7 +1042,9 @@ async def assign_mentor(
         {"_id": ObjectId(team_id)}, {"$set": {"mentorId": mentor_user_id}}
     )
 
-    assignment_message = f"You have been assigned to mentor {team.get('teamName', 'a team')}."
+    assignment_message = (
+        f"You have been assigned to mentor {team.get('teamName', 'a team')}."
+    )
     await db["notifications"].insert_one(
         {
             "userId": mentor_user_id,
@@ -954,7 +1076,9 @@ async def remove_mentor_assignment(
 
     team = await db["teams"].find_one({"_id": ObjectId(team_id)})
     if not team:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Team not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Team not found"
+        )
 
     user_id = current_user.get("id") or current_user.get("sub")
     if current_user.get("role") != "admin":
@@ -963,9 +1087,13 @@ async def remove_mentor_assignment(
             raise HTTPException(status_code=400, detail="Invalid team hackathon id")
         hackathon = await db["hackathons"].find_one({"_id": ObjectId(hackathon_id)})
         if not hackathon or hackathon.get("organizerId") != user_id:
-            raise HTTPException(status_code=403, detail="Not authorized to update this team")
+            raise HTTPException(
+                status_code=403, detail="Not authorized to update this team"
+            )
 
-    await db["teams"].update_one({"_id": ObjectId(team_id)}, {"$unset": {"mentorId": ""}})
+    await db["teams"].update_one(
+        {"_id": ObjectId(team_id)}, {"$unset": {"mentorId": ""}}
+    )
     updated_team = await db["teams"].find_one({"_id": ObjectId(team_id)})
     updated_team["_id"] = str(updated_team["_id"])
     return TeamResponse(**updated_team)
@@ -996,7 +1124,7 @@ async def remove_team_member(
     if not bool(platform_settings.get("allowTeamChanges", True)):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Team composition changes are currently locked by platform policy."
+            detail="Team composition changes are currently locked by platform policy.",
         )
 
     # 2. Verify current user is the team leader

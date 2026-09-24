@@ -37,17 +37,19 @@ async def with_auth(
     session_id = current_user_payload.get("sessionId")
     if session_id:
         from database import get_db
+
         db = get_db()
-        revoked_sess = await db["admin_sessions"].find_one({"sessionId": session_id, "revoked": True})
+        revoked_sess = await db["admin_sessions"].find_one(
+            {"sessionId": session_id, "revoked": True}
+        )
         if revoked_sess:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="This administrator session has been revoked. Please sign in again."
+                detail="This administrator session has been revoked. Please sign in again.",
             )
         # Update lastActive timestamp
         await db["admin_sessions"].update_one(
-            {"sessionId": session_id},
-            {"$set": {"lastActive": datetime.utcnow()}}
+            {"sessionId": session_id}, {"$set": {"lastActive": datetime.utcnow()}}
         )
 
     if current_user_payload.get("is_mock"):
@@ -86,12 +88,15 @@ class RequireRole:
         session_id = user.get("sessionId")
         if session_id:
             from database import get_db
+
             db = get_db()
-            revoked_sess = await db["admin_sessions"].find_one({"sessionId": session_id, "revoked": True})
+            revoked_sess = await db["admin_sessions"].find_one(
+                {"sessionId": session_id, "revoked": True}
+            )
             if revoked_sess:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="This administrator session has been revoked. Please sign in again."
+                    detail="This administrator session has been revoked. Please sign in again.",
                 )
 
         return user

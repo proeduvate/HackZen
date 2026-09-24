@@ -32,8 +32,12 @@ class RAGEngine:
         if self.use_chroma:
             os.makedirs(self.persist_dir, exist_ok=True)
             try:
-                self.client = chromadb.PersistentClient(path=self.persist_dir, settings=Settings(allow_reset=True))
-                self.collection = self.client.get_or_create_collection(name=self.collection_name)
+                self.client = chromadb.PersistentClient(
+                    path=self.persist_dir, settings=Settings(allow_reset=True)
+                )
+                self.collection = self.client.get_or_create_collection(
+                    name=self.collection_name
+                )
             except Exception:
                 self._rebuild_chroma_store()
 
@@ -41,8 +45,12 @@ class RAGEngine:
         if os.path.isdir(self.persist_dir):
             shutil.rmtree(self.persist_dir, ignore_errors=True)
         os.makedirs(self.persist_dir, exist_ok=True)
-        self.client = chromadb.PersistentClient(path=self.persist_dir, settings=Settings(allow_reset=True))
-        self.collection = self.client.get_or_create_collection(name=self.collection_name)
+        self.client = chromadb.PersistentClient(
+            path=self.persist_dir, settings=Settings(allow_reset=True)
+        )
+        self.collection = self.client.get_or_create_collection(
+            name=self.collection_name
+        )
 
     def ingest_directory(self, data_dir: str):
         if self.disable_embeddings or not self.use_chroma:
@@ -77,7 +85,9 @@ class RAGEngine:
         if ids and self.collection is not None:
             try:
                 embeddings = self.embedding_model.encode(texts).tolist()
-                self.collection.add(ids=ids, documents=texts, metadatas=metadatas, embeddings=embeddings)
+                self.collection.add(
+                    ids=ids, documents=texts, metadatas=metadatas, embeddings=embeddings
+                )
             except Exception:
                 # Keep app functional even if vector indexing fails; keyword fallback still works.
                 pass
@@ -132,13 +142,24 @@ class RAGEngine:
 
         try:
             embeddings = self.embedding_model.encode(chunks).tolist()
-            self.collection.add(ids=chunk_ids, documents=chunks, metadatas=metadatas, embeddings=embeddings)
+            self.collection.add(
+                ids=chunk_ids,
+                documents=chunks,
+                metadatas=metadatas,
+                embeddings=embeddings,
+            )
         except Exception:
             pass
 
         return {"doc_id": doc["id"], "chunks_indexed": len(chunks)}
 
-    def retrieve(self, query: str, top_k: int = 4, hackathon: str = "", uploaded_only: bool = False):
+    def retrieve(
+        self,
+        query: str,
+        top_k: int = 4,
+        hackathon: str = "",
+        uploaded_only: bool = False,
+    ):
         if self.disable_embeddings or not self.use_chroma or self.collection is None:
             return []
         if self.embedding_model is None:
@@ -149,7 +170,9 @@ class RAGEngine:
         if uploaded_only:
             where["uploaded"] = True
         where = where or None
-        results = self.collection.query(query_embeddings=query_embedding, n_results=top_k, where=where)
+        results = self.collection.query(
+            query_embeddings=query_embedding, n_results=top_k, where=where
+        )
 
         matches = []
         for i in range(len(results.get("ids", [[]])[0])):
@@ -162,11 +185,19 @@ class RAGEngine:
             )
         return matches
 
-    def keyword_search(self, query: str, top_k: int = 4, hackathon: str = "", uploaded_only: bool = False):
+    def keyword_search(
+        self,
+        query: str,
+        top_k: int = 4,
+        hackathon: str = "",
+        uploaded_only: bool = False,
+    ):
         if not self.documents:
             return []
 
-        base_terms = [t for t in re.findall(r"[a-zA-Z0-9]+", query.lower()) if len(t) > 2]
+        base_terms = [
+            t for t in re.findall(r"[a-zA-Z0-9]+", query.lower()) if len(t) > 2
+        ]
         query_terms = set()
         for term in base_terms:
             query_terms.add(term)
@@ -296,6 +327,8 @@ class RAGEngine:
             return
         try:
             self.client.reset()
-            self.collection = self.client.get_or_create_collection(name=self.collection_name)
+            self.collection = self.client.get_or_create_collection(
+                name=self.collection_name
+            )
         except Exception:
             self._rebuild_chroma_store()

@@ -11,7 +11,6 @@ from backend.ai.services.memory_service import MemoryService
 from backend.ai.services.openrouter_client import OpenRouterClient
 from backend.ai.utils.logging import get_logger
 
-
 logger = get_logger(__name__)
 
 
@@ -37,7 +36,9 @@ async def initialize_ai_container() -> AIContainer:
     await memory_service.initialize()
     dataset_service = DatasetService(config, rag_index)
     openrouter_client = OpenRouterClient(config)
-    ai_service = AIService(config, rag_index, memory_service, dataset_service, openrouter_client)
+    ai_service = AIService(
+        config, rag_index, memory_service, dataset_service, openrouter_client
+    )
     return AIContainer(
         config=config,
         rag_index=rag_index,
