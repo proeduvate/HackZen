@@ -13,6 +13,7 @@ from routers import (
     inbox,
     progress,
     submission,
+    settingsRoutes,
 )
 
 router = APIRouter()
