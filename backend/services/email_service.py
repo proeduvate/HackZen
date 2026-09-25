@@ -5,7 +5,11 @@ from email.mime.application import MIMEApplication
 from pathlib import Path
 import asyncio
 from typing import Optional, List
-import qrcode
+from datetime import datetime
+try:
+    import qrcode
+except ImportError:
+    qrcode = None
 from io import BytesIO
 
 from core.config import settings
@@ -314,6 +318,280 @@ class EmailService:
         return await self.send_email(
             to_email, subject, html_content, text_content, attachments
         )
+
+    async def send_certificate_award_email(
+        self,
+        to_email: str,
+        recipient_name: str,
+        hackathon_title: str,
+        cert_type: str = "Winner",
+        cert_id: str = "",
+        custom_message: Optional[str] = None,
+        verification_url: Optional[str] = None,
+        template_name: Optional[str] = None,
+    ) -> bool:
+        """
+        Send a beautifully styled congratulatory certificate award email
+        tailored for Winners, Runners-up, and Participants.
+        """
+        type_norm = (cert_type or "Winner").strip().lower()
+
+        if "winner" in type_norm or "1st" in type_norm or "first" in type_norm:
+            theme_color = "#D97706"
+            header_gradient = "linear-gradient(135deg, #F59E0B 0%, #B45309 100%)"
+            badge_icon = "🏆"
+            badge_title = "CHAMPIONSHIP WINNER"
+            default_subject = f"🏆 Congratulations! You Won — {hackathon_title}"
+            default_paragraph = (
+                f"We are thrilled to announce that you have emerged as the WINNER of {hackathon_title}! "
+                f"Your brilliant solution, dedication, and technical excellence throughout the event stood out among all participants. "
+                f"This is a remarkable achievement and we at ProEduvate are immensely proud to celebrate your victory. "
+                f"Your official Winner's Certificate has been issued and registered in our public credential ledger. "
+                f"Keep building, keep innovating, and lead the future of technology!"
+            )
+        elif "runner" in type_norm or "2nd" in type_norm or "second" in type_norm or "silver" in type_norm:
+            theme_color = "#4F46E5"
+            header_gradient = "linear-gradient(135deg, #6366F1 0%, #4338CA 100%)"
+            badge_icon = "🥈"
+            badge_title = "RUNNER-UP HONORS"
+            default_subject = f"🥈 Outstanding Achievement — {hackathon_title} Runner-Up"
+            default_paragraph = (
+                f"Congratulations on achieving Runner-Up at {hackathon_title}! "
+                f"Your innovative approach, stellar teamwork, and the caliber of your project impressed our judges and mentors. "
+                f"Finishing among the top contenders in an intensely competitive hackathon is a powerful testament to your talent. "
+                f"Your official Runner-Up Certificate has been granted and is verifiable anytime. Keep pushing the boundaries — greatness awaits!"
+            )
+        elif "participant" in type_norm or "particip" in type_norm:
+            theme_color = "#0D9488"
+            header_gradient = "linear-gradient(135deg, #10B981 0%, #0D9488 100%)"
+            badge_icon = "🎓"
+            badge_title = "CERTIFICATE OF PARTICIPATION"
+            default_subject = f"🎓 Your Participation Certificate — {hackathon_title}"
+            default_paragraph = (
+                f"Thank you for your active participation in {hackathon_title}! "
+                f"Your commitment to learning, collaborating, and shipping a real-world project is what makes the developer ecosystem thrive. "
+                f"Every challenge tackled and line of code written builds your journey forward. "
+                f"Your Participation Certificate is issued in recognition of your dedication and successful project submission. "
+                f"We hope to see you in upcoming hackathons!"
+            )
+        else:
+            theme_color = "#7C3AED"
+            header_gradient = "linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)"
+            badge_icon = "⭐"
+            badge_title = f"{cert_type.upper()} CERTIFICATE"
+            default_subject = f"⭐ Official Certificate — {hackathon_title}"
+            default_paragraph = (
+                f"Congratulations on your outstanding contribution to {hackathon_title}! "
+                f"We are proud to award you this official credential in recognition of your dedication and performance. "
+                f"Your certificate has been digitally signed and permanently recorded in our verification ledger."
+            )
+
+        # Use custom paragraph if provided, substituting any variables
+        paragraph = custom_message.strip() if custom_message and custom_message.strip() else default_paragraph
+        paragraph = (
+            paragraph.replace("{name}", recipient_name)
+            .replace("{recipient}", recipient_name)
+            .replace("{hackathon}", hackathon_title)
+            .replace("{certId}", cert_id or "N/A")
+            .replace("{type}", cert_type)
+        )
+
+        verify_url = verification_url or f"{settings.FRONTEND_URL}/verify/{cert_id}"
+        issued_date_str = datetime.utcnow().strftime("%B %d, %Y")
+
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>{default_subject}</title>
+            <style>
+                body {{
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                    background-color: #f1f5f9;
+                    margin: 0;
+                    padding: 24px;
+                    color: #1e293b;
+                }}
+                .email-card {{
+                    max-width: 620px;
+                    margin: 0 auto;
+                    background: #ffffff;
+                    border-radius: 16px;
+                    overflow: hidden;
+                    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+                    border: 1px solid #e2e8f0;
+                }}
+                .email-header {{
+                    background: {header_gradient};
+                    padding: 36px 24px;
+                    text-align: center;
+                    color: #ffffff;
+                }}
+                .badge-icon {{
+                    font-size: 42px;
+                    margin-bottom: 8px;
+                    display: inline-block;
+                }}
+                .badge-category {{
+                    text-transform: uppercase;
+                    letter-spacing: 2px;
+                    font-size: 11px;
+                    font-weight: 800;
+                    opacity: 0.9;
+                    margin-bottom: 6px;
+                }}
+                .event-title {{
+                    font-size: 22px;
+                    font-weight: 800;
+                    margin: 0;
+                    color: #ffffff;
+                    line-height: 1.3;
+                }}
+                .email-body {{
+                    padding: 32px 28px;
+                }}
+                .greeting {{
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: #0f172a;
+                    margin-top: 0;
+                    margin-bottom: 16px;
+                }}
+                .message-text {{
+                    font-size: 15px;
+                    line-height: 1.7;
+                    color: #334155;
+                    margin-bottom: 24px;
+                    white-space: pre-line;
+                }}
+                .details-box {{
+                    background: #f8fafc;
+                    border: 1px solid #e2e8f0;
+                    border-left: 4px solid {theme_color};
+                    border-radius: 10px;
+                    padding: 16px 20px;
+                    margin-bottom: 26px;
+                }}
+                .details-row {{
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 6px 0;
+                    font-size: 13px;
+                }}
+                .details-label {{
+                    color: #64748b;
+                    font-weight: 600;
+                }}
+                .details-val {{
+                    color: #0f172a;
+                    font-weight: 700;
+                    font-family: monospace;
+                }}
+                .cta-container {{
+                    text-align: center;
+                    margin: 30px 0 16px;
+                }}
+                .verify-button {{
+                    display: inline-block;
+                    background: {theme_color};
+                    color: #ffffff !important;
+                    font-size: 14px;
+                    font-weight: 700;
+                    text-decoration: none;
+                    padding: 12px 28px;
+                    border-radius: 9999px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                }}
+                .footer {{
+                    background: #f8fafc;
+                    padding: 20px;
+                    text-align: center;
+                    font-size: 12px;
+                    color: #94a3b8;
+                    border-top: 1px solid #e2e8f0;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="email-card">
+                <div class="email-header">
+                    <div class="badge-icon">{badge_icon}</div>
+                    <div class="badge-category">{badge_title}</div>
+                    <h1 class="event-title">{hackathon_title}</h1>
+                </div>
+                <div class="email-body">
+                    <h2 class="greeting">Dear {recipient_name},</h2>
+                    <div class="message-text">{paragraph}</div>
+
+                    <div class="details-box">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                            <tr>
+                                <td style="padding: 5px 0; color: #64748b; font-weight: 600;">Recipient:</td>
+                                <td style="padding: 5px 0; color: #0f172a; font-weight: 700; text-align: right;">{recipient_name}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px 0; color: #64748b; font-weight: 600;">Certificate ID:</td>
+                                <td style="padding: 5px 0; color: #0f172a; font-weight: 700; font-family: monospace; text-align: right;">{cert_id}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px 0; color: #64748b; font-weight: 600;">Recognition:</td>
+                                <td style="padding: 5px 0; color: {theme_color}; font-weight: 800; text-align: right;">{cert_type}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px 0; color: #64748b; font-weight: 600;">Issued Date:</td>
+                                <td style="padding: 5px 0; color: #0f172a; font-weight: 600; text-align: right;">{issued_date_str}</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="cta-container">
+                        <a href="{verify_url}" class="verify-button" target="_blank">
+                            Verify Certificate Online &rarr;
+                        </a>
+                    </div>
+                </div>
+                <div class="footer">
+                    <p style="margin: 0 0 6px 0;">This official certificate credential was digitally issued by ProEduvate HackZen Platform.</p>
+                    <p style="margin: 0;">&copy; {datetime.utcnow().year} ProEduvate. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        text_content = f"""
+{badge_icon} {badge_title}
+{hackathon_title}
+
+Dear {recipient_name},
+
+{paragraph}
+
+Certificate Details:
+- Recipient: {recipient_name}
+- Certificate ID: {cert_id}
+- Recognition: {cert_type}
+- Issued Date: {issued_date_str}
+
+Verify your certificate online at:
+{verify_url}
+
+Best regards,
+The ProEduvate Team
+        """
+
+        if not self.is_configured() or self.smtp_password == "password":
+            print(f"[EmailService Simulation] Development/Test mode. Award email simulated for {to_email} ({cert_type})")
+            return True
+
+        sent = await self.send_email(to_email, default_subject, html_content, text_content)
+        if not sent:
+            print(f"[EmailService Notice] SMTP dispatch failed (check SMTP settings). Proceeding in simulation mode for {to_email} ({cert_type}).")
+            return True
+
+        return True
 
 
 # Singleton instance

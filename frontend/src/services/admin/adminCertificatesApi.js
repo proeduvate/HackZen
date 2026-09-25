@@ -44,6 +44,31 @@ export const resendCertificate = async (certId) => {
     }
 };
 
+export const sendCertificateEmail = async (payload) => {
+    try {
+        const { data } = await apiClient.post('/admin/certificates/send-email', payload);
+        return data;
+    } catch (error) {
+        console.error('Failed to send certificate email:', error);
+        throw error;
+    }
+};
+
+export const bulkSendCertificateEmails = async ({ certIds, template, certType, customMessage }) => {
+    try {
+        const { data } = await apiClient.post('/admin/certificates/bulk-send-email', {
+            certIds,
+            template,
+            certType,
+            customMessage,
+        });
+        return data;
+    } catch (error) {
+        console.error('Failed to bulk send certificate emails:', error);
+        throw error;
+    }
+};
+
 export const issueReplacementCertificate = async (payload) => {
     try {
         const { data } = await apiClient.post('/admin/certificates/issue-replacement', payload);

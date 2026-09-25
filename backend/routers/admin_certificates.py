@@ -10,6 +10,7 @@ from bson import ObjectId
 
 from database import get_db
 from core.dependencies import RequireRole
+from services.email_service import email_service
 
 CERT_UPLOADS_DIR = Path(__file__).parent.parent / "uploads" / "certificates"
 CERT_UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
@@ -43,6 +44,24 @@ class ReplacementCertRequest(BaseModel):
 class BulkIssueRequest(BaseModel):
     recipients: List[Dict[str, Any]]
     template: str = "Achievement Certificate"
+
+
+class SendCertificateEmailRequest(BaseModel):
+    certId: Optional[str] = None
+    recipientEmail: Optional[str] = None
+    recipientName: Optional[str] = None
+    hackathon: Optional[str] = None
+    certType: Optional[str] = "Winner"
+    template: Optional[str] = "Winner Certificate"
+    customMessage: Optional[str] = None
+    subject: Optional[str] = None
+
+
+class BulkSendCertificateEmailRequest(BaseModel):
+    certIds: List[str]
+    template: Optional[str] = "Winner Certificate"
+    certType: Optional[str] = "Winner"
+    customMessage: Optional[str] = None
 
 
 @router.get("/all")
@@ -384,6 +403,190 @@ async def issue_certificate(
     }
 
 
+@router.post("/send-email")
+async def send_certificate_email_endpoint(
+    req: SendCertificateEmailRequest,
+    current_user: dict = Depends(RequireRole(["admin", "superadmin"])),
+):
+    """Send award certificate email with selected template and personalized congratulatory paragraph"""
+    db = get_db()
+    cert = None
+    query = None
+
+    if req.certId:
+        query = (
+            {"_id": ObjectId(req.certId)}
+            if ObjectId.is_valid(req.certId)
+            else {"validationId": req.certId}
+        )
+        cert = await db["certificates"].find_one(query)
+
+    recipient_name = (
+        req.recipientName
+        or (cert.get("recipientName") if cert else None)
+        or (cert.get("recipient", {}).get("name") if cert else None)
+        or "Participant"
+    )
+    recipient_email = (
+        req.recipientEmail
+        or (cert.get("recipientEmail") if cert else None)
+        or (cert.get("recipient", {}).get("email") if cert else None)
+    )
+
+    if not recipient_email:
+        user = await db["users"].find_one({"name": recipient_name})
+        if user and user.get("email"):
+            recipient_email = user["email"]
+        else:
+            raise HTTPException(status_code=400, detail="Recipient email address is required.")
+
+    hackathon_title = (
+        req.hackathon
+        or (cert.get("eventTitle") if cert else None)
+        or (cert.get("event") if cert else None)
+        or "ProEduvate Hackathon 2026"
+    )
+    cert_type = (
+        req.certType
+        or (cert.get("type") if cert else None)
+        or (cert.get("certType") if cert else None)
+        or "Winner"
+    )
+    validation_id = (
+        (cert.get("validationId") if cert else None)
+        or req.certId
+        or f"CERT-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+    )
+
+    delivered = await email_service.send_certificate_award_email(
+        to_email=recipient_email,
+        recipient_name=recipient_name,
+        hackathon_title=hackathon_title,
+        cert_type=cert_type,
+        cert_id=validation_id,
+        custom_message=req.customMessage,
+        template_name=req.template,
+    )
+
+    if query and cert:
+        new_log = {
+            "date": datetime.utcnow().strftime("%b %d, %I:%M %p"),
+            "event": f"Award email sent to {recipient_email} ({req.template or cert_type})",
+        }
+        await db["certificates"].update_one(
+            query,
+            {
+                "$set": {
+                    "deliveryStatus.emailSent": True,
+                    "lastEmailSentAt": datetime.utcnow().isoformat(),
+                    "lastTemplateUsed": req.template or cert_type,
+                },
+                "$push": {"auditHistory": new_log},
+            },
+        )
+
+    return {
+        "success": True,
+        "delivered": delivered,
+        "recipientEmail": recipient_email,
+        "recipientName": recipient_name,
+        "validationId": validation_id,
+        "message": f"Certificate email successfully dispatched to {recipient_email}.",
+    }
+
+
+@router.post("/bulk-send-email")
+async def bulk_send_certificate_emails_endpoint(
+    req: BulkSendCertificateEmailRequest,
+    current_user: dict = Depends(RequireRole(["admin", "superadmin"])),
+):
+    """Bulk send certificate emails to selected certificates with template"""
+    if not req.certIds:
+        raise HTTPException(status_code=400, detail="No certificate IDs provided.")
+
+    db = get_db()
+    sent_count = 0
+    failed_recipients = []
+
+    for cid in req.certIds:
+        query = (
+            {"_id": ObjectId(cid)}
+            if ObjectId.is_valid(cid)
+            else {"validationId": cid}
+        )
+        cert = await db["certificates"].find_one(query)
+        if not cert:
+            failed_recipients.append({"certId": cid, "reason": "Not found in database"})
+            continue
+
+        recipient_name = (
+            cert.get("recipientName")
+            or cert.get("recipient", {}).get("name")
+            or "Participant"
+        )
+        recipient_email = (
+            cert.get("recipientEmail")
+            or cert.get("recipient", {}).get("email")
+        )
+        if not recipient_email:
+            user = await db["users"].find_one({"name": recipient_name})
+            if user and user.get("email"):
+                recipient_email = user["email"]
+            else:
+                recipient_email = f"{recipient_name.lower().replace(' ', '.')}@example.com"
+
+        hackathon_title = (
+            cert.get("eventTitle")
+            or cert.get("event")
+            or "ProEduvate Hackathon 2026"
+        )
+        cert_type = (
+            req.certType
+            or cert.get("type")
+            or cert.get("certType")
+            or "Winner"
+        )
+        validation_id = cert.get("validationId") or str(cid)
+
+        try:
+            await email_service.send_certificate_award_email(
+                to_email=recipient_email,
+                recipient_name=recipient_name,
+                hackathon_title=hackathon_title,
+                cert_type=cert_type,
+                cert_id=validation_id,
+                custom_message=req.customMessage,
+                template_name=req.template,
+            )
+            sent_count += 1
+
+            new_log = {
+                "date": datetime.utcnow().strftime("%b %d, %I:%M %p"),
+                "event": f"Bulk award email dispatched to {recipient_email} ({req.template or cert_type})",
+            }
+            await db["certificates"].update_one(
+                query,
+                {
+                    "$set": {
+                        "deliveryStatus.emailSent": True,
+                        "lastEmailSentAt": datetime.utcnow().isoformat(),
+                        "lastTemplateUsed": req.template or cert_type,
+                    },
+                    "$push": {"auditHistory": new_log},
+                },
+            )
+        except Exception as e:
+            failed_recipients.append({"certId": cid, "email": recipient_email, "error": str(e)})
+
+    return {
+        "success": True,
+        "sentCount": sent_count,
+        "total": len(req.certIds),
+        "failed": failed_recipients,
+        "message": f"Dispatched certificate emails to {sent_count} of {len(req.certIds)} recipients.",
+    }
+
+
 @router.post("/resend")
 async def resend_certificate(
     payload: dict = Body(...),
@@ -401,9 +604,40 @@ async def resend_certificate(
     if not cert:
         raise HTTPException(status_code=404, detail="Certificate not found")
 
+    recipient_name = (
+        cert.get("recipientName")
+        or cert.get("recipient", {}).get("name")
+        or "Participant"
+    )
+    recipient_email = (
+        cert.get("recipientEmail")
+        or cert.get("recipient", {}).get("email")
+        or "user@example.com"
+    )
+    hackathon_title = (
+        cert.get("eventTitle")
+        or cert.get("event")
+        or "ProEduvate Hackathon 2026"
+    )
+    cert_type = (
+        cert.get("type")
+        or cert.get("certType")
+        or "Winner"
+    )
+    validation_id = cert.get("validationId") or str(cert["_id"])
+
+    # Dispatch email using the personalized template system
+    await email_service.send_certificate_award_email(
+        to_email=recipient_email,
+        recipient_name=recipient_name,
+        hackathon_title=hackathon_title,
+        cert_type=cert_type,
+        cert_id=validation_id,
+    )
+
     new_log = {
         "date": datetime.utcnow().strftime("%b %d, %I:%M %p"),
-        "event": "Certificate email resent by Admin",
+        "event": f"Certificate award email resent to {recipient_email}",
     }
     await db["certificates"].update_one(
         query,
@@ -415,7 +649,7 @@ async def resend_certificate(
 
     return {
         "success": True,
-        "message": f"Certificate {cert.get('validationId')} email resent to recipient.",
+        "message": f"Certificate {cert.get('validationId')} email resent to {recipient_email}.",
     }
 
 

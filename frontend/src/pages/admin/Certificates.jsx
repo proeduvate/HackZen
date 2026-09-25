@@ -31,6 +31,8 @@ import {
     fetchEligibilityQueue, 
     issueCertificate, 
     resendCertificate, 
+    sendCertificateEmail,
+    bulkSendCertificateEmails,
     issueReplacementCertificate, 
     revokeCertificateWithReason, 
     verifyCertificatePublic, 
@@ -86,6 +88,14 @@ export const DEFAULT_BUILTIN_TEMPLATES = [
         colorScheme: "Emerald & Gold"
     }
 ];
+
+// --- Pre-written Official Congratulatory Paragraphs by Certificate Type ---
+export const DEFAULT_EMAIL_MESSAGES = {
+    'Winner': `We are thrilled to announce that you have emerged as the WINNER of {hackathon}!\n\nYour brilliant solution, dedication, and technical excellence throughout the event stood out among all participants. This is a remarkable achievement and we at ProEduvate are immensely proud to celebrate your victory.\n\nYour official Winner's Certificate has been issued and registered in our public credential ledger. Keep building, keep innovating, and lead the future of technology!`,
+    'Runner Up': `Congratulations on achieving Runner-Up at {hackathon}!\n\nYour innovative approach, stellar teamwork, and the caliber of your project impressed our judges and mentors. Finishing among the top contenders in an intensely competitive hackathon is a powerful testament to your talent.\n\nYour official Runner-Up Certificate has been granted and is verifiable anytime. Keep pushing the boundaries — greatness awaits!`,
+    'Participant': `Thank you for your active participation in {hackathon}!\n\nYour commitment to learning, collaborating, and shipping a real-world project is what makes the developer ecosystem thrive. Every challenge tackled and line of code written builds your journey forward.\n\nYour Participation Certificate is issued in recognition of your dedication and successful project submission. We hope to see you in upcoming hackathons!`,
+    'Special Recognition': `Congratulations on your outstanding contribution to {hackathon}!\n\nWe are proud to award you this official credential in recognition of your dedication and performance. Your certificate has been digitally signed and permanently recorded in our verification ledger.`
+};
 
 // Helper to resolve certificate template image from record
 export const getCertificateTemplateImage = (cert, templates = []) => {
@@ -307,6 +317,22 @@ const Certificates = () => {
     const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
     const [isReplacementModalOpen, setIsReplacementModalOpen] = useState(false);
     const [isTemplatesModalOpen, setIsTemplatesModalOpen] = useState(false);
+
+    // Multi-selection for certificates & Email Modal state
+    const [selectedCertIds, setSelectedCertIds] = useState([]);
+    const [emailModal, setEmailModal] = useState({
+        isOpen: false,
+        mode: 'single', // 'single' | 'bulk'
+        cert: null,
+        certs: [],
+        template: 'Winner Certificate',
+        certType: 'Winner',
+        customMessage: '',
+        recipientName: '',
+        recipientEmail: '',
+        hackathon: '',
+        sending: false
+    });
 
     // Templates & Upload Management State
     const [templates, setTemplates] = useState(DEFAULT_BUILTIN_TEMPLATES);
@@ -840,6 +866,136 @@ const Certificates = () => {
         });
     }, [eligibilityQueue, hackathonFilter, searchQuery]);
 
+    // Selection helpers for bulk email
+    const toggleCertSelection = (certId, e) => {
+        if (e) e.stopPropagation();
+        setSelectedCertIds(prev => 
+            prev.includes(certId) ? prev.filter(id => id !== certId) : [...prev, certId]
+        );
+    };
+
+    const selectAllFilteredCerts = () => {
+        const allIds = filteredCertificates.map(c => c.id || c.validationId);
+        if (selectedCertIds.length === allIds.length && allIds.length > 0) {
+            setSelectedCertIds([]);
+        } else {
+            setSelectedCertIds(allIds);
+        }
+    };
+
+    // Open Email Modal for Single Certificate
+    const openEmailModalForCert = (cert) => {
+        if (!cert) return;
+        const certType = String(cert.type || cert.certType || 'Winner');
+        let normType = 'Winner';
+        if (certType.toUpperCase().includes('RUNNER') || certType.toUpperCase().includes('SECOND')) {
+            normType = 'Runner Up';
+        } else if (certType.toUpperCase().includes('PARTICIP')) {
+            normType = 'Participant';
+        }
+
+        const template = normType === 'Winner' ? 'Winner Certificate' : normType === 'Runner Up' ? 'Runner-up Certificate' : 'Participation Certificate';
+        const hack = cert.hackathon || cert.eventTitle || 'Global AI Summit 2026';
+        const rawDefault = DEFAULT_EMAIL_MESSAGES[normType] || DEFAULT_EMAIL_MESSAGES['Winner'];
+
+        setEmailModal({
+            isOpen: true,
+            mode: 'single',
+            cert: cert,
+            certs: [cert],
+            template: template,
+            certType: normType,
+            customMessage: rawDefault,
+            recipientName: cert.recipientName || 'Participant',
+            recipientEmail: cert.recipientEmail || '',
+            hackathon: hack,
+            sending: false
+        });
+    };
+
+    // Open Email Modal for Bulk Send (all selected)
+    const openBulkEmailModal = () => {
+        const certsToSend = certificates.filter(c => selectedCertIds.includes(c.id || c.validationId));
+        if (certsToSend.length === 0) {
+            showToast("Please select at least one certificate using the checkboxes to send email.", "info");
+            return;
+        }
+
+        const first = certsToSend[0];
+        const certType = String(first?.type || 'Winner');
+        let normType = 'Winner';
+        if (certType.toUpperCase().includes('RUNNER') || certType.toUpperCase().includes('SECOND')) {
+            normType = 'Runner Up';
+        } else if (certType.toUpperCase().includes('PARTICIP')) {
+            normType = 'Participant';
+        }
+
+        const template = normType === 'Winner' ? 'Winner Certificate' : normType === 'Runner Up' ? 'Runner-up Certificate' : 'Participation Certificate';
+        const rawDefault = DEFAULT_EMAIL_MESSAGES[normType] || DEFAULT_EMAIL_MESSAGES['Winner'];
+
+        setEmailModal({
+            isOpen: true,
+            mode: 'bulk',
+            cert: first,
+            certs: certsToSend,
+            template: template,
+            certType: normType,
+            customMessage: rawDefault,
+            recipientName: `${certsToSend.length} Selected Recipients`,
+            recipientEmail: `${certsToSend.length} email addresses selected`,
+            hackathon: first?.hackathon || 'Selected Hackathons',
+            sending: false
+        });
+    };
+
+    // Handle template change inside email modal
+    const handleEmailTemplateChange = (templateName, typeName) => {
+        const defaultMsg = DEFAULT_EMAIL_MESSAGES[typeName] || DEFAULT_EMAIL_MESSAGES['Winner'];
+        setEmailModal(prev => ({
+            ...prev,
+            template: templateName,
+            certType: typeName,
+            customMessage: defaultMsg
+        }));
+    };
+
+    // Submit handler for sending email
+    const handleSendEmailSubmit = async (e) => {
+        e.preventDefault();
+        setEmailModal(prev => ({ ...prev, sending: true }));
+        try {
+            if (emailModal.mode === 'single') {
+                const payload = {
+                    certId: emailModal.cert?.id || emailModal.cert?.validationId,
+                    recipientName: emailModal.recipientName,
+                    recipientEmail: emailModal.recipientEmail,
+                    hackathon: emailModal.hackathon,
+                    certType: emailModal.certType,
+                    template: emailModal.template,
+                    customMessage: emailModal.customMessage
+                };
+                const res = await sendCertificateEmail(payload);
+                showToast(res.message || `Certificate email dispatched to ${emailModal.recipientEmail}!`, "success");
+            } else {
+                const certIds = emailModal.certs.map(c => c.id || c.validationId);
+                const res = await bulkSendCertificateEmails({
+                    certIds,
+                    template: emailModal.template,
+                    certType: emailModal.certType,
+                    customMessage: emailModal.customMessage
+                });
+                showToast(res.message || `Dispatched emails to ${res.sentCount} recipients!`, "success");
+                setSelectedCertIds([]);
+            }
+            setEmailModal(prev => ({ ...prev, isOpen: false, sending: false }));
+            loadCertificatesData();
+        } catch (err) {
+            console.error("Email send failed:", err);
+            showToast(err.response?.data?.detail || "Failed to send email. Please check network/SMTP configuration.", "error");
+            setEmailModal(prev => ({ ...prev, sending: false }));
+        }
+    };
+
     return (
         <div className="space-y-5 animate-in fade-in duration-500 pb-8">
             
@@ -1010,6 +1166,19 @@ const Certificates = () => {
                     >
                         <BoxIcon className="w-3.5 h-3.5" /> 
                         <span>Bulk Issue</span>
+                    </button>
+                    <button 
+                        onClick={openBulkEmailModal}
+                        disabled={selectedCertIds.length === 0}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 ${
+                            selectedCertIds.length > 0 
+                            ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/25 cursor-pointer active:scale-95' 
+                            : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-gray-500 border border-slate-200/60 dark:border-white/5 cursor-not-allowed opacity-60'
+                        }`}
+                        title={selectedCertIds.length > 0 ? "Send personalized email to selected certificates" : "Select certificates using checkboxes below to email"}
+                    >
+                        <MailIcon className="w-3.5 h-3.5" /> 
+                        <span>Email Selected {selectedCertIds.length > 0 ? `(${selectedCertIds.length})` : ''}</span>
                     </button>
                     <button 
                         onClick={() => setIsIssueModalOpen(true)} 
@@ -1259,6 +1428,48 @@ const Certificates = () => {
                         )}
                     </div>
 
+                    {/* Multi-Selection & Bulk Email Action Bar */}
+                    {activeTab !== 'Eligibility Queue' && (
+                        <div className="flex items-center justify-between px-3 py-1.5 bg-slate-100/90 dark:bg-white/[0.04] border-b border-slate-200 dark:border-white/10 text-xs shrink-0">
+                            <label className="flex items-center gap-2 cursor-pointer select-none font-bold text-slate-700 dark:text-slate-300 text-[11px]">
+                                <input 
+                                    type="checkbox" 
+                                    checked={filteredCertificates.length > 0 && selectedCertIds.length === filteredCertificates.length}
+                                    onChange={selectAllFilteredCerts}
+                                    className="rounded border-slate-300 text-sky-600 focus:ring-sky-500 w-3.5 h-3.5 cursor-pointer"
+                                />
+                                <span>Select All ({filteredCertificates.length})</span>
+                            </label>
+
+                            {selectedCertIds.length > 0 ? (
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[11px] font-black text-sky-600 dark:text-sky-400">
+                                        {selectedCertIds.length} selected
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={openBulkEmailModal}
+                                        className="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] rounded-lg shadow-sm transition-all flex items-center gap-1 active:scale-95"
+                                    >
+                                        <MailIcon className="w-3 h-3" />
+                                        <span>Email Selected ({selectedCertIds.length})</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedCertIds([])}
+                                        className="text-[10px] text-slate-500 hover:text-slate-800 dark:hover:text-white font-bold"
+                                    >
+                                        Clear
+                                    </button>
+                                </div>
+                            ) : (
+                                <span className="text-[10px] text-slate-400 font-medium">
+                                    Select checkboxes to bulk email
+                                </span>
+                            )}
+                        </div>
+                    )}
+
                     {/* List Items (Cards) */}
                     <div className="flex-1 overflow-y-auto p-2.5 space-y-2 custom-scrollbar">
                         {isLoading ? (
@@ -1405,23 +1616,47 @@ const Certificates = () => {
                                                                 }`}
                                                             >
                                                                 <div className="flex justify-between items-start mb-1">
-                                                                    <div className="truncate pr-2">
-                                                                        <div className="flex items-center gap-1.5">
-                                                                            <h4 className="text-xs font-black text-slate-900 dark:text-white truncate">{cert.recipientName}</h4>
-                                                                            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-gray-300">
-                                                                                {cert.type || 'Standard'}
-                                                                            </span>
+                                                                    <div className="flex items-start gap-2 truncate pr-2">
+                                                                        <input 
+                                                                            type="checkbox"
+                                                                            checked={selectedCertIds.includes(cert.id || cert.validationId)}
+                                                                            onChange={(e) => toggleCertSelection(cert.id || cert.validationId, e)}
+                                                                            onClick={(e) => e.stopPropagation()}
+                                                                            className="mt-0.5 rounded border-slate-300 text-sky-600 focus:ring-sky-500 w-3.5 h-3.5 shrink-0 cursor-pointer"
+                                                                            title="Select for bulk email"
+                                                                        />
+                                                                        <div className="truncate">
+                                                                            <div className="flex items-center gap-1.5">
+                                                                                <h4 className="text-xs font-black text-slate-900 dark:text-white truncate">{cert.recipientName}</h4>
+                                                                                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-gray-300">
+                                                                                    {cert.type || 'Standard'}
+                                                                                </span>
+                                                                            </div>
+                                                                            <p className="text-[11px] text-sky-600 dark:text-sky-400 font-medium truncate">{cert.recipientEmail}</p>
                                                                         </div>
-                                                                        <p className="text-[11px] text-sky-600 dark:text-sky-400 font-medium truncate">{cert.recipientEmail}</p>
                                                                     </div>
 
-                                                                    <span className={`shrink-0 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${
-                                                                        cert.status === 'Active' ? 'bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30' :
-                                                                        cert.status === 'Revoked' ? 'bg-rose-50 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/30' :
-                                                                        'bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/30'
-                                                                    }`}>
-                                                                        {cert.status}
-                                                                    </span>
+                                                                    <div className="flex items-center gap-1.5 shrink-0">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                openEmailModalForCert(cert);
+                                                                            }}
+                                                                            className="px-2 py-0.5 text-[9.5px] font-bold rounded-lg bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-500/30 hover:bg-sky-100 flex items-center gap-1 transition-all"
+                                                                            title="Send personalized award email"
+                                                                        >
+                                                                            <MailIcon className="w-2.5 h-2.5" />
+                                                                            <span>Email</span>
+                                                                        </button>
+                                                                        <span className={`shrink-0 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${
+                                                                            cert.status === 'Active' ? 'bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30' :
+                                                                            cert.status === 'Revoked' ? 'bg-rose-50 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/30' :
+                                                                            'bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/30'
+                                                                        }`}>
+                                                                            {cert.status}
+                                                                        </span>
+                                                                    </div>
                                                                 </div>
 
                                                                 <div className="flex justify-between items-center mt-1.5 pt-1.5 border-t border-slate-100 dark:border-white/5 text-[10px] text-slate-500 font-mono">
@@ -1466,30 +1701,54 @@ const Certificates = () => {
                                         }`}
                                     >
                                         <div className="flex justify-between items-start mb-1.5">
-                                            <div className="truncate pr-2">
-                                                <h4 className="text-xs font-black text-slate-900 dark:text-white truncate">{cert.recipientName}</h4>
-                                                <p className="text-[11px] text-sky-600 dark:text-sky-400 font-medium truncate">{cert.recipientEmail}</p>
+                                            <div className="flex items-start gap-2.5 truncate pr-2">
+                                                <input 
+                                                    type="checkbox"
+                                                    checked={selectedCertIds.includes(cert.id || cert.validationId)}
+                                                    onChange={(e) => toggleCertSelection(cert.id || cert.validationId, e)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="mt-0.5 rounded border-slate-300 text-sky-600 focus:ring-sky-500 w-3.5 h-3.5 shrink-0 cursor-pointer"
+                                                    title="Select for bulk email"
+                                                />
+                                                <div className="truncate">
+                                                    <h4 className="text-xs font-black text-slate-900 dark:text-white truncate">{cert.recipientName}</h4>
+                                                    <p className="text-[11px] text-sky-600 dark:text-sky-400 font-medium truncate">{cert.recipientEmail}</p>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            const h = cert.hackathon || cert.eventTitle;
+                                                            if (h) setHackathonFilter(h);
+                                                        }}
+                                                        className="text-[10px] text-slate-500 hover:text-sky-600 dark:text-gray-400 dark:hover:text-sky-400 truncate mt-0.5 text-left font-medium block hover:underline"
+                                                        title={`Filter certificates by "${cert.hackathon || cert.eventTitle}"`}
+                                                    >
+                                                        {cert.hackathon || cert.eventTitle || 'General Hackathon'}
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center gap-1.5 shrink-0">
                                                 <button
                                                     type="button"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        const h = cert.hackathon || cert.eventTitle;
-                                                        if (h) setHackathonFilter(h);
+                                                        openEmailModalForCert(cert);
                                                     }}
-                                                    className="text-[10px] text-slate-500 hover:text-sky-600 dark:text-gray-400 dark:hover:text-sky-400 truncate mt-0.5 text-left font-medium block hover:underline"
-                                                    title={`Filter certificates by "${cert.hackathon || cert.eventTitle}"`}
+                                                    className="px-2 py-0.5 text-[9.5px] font-bold rounded-lg bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-500/30 hover:bg-sky-100 flex items-center gap-1 transition-all"
+                                                    title="Send personalized award email"
                                                 >
-                                                    {cert.hackathon || cert.eventTitle || 'General Hackathon'}
+                                                    <MailIcon className="w-2.5 h-2.5" />
+                                                    <span>Email</span>
                                                 </button>
+                                                <span className={`shrink-0 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${
+                                                    cert.status === 'Active' ? 'bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30' :
+                                                    cert.status === 'Revoked' ? 'bg-rose-50 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/30' :
+                                                    'bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/30'
+                                                }`}>
+                                                    {cert.status}
+                                                </span>
                                             </div>
-
-                                            <span className={`shrink-0 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${
-                                                cert.status === 'Active' ? 'bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30' :
-                                                cert.status === 'Revoked' ? 'bg-rose-50 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/30' :
-                                                'bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/30'
-                                            }`}>
-                                                {cert.status}
-                                            </span>
                                         </div>
 
                                         <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-100 dark:border-white/5 text-[10px] text-slate-500 font-mono">
@@ -1686,6 +1945,14 @@ const Certificates = () => {
                                 <div className="flex items-center gap-2 flex-wrap">
                                     {(selectedCert.status === 'Active' || selectedCert.status === 'Issued') && (
                                         <>
+                                            <button 
+                                                onClick={() => openEmailModalForCert(selectedCert)}
+                                                disabled={actionLoading}
+                                                className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all shadow-sm shadow-blue-500/25 flex items-center gap-1.5 active:scale-95"
+                                            >
+                                                <MailIcon className="w-3.5 h-3.5" />
+                                                <span>Send Email</span>
+                                            </button>
                                             <button 
                                                 onClick={() => handleResend(selectedCert.id || selectedCert.validationId)}
                                                 disabled={actionLoading}
@@ -2390,7 +2657,221 @@ const Certificates = () => {
                 </form>
             </ActionModal>
 
-            {/* 7. FULL-RESOLUTION PREVIEW MODAL */}
+            {/* 7. EMAIL CERTIFICATE MODAL */}
+            <ActionModal
+                isOpen={emailModal.isOpen}
+                onClose={() => setEmailModal(prev => ({ ...prev, isOpen: false }))}
+                title={emailModal.mode === 'bulk' ? `Send Certificate Emails (${emailModal.certs.length} Recipients)` : "Send Certificate Email"}
+                subtitle={emailModal.mode === 'bulk' ? "Dispatch official congratulatory award emails to selected recipients with custom certificates." : `Send an official congratulatory award email to ${emailModal.recipientName}`}
+                maxWidth="max-w-2xl"
+            >
+                <form onSubmit={handleSendEmailSubmit} className="space-y-4 text-xs">
+                    {/* Mode & Recipients Summary */}
+                    <div className="p-3 bg-slate-50 dark:bg-white/[0.04] rounded-xl border border-slate-200 dark:border-white/10 space-y-2">
+                        <div className="flex items-center justify-between">
+                            <span className="font-extrabold uppercase tracking-wider text-[10px] text-slate-500 dark:text-gray-400">
+                                {emailModal.mode === 'bulk' ? 'Bulk Dispatch Recipients:' : 'Recipient Details:'}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full font-mono text-[10px] font-bold bg-sky-100 dark:bg-sky-500/20 text-sky-800 dark:text-sky-300">
+                                {emailModal.mode === 'bulk' ? `${emailModal.certs.length} Candidates` : (emailModal.cert?.validationId || 'Certificate')}
+                            </span>
+                        </div>
+
+                        {emailModal.mode === 'single' ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-1">
+                                        Recipient Name
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        value={emailModal.recipientName}
+                                        onChange={(e) => setEmailModal(prev => ({ ...prev, recipientName: e.target.value }))}
+                                        className={`w-full px-3 py-1.5 rounded-xl border font-bold text-xs ${theme.inputBg}`}
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-1">
+                                        Recipient Email
+                                    </label>
+                                    <input 
+                                        type="email" 
+                                        value={emailModal.recipientEmail}
+                                        onChange={(e) => setEmailModal(prev => ({ ...prev, recipientEmail: e.target.value }))}
+                                        className={`w-full px-3 py-1.5 rounded-xl border font-bold text-xs ${theme.inputBg}`}
+                                        required
+                                    />
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="max-h-24 overflow-y-auto space-y-1 custom-scrollbar pr-1">
+                                {emailModal.certs.map((c, idx) => (
+                                    <div key={idx} className="flex items-center justify-between text-[11px] p-1.5 bg-white dark:bg-black/20 rounded-lg border border-slate-200/60 dark:border-white/5">
+                                        <span className="font-bold text-slate-900 dark:text-white truncate">
+                                            {c.recipientName}
+                                        </span>
+                                        <span className="text-slate-500 dark:text-gray-400 font-mono text-[10px] truncate max-w-[200px]">
+                                            {c.recipientEmail}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Template Picker Pills */}
+                    <div>
+                        <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-gray-400 mb-1.5">
+                            Award Certificate Template:
+                        </label>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            {[
+                                { id: 'Winner', label: '🏆 Winner', template: 'Winner Certificate', color: 'border-amber-400 text-amber-700 bg-amber-50 dark:bg-amber-500/20 dark:text-amber-300' },
+                                { id: 'Runner Up', label: '🥈 Runner-Up', template: 'Runner-up Certificate', color: 'border-indigo-400 text-indigo-700 bg-indigo-50 dark:bg-indigo-500/20 dark:text-indigo-300' },
+                                { id: 'Participant', label: '🎓 Participant', template: 'Participation Certificate', color: 'border-emerald-400 text-emerald-700 bg-emerald-50 dark:bg-emerald-500/20 dark:text-emerald-300' },
+                                { id: 'Special Recognition', label: '⭐ Recognition', template: 'Achievement Certificate', color: 'border-purple-400 text-purple-700 bg-purple-50 dark:bg-purple-500/20 dark:text-purple-300' },
+                            ].map((tpl) => {
+                                const isSelected = emailModal.certType === tpl.id;
+                                return (
+                                    <button
+                                        key={tpl.id}
+                                        type="button"
+                                        onClick={() => handleEmailTemplateChange(tpl.template, tpl.id)}
+                                        className={`py-2 px-2.5 rounded-xl text-xs font-black transition-all border text-center flex items-center justify-center gap-1.5 ${
+                                            isSelected 
+                                            ? `${tpl.color} shadow-sm ring-2 ring-sky-400/40`
+                                            : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-gray-400 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        <span>{tpl.label}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Editable Message Box */}
+                    <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                            <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-gray-400">
+                                Congratulatory Paragraph (Editable):
+                            </label>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const defaultMsg = DEFAULT_EMAIL_MESSAGES[emailModal.certType] || DEFAULT_EMAIL_MESSAGES['Winner'];
+                                    setEmailModal(prev => ({ ...prev, customMessage: defaultMsg }));
+                                }}
+                                className="text-[10px] font-bold text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-1"
+                            >
+                                <span>↺ Reset to Default Paragraph</span>
+                            </button>
+                        </div>
+                        <textarea
+                            rows={4}
+                            value={emailModal.customMessage}
+                            onChange={(e) => setEmailModal(prev => ({ ...prev, customMessage: e.target.value }))}
+                            placeholder="Type personalized congratulatory message..."
+                            className={`w-full p-3 rounded-xl border text-xs font-normal leading-relaxed focus:outline-none focus:border-sky-500 ${theme.inputBg}`}
+                        />
+                        <p className="text-[10px] text-slate-400 dark:text-gray-500 mt-1">
+                            Available dynamic tags: <code className="text-sky-600 font-bold">{'{name}'}</code>, <code className="text-sky-600 font-bold">{'{hackathon}'}</code>, <code className="text-sky-600 font-bold">{'{certId}'}</code>
+                        </p>
+                    </div>
+
+                    {/* Live Preview Panel */}
+                    <div>
+                        <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-gray-400 mb-1.5">
+                            Live Email Rendering Preview:
+                        </label>
+                        <div className="border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm bg-slate-50 dark:bg-black/30">
+                            {/* Email Header Preview */}
+                            <div className={`p-4 text-center text-white ${
+                                emailModal.certType === 'Winner' ? 'bg-gradient-to-r from-amber-500 to-amber-700' :
+                                emailModal.certType === 'Runner Up' ? 'bg-gradient-to-r from-indigo-500 to-indigo-700' :
+                                emailModal.certType === 'Participant' ? 'bg-gradient-to-r from-emerald-500 to-teal-700' :
+                                'bg-gradient-to-r from-purple-500 to-indigo-700'
+                            }`}>
+                                <div className="text-2xl mb-1">
+                                    {emailModal.certType === 'Winner' ? '🏆' : emailModal.certType === 'Runner Up' ? '🥈' : emailModal.certType === 'Participant' ? '🎓' : '⭐'}
+                                </div>
+                                <div className="text-[10px] font-extrabold uppercase tracking-widest opacity-90">
+                                    {emailModal.certType === 'Winner' ? 'Championship Winner' : emailModal.certType === 'Runner Up' ? 'Runner-Up Honors' : emailModal.certType === 'Participant' ? 'Certificate of Participation' : 'Special Recognition'}
+                                </div>
+                                <h3 className="text-sm font-black mt-0.5">
+                                    {emailModal.hackathon || 'Global AI Summit 2026'}
+                                </h3>
+                            </div>
+
+                            {/* Email Body Preview */}
+                            <div className="p-4 space-y-2.5 bg-white dark:bg-navy-950/60 text-slate-800 dark:text-slate-200 text-xs">
+                                <p className="font-bold text-sm text-slate-900 dark:text-white">
+                                    Dear {emailModal.mode === 'single' ? (emailModal.recipientName || 'Participant') : '{Recipient Name}'},
+                                </p>
+                                <p className="whitespace-pre-line text-xs text-slate-600 dark:text-gray-300 leading-relaxed">
+                                    {(emailModal.customMessage || '')
+                                        .replace(/{name}/g, emailModal.mode === 'single' ? (emailModal.recipientName || 'Participant') : '{Recipient Name}')
+                                        .replace(/{recipient}/g, emailModal.mode === 'single' ? (emailModal.recipientName || 'Participant') : '{Recipient Name}')
+                                        .replace(/{hackathon}/g, emailModal.hackathon || 'Global AI Summit 2026')
+                                        .replace(/{certId}/g, emailModal.cert?.validationId || 'CERT-2026-X1Y2')
+                                    }
+                                </p>
+
+                                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/5 text-[11px] space-y-1">
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-500">Certificate ID:</span>
+                                        <span className="font-mono font-bold text-sky-600 dark:text-sky-400">{emailModal.cert?.validationId || 'CERT-2026-A1B2C3'}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-500">Recognition Tier:</span>
+                                        <span className="font-bold text-slate-800 dark:text-white">{emailModal.certType}</span>
+                                    </div>
+                                </div>
+
+                                <div className="pt-1 text-center">
+                                    <span className="inline-block px-4 py-1.5 rounded-full text-[11px] font-bold bg-slate-800 dark:bg-sky-600 text-white shadow-sm">
+                                        Verify Certificate Online &rarr;
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Modal Action Buttons */}
+                    <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-200 dark:border-white/10">
+                        <button
+                            type="button"
+                            onClick={() => setEmailModal(prev => ({ ...prev, isOpen: false }))}
+                            className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={emailModal.sending}
+                            className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-sm shadow-blue-500/25 transition-all flex items-center gap-1.5 disabled:opacity-50 active:scale-95"
+                        >
+                            {emailModal.sending ? (
+                                <>
+                                    <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                    </svg>
+                                    <span>Sending Emails...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <MailIcon className="w-3.5 h-3.5" />
+                                    <span>{emailModal.mode === 'bulk' ? `Dispatch to ${emailModal.certs.length} Recipients` : 'Dispatch Award Email'}</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </form>
+            </ActionModal>
+
+            {/* 8. FULL-RESOLUTION PREVIEW MODAL */}
             {previewImageModal.isOpen && (
                 <div 
                     className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
