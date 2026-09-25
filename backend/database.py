@@ -18,7 +18,6 @@ class MongoDB:
                 maxPoolSize=100,
                 minPoolSize=10,
                 serverSelectionTimeoutMS=5000,
-                tlsCAFile=certifi.where(),
             )
             await cls.client.admin.command("ping")
             cls.db = cls.client[settings.DB_NAME]

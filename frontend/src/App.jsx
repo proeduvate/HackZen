@@ -60,6 +60,7 @@ import EditAdminProfile from './pages/admin/EditAdminProfile';
 import EvaluationCriteria from './pages/organizer/EvaluationCriteria';
 import InitializeEvent from './pages/organizer/InitializeEvent';
 import InviteMentors from './pages/organizer/InviteMentors';
+import StudentWorkspace from './pages/student/StudentWorkspace';
 
 
 import './App.css';
@@ -142,6 +143,7 @@ function AppContent() {
             <Route path="step-3" element={<HackathonRegistrationStepThree />} />
           </Route>
           <Route path="teams" element={<TeamsPage />} />
+          <Route path="workspace" element={<StudentWorkspace />} />
           <Route path="ai-assistant" element={<StudentAIAssistant />} />
           <Route path="profile">
             <Route index element={<StudentProfile />} />

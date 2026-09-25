@@ -1,236 +1,177 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchDashboardData } from '../../services/student/dashboardApi';
 
+const metricDefinitions = [
+    { key: 'registeredHackathons', label: 'Registered Hackathons' },
+    { key: 'activeTeams', label: 'Active Teams' },
+    { key: 'submissions', label: 'Submissions' },
+    { key: 'certificates', label: 'Certificates' },
+];
+
+const formatDate = (value) => {
+    if (!value) return 'Date to be announced';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime())
+        ? 'Date to be announced'
+        : new Intl.DateTimeFormat('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).format(date);
+};
+
+const formatDateRange = (start, end) => {
+    if (!start && !end) return 'Dates to be announced';
+    if (!end) return formatDate(start);
+    if (!start) return formatDate(end);
+    return `${formatDate(start)} – ${formatDate(end)}`;
+};
+
+const formatStatus = (status) => {
+    if (!status) return 'Registered';
+    return status.split(/[-_ ]/).filter(Boolean).map((word) => word[0].toUpperCase() + word.slice(1)).join(' ');
+};
+
+const prizePool = (prizes) => {
+    if (!Array.isArray(prizes) || prizes.length === 0) return null;
+    const values = prizes
+        .map((prize) => (typeof prize === 'object' ? prize.amount ?? prize.value ?? prize.prize ?? null : prize))
+        .filter((value) => value !== null && value !== undefined && value !== '');
+    return values.length ? values.join(' · ') : null;
+};
+
+const DashboardSkeleton = () => (
+    <div className="space-y-8 animate-pulse">
+        <div className="h-10 w-72 rounded bg-slate-200" />
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            {[0, 1, 2, 3].map((item) => <div key={item} className="h-36 rounded-2xl border border-slate-200 bg-white" />)}
+        </div>
+        <div className="grid gap-8 xl:grid-cols-[minmax(0,2fr)_minmax(360px,1fr)]">
+            <div className="space-y-6"><div className="h-8 w-52 rounded bg-slate-200" /><div className="h-64 rounded-2xl bg-white" /></div>
+            <div className="space-y-5"><div className="h-8 w-40 rounded bg-slate-200" /><div className="h-48 rounded-2xl bg-white" /></div>
+        </div>
+    </div>
+);
+
 const StudentDashboard = () => {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('milestones');
+    const [dashboard, setDashboard] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [stats, setStats] = useState([]);
-    const [featured, setFeatured] = useState(null);
-    const [trackedHackathons, setTrackedHackathons] = useState([]);
+    const [error, setError] = useState('');
 
-    const [storedUser, setStoredUser] = useState(() => {
-        const session = sessionStorage.getItem('user');
-        const local = localStorage.getItem('user');
-        return JSON.parse(session || local || '{"name": "User"}');
-    });
-    const userName = (storedUser?.name || 'User').split(' ')[0];
-
-    const loadDashboardData = async (showLoading = true) => {
-        if (showLoading) setIsLoading(true);
+    const loadDashboard = useCallback(async () => {
+        setIsLoading(true);
+        setError('');
         try {
-            const data = await fetchDashboardData();
-            setStats(data.stats);
-            setFeatured(data.featured);
-            setTrackedHackathons(data.tracked);
-        } catch (error) {
-            console.error("Dashboard fetch failed", error);
+            setDashboard(await fetchDashboardData());
+        } catch (requestError) {
+            console.error('Unable to load student dashboard:', requestError);
+            setError('We could not load your dashboard. Please try again.');
         } finally {
             setIsLoading(false);
         }
-    };
-
-    useEffect(() => {
-        const handleUserUpdate = () => {
-            const user = sessionStorage.getItem('user');
-            if (user) {
-                setStoredUser(JSON.parse(user));
-                loadDashboardData(false); // Refresh stats without full spinner
-            }
-        };
-        window.addEventListener('user-update', handleUserUpdate);
-
-        loadDashboardData(true);
-        return () => window.removeEventListener('user-update', handleUserUpdate);
     }, []);
 
-    const analyticsCards = [
-        { id: 'engagements', label: 'Engagements', value: stats.find((item) => item.label === 'Engagements')?.value || '1.2K', icon: '⚡', color: 'blue' },
-        { id: 'collaborations', label: 'Collaborations', value: stats.find((item) => item.label === 'Collaborations')?.value || '84', icon: '👥', color: 'purple' },
-        { id: 'allocations', label: 'Allocations', value: stats.find((item) => item.label === 'Allocations')?.value || '26', icon: '💎', color: 'cyan' },
-    ];
+    useEffect(() => {
+        loadDashboard();
+        const refreshDashboard = () => loadDashboard();
+        window.addEventListener('user-update', refreshDashboard);
+        return () => window.removeEventListener('user-update', refreshDashboard);
+    }, [loadDashboard]);
 
-    const milestoneItems = [
-        { title: 'Completed Hackathons', value: stats.find((item) => item.label === 'Completed Hackathons')?.value || '8', progress: 80, badge: 'On Track' },
-        { title: 'Mentor Sessions', value: stats.find((item) => item.label === 'Mentor Sessions')?.value || '23', progress: 60, badge: 'Active' },
-        { title: 'Project Submissions', value: stats.find((item) => item.label === 'Project Submissions')?.value || '14', progress: 70, badge: 'Growing' },
-    ];
-
-
+    const registeredHackathons = dashboard?.registeredHackathons ?? [];
+    const upcomingHackathons = dashboard?.upcomingHackathons ?? [];
+    const studentName = dashboard?.student?.name?.split(' ')[0] || 'Student';
 
     return (
-        <div className="space-y-12 pb-20 animate-in fade-in slide-in-from-bottom-6 duration-700">
-            {/* Premium Header */}
-            <div className="relative mb-10">
-                <div className="absolute -left-10 -top-10 w-40 h-40 bg-blue-600/10 blur-[100px] rounded-full"></div>
-                <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-                    Welcome back, <span className="gradient-text from-blue-400 via-purple-400 to-cyan-400">{userName}</span>
-                </h1>
-                <p className="text-gray-400 font-medium italic">
-                    Manage your tactical hackathon participation, elite team coordination, and submission metrics.
-                </p>
-            </div>
-
-
-            <section className="grid gap-8 xl:grid-cols-[2fr_1fr]">
-                {/* Featured Event Premium Card */}
-                <div className="glass-strong rounded-[2.5rem] border border-white/10 p-10 relative overflow-hidden flex flex-col group transition-all duration-500 hover:border-blue-500/30 shadow-2xl bg-navy-950/20">
-                    <div className="absolute -right-20 -top-20 h-80 w-80 rounded-full bg-blue-600/5 blur-[120px] group-hover:bg-blue-600/10 transition-all duration-700"></div>
-                    <div className="relative z-10 grid gap-10 lg:grid-cols-[1fr_auto] lg:items-center flex-1">
-                        <div className="space-y-6">
-                            <span className="inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/10 border border-white/20 text-white shadow-sm">Featured Intelligence Arena</span>
-                            <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight leading-tight group-hover:text-blue-400 transition-colors">
-                                {featured ? featured.title : 'Global Connect Hackathon 2025'}
-                            </h2>
-                            <p className="max-w-2xl text-gray-400 leading-relaxed text-sm italic">
-                                {featured ? (featured.description || 'Join thousands of innovators to build the future.') : 'A premier hackathon bringing together innovators, mentors, and peer teams to solve real-world challenges.'}
-                            </p>
-
-                            <div className="flex flex-wrap gap-4 pt-2">
-                                <button
-                                    onClick={() => navigate(featured ? `/student/hackathons` : '/student/hackathons')}
-                                    className="px-10 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl font-black text-[11px] uppercase tracking-widest text-white shadow-xl shadow-blue-900/20 hover:shadow-blue-600/40 transition-all hover:scale-105 active:scale-95"
-                                >
-                                    Initiate Entry
-                                </button>
-                                <button className="px-8 py-4 bg-white/5 border border-white/10 rounded-2xl font-black text-[11px] uppercase tracking-widest text-white hover:bg-white/10 transition-all">
-                                    Dossier Details
-                                </button>
-                            </div>
-                        </div>
-                        <div className="hidden lg:flex items-center justify-center relative">
-                            <div className="absolute inset-0 bg-blue-500/10 blur-3xl rounded-full"></div>
-                            <div className="h-44 w-44 rounded-[2.5rem] border border-white/10 shadow-2xl flex items-center justify-center bg-navy-950/40 text-6xl rotate-3 hover:rotate-0 transition-transform duration-500 relative z-10">
-                                {featured?.themes?.[0]?.toLowerCase()?.includes('ai') ? '🤖' : '🏆'}
-                            </div>
-                        </div>
-                    </div>
+        <div className="-m-6 min-h-full bg-[#fbf9ff] p-6 text-[#202030] lg:-m-10 lg:p-10">
+            {isLoading ? <DashboardSkeleton /> : error ? (
+                <div className="mx-auto flex min-h-[420px] max-w-lg flex-col items-center justify-center rounded-2xl border border-red-200 bg-white p-8 text-center shadow-sm">
+                    <h1 className="text-2xl font-bold text-slate-900">Dashboard unavailable</h1>
+                    <p className="mt-3 text-slate-600">{error}</p>
+                    <button onClick={loadDashboard} className="mt-6 rounded-lg bg-[#432bc6] px-5 py-3 font-medium text-white transition hover:bg-[#351eae]">Try again</button>
                 </div>
+            ) : (
+                <>
+                    <header className="mb-10">
+                        <h1 className="text-3xl font-bold tracking-tight text-[#202030] sm:text-4xl">Welcome back, {studentName}!</h1>
+                    </header>
 
-                {/* Vertical Stats Column */}
-                <div className="grid gap-6">
-                    {analyticsCards.map((card) => (
-                        <div key={card.id} className="glass-strong rounded-3xl border border-white/10 p-8 hover:border-blue-500/30 transition-all duration-500 flex items-center justify-between group shadow-xl bg-navy-950/20">
-                            <div>
-                                <p className="text-gray-400 text-sm font-medium mb-1">{card.label}</p>
-                                <p className="text-3xl font-bold text-white tracking-tight group-hover:scale-105 transition-transform origin-left">{card.value}</p>
-                            </div>
-
-                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 text-2xl group-hover:bg-blue-500/10 group-hover:text-blue-400 border border-white/5 group-hover:border-blue-500/20 transition-all duration-500 shadow-inner">
-                                {card.icon}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </section>
-
-            <section className="space-y-8">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-                    <div className="flex gap-3 rounded-2xl bg-black/40 p-1.5 border border-white/5 w-max shadow-2xl">
-                        {['milestones', 'tracking'].map((tab) => (
-                            <button
-                                key={tab}
-                                onClick={() => setActiveTab(tab)}
-                                className={`rounded-xl px-8 py-3 text-[11px] font-black uppercase tracking-widest transition-all ${
-                                    activeTab === tab
-                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40 border border-blue-500/50'
-                                        : 'text-gray-500 hover:text-white hover:bg-white/5'
-                                }`}
-                            >
-                                {tab === 'milestones' ? 'Operational Milestones' : 'Tactical Tracking'}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {activeTab === 'milestones' ? (
-                    <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
-                        {milestoneItems.map((item) => (
-                            <div key={item.title} className="glass-strong rounded-[2rem] border border-white/10 p-8 hover:border-blue-500/30 transition-all duration-500 group shadow-2xl bg-navy-950/20 flex flex-col min-h-[220px]">
-                                <div className="flex items-start justify-between gap-4 mb-6">
-                                    <div>
-                                        <p className="text-gray-400 text-sm font-medium mb-1">{item.title}</p>
-                                        <p className="text-3xl font-bold text-white tracking-tight group-hover:text-blue-400 transition-colors">{item.value}</p>
-                                    </div>
-                                    <span className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.1)]">{item.badge}</span>
-                                </div>
-
-                                <div className="mt-auto space-y-3">
-                                    <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-gray-500">
-                                        <span className="italic">Efficiency Matrix</span>
-                                        <span className="text-blue-400">{item.progress}%</span>
-                                    </div>
-                                    <div className="h-1.5 rounded-full bg-white/5 overflow-hidden border border-white/5 p-[1px]">
-                                        <div 
-                                            className="h-full rounded-full bg-gradient-to-r from-blue-600 via-indigo-500 to-cyan-400 transition-all duration-1000 shadow-[0_0_10px_rgba(59,130,246,0.3)]" 
-                                            style={{ width: `${item.progress}%` }} 
-                                        />
-                                    </div>
-                                </div>
+                    <section aria-label="Dashboard metrics" className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+                        {metricDefinitions.map((metric) => (
+                            <div key={metric.key} className="rounded-2xl border border-[#d8d3e5] bg-white px-8 py-7 shadow-[0_1px_2px_rgba(31,22,60,0.03)]">
+                                <p className="text-sm font-semibold uppercase tracking-wide text-[#626170]">{metric.label}</p>
+                                <p className="mt-3 text-4xl font-bold tracking-tight text-[#432bc6]">{dashboard?.metrics?.[metric.key] ?? 0}</p>
                             </div>
                         ))}
-                    </div>
-                ) : (
-                    <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
-                        {trackedHackathons.map((item) => (
-                            <div key={item.id} className="glass-strong rounded-[2rem] border border-white/10 hover:border-blue-500/30 transition-all duration-500 flex flex-col overflow-hidden group shadow-2xl bg-navy-950/20">
-                                <div className="p-8 border-b border-white/5 flex-1 space-y-6">
-                                    <div className="flex items-start justify-between gap-4">
-                                        <h3 className="text-xl font-bold text-white leading-tight tracking-tight group-hover:text-blue-400 transition-colors">{item.name}</h3>
-                                        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border shadow-lg ${
-                                            item.status === 'Live' || item.status === 'Ongoing' 
-                                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-emerald-900/10' 
-                                                : 'bg-white/5 text-gray-400 border-white/10 shadow-black/20'
-                                        }`}>
-                                            {item.status}
-                                        </span>
-                                    </div>
+                    </section>
 
-                                    
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/20">
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                                        </div>
-                                        <div>
-                                            <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">Tactical Unit</p>
-                                            <p className="text-sm font-bold text-white italic">{item.team}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-black/30 rounded-2xl p-6 border border-white/5 shadow-inner">
-                                        <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] mb-3">Intelligence Update</p>
-                                        <p className="text-sm font-medium text-gray-300 italic leading-relaxed">Next Phase: <span className="text-white font-bold">{item.next}</span></p>
-                                    </div>
-
-                                    <div className="space-y-3">
-                                        <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-gray-500">
-                                            <span className="italic">Synchronization</span>
-                                            <span className="text-blue-400">{item.progress}%</span>
-                                        </div>
-                                        <div className="h-1.5 rounded-full bg-white/5 overflow-hidden border border-white/5 p-[1px]">
-                                            <div className="h-full rounded-full bg-gradient-to-r from-blue-600 via-indigo-500 to-cyan-400 shadow-[0_0_12px_rgba(59,130,246,0.2)]" style={{ width: `${item.progress}%` }} />
-                                        </div>
-                                    </div>
+                    <section className="mt-14 grid gap-8 xl:grid-cols-[minmax(0,2fr)_minmax(360px,1fr)]">
+                        <div>
+                            <h2 className="mb-7 text-3xl font-bold tracking-tight text-[#202030]">My Hackathons</h2>
+                            {registeredHackathons.length === 0 ? (
+                                <div className="rounded-2xl border border-[#d8d3e5] bg-white p-8 text-center">
+                                    <h3 className="text-lg font-semibold text-slate-800">No registered hackathons yet</h3>
+                                    <p className="mt-2 text-sm text-slate-600">Explore upcoming events and register for a hackathon to see it here.</p>
+                                    <button onClick={() => navigate('/student/hackathons')} className="mt-5 rounded-lg bg-[#432bc6] px-5 py-3 font-medium text-white transition hover:bg-[#351eae]">Explore Hackathons</button>
                                 </div>
-                                <div className="mt-auto flex items-center justify-between p-6 bg-white/[0.02] border-t border-white/5">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
-                                        <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest">Active Link</span>
-                                    </div>
-                                    <button
-                                        onClick={() => navigate('/student/submissions')}
-                                        className="group/btn flex items-center gap-2 text-[10px] text-blue-400 font-black uppercase tracking-widest hover:text-blue-300 transition-all"
-                                    >
-                                        Inspect Arena
-                                        <svg className="w-4 h-4 transform group-hover/btn:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
-                                    </button>
+                            ) : (
+                                <div className="space-y-6">
+                                    {registeredHackathons.map((hackathon) => {
+                                        const progress = hackathon.team?.progress;
+                                        const percentage = progress?.percentage;
+                                        const status = hackathon.team ? progress?.status || hackathon.status : hackathon.applicationStatus;
+                                        return (
+                                            <article key={hackathon.id} className="flex flex-col gap-6 rounded-2xl border border-[#d8d3e5] bg-white p-6 shadow-[0_1px_2px_rgba(31,22,60,0.03)] sm:flex-row sm:items-center">
+                                                <div className="flex h-28 w-full shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#f1eff8] sm:w-40">
+                                                    {hackathon.posterUrl ? <img src={hackathon.posterUrl} alt="" className="h-full w-full object-cover" /> : <span aria-hidden="true" className="text-3xl font-bold text-[#786ab9]">{hackathon.title.charAt(0).toUpperCase()}</span>}
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <h3 className="truncate text-2xl font-bold tracking-tight text-[#202030]">{hackathon.title}</h3>
+                                                    <p className="mt-1 text-base text-[#626170]">{hackathon.team ? `Team: ${hackathon.team.name}` : `Registration: ${formatStatus(hackathon.applicationStatus)}`}</p>
+                                                    {percentage !== null && percentage !== undefined ? (
+                                                        <div className="mt-5">
+                                                            <div className="h-2.5 overflow-hidden rounded-full bg-[#e4e0f2]"><div className="h-full rounded-full bg-[#432bc6]" style={{ width: `${percentage}%` }} /></div>
+                                                            <p className="mt-2 text-sm font-medium text-[#626170]">Progress <span className="float-right text-[#432bc6]">{percentage}%</span></p>
+                                                        </div>
+                                                    ) : <p className="mt-5 text-sm text-[#626170]">{formatDateRange(hackathon.hackathonStart, hackathon.hackathonEnd)}</p>}
+                                                </div>
+                                                <div className="flex shrink-0 flex-col items-end gap-5 sm:self-stretch sm:justify-end">
+                                                    <span className="rounded-md bg-[#e8e4fb] px-3 py-1.5 text-sm font-medium text-[#5140bd]">{formatStatus(status)}</span>
+                                                    <button onClick={() => navigate(hackathon.team ? '/student/teams' : '/student/hackathons')} className="w-full rounded-lg bg-[#432bc6] px-6 py-3 text-base font-medium text-white transition hover:bg-[#351eae] sm:w-auto">{hackathon.team ? 'View Workspace' : 'View Hackathon'}</button>
+                                                </div>
+                                            </article>
+                                        );
+                                    })}
                                 </div>
+                            )}
+                        </div>
+
+                        <aside>
+                            <div className="mb-7 flex items-center justify-between">
+                                <h2 className="text-3xl font-bold tracking-tight text-[#202030]">Upcoming</h2>
+                                <button onClick={() => navigate('/student/hackathons')} className="text-base font-medium text-[#4d38c8] transition hover:text-[#351eae]">See all</button>
                             </div>
-                        ))}
-                    </div>
-                )}
-            </section>
+                            {upcomingHackathons.length === 0 ? (
+                                <div className="rounded-2xl border border-[#d8d3e5] bg-white p-8 text-center"><p className="text-slate-600">There are no upcoming hackathons available right now.</p></div>
+                            ) : (
+                                <div className="space-y-5">
+                                    {upcomingHackathons.map((hackathon) => {
+                                        const prize = prizePool(hackathon.prizes);
+                                        return (
+                                            <article key={hackathon.id} className="rounded-2xl border border-[#d8d3e5] bg-white p-6 shadow-[0_1px_2px_rgba(31,22,60,0.03)]">
+                                                <h3 className="text-2xl font-bold leading-tight tracking-tight text-[#202030]">{hackathon.title}</h3>
+                                                <p className="mt-2 text-base text-[#626170]">{formatDateRange(hackathon.hackathonStart, hackathon.hackathonEnd)}</p>
+                                                <div className="mt-7 flex items-end justify-between gap-4">
+                                                    <div><p className="text-sm font-medium text-[#626170]">Prize Pool</p><p className="mt-1 text-lg font-bold text-[#432bc6]">{prize || 'Not announced'}</p></div>
+                                                    <button onClick={() => navigate(`/student/hackathons/${hackathon.id}/register`)} className="shrink-0 rounded-lg bg-[#8e7ff4] px-5 py-3 text-base font-medium text-[#3f32b6] transition hover:bg-[#7d6bea]">Register Now</button>
+                                                </div>
+                                            </article>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </aside>
+                    </section>
+                </>
+            )}
         </div>
     );
 };

@@ -48,6 +48,7 @@ class HackathonUpdate(BaseModel):
 
 
 class HackathonResponse(HackathonBase):
+    id: str = Field(..., alias="_id")
     organizerId: str = Field(..., alias="organizerId")
     createdAt: datetime = Field(..., alias="createdAt")
     updatedAt: datetime = Field(..., alias="updatedAt")

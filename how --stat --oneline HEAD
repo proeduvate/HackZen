@@ -1,0 +1,38 @@
+[33mcommit fdec00f021f018953b2e53cd531030d21af8b90d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdevelop[m[33m, [m[1;31morigin/develop[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Meenakshi K <meenakshi.k.2402@gmail.com>
+Date:   Sat Jun 6 14:58:35 2026 +0530
+
+    Initial project setup for frontend and backend (#2)
+    
+    * feat: initial project setup for frontend and backend
+    
+    * fix: added missing backend dependencies (python-multipart, google-genai)
+    
+    * eslint rules to fix github actions workflow
+    
+    * auto-format backend code with black to fix CI workflow
+    
+    * style: fix black formatting for CI
+    
+    * fix: restore files corrupted by encoding and run black
+    
+    * style: final forced formatting fix for perfect CI
+    
+    * style: match CI black version formatting for dependencies and security
+    
+    * chore: optimize CI linting rules to match project style
+    
+    * feat: complete operationalization and final linting fixes
+    
+    * Revert experimental team features and optimize login performance
+    
+    * style: run black formatter to fix CI failures
+    
+    * fix: resolve flake8 W503 linting error
+    
+    * fix: resolve black/flake8 conflict by ignoring W503 in CI
+
+[1mdiff --git a/backend/requirements.txt b/backend/requirements.txt[m
+[1mnew file mode 100644[m
+[1mindex 0000000..0af8932[m
+Binary files /dev/null and b/backend/requirements.txt differ
