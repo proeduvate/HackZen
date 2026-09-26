@@ -6,34 +6,118 @@ import apiClient from '../../api/api';
 
 export const fetchSubmissions = async (teamId) => {
     try {
-        if (!teamId) return [];
-        const { data } = await apiClient.get(`/submissions/team/${teamId}`);
-        
-        return data.map(sub => ({
-            id: sub._id,
-            project: 'Project Submission v' + sub.version,
-            hackathon: 'Current Hackathon', // Placeholder until hackathon title is joined
-            submittedAt: new Date(sub.submittedAt).toLocaleDateString(),
-            status: 'Submitted',
-            score: null,
-            feedback: null,
-            resources: ['Download Project']
-        }));
+        let teamsToFetch = [];
+        if (teamId) {
+            teamsToFetch = [{ id: teamId, teamName: 'Active Team' }];
+        } else {
+            try {
+                const { data: myTeams } = await apiClient.get('/teams/my-teams');
+                if (Array.isArray(myTeams) && myTeams.length > 0) {
+                    teamsToFetch = myTeams.map(t => ({ id: t.id || t._id, teamName: t.teamName, hackathonId: t.hackathonId }));
+                }
+            } catch (err) {
+                console.warn('Could not fetch student teams:', err);
+            }
+        }
+
+        if (teamsToFetch.length === 0) {
+            return [];
+        }
+
+        const results = await Promise.all(
+            teamsToFetch.map(async (t) => {
+                try {
+                    const { data } = await apiClient.get(`/submissions/team/${t.id}`);
+                    if (!Array.isArray(data)) return [];
+                    return data.map(sub => ({
+                        id: sub._id || sub.id,
+                        teamId: sub.teamId || t.id,
+                        team: sub.team || t.teamName || 'Active Team',
+                        teamName: sub.team || t.teamName,
+                        project: sub.project || sub.title || (`Project Submission v${sub.version || 1}`),
+                        hackathon: sub.hackathon || sub.hackathonTitle || t.teamName || 'Current Hackathon',
+                        desc: sub.desc || sub.description || '',
+                        category: sub.category || sub.track || 'General',
+                        submittedAt: sub.time || (sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString() : ''),
+                        iso: sub.submittedAt || null,
+                        status: sub.status || (sub.isLate ? 'Late Submission' : 'Submitted'),
+                        isLate: Boolean(sub.isLate),
+                        score: sub.score ?? sub.aiScore ?? null,
+                        evaluationCount: sub.evaluationCount ?? 0,
+                        feedback: sub.aiReview || sub.feedback || null,
+                        githubUrl: sub.githubUrl || '',
+                        liveDemoUrl: sub.liveDemoUrl || '',
+                        fileUrl: sub.fileUrl || '',
+                        version: sub.version || 1,
+                        resources: [
+                            sub.githubUrl ? 'GitHub Repo' : null,
+                            sub.liveDemoUrl ? 'Live Demo' : null,
+                            sub.fileUrl ? 'Deliverable Archive' : null
+                        ].filter(Boolean)
+                    }));
+                } catch {
+                    return [];
+                }
+            })
+        );
+
+        return results.flat();
     } catch (error) {
         console.error('Failed to fetch student submissions:', error);
         return [];
     }
 };
 
+export const uploadSubmissionFile = async (file) => {
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const { data } = await apiClient.post('/submissions/upload', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return data;
+    } catch (error) {
+        console.error('File upload failed:', error);
+        throw error;
+    }
+};
+
 export const submitProject = async (submissionData) => {
     try {
-        const { data: teamSubs } = await apiClient.get(`/submissions/team/${submissionData.teamId}`);
-        const nextVersion = teamSubs.length + 1;
+        let uploadedFileUrl = submissionData.fileUrl || '';
+
+        // If a real File object is provided, upload it to the server
+        if (submissionData.file instanceof File) {
+            try {
+                const uploadRes = await uploadSubmissionFile(submissionData.file);
+                if (uploadRes?.fileUrl) {
+                    uploadedFileUrl = uploadRes.fileUrl;
+                }
+            } catch (upErr) {
+                console.warn('Backend file upload failed or skipped, falling back to named reference:', upErr);
+                uploadedFileUrl = `/uploads/submissions/${submissionData.file.name}`;
+            }
+        }
+
+        let nextVersion = 1;
+        try {
+            const { data: teamSubs } = await apiClient.get(`/submissions/team/${submissionData.teamId}`);
+            if (Array.isArray(teamSubs)) {
+                nextVersion = teamSubs.length + 1;
+            }
+        } catch {}
 
         const payload = {
             teamId: submissionData.teamId,
             stageId: submissionData.stageId || 'initial_stage',
-            fileUrl: submissionData.fileUrl || 'pending_upload',
+            project: submissionData.project || 'Hackathon Project Submission',
+            desc: submissionData.desc || '',
+            category: submissionData.category || 'General',
+            fileUrl: uploadedFileUrl || (submissionData.file?.name ? `/uploads/submissions/${submissionData.file.name}` : ''),
+            githubUrl: submissionData.githubUrl || '',
+            liveDemoUrl: submissionData.liveDemoUrl || '',
             version: nextVersion
         };
 
@@ -44,3 +128,4 @@ export const submitProject = async (submissionData) => {
         throw error;
     }
 };
+

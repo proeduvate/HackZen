@@ -1,8 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import apiClient from '../../api/api';
 import { getMyTeams } from '../../api/teamApi';
+import { usePlatformSettings } from '../../context/PlatformSettingsContext';
 
 const StudentWorkspace = () => {
+    const navigate = useNavigate();
+    const { 
+        allowTeamChanges,
+        maxUploadFileSize,
+        allowedFileTypes,
+        gitHubRepo,
+        demoUrl
+    } = usePlatformSettings();
     // State management
     const [teams, setTeams] = useState([]);
     const [selectedTeam, setSelectedTeam] = useState(null);
@@ -48,7 +58,11 @@ const StudentWorkspace = () => {
     useEffect(() => {
         if (activeTab !== 'Chat' || !selectedTeam) return;
 
+        let isCleanedUp = false;
+        let retryTimeoutId = null;
+
         const connectWS = () => {
+            if (isCleanedUp) return;
             const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
             // Correctly handle the base URL to create the WS URL
             const wsBase = apiBase.replace(/^http/, 'ws').replace(/\/api$/, '');
@@ -61,32 +75,38 @@ const StudentWorkspace = () => {
             ws.onopen = () => console.log("Chat connected");
 
             ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                if (data.type === 'new_message') {
-                    const msg = data.message;
-                    const newMessage = {
-                        id: msg._id || Date.now(),
-                        text: msg.content,
-                        sender: msg.senderId === userId ? 'me' : 'them',
-                        user: msg.senderName || (msg.senderId === userId ? userName : 'Teammate'),
-                        time: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                        type: msg.messageType || 'text'
-                    };
-                    
-                    setTeamMessages(prev => ({
-                        ...prev,
-                        [selectedTeam]: [...(prev[selectedTeam] || []), newMessage]
-                    }));
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'new_message') {
+                        const msg = data.message;
+                        const newMessage = {
+                            id: msg._id || Date.now(),
+                            text: msg.content,
+                            sender: msg.senderId === userId ? 'me' : 'them',
+                            user: msg.senderName || (msg.senderId === userId ? userName : 'Teammate'),
+                            time: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                            type: msg.messageType || 'text'
+                        };
+                        
+                        setTeamMessages(prev => ({
+                            ...prev,
+                            [selectedTeam]: [...(prev[selectedTeam] || []), newMessage]
+                        }));
+                    }
+                } catch (e) {
+                    console.error("Failed to parse websocket message:", e);
                 }
             };
 
             ws.onclose = () => {
-                console.log("Chat disconnected. Retrying in 3s...");
-                setTimeout(() => {
-                    if (activeTab === 'Chat' && socketRef.current?.readyState !== WebSocket.OPEN) {
-                        connectWS();
-                    }
-                }, 3000);
+                if (!isCleanedUp) {
+                    console.log("Chat disconnected. Retrying in 3s...");
+                    retryTimeoutId = setTimeout(() => {
+                        if (!isCleanedUp && activeTab === 'Chat' && socketRef.current?.readyState !== WebSocket.OPEN) {
+                            connectWS();
+                        }
+                    }, 3000);
+                }
             };
 
             ws.onerror = (err) => console.error("WebSocket Error:", err);
@@ -95,6 +115,8 @@ const StudentWorkspace = () => {
         connectWS();
 
         return () => {
+            isCleanedUp = true;
+            if (retryTimeoutId) clearTimeout(retryTimeoutId);
             if (socketRef.current) {
                 socketRef.current.close();
             }
@@ -262,6 +284,11 @@ const StudentWorkspace = () => {
                                         <span className="text-sm text-gray-400 font-medium">
                                             {currentTeam?.isOnline ? `Online • ${currentTeam?.status}` : 'Offline'}
                                         </span>
+                                        {!allowTeamChanges && (
+                                            <span className="ml-2 text-[10px] px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20 font-semibold">
+                                                🔒 Team members locked by platform
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -390,11 +417,54 @@ const StudentWorkspace = () => {
                             )}
 
                             {activeTab === 'Files' && (
-                                <div className="flex-1 flex flex-col items-center justify-center text-gray-500 space-y-4">
-                                    <div className="text-6xl">📁</div>
-                                    <p className="text-xl font-medium">Team files will appear here</p>
-                                    <button className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl border border-white/10 transition-colors">
-                                        Upload Document
+                                <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-6">
+                                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-purple-500/30 flex items-center justify-center text-3xl shadow-lg">
+                                        📁
+                                    </div>
+                                    <div className="text-center max-w-md">
+                                        <h3 className="text-xl font-bold text-white mb-1">Project Deliverables & Repository</h3>
+                                        <p className="text-xs text-gray-400">Configure your team's project archive, source repository, and live deployment.</p>
+                                    </div>
+
+                                    {/* Platform Deliverables Baseline Policy Card */}
+                                    <div className="w-full max-w-lg glass p-5 rounded-2xl border border-white/10 space-y-3.5 text-xs">
+                                        <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+                                            <span className="font-bold text-white uppercase tracking-wider text-[10px]">Platform Deliverable Baseline</span>
+                                            <span className="px-2 py-0.5 rounded-md bg-sky-500/10 text-sky-400 border border-sky-500/20 text-[10px] font-bold">Live Enforced</span>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="p-3 bg-black/20 rounded-xl border border-white/5">
+                                                <span className="text-[10px] text-gray-400 uppercase font-semibold block mb-0.5">Max Archive Size</span>
+                                                <span className="text-sm font-bold text-white">{maxUploadFileSize}</span>
+                                            </div>
+                                            <div className="p-3 bg-black/20 rounded-xl border border-white/5">
+                                                <span className="text-[10px] text-gray-400 uppercase font-semibold block mb-0.5">GitHub Repository</span>
+                                                <span className={`text-xs font-bold ${gitHubRepo ? 'text-sky-400' : 'text-gray-400'}`}>
+                                                    {gitHubRepo ? 'Mandatory Link' : 'Optional'}
+                                                </span>
+                                            </div>
+                                            <div className="p-3 bg-black/20 rounded-xl border border-white/5">
+                                                <span className="text-[10px] text-gray-400 uppercase font-semibold block mb-0.5">Live Demo URL</span>
+                                                <span className={`text-xs font-bold ${demoUrl ? 'text-sky-400' : 'text-gray-400'}`}>
+                                                    {demoUrl ? 'Mandatory Link' : 'Optional'}
+                                                </span>
+                                            </div>
+                                            <div className="p-3 bg-black/20 rounded-xl border border-white/5">
+                                                <span className="text-[10px] text-gray-400 uppercase font-semibold block mb-0.5">Accepted Formats</span>
+                                                <span className="text-xs font-bold text-purple-300 truncate block">
+                                                    {(allowedFileTypes || []).join(', ')}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button 
+                                        onClick={() => navigate('/student/submissions')}
+                                        className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg active:scale-95 flex items-center gap-2"
+                                    >
+                                        <span>Open Deliverables & Project Submission Portal</span>
+                                        <span>→</span>
                                     </button>
                                 </div>
                             )}

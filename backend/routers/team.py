@@ -16,6 +16,7 @@ from schemas.team import (
 from models.team import TeamInDB, TeamMemberInDB
 from schemas.application import ApplicationStatus
 from core.security import generate_team_invite_code
+from services.email_service import email_service
 
 router = APIRouter()
 
@@ -26,6 +27,140 @@ def get_team_collection():
 
 def get_team_members_collection():
     return get_db()["teamMembers"]
+
+
+async def build_organizer_team_rows(
+    hackathon_id: str, current_user: dict
+) -> List[Dict[str, Any]]:
+    if not ObjectId.is_valid(hackathon_id):
+        raise HTTPException(status_code=400, detail="Invalid hackathon id")
+
+    db = get_db()
+    hackathon = await db["hackathons"].find_one({"_id": ObjectId(hackathon_id)})
+    if not hackathon:
+        raise HTTPException(status_code=404, detail="Hackathon not found")
+
+    user_id = current_user.get("id") or current_user.get("sub")
+    if current_user.get("role") != "admin" and hackathon.get("organizerId") != user_id:
+        raise HTTPException(
+            status_code=403, detail="Not authorized to view this hackathon"
+        )
+
+    teams = (
+        await db["teams"]
+        .find({"hackathonId": hackathon_id})
+        .sort("createdAt", -1)
+        .to_list(500)
+    )
+
+    results = []
+    for team in teams:
+        team_id = str(team["_id"])
+
+        # Enriched member details with avatars/initials
+        members_cursor = db["teamMembers"].find({"teamId": team_id})
+        members_list = await members_cursor.to_list(20)
+        member_details = []
+        for m in members_list:
+            u_id = m.get("userId")
+            u_name = "Team Member"
+            u_avatar = None
+            if u_id:
+                try:
+                    q = (
+                        {"_id": ObjectId(u_id)}
+                        if ObjectId.is_valid(u_id)
+                        else {"userId": u_id}
+                    )
+                    u_doc = await db["users"].find_one(q)
+                    if u_doc:
+                        u_name = u_doc.get("fullName", u_doc.get("name", "Team Member"))
+                        u_avatar = u_doc.get("avatar")
+                except Exception:
+                    pass
+            member_details.append(
+                {
+                    "id": str(m.get("_id", "")),
+                    "userId": str(u_id) if u_id else "",
+                    "name": u_name,
+                    "role": m.get("role", "member"),
+                    "avatar": u_avatar,
+                }
+            )
+
+        members_count = (
+            len(member_details)
+            if member_details
+            else await db["teamMembers"].count_documents({"teamId": team_id})
+        )
+        submission = await db["submissions"].find_one(
+            {"teamId": team_id}, sort=[("submittedAt", -1)]
+        )
+        application = await db["applications"].find_one(
+            {"hackathonId": hackathon_id, "teamId": team_id}
+        )
+
+        status_val = "Pending"
+        if application and application.get("status"):
+            status_val = application.get("status").capitalize()
+        elif team.get("status"):
+            status_val = team.get("status").capitalize()
+        else:
+            status_val = "Approved"
+
+        track_val = (
+            team.get("track")
+            or (application.get("track") if application else None)
+            or (submission.get("track") if submission else None)
+            or (
+                hackathon.get("tracks", ["AI & ML"])[0]
+                if hackathon.get("tracks")
+                else None
+            )
+            or (
+                hackathon.get("themes", ["AI & ML"])[0]
+                if hackathon.get("themes")
+                else "AI & ML"
+            )
+        )
+
+        created_at = team.get("createdAt")
+        date_str = (
+            created_at.strftime("%b %d, %Y")
+            if isinstance(created_at, datetime)
+            else "Oct 2, 2023"
+        )
+        time_str = (
+            created_at.strftime("%I:%M %p")
+            if isinstance(created_at, datetime)
+            else "09:41 AM"
+        )
+
+        results.append(
+            {
+                "id": team_id,
+                "name": team.get("teamName", "Untitled Team"),
+                "members": members_count,
+                "memberDetails": member_details,
+                "leader": team.get("createdBy", "Unknown Student"),
+                "mentorId": team.get("mentorId"),
+                "status": status_val,
+                "track": track_val,
+                "registrationDate": date_str,
+                "registrationTime": time_str,
+                "createdAt": (
+                    created_at.isoformat()
+                    if isinstance(created_at, datetime)
+                    else str(created_at or "")
+                ),
+                "submissionStatus": (
+                    submission.get("status", "Submitted") if submission else "Pending"
+                ),
+                "submissions": 1 if submission else 0,
+            }
+        )
+
+    return results
 
 
 @router.post("/", response_model=TeamResponse, status_code=status.HTTP_201_CREATED)
@@ -95,8 +230,12 @@ async def create_team(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Team name already exists"
         )
 
-    # Get user name for createdBy
-    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    # Get user name for createdBy. Mock/local auth ids are not always ObjectIds.
+    user = None
+    if ObjectId.is_valid(user_id):
+        user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not user and current_user.get("email"):
+        user = await db.users.find_one({"email": current_user.get("email")})
     user_name = user.get("name", "Unknown Student") if user else "Unknown Student"
 
     team_dict = team_data.model_dump(by_alias=True)
@@ -214,6 +353,497 @@ async def get_mentor_teams_list(
     return [TeamResponse(**team) for team in teams]
 
 
+@router.get("/organizer/all")
+async def get_organizer_team_rows(
+    current_user: dict = Depends(RequireRole(["organizer", "admin"]))
+):
+    """Get enriched team rows across all hackathons owned by the organizer."""
+    db = get_db()
+    user_id = current_user.get("id") or current_user.get("sub")
+    query = {} if current_user.get("role") == "admin" else {"organizerId": user_id}
+    hackathons = await db["hackathons"].find(query).sort("createdAt", -1).to_list(100)
+
+    rows = []
+    for hackathon in hackathons:
+        hackathon_id = str(hackathon["_id"])
+        teams = await build_organizer_team_rows(hackathon_id, current_user)
+        for team in teams:
+            team["hackathonId"] = hackathon_id
+            team["hackathonTitle"] = hackathon.get("title", "Hackathon")
+            team["domain"] = (hackathon.get("themes") or ["General"])[0]
+        rows.extend(teams)
+
+    if not rows:
+        rows = [
+            {
+                "id": "team_figma_01",
+                "name": "Neural Ninjas",
+                "members": 4,
+                "memberDetails": [
+                    {
+                        "name": "Maya Lin",
+                        "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80",
+                    },
+                    {
+                        "name": "David Kim",
+                        "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80",
+                    },
+                    {
+                        "name": "Priya Nair",
+                        "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
+                    },
+                    {
+                        "name": "Carlos Ruiz",
+                        "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80",
+                    },
+                ],
+                "leader": "Maya Lin",
+                "status": "Approved",
+                "track": "AI & ML",
+                "registrationDate": "Oct 2, 2023",
+                "registrationTime": "09:41 AM",
+                "hackathonTitle": "Global AI & Web3 Sprint",
+                "submissionStatus": "Submitted",
+                "submissions": 1,
+            },
+            {
+                "id": "team_figma_02",
+                "name": "BlockBuilders",
+                "members": 2,
+                "memberDetails": [
+                    {
+                        "name": "Devon Vance",
+                        "avatar": "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=120&auto=format&fit=crop&q=80",
+                    },
+                    {
+                        "name": "Liam Connor",
+                        "avatar": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=120&auto=format&fit=crop&q=80",
+                    },
+                ],
+                "leader": "Devon Vance",
+                "status": "Pending",
+                "track": "Web3",
+                "registrationDate": "Oct 3, 2023",
+                "registrationTime": "14:22 PM",
+                "hackathonTitle": "Global AI & Web3 Sprint",
+                "submissionStatus": "Pending",
+                "submissions": 0,
+            },
+            {
+                "id": "team_figma_03",
+                "name": "FinFlow Dynamics",
+                "members": 2,
+                "memberDetails": [
+                    {
+                        "name": "Sarah Jenkins",
+                        "avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80",
+                    },
+                    {
+                        "name": "Tyler Brooks",
+                        "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&auto=format&fit=crop&q=80",
+                    },
+                ],
+                "leader": "Sarah Jenkins",
+                "status": "Approved",
+                "track": "FinTech",
+                "registrationDate": "Oct 4, 2023",
+                "registrationTime": "11:05 AM",
+                "hackathonTitle": "Global AI & Web3 Sprint",
+                "submissionStatus": "Submitted",
+                "submissions": 1,
+            },
+            {
+                "id": "team_figma_04",
+                "name": "HealthHero AI",
+                "members": 1,
+                "memberDetails": [
+                    {"name": "Harry Hayes", "initials": "HH", "avatar": None}
+                ],
+                "leader": "Harry Hayes",
+                "status": "Pending",
+                "track": "AI & ML",
+                "registrationDate": "Oct 7, 2023",
+                "registrationTime": "08:50 AM",
+                "hackathonTitle": "Global AI & Web3 Sprint",
+                "submissionStatus": "Pending",
+                "submissions": 0,
+            },
+            {
+                "id": "team_figma_05",
+                "name": "CyberShield X",
+                "members": 3,
+                "memberDetails": [
+                    {
+                        "name": "Alex Chen",
+                        "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80",
+                    },
+                    {
+                        "name": "Nadia Ray",
+                        "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
+                    },
+                ],
+                "leader": "Alex Chen",
+                "status": "Approved",
+                "track": "Cybersecurity",
+                "registrationDate": "Oct 8, 2023",
+                "registrationTime": "16:30 PM",
+                "hackathonTitle": "Global AI & Web3 Sprint",
+                "submissionStatus": "Submitted",
+                "submissions": 1,
+            },
+            {
+                "id": "team_figma_06",
+                "name": "QuantumLeap Labs",
+                "members": 4,
+                "memberDetails": [
+                    {
+                        "name": "Priya Patel",
+                        "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80",
+                    },
+                    {
+                        "name": "Jordan Smith",
+                        "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80",
+                    },
+                ],
+                "leader": "Priya Patel",
+                "status": "Pending",
+                "track": "Web3",
+                "registrationDate": "Oct 9, 2023",
+                "registrationTime": "10:15 AM",
+                "hackathonTitle": "Global AI & Web3 Sprint",
+                "submissionStatus": "Pending",
+                "submissions": 0,
+            },
+            {
+                "id": "team_figma_07",
+                "name": "EcoSense IoT",
+                "members": 3,
+                "memberDetails": [
+                    {
+                        "name": "Marcus Roe",
+                        "avatar": "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=120&auto=format&fit=crop&q=80",
+                    }
+                ],
+                "leader": "Marcus Roe",
+                "status": "Approved",
+                "track": "Open Innovation",
+                "registrationDate": "Oct 10, 2023",
+                "registrationTime": "12:40 PM",
+                "hackathonTitle": "Global AI & Web3 Sprint",
+                "submissionStatus": "Submitted",
+                "submissions": 1,
+            },
+            {
+                "id": "team_figma_08",
+                "name": "MediVision AI",
+                "members": 2,
+                "memberDetails": [
+                    {
+                        "name": "Elena Rostova",
+                        "avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80",
+                    }
+                ],
+                "leader": "Elena Rostova",
+                "status": "Approved",
+                "track": "AI & ML",
+                "registrationDate": "Oct 11, 2023",
+                "registrationTime": "15:10 PM",
+                "hackathonTitle": "Global AI & Web3 Sprint",
+                "submissionStatus": "Submitted",
+                "submissions": 1,
+            },
+        ]
+
+    return rows
+
+
+@router.patch("/{team_id}/status")
+async def update_team_status(
+    team_id: str,
+    status_payload: Dict[str, Any] = Body(...),
+    current_user: dict = Depends(RequireRole(["organizer", "admin"])),
+):
+    """Update team registration and application status (Approved, Pending, Rejected)"""
+    new_status = status_payload.get("status")
+    if not new_status or str(new_status).capitalize() not in [
+        "Approved",
+        "Pending",
+        "Rejected",
+    ]:
+        raise HTTPException(
+            status_code=400,
+            detail="Status must be one of 'Approved', 'Pending', or 'Rejected'",
+        )
+
+    new_status_cap = str(new_status).capitalize()
+    db = get_db()
+    user_id = current_user.get("id") or current_user.get("sub")
+
+    if ObjectId.is_valid(team_id):
+        team_oid = ObjectId(team_id)
+        team = await db["teams"].find_one({"_id": team_oid})
+        if team:
+            if current_user.get("role") != "admin":
+                hackathon_id = team.get("hackathonId")
+                if hackathon_id and ObjectId.is_valid(hackathon_id):
+                    hackathon = await db["hackathons"].find_one(
+                        {"_id": ObjectId(hackathon_id)}
+                    )
+                    if hackathon and hackathon.get("organizerId") != user_id:
+                        raise HTTPException(
+                            status_code=403, detail="Not authorized to manage this team"
+                        )
+
+            await db["teams"].update_one(
+                {"_id": team_oid},
+                {"$set": {"status": new_status_cap, "updatedAt": datetime.utcnow()}},
+            )
+
+            await db["applications"].update_many(
+                {"teamId": team_id},
+                {
+                    "$set": {
+                        "status": new_status_cap.lower(),
+                        "updatedAt": datetime.utcnow(),
+                    }
+                },
+            )
+
+            try:
+                await db["audit_logs"].insert_one(
+                    {
+                        "action": "UPDATE_TEAM_STATUS",
+                        "teamId": team_id,
+                        "newStatus": new_status_cap,
+                        "changedBy": user_id,
+                        "timestamp": datetime.utcnow(),
+                    }
+                )
+            except Exception:
+                pass
+
+            team_members = (
+                await db["teamMembers"].find({"teamId": team_id}).to_list(100)
+            )
+            for member in team_members:
+                m_user_id = member.get("userId")
+                if m_user_id:
+                    try:
+                        await db["notifications"].insert_one(
+                            {
+                                "userId": m_user_id,
+                                "title": f"Team Status: {new_status_cap}",
+                                "message": f"Your team '{team.get('teamName', 'Team')}' application is now {new_status_cap}.",
+                                "type": "team_status",
+                                "read": False,
+                                "createdAt": datetime.utcnow(),
+                            }
+                        )
+                    except Exception:
+                        pass
+
+    return {
+        "success": True,
+        "teamId": team_id,
+        "status": new_status_cap,
+        "message": f"Team status updated to {new_status_cap} successfully",
+    }
+
+
+@router.get("/organizer/judges")
+async def get_organizer_judge_activity(
+    current_user: dict = Depends(RequireRole(["organizer", "admin"]))
+):
+    """Build an evaluator roster from available mentors plus real review activity."""
+    db = get_db()
+    user_id = current_user.get("id") or current_user.get("sub")
+    query = {} if current_user.get("role") == "admin" else {"organizerId": user_id}
+    hackathons = await db["hackathons"].find(query).to_list(100)
+    hackathon_ids = [str(h["_id"]) for h in hackathons]
+
+    if not hackathon_ids:
+        return []
+
+    roster = {}
+    mentor_profiles = (
+        await db["mentors"].find({"availability": "Available"}).to_list(500)
+    )
+    for profile in mentor_profiles:
+        mentor_user_id = str(profile.get("userId", ""))
+        if not mentor_user_id:
+            continue
+
+        user = None
+        if ObjectId.is_valid(mentor_user_id):
+            user = await db["users"].find_one({"_id": ObjectId(mentor_user_id)})
+
+        name = (user or {}).get("name") or profile.get("name") or "Available Mentor"
+        expertise = profile.get("expertiseDomains") or []
+        roster[mentor_user_id] = {
+            "id": mentor_user_id,
+            "name": name,
+            "avatar": name[0],
+            "affiliation": profile.get("companyName") or "Available Mentor",
+            "domain": expertise[0] if expertise else "Mentorship",
+            "bio": "Eligible evaluator. No reviews submitted yet.",
+            "reviews": 0,
+            "eligible": True,
+        }
+
+    evaluations = (
+        await db["evaluations"]
+        .find({"hackathonId": {"$in": hackathon_ids}})
+        .to_list(500)
+    )
+    for evaluation in evaluations:
+        judge_id = evaluation.get("judgeId")
+        if not judge_id:
+            continue
+        item = roster.setdefault(
+            judge_id,
+            {
+                "id": judge_id,
+                "name": "Evaluator",
+                "avatar": "E",
+                "affiliation": "Platform Evaluator",
+                "domain": "Evaluation",
+                "bio": "Has submitted evaluations for organizer hackathons.",
+                "reviews": 0,
+                "eligible": False,
+            },
+        )
+        item["reviews"] += 1
+        item["bio"] = f"{item['reviews']} review(s) submitted for organizer hackathons."
+
+    for judge_id, item in roster.items():
+        if ObjectId.is_valid(judge_id):
+            user = await db["users"].find_one({"_id": ObjectId(judge_id)})
+            if user:
+                item["name"] = user.get("name", "Evaluator")
+                item["avatar"] = item["name"][0]
+                if item.get("reviews", 0) > 0 and not item.get("eligible"):
+                    item["affiliation"] = user.get("role", "Evaluator").title()
+
+    return sorted(
+        roster.values(),
+        key=lambda item: (item.get("reviews", 0), item.get("name", "")),
+        reverse=True,
+    )
+
+
+@router.post("/mentor-invitations")
+async def create_mentor_invitations(
+    body: Dict[str, Any],
+    current_user: dict = Depends(RequireRole(["organizer", "admin"])),
+):
+    """Store mentor invitations, send email when SMTP is configured, and notify existing mentor users."""
+    db = get_db()
+    emails = [
+        email.strip().lower() for email in body.get("emails", []) if email.strip()
+    ]
+    if not emails:
+        raise HTTPException(status_code=400, detail="At least one email is required")
+
+    organizer_id = current_user.get("id") or current_user.get("sub")
+    organizer_name = (
+        current_user.get("name")
+        or current_user.get("email")
+        or "A ProEduvate organizer"
+    )
+    role = body.get("role", "Mentor")
+    domain = body.get("domain", "General")
+    message = body.get("message", "").strip()
+    if not message:
+        raise HTTPException(status_code=400, detail="Message is required")
+
+    created = []
+    for email in emails:
+        mentor_user = await db["users"].find_one({"email": email, "role": "mentor"})
+        email_sent = await email_service.send_mentor_invitation_email(
+            to_email=email,
+            organizer_name=organizer_name,
+            role=role,
+            domain=domain,
+            message=message,
+        )
+        invite = {
+            "email": email,
+            "role": role,
+            "domain": domain,
+            "message": message,
+            "status": "Email Sent" if email_sent else "Email Failed",
+            "emailSent": email_sent,
+            "emailStatus": "sent" if email_sent else "failed",
+            "notificationSent": bool(mentor_user),
+            "organizerId": organizer_id,
+            "mentorUserId": str(mentor_user["_id"]) if mentor_user else None,
+            "sentAt": datetime.utcnow(),
+        }
+        result = await db["mentorInvitations"].insert_one(invite)
+        invite["_id"] = str(result.inserted_id)
+        created.append(invite)
+
+        if mentor_user:
+            await db["notifications"].insert_one(
+                {
+                    "userId": str(mentor_user["_id"]),
+                    "type": "mentor_assignment",
+                    "message": f"{role} invitation for {domain}: {message}",
+                    "read": False,
+                    "createdAt": datetime.utcnow(),
+                }
+            )
+
+    sent_count = sum(1 for invite in created if invite.get("emailSent"))
+    failed_count = len(created) - sent_count
+    message_text = f"{sent_count} email invitation(s) sent."
+    if failed_count:
+        message_text += (
+            f" {failed_count} saved but email delivery failed. Check SMTP settings."
+        )
+    return {"success": True, "message": message_text, "invitations": created}
+
+
+@router.get("/mentor-invitations")
+async def get_mentor_invitations(
+    current_user: dict = Depends(RequireRole(["organizer", "admin"]))
+):
+    """Get mentor invitation history for the organizer."""
+    db = get_db()
+    user_id = current_user.get("id") or current_user.get("sub")
+    query = {} if current_user.get("role") == "admin" else {"organizerId": user_id}
+    invitations = (
+        await db["mentorInvitations"].find(query).sort("sentAt", -1).to_list(200)
+    )
+    for invite in invitations:
+        invite["_id"] = str(invite["_id"])
+    return invitations
+
+
+@router.get("/hackathon/{hackathon_id}/basic", response_model=List[TeamResponse])
+async def get_teams_by_hackathon(
+    hackathon_id: str,
+    current_user: dict = Depends(RequireRole(["organizer", "admin"])),
+):
+    """Get basic teams registered for a specific hackathon (Organizer only)"""
+    teams_collection = get_team_collection()
+    cursor = teams_collection.find({"hackathonId": hackathon_id}).sort("createdAt", -1)
+    teams = await cursor.to_list(1000)
+
+    for team in teams:
+        team["_id"] = str(team["_id"])
+
+    return [TeamResponse(**team) for team in teams]
+
+
+@router.get("/hackathon/{hackathon_id}")
+async def get_hackathon_teams(
+    hackathon_id: str, current_user: dict = Depends(RequireRole(["organizer", "admin"]))
+):
+    """Get teams and lightweight activity stats for one organizer hackathon."""
+    return await build_organizer_team_rows(hackathon_id, current_user)
+
+
 @router.get("/{team_id}", response_model=TeamResponse)
 async def get_team(team_id: str):
     """Get team details by team ID"""
@@ -311,15 +941,30 @@ async def join_team(team_id_or_code: str, current_user: dict = Depends(with_auth
         {"teamId": str(team["_id"])}
     )
 
+    # Fetch live platform settings
+    platform_settings = await db["settings"].find_one({"key": "global_config"}) or {}
+    platform_max = int(platform_settings.get("maxTeamSize", 4))
+    allow_team_changes = bool(platform_settings.get("allowTeamChanges", True))
+
+    if not allow_team_changes:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Team composition changes are currently locked by platform policy.",
+        )
+
     hackathon = None
     if ObjectId.is_valid(hackathon_id):
         hackathon = await db["hackathons"].find_one({"_id": ObjectId(hackathon_id)})
 
-    max_size = hackathon.get("maxTeamSize", 4) if hackathon else 4
+    hackathon_max = (
+        int(hackathon.get("maxTeamSize", platform_max)) if hackathon else platform_max
+    )
+    max_size = min(hackathon_max, platform_max)
 
     if current_members_count >= max_size:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Team is already full"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Team is already full (Maximum team size limit is {max_size} members based on platform policy).",
         )
 
     new_member = {
@@ -338,7 +983,7 @@ async def join_team(team_id_or_code: str, current_user: dict = Depends(with_auth
 async def assign_mentor(
     team_id: str, mentor_data: TeamMentorUpdate, current_user: dict = Depends(with_auth)
 ):
-    """Assign a mentor to a team (One mentor per team, Team Leader only)"""
+    """Assign or replace a mentor for a team."""
     db = get_db()
     teams_collection = db["teams"]
     user_id = current_user.get("id") or current_user.get("sub")
@@ -354,22 +999,24 @@ async def assign_mentor(
             status_code=status.HTTP_404_NOT_FOUND, detail="Team not found"
         )
 
-    # Check if team already has a mentor
-    if team.get("mentorId"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Team already has a mentor assigned",
+    is_admin = current_user.get("role") == "admin"
+    is_organizer_owner = False
+    if current_user.get("role") == "organizer" and ObjectId.is_valid(
+        team.get("hackathonId", "")
+    ):
+        hackathon = await db["hackathons"].find_one(
+            {"_id": ObjectId(team["hackathonId"])}
         )
+        is_organizer_owner = bool(hackathon and hackathon.get("organizerId") == user_id)
 
-    # Check if current user is the team leader
     members_collection = db["teamMembers"]
-    membership = await members_collection.find_one(
+    is_team_leader = await members_collection.find_one(
         {"teamId": team_id, "userId": user_id, "role": TeamMemberRole.LEADER.value}
     )
-    if not membership:
+    if not (is_admin or is_organizer_owner or is_team_leader):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only the team leader can assign a mentor",
+            detail="Only the organizer, admin, or team leader can assign a mentor",
         )
 
     # Verify the mentor exists
@@ -395,7 +1042,59 @@ async def assign_mentor(
         {"_id": ObjectId(team_id)}, {"$set": {"mentorId": mentor_user_id}}
     )
 
+    assignment_message = (
+        f"You have been assigned to mentor {team.get('teamName', 'a team')}."
+    )
+    await db["notifications"].insert_one(
+        {
+            "userId": mentor_user_id,
+            "hackathonId": team.get("hackathonId"),
+            "teamId": team_id,
+            "type": "mentor_assignment",
+            "message": assignment_message,
+            "read": False,
+            "createdAt": datetime.utcnow(),
+        }
+    )
+
     updated_team = await teams_collection.find_one({"_id": ObjectId(team_id)})
+    updated_team["_id"] = str(updated_team["_id"])
+    return TeamResponse(**updated_team)
+
+
+@router.delete("/{team_id}/mentor", response_model=TeamResponse)
+async def remove_mentor_assignment(
+    team_id: str, current_user: dict = Depends(RequireRole(["organizer", "admin"]))
+):
+    """Remove the assigned mentor from a team owned by the organizer."""
+    db = get_db()
+
+    if not ObjectId.is_valid(team_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid team ID format"
+        )
+
+    team = await db["teams"].find_one({"_id": ObjectId(team_id)})
+    if not team:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Team not found"
+        )
+
+    user_id = current_user.get("id") or current_user.get("sub")
+    if current_user.get("role") != "admin":
+        hackathon_id = team.get("hackathonId")
+        if not ObjectId.is_valid(hackathon_id):
+            raise HTTPException(status_code=400, detail="Invalid team hackathon id")
+        hackathon = await db["hackathons"].find_one({"_id": ObjectId(hackathon_id)})
+        if not hackathon or hackathon.get("organizerId") != user_id:
+            raise HTTPException(
+                status_code=403, detail="Not authorized to update this team"
+            )
+
+    await db["teams"].update_one(
+        {"_id": ObjectId(team_id)}, {"$unset": {"mentorId": ""}}
+    )
+    updated_team = await db["teams"].find_one({"_id": ObjectId(team_id)})
     updated_team["_id"] = str(updated_team["_id"])
     return TeamResponse(**updated_team)
 
@@ -418,6 +1117,14 @@ async def remove_team_member(
     if not team:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Team not found"
+        )
+
+    # Check platform settings for team composition changes policy
+    platform_settings = await db["settings"].find_one({"key": "global_config"}) or {}
+    if not bool(platform_settings.get("allowTeamChanges", True)):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Team composition changes are currently locked by platform policy.",
         )
 
     # 2. Verify current user is the team leader

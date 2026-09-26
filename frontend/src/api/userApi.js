@@ -10,39 +10,29 @@ export const setAuthToken = (token) => {
 
 export const register = async (userData) => {
     try {
-        console.log('Mocking Platform Registration for:', userData.email);
-        
-        // Simulating network delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        /* REAL API CALL
         const { data } = await apiClient.post('/auth/register', userData);
         return data;
-        */
-
-        return {
-            message: "User registered successfully (Mock)",
-            user: {
-                id: "mock_user_" + Math.random().toString(36).substr(2, 9),
-                name: userData.name || "Mock Student",
-                email: userData.email,
-                role: userData.role || "student"
-            }
-        };
     } catch (error) {
-        console.error('Registration failed:', error);
-        throw error;
+        const detail = error.response?.data?.detail || error.response?.data || error.message || 'Registration failed';
+        throw { detail };
     }
 };
 
 export const login = async (credentials) => {
-    const { data } = await apiClient.post('/auth/login', credentials);
-    if (data.token) {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        setAuthToken(data.token);
+    try {
+        const { data } = await apiClient.post('/auth/login', credentials);
+        const { token, user } = data;
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+        setAuthToken(token);
+        return data;
+    } catch (error) {
+        const detail = error.response?.data?.detail
+            || error.response?.data?.error?.message
+            || error.message
+            || 'Login failed. Please check your credentials.';
+        throw { detail };
     }
-    return data;
 };
 
 export const forgotPassword = async (payload) => {
@@ -79,3 +69,34 @@ export const logout = () => {
         console.error('Error clearing cache on logout:', error);
     }
 };
+
+export const fetchMyNotifications = async () => {
+    try {
+        const response = await apiClient.get('/auth/my-notifications');
+        return response.data;
+    } catch (error) {
+        try {
+            const response = await apiClient.get('/dashboard/my-notifications');
+            return response.data;
+        } catch (err) {
+            console.error("Error fetching notifications:", error);
+            return [];
+        }
+    }
+};
+
+export const markAllNotificationsRead = async () => {
+    try {
+        const response = await apiClient.put('/auth/my-notifications/read');
+        return response.data;
+    } catch (error) {
+        try {
+            const response = await apiClient.put('/dashboard/my-notifications/read');
+            return response.data;
+        } catch (err) {
+            console.error("Error marking notifications as read:", err);
+            throw err;
+        }
+    }
+};
+

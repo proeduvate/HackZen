@@ -1,7 +1,10 @@
 import React from 'react';
+import Logo from './Logo';
+import { usePlatformSettings } from '../context/PlatformSettingsContext';
 
 const Footer = () => {
     const currentYear = new Date().getFullYear();
+    const { platformName, supportEmail, supportPhone, website } = usePlatformSettings();
 
     const footerLinks = {
         platform: [
@@ -23,9 +26,9 @@ const Footer = () => {
             { name: 'GDPR', href: '#' },
         ],
         company: [
-            { name: 'About Us', href: 'https://www.proeduvate.in/#about' },
-            { name: 'Careers', href: 'https://www.proeduvate.in/careers' },
-            { name: 'Contact', href: 'https://www.proeduvate.in/#contact' },
+            { name: 'Official Website', href: website || 'https://proeduvate.com' },
+            { name: `Support: ${supportEmail || 'support@proeduvate.com'}`, href: `mailto:${supportEmail || 'support@proeduvate.com'}` },
+            { name: `Hotline: ${supportPhone || '+91 800 123 4567'}`, href: `tel:${supportPhone || '+91 800 123 4567'}` },
             { name: 'Partners', href: '#' },
         ],
     };
@@ -44,11 +47,7 @@ const Footer = () => {
                     {/* Logo and Description */}
                     <div className="lg:col-span-2">
                         <div className="flex items-center space-x-3 mb-4">
-                            <img
-                                src="/proeduvatee-removebg-preview.png"
-                                alt="ProEduvate Logo"
-                                className="h-16 w-auto"
-                            />
+                            <Logo size="lg" />
                         </div>
                         <p className="text-gray-400 mb-4 max-w-sm">
                             Empowering innovation through hackathons. Build, compete, and innovate with the best platform for organizers and participants.
@@ -127,7 +126,7 @@ const Footer = () => {
                 {/* Bottom Bar */}
                 <div className="border-t border-white/10 pt-8 flex justify-center">
                     <p className="text-gray-400 text-sm text-center">
-                        © {currentYear} ProEduvate. All rights reserved.
+                        © {currentYear} {platformName || 'ProEduvate'}. All rights reserved.
                     </p>
                 </div>
             </div>

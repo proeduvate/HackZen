@@ -4,32 +4,39 @@ import { fetchStudentProfile } from '../../services/student/profileApi';
 import { fetchMyCertificates } from '../../api/profileApi';
 
 const StudentProfile = () => {
-    const [user, setUser] = React.useState({
-        name: 'Hari Raajan G',
-        role: 'Top Performer',
-        subRole: 'student | Computer Science & Engineering',
-        stats: {
-            engagements: 124,
-            collaborations: 12,
-            performance: '99.9%'
-        },
-        competencies: [
-            { name: 'Full Stack Development', level: 'Advanced', value: 95 },
-            { name: 'AI & Machine Learning', level: 'Intermediate', value: 75 },
-            { name: 'Cloud Architecture', level: 'Expert', value: 90 },
-            { name: 'Agile Methodology', level: 'Advanced', value: 85 }
-        ],
-        recentActions: [
-            { id: 1, type: 'Project', title: 'Global AI Summit', detail: 'Final Prototype Submitted', time: '2 hours ago' },
-            { id: 2, type: 'Team', title: 'CyberGuard Alpha', detail: 'Integrated WebSocket Chat', time: '5 hours ago' },
-            { id: 3, type: 'Certification', title: 'Google Cloud Engineer', detail: 'Certificate Issued', time: '1 day ago' }
-        ],
-        links: {
-            github: 'github.com/hariraajan',
-            linkedin: 'linkedin.com/in/hariraajan'
-        },
-        initials: 'HG',
-        certificatesList: []
+    const storedUser = React.useMemo(() => {
+        try {
+            const raw = sessionStorage.getItem('user') || localStorage.getItem('user');
+            return raw ? JSON.parse(raw) : null;
+        } catch {
+            return null;
+        }
+    }, []);
+
+    const [user, setUser] = React.useState(() => {
+        const name = storedUser?.name || 'Student';
+        const initials = name.split(' ').map(n => n[0]).filter(Boolean).join('').toUpperCase() || 'ST';
+        return {
+            name: name,
+            role: 'Participant',
+            subRole: `student | ${storedUser?.college || storedUser?.collegeName || 'Student Member'}`,
+            stats: {
+                engagements: 0,
+                collaborations: 0,
+                performance: '100%'
+            },
+            competencies: [
+                { name: 'Full Stack Development', level: 'Intermediate', value: 75 },
+                { name: 'Problem Solving', level: 'Intermediate', value: 80 }
+            ],
+            recentActions: [],
+            links: {
+                github: storedUser?.github || '',
+                linkedin: storedUser?.linkedin || ''
+            },
+            initials: initials,
+            certificatesList: []
+        };
     });
 
     React.useEffect(() => {
@@ -41,36 +48,40 @@ const StudentProfile = () => {
                 ]);
 
                 if (profileData) {
-                    // Map skills to competencies with mock levels if not present
-                    const skills = profileData.skills || ['React', 'Python', 'Node.js'];
-                    const mappedCompetencies = skills.map(skill => {
-                        if (typeof skill === 'object') return skill;
-                        // Mocking levels based on skill name length for visual variety
-                        const levels = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
-                        const levelIdx = Math.min(skill.length % 4, 3);
+                    const skills = profileData.skills || ['Full Stack', 'Python', 'React'];
+                    const mappedCompetencies = skills.map((skill, idx) => {
+                        if (typeof skill === 'object' && skill.name) return skill;
+                        const skillName = typeof skill === 'string' ? skill : String(skill);
+                        const levels = ['Proficient', 'Advanced', 'Intermediate', 'Expert'];
+                        const level = levels[idx % levels.length];
+                        const value = 70 + ((idx % 4) * 8);
                         return {
-                            name: skill,
-                            level: levels[levelIdx],
-                            value: 40 + (levelIdx * 20)
+                            name: skillName,
+                            level: level,
+                            value: value
                         };
                     });
+
+                    const displayName = profileData.name || storedUser?.name || 'Student';
+                    const initials = displayName.split(' ').map(n => n[0]).filter(Boolean).join('').toUpperCase() || 'ST';
 
                     setUser(prev => ({
                         ...prev,
                         ...profileData,
-                        subRole: `student | ${profileData.collegeName || profileData.college || 'Chennai Institute of Technology'}`,
+                        name: displayName,
+                        subRole: `student | ${profileData.collegeName || profileData.college || storedUser?.college || 'Student Member'}`,
                         certificatesList: certsData || [],
                         competencies: mappedCompetencies,
                         stats: {
                             ...prev.stats,
                             collaborations: certsData?.length || 0,
-                            engagements: (profileData.stats?.hackathons || 0) * 5
+                            engagements: (profileData.stats?.hackathons || 1) * 3
                         },
                         links: {
-                            github: profileData.links?.github || 'github.com/hariraajan',
-                            linkedin: profileData.links?.portfolio || profileData.links?.linkedin || 'linkedin.com/in/hariraajan'
+                            github: profileData.links?.github || profileData.github || '',
+                            linkedin: profileData.links?.portfolio || profileData.links?.linkedin || profileData.linkedin || ''
                         },
-                        initials: (profileData.name || '').split(' ').map(n => n[0]).join('').toUpperCase() || 'HG'
+                        initials: initials
                     }));
                 }
             } catch (err) {
@@ -81,7 +92,7 @@ const StudentProfile = () => {
         fetchUserData();
         window.addEventListener('user-update', fetchUserData);
         return () => window.removeEventListener('user-update', fetchUserData);
-    }, []);
+    }, [storedUser]);
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-in fade-in duration-700">

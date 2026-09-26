@@ -20,6 +20,7 @@ class NotificationType(str, Enum):
 class NotificationBase(BaseModel):
     userId: str = Field(..., alias="userId")
     hackathonId: Optional[str] = Field(None, alias="hackathonId")
+    teamId: Optional[str] = Field(None, alias="teamId")
     type: str  # team_invite | mentor_assignment | milestone_check | etc
     message: str
     read: bool = False

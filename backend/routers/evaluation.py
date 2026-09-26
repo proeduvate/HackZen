@@ -15,6 +15,86 @@ def get_evaluation_collection():
     return get_db()["evaluations"]
 
 
+DEFAULT_CRITERIA = [
+    {
+        "id": "innovation",
+        "label": "Innovation & Originality",
+        "description": "Is the idea unique and novel?",
+        "weight": 10,
+        "minScore": 0,
+        "maxScore": 10,
+    },
+    {
+        "id": "technical",
+        "label": "Technical Implementation",
+        "description": "Code quality and complexity.",
+        "weight": 10,
+        "minScore": 0,
+        "maxScore": 10,
+    },
+    {
+        "id": "design",
+        "label": "Design & User Experience",
+        "description": "UI/UX and ease of use.",
+        "weight": 10,
+        "minScore": 0,
+        "maxScore": 10,
+    },
+    {
+        "id": "presentation",
+        "label": "Presentation Quality",
+        "description": "Clarity of the pitch/demo.",
+        "weight": 10,
+        "minScore": 0,
+        "maxScore": 10,
+    },
+    {
+        "id": "feasibility",
+        "label": "Business Feasibility",
+        "description": "Market potential and viability.",
+        "weight": 10,
+        "minScore": 0,
+        "maxScore": 10,
+    },
+]
+
+
+@router.get("/criteria")
+async def get_evaluation_criteria(current_user: dict = Depends(with_auth)):
+    """Get evaluation criteria saved by this organizer (defaults if never saved)."""
+    db = get_db()
+    user_id = current_user.get("id") or current_user.get("sub")
+    doc = await db["evaluationCriteria"].find_one({"organizerId": user_id})
+    if not doc:
+        return DEFAULT_CRITERIA
+    return doc.get("criteria", DEFAULT_CRITERIA)
+
+
+@router.put("/criteria")
+async def save_evaluation_criteria(
+    criteria: List[Dict[str, Any]] = Body(...),
+    current_user: dict = Depends(with_auth),
+):
+    """Upsert evaluation criteria for the current organizer."""
+    db = get_db()
+    user_id = current_user.get("id") or current_user.get("sub")
+    if not isinstance(criteria, list):
+        raise HTTPException(status_code=400, detail="Criteria must be a list")
+
+    await db["evaluationCriteria"].update_one(
+        {"organizerId": user_id},
+        {
+            "$set": {
+                "organizerId": user_id,
+                "criteria": criteria,
+                "updatedAt": datetime.utcnow(),
+            }
+        },
+        upsert=True,
+    )
+    return criteria
+
+
 @router.post(
     "/", response_model=EvaluationResponse, status_code=status.HTTP_201_CREATED
 )
@@ -25,9 +105,15 @@ async def create_evaluation(
     """Evaluate a project submission (Judges/Mentors/Admins only)"""
 
     collection = get_evaluation_collection()
+    user_id = current_user.get("id") or current_user.get("sub")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid user token",
+        )
 
     eval_dict = eval_data.model_dump(by_alias=True)
-    eval_dict["judgeId"] = current_user["sub"]
+    eval_dict["judgeId"] = user_id
     eval_dict["evaluatedAt"] = datetime.utcnow()
 
     # Calculate total score if logic exists, otherwise use provided
@@ -57,6 +143,12 @@ async def get_submission_evaluations(submission_id: str):
 async def get_leaderboard(hackathon_id: str):
     """Calculate and return leaderboard for a specific hackathon"""
     db = get_db()
+
+    # Check live platform settings for public leaderboard visibility
+    settings = await db["settings"].find_one({"key": "global_config"}) or {}
+    if not bool(settings.get("publicLeaderboard", True)):
+        return []
+
     eval_collection = db["evaluations"]
     teams_collection = db["teams"]
 

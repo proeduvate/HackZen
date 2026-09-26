@@ -10,10 +10,11 @@ import apiClient from '../../api/api';
  */
 export const fetchMyTeams = async () => {
     try {
-        const { data } = await apiClient.get('/teams/my');
+        const { data } = await apiClient.get('/teams/my-teams');
         return data.map((team, idx) => ({
             id: team._id,
             name: team.teamName,
+            teamCode: team.teamCode || null,
             hackathon: team.hackathonId || 'Active Hackathon',
             status: 'Active',
             lastMessage: 'Check workspace for updates',
@@ -81,11 +82,33 @@ export const fetchTeamWorkspace = async (teamId) => {
  */
 export const createTeam = async (teamData) => {
     try {
-        const { data } = await apiClient.post('/teams/', teamData);
-        return { success: true, team: data };
+        const payload = {
+            hackathonId: teamData.hackathonId || teamData.hackathon,
+            teamName: teamData.name || teamData.teamName
+        };
+        const { data } = await apiClient.post('/teams/', payload);
+        return {
+            success: true,
+            team: {
+                id: data._id,
+                name: data.teamName,
+                hackathon: data.hackathonId,
+                status: 'Active',
+                lastMessage: 'Team workspace created',
+                time: 'Just now',
+                unread: 0,
+                gradient: 'from-purple-600 to-indigo-600',
+                isOnline: true,
+                progress: 0,
+                members: 1,
+                domain: teamData.domain || 'Technology',
+                roleInTeam: 'Team Lead',
+                activity: []
+            }
+        };
     } catch (error) {
         console.error('Failed to create team:', error);
-        throw error;
+        throw new Error(error.response?.data?.detail || error.response?.data?.error?.message || 'Failed to create team');
     }
 };
 
@@ -141,15 +164,32 @@ export const fetchTeamsMeta = async () => {
             apiClient.get('/applications/my')
         ]);
 
+        const uniqueHackathonIds = [...new Set(appsRes.data.map(app => app.hackathonId).filter(Boolean))];
+        const hackathonResults = await Promise.allSettled(
+            uniqueHackathonIds.map(id => apiClient.get(`/hackathon/${id}`))
+        );
+        const hackathonMap = hackathonResults.reduce((map, result, index) => {
+            if (result.status === 'fulfilled') {
+                const hackathon = result.value.data;
+                map[uniqueHackathonIds[index]] = hackathon;
+            }
+            return map;
+        }, {});
+
         return {
-            alerts: inboxRes.data.filter(n => !n.isRead).map(n => ({ id: n._id, type: 'warning', message: n.title })),
-            registrations: appsRes.data.map(app => ({
-                id: app._id,
-                name: app.hackathonId,
+            alerts: inboxRes.data.filter(n => !n.read).map(n => ({ id: n._id, type: 'warning', message: n.message })),
+            registrations: appsRes.data.map(app => {
+                const hackathon = hackathonMap[app.hackathonId] || {};
+                return {
+                id: app.hackathonId,
+                applicationId: app._id,
+                name: hackathon.title || app.hackathonId,
                 date: new Date(app.appliedAt).toLocaleDateString(),
                 status: app.status,
-                color: 'text-blue-400'
-            }))
+                color: 'text-blue-400',
+                domain: hackathon.themes?.[0] || 'Technology'
+                };
+            })
         };
     } catch (error) {
         console.error('Failed to fetch teams meta:', error);
