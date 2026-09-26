@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { RocketIcon, UsersIcon, ZapIcon, BoxIcon, CertificateIcon, SirenIcon, AlarmIcon, TriangleAlertIcon, CheckIcon, MegaphoneIcon, RobotIcon } from '../../components/AdminIcons';
 import { useNavigate } from 'react-router-dom';
 import { fetchDashboardData, sendPlatformAnnouncement, runSecurityAudit } from '../../services/admin/dashboardApi';
-import { useTheme } from '../../context/ThemeContext';
 
 // --- Animated Counter Value Component ---
 const StatValue = ({ value, duration = 1000 }) => {
@@ -25,7 +24,7 @@ const StatValue = ({ value, duration = 1000 }) => {
 };
 
 // --- Announcement Modal Component ---
-const AnnouncementModal = ({ isOpen, onClose, onSubmit, isSubmitting, isLightTheme }) => {
+const AnnouncementModal = ({ isOpen, onClose, onSubmit, isSubmitting }) => {
     const [formData, setFormData] = useState({
         title: '',
         message: '',
@@ -42,40 +41,38 @@ const AnnouncementModal = ({ isOpen, onClose, onSubmit, isSubmitting, isLightThe
     };
 
     return (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-
-            <div className={`border rounded-2xl p-6 w-full max-w-lg shadow-2xl relative ${isLightTheme ? 'bg-white border-[#dfe1e6] text-[#172b4d]' : 'bg-navy-900 border-white/10 text-white'}`}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200 relative">
                 <button 
                     onClick={onClose} 
-                    className={`absolute top-4 right-4 p-1 rounded-lg transition-colors ${isLightTheme ? 'text-gray-400 hover:text-black' : 'text-gray-400 hover:text-white'}`}
+                    className="absolute top-5 right-5 p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors cursor-pointer"
                     aria-label="Close modal"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"/>
                         <line x1="6" y1="6" x2="18" y2="18"/>
                     </svg>
                 </button>
                 
-                <div className={`flex items-center gap-2 mb-4 border-b pb-3 ${isLightTheme ? 'border-[#dfe1e6]' : 'border-white/10'}`}>
-                    <div className="p-2 rounded-xl bg-sky-50 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-500/30 flex items-center justify-center shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="m3 11 18-5v12L3 14v-3z"/>
-                            <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>
-                        </svg>
+                <div className="flex items-center gap-3 border-b border-slate-100 dark:border-white/10 pb-4">
+                    <div className="w-10 h-10 rounded-full bg-sky-50 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
+                        <MegaphoneIcon className="w-5 h-5 text-sky-600 dark:text-sky-400" />
                     </div>
-                    <h2 className={`text-xl font-bold uppercase tracking-wider ${isLightTheme ? 'text-[#172b4d]' : 'text-white'}`}>Send Platform Announcement</h2>
+                    <div>
+                        <h2 className="text-lg font-bold text-slate-900 dark:text-white">Send Platform Announcement</h2>
+                        <p className="text-xs text-slate-500 dark:text-gray-400">Broadcast updates to platform participants</p>
+                    </div>
                 </div>
-
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className={`text-[10px] font-bold uppercase tracking-wider mb-1 block ${isLightTheme ? 'text-[#737685]' : 'text-gray-400'}`}>
+                        <label className="text-xs font-bold text-slate-700 dark:text-gray-300 uppercase tracking-wider mb-1.5 block">
                             Target Audience
                         </label>
                         <select 
                             value={formData.audience}
                             onChange={(e) => setFormData({ ...formData, audience: e.target.value })}
-                            className={`w-full rounded-lg px-3 py-2.5 text-xs focus:outline-none focus:border-amber-500 ${isLightTheme ? 'bg-white border-[#dfe1e6] text-[#172b4d]' : 'bg-black/30 border-white/10 text-white'}`}
+                            className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 transition-colors"
                         >
                             <option value="all">All Platform Users</option>
                             <option value="students">Students Only</option>
@@ -85,7 +82,7 @@ const AnnouncementModal = ({ isOpen, onClose, onSubmit, isSubmitting, isLightThe
                     </div>
 
                     <div>
-                        <label className={`text-[10px] font-bold uppercase tracking-wider mb-1 block ${isLightTheme ? 'text-[#737685]' : 'text-gray-400'}`}>
+                        <label className="text-xs font-bold text-slate-700 dark:text-gray-300 uppercase tracking-wider mb-1.5 block">
                             Announcement Title
                         </label>
                         <input 
@@ -94,12 +91,12 @@ const AnnouncementModal = ({ isOpen, onClose, onSubmit, isSubmitting, isLightThe
                             placeholder="e.g., Scheduled Platform Maintenance"
                             value={formData.title}
                             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                            className={`w-full rounded-lg px-3 py-2.5 text-xs focus:outline-none focus:border-amber-500 ${isLightTheme ? 'bg-white border-[#dfe1e6] text-[#172b4d]' : 'bg-black/30 border-white/10 text-white'}`}
+                            className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 transition-colors"
                         />
                     </div>
 
                     <div>
-                        <label className={`text-[10px] font-bold uppercase tracking-wider mb-1 block ${isLightTheme ? 'text-[#737685]' : 'text-gray-400'}`}>
+                        <label className="text-xs font-bold text-slate-700 dark:text-gray-300 uppercase tracking-wider mb-1.5 block">
                             Message Payload
                         </label>
                         <textarea 
@@ -108,22 +105,22 @@ const AnnouncementModal = ({ isOpen, onClose, onSubmit, isSubmitting, isLightThe
                             placeholder="Provide clear instructions or update details for recipients..."
                             value={formData.message}
                             onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                            className={`w-full rounded-lg px-3 py-2.5 text-xs focus:outline-none focus:border-amber-500 resize-none ${isLightTheme ? 'bg-white border-[#dfe1e6] text-[#172b4d]' : 'bg-black/30 border-white/10 text-white'}`}
+                            className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 transition-colors resize-none"
                         ></textarea>
                     </div>
 
-                    <div className={`flex justify-end gap-3 pt-3 border-t ${isLightTheme ? 'border-[#dfe1e6]' : 'border-white/10'}`}>
+                    <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-white/10">
                         <button 
                             type="button" 
                             onClick={onClose} 
-                            className={`px-4 py-2 text-xs font-bold transition-colors ${isLightTheme ? 'text-gray-500 hover:text-black' : 'text-gray-400 hover:text-white'}`}
+                            className="px-4 py-2.5 rounded-xl bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-gray-200 border border-slate-200 dark:border-white/10 text-xs font-bold shadow-sm transition-all cursor-pointer"
                         >
                             Cancel
                         </button>
                         <button 
                             type="submit" 
                             disabled={isSubmitting}
-                            className={`px-6 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-lg transition-colors shadow-lg shadow-amber-900/20 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold shadow-md shadow-sky-500/30 transition-all active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isSubmitting ? 'Dispatching...' : 'Broadcast Announcement'}
                         </button>
@@ -136,8 +133,6 @@ const AnnouncementModal = ({ isOpen, onClose, onSubmit, isSubmitting, isLightThe
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
-    const { theme: globalTheme } = useTheme();
-    const isLightTheme = globalTheme === 'light';
     
     const [isLoading, setIsLoading] = useState(true);
     const [dateRange, setDateRange] = useState('Last 30 Days');
@@ -190,31 +185,13 @@ const AdminDashboard = () => {
     const handleRunAudit = async () => {
         setToastMessage("⚡ Executing protocol security audit scan...");
         try {
-            const res = await runSecurityAudit();
+            await runSecurityAudit();
             setToastMessage("✓ Security Audit Scan Completed: All protocols synchronized.");
             setTimeout(() => setToastMessage(null), 4000);
         } catch (e) {
             setToastMessage("✓ Security Audit Scan Completed.");
             setTimeout(() => setToastMessage(null), 4000);
         }
-    };
-
-    // Theme tokens
-    const theme = {
-        cardBg: isLightTheme 
-            ? 'bg-white border border-slate-200/80 shadow-sm text-slate-700 transition-all hover:border-sky-300 rounded-2xl' 
-            : 'glass-strong border-white/5 bg-navy-900/40 text-white shadow-xl rounded-2xl',
-        cardHeader: isLightTheme 
-            ? 'border-b border-slate-100 bg-slate-50/60 text-slate-700 font-bold' 
-            : 'border-b border-white/5 bg-white/[0.02] text-white',
-        headingText: isLightTheme ? 'text-slate-800 font-extrabold' : 'text-white font-bold',
-        subText: isLightTheme ? 'text-slate-500 font-normal' : 'text-gray-400 font-normal',
-        mutedText: isLightTheme ? 'text-slate-400 font-semibold' : 'text-gray-400 font-semibold',
-        innerBg: isLightTheme ? 'bg-slate-50/70 border border-slate-200/60 text-slate-700 rounded-2xl' : 'bg-black/20 border border-white/5 text-white rounded-2xl',
-        hoverRow: isLightTheme ? 'hover:bg-sky-50/70' : 'hover:bg-white/5',
-        inputBg: isLightTheme ? 'bg-white border border-slate-200 text-slate-700 focus:border-sky-500 rounded-2xl' : 'bg-black/30 border border-white/10 text-white rounded-2xl',
-        quickBtn: isLightTheme ? 'bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 hover:border-sky-500 hover:text-sky-500 rounded-2xl shadow-sm' : 'bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-2xl',
-        aiBanner: isLightTheme ? 'border border-sky-200 bg-gradient-to-r from-sky-50/80 via-slate-50 to-indigo-50/50 text-slate-800 shadow-sm rounded-2xl' : 'border border-sky-500/30 bg-gradient-to-r from-sky-900/20 to-navy-900/40 text-white rounded-2xl'
     };
 
     // Derived Action Center items strictly from live DB
@@ -234,7 +211,7 @@ const AdminDashboard = () => {
             }));
         }
         return [];
-    }, [dashboardData, isLightTheme]);
+    }, [dashboardData]);
 
     // Derived Exceptions items with exact intended destinations strictly from live DB
     const exceptionItems = useMemo(() => {
@@ -243,7 +220,7 @@ const AdminDashboard = () => {
                 const text = (typeof ex === 'string' ? ex : ex.text || '').toLowerCase();
                 let link = '/admin/users';
                 let category = 'System';
-                let badgeColor = 'text-slate-600 bg-slate-500/10 border-slate-500/20';
+                let badgeColor = 'text-slate-600 dark:text-gray-400 bg-slate-500/10 border-slate-500/20';
 
                 if (text.includes('mentor') || text.includes('unassigned team')) {
                     link = '/admin/users?role=Mentor&filter=unassigned';
@@ -272,7 +249,7 @@ const AdminDashboard = () => {
             });
         }
         return [];
-    }, [dashboardData, isLightTheme]);
+    }, [dashboardData]);
 
     // Helper for Activity link destination
     const getActivityLink = (act) => {
@@ -323,33 +300,34 @@ const AdminDashboard = () => {
         });
     }, [allCombinedActivities, activityFilter]);
 
-
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-16 transition-colors duration-300 relative">
+        <div className="space-y-7 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-16 max-w-7xl mx-auto">
             
-            {/* Toast Notification Popup */}
+            {/* Notification Toast */}
             {toastMessage && (
-                <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top-4 fade-in duration-300">
-                    <div className="bg-sky-600/95 backdrop-blur-md border border-sky-400/50 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 font-bold text-sm shadow-sky-900/20">
-                        <MegaphoneIcon className="w-5 h-5 text-white" />
-                        {toastMessage}
-                    </div>
+                <div className="fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 border backdrop-blur-md transition-all duration-300 animate-in slide-in-from-bottom-5 bg-sky-950/90 border-sky-500/30 text-sky-200">
+                    <MegaphoneIcon className="w-4 h-4 text-sky-400" />
+                    <span className="text-sm font-medium">{toastMessage}</span>
                 </div>
             )}
 
             {/* 1. HEADER & DATE RANGE SELECTOR */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className={`text-3xl font-extrabold tracking-tight ${theme.headingText}`}>Admin Operational Command Center</h1>
-                    <p className={`mt-1 text-sm font-medium ${theme.subText}`}>Real-time governance, exception monitoring, and system metrics.</p>
+                    <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                        Admin Operational Command Center
+                    </h1>
+                    <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
+                        Real-time governance, exception monitoring, and system metrics.
+                    </p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <span className={`text-xs font-bold uppercase tracking-wider ${theme.mutedText}`}>Date Range:</span>
+                    <span className="text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider">Date Range:</span>
                     <div className="relative inline-flex items-center">
                         <select 
                             value={dateRange}
                             onChange={(e) => setDateRange(e.target.value)}
-                            className={`appearance-none pr-9 pl-4 py-2 rounded-full border border-slate-200 dark:border-white/10 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold cursor-pointer transition-all ${theme.inputBg}`}
+                            className="w-full bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-xl pr-9 pl-4 py-2 text-xs font-bold text-slate-700 dark:text-white focus:outline-none focus:border-sky-500 transition-colors appearance-none cursor-pointer shadow-sm"
                         >
                             <option>Today</option>
                             <option>Yesterday</option>
@@ -359,7 +337,7 @@ const AdminDashboard = () => {
                             <option>All Time</option>
                         </select>
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center">
-                            <svg className="w-3.5 h-3.5 text-slate-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-3.5 h-3.5 text-slate-400 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="m6 9 6 6 6-6" />
                             </svg>
                         </div>
@@ -368,27 +346,42 @@ const AdminDashboard = () => {
             </div>
 
             {/* 2. DYNAMIC QUICK ACTIONS BAR */}
-            <div className={`p-3.5 rounded-2xl border flex flex-nowrap md:flex-wrap overflow-x-auto scrollbar-hide gap-2.5 items-center ${theme.cardBg}`}>
-                <span className={`text-[10px] font-black uppercase tracking-widest mr-1 shrink-0 whitespace-nowrap ${theme.mutedText}`}>Quick Actions:</span>
+            <div className="p-4 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm flex flex-nowrap md:flex-wrap overflow-x-auto scrollbar-hide gap-2.5 items-center">
+                <span className="text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider mr-1 shrink-0 whitespace-nowrap">Quick Actions:</span>
                 
-                <button onClick={() => navigate('/admin/organizer-approvals')} className="px-3 py-1.5 bg-sky-50 dark:bg-emerald-500/10 border border-sky-200 dark:border-emerald-500/20 text-sky-600 dark:text-emerald-400 rounded-2xl text-[11px] font-bold transition-all hover:bg-sky-100 flex items-center gap-1.5 shrink-0 shadow-sm">
-                    <CheckIcon className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> Approve Organizers ({dashboardData?.quickActionCounts?.organizerApprovals ?? 0})
+                <button 
+                    onClick={() => navigate('/admin/organizer-approvals')} 
+                    className="px-3.5 py-2 bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/20 text-sky-700 dark:text-sky-300 rounded-xl text-xs font-bold transition-all hover:bg-sky-100 dark:hover:bg-sky-500/20 flex items-center gap-1.5 shrink-0 shadow-sm cursor-pointer active:scale-95"
+                >
+                    <CheckIcon className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" /> Approve Organizers ({dashboardData?.quickActionCounts?.organizerApprovals ?? 0})
                 </button>
-                <button onClick={() => navigate('/admin/users?role=MENTOR&filter=pending_mentors')} className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded-2xl text-[11px] font-bold transition-all hover:bg-emerald-100 flex items-center gap-1.5 shrink-0 shadow-sm">
+                <button 
+                    onClick={() => navigate('/admin/users?role=MENTOR&filter=pending_mentors')} 
+                    className="px-3.5 py-2 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded-xl text-xs font-bold transition-all hover:bg-emerald-100 dark:hover:bg-emerald-500/20 flex items-center gap-1.5 shrink-0 shadow-sm cursor-pointer active:scale-95"
+                >
                     <CheckIcon className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> Approve Mentors ({dashboardData?.quickActionCounts?.mentorApprovals ?? 0})
                 </button>
-                <button onClick={() => navigate('/admin/submissions?filter=pending')} className="px-3 py-1.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/20 text-amber-800 dark:text-amber-500 rounded-2xl text-[11px] font-bold transition-all hover:bg-amber-100 flex items-center gap-1.5 shrink-0 shadow-sm">
-                    <TriangleAlertIcon className="w-3.5 h-3.5 text-amber-600 dark:text-amber-500" /> Submissions ({dashboardData?.quickActionCounts?.pendingSubmissions ?? 0})
+                <button 
+                    onClick={() => navigate('/admin/submissions?filter=pending')} 
+                    className="px-3.5 py-2 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-700 dark:text-amber-400 rounded-xl text-xs font-bold transition-all hover:bg-amber-100 dark:hover:bg-amber-500/20 flex items-center gap-1.5 shrink-0 shadow-sm cursor-pointer active:scale-95"
+                >
+                    <TriangleAlertIcon className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" /> Submissions ({dashboardData?.quickActionCounts?.pendingSubmissions ?? 0})
                 </button>
-                <button onClick={() => navigate('/admin/disputes')} className="px-3 py-1.5 bg-rose-50 dark:bg-red-500/10 border border-rose-300 dark:border-red-500/20 text-rose-700 dark:text-red-500 rounded-2xl text-[11px] font-bold transition-all hover:bg-rose-100 flex items-center gap-1.5 shrink-0 shadow-sm">
-                    <SirenIcon className="w-3.5 h-3.5 text-rose-600 dark:text-red-500" /> Disputes ({dashboardData?.quickActionCounts?.pendingDisputes ?? 0})
+                <button 
+                    onClick={() => navigate('/admin/disputes')} 
+                    className="px-3.5 py-2 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-400 rounded-xl text-xs font-bold transition-all hover:bg-rose-100 dark:hover:bg-rose-500/20 flex items-center gap-1.5 shrink-0 shadow-sm cursor-pointer active:scale-95"
+                >
+                    <SirenIcon className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" /> Disputes ({dashboardData?.quickActionCounts?.pendingDisputes ?? 0})
                 </button>
-                <button onClick={() => navigate('/admin/certificates?filter=pending')} className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-700 dark:text-indigo-400 rounded-2xl text-[11px] font-bold transition-all hover:bg-indigo-100 flex items-center gap-1.5 shrink-0 shadow-sm">
-                    <CertificateIcon className="w-3.5 h-3.5" /> Certificates ({dashboardData?.quickActionCounts?.certificateRequests ?? 0})
+                <button 
+                    onClick={() => navigate('/admin/certificates?filter=pending')} 
+                    className="px-3.5 py-2 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-700 dark:text-indigo-400 rounded-xl text-xs font-bold transition-all hover:bg-indigo-100 dark:hover:bg-indigo-500/20 flex items-center gap-1.5 shrink-0 shadow-sm cursor-pointer active:scale-95"
+                >
+                    <CertificateIcon className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" /> Certificates ({dashboardData?.quickActionCounts?.certificateRequests ?? 0})
                 </button>
                 <button 
                     onClick={() => setIsAnnouncementOpen(true)} 
-                    className="px-3 py-1.5 bg-orange-50 dark:bg-amber-500/10 border border-orange-200 dark:border-amber-500/20 text-orange-700 dark:text-amber-500 rounded-lg text-[11px] font-bold transition-all hover:bg-orange-100 flex items-center gap-1.5 shrink-0 shadow-sm"
+                    className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 shadow-md shadow-sky-500/30 cursor-pointer active:scale-95 ml-auto"
                 >
                     <MegaphoneIcon className="w-3.5 h-3.5" /> Broadcast Announcement
                 </button>
@@ -400,72 +393,82 @@ const AdminDashboard = () => {
                 onClose={() => setIsAnnouncementOpen(false)}
                 onSubmit={handleBroadcastSubmit}
                 isSubmitting={isSubmitting}
-                isLightTheme={isLightTheme}
             />
 
-            {/* 3. CORE KPI GRID (100% Real-Time Database State) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-5 pt-1">
+            {/* 3. CORE KPI GRID (Organizer Style with Sky Accents) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
                 {[
-                    { title: 'Active Hackathons', value: dashboardData?.stats?.[0]?.value ?? 0, trend: dashboardData?.stats?.[0]?.change || 'Live Events', icon: <RocketIcon className="w-4 h-4 text-sky-500" />, badge: `${dashboardData?.stats?.[0]?.value ?? 0} Live`, link: '/admin/hackathon-approvals?filter=active' },
-                    { title: 'Total Users', value: dashboardData?.stats?.[1]?.value ?? 0, trend: dashboardData?.stats?.[1]?.change || 'Verified Accounts', icon: <UsersIcon className="w-4 h-4 text-sky-500" />, badge: `${dashboardData?.stats?.[1]?.value ?? 0} Active`, link: '/admin/users' },
-                    { title: 'Active Teams', value: dashboardData?.stats?.[2]?.value ?? 0, trend: dashboardData?.stats?.[2]?.change || 'Formed Squads', icon: <ZapIcon className="w-4 h-4 text-sky-500" />, badge: `${dashboardData?.stats?.[2]?.value ?? 0} Formed`, link: '/admin/users?role=Student' },
-                    { title: 'Submissions', value: dashboardData?.stats?.[3]?.value ?? 0, trend: dashboardData?.stats?.[3]?.change || 'Project Repos', icon: <BoxIcon className="w-4 h-4 text-sky-500" />, badge: `${dashboardData?.stats?.[3]?.value ?? 0} Total`, link: '/admin/submissions?filter=all' },
-                    { title: 'Certificates', value: dashboardData?.stats?.[4]?.value ?? 0, trend: dashboardData?.stats?.[4]?.change || 'Issued Ledger', icon: <CertificateIcon className="w-4 h-4 text-sky-500" />, badge: `${dashboardData?.stats?.[4]?.value ?? 0} Issued`, link: '/admin/certificates?filter=issued' },
+                    { title: 'Active Hackathons', value: dashboardData?.stats?.[0]?.value ?? 0, trend: dashboardData?.stats?.[0]?.change || 'Live Events', icon: <RocketIcon className="w-5 h-5 text-sky-600 dark:text-sky-400" />, badge: `${dashboardData?.stats?.[0]?.value ?? 0} Live`, link: '/admin/hackathon-approvals?filter=active' },
+                    { title: 'Total Users', value: dashboardData?.stats?.[1]?.value ?? 0, trend: dashboardData?.stats?.[1]?.change || 'Verified Accounts', icon: <UsersIcon className="w-5 h-5 text-sky-600 dark:text-sky-400" />, badge: `${dashboardData?.stats?.[1]?.value ?? 0} Active`, link: '/admin/users' },
+                    { title: 'Active Teams', value: dashboardData?.stats?.[2]?.value ?? 0, trend: dashboardData?.stats?.[2]?.change || 'Formed Squads', icon: <ZapIcon className="w-5 h-5 text-sky-600 dark:text-sky-400" />, badge: `${dashboardData?.stats?.[2]?.value ?? 0} Formed`, link: '/admin/users?role=Student' },
+                    { title: 'Submissions', value: dashboardData?.stats?.[3]?.value ?? 0, trend: dashboardData?.stats?.[3]?.change || 'Project Repos', icon: <BoxIcon className="w-5 h-5 text-sky-600 dark:text-sky-400" />, badge: `${dashboardData?.stats?.[3]?.value ?? 0} Total`, link: '/admin/submissions?filter=all' },
+                    { title: 'Certificates', value: dashboardData?.stats?.[4]?.value ?? 0, trend: dashboardData?.stats?.[4]?.change || 'Issued Ledger', icon: <CertificateIcon className="w-5 h-5 text-sky-600 dark:text-sky-400" />, badge: `${dashboardData?.stats?.[4]?.value ?? 0} Issued`, link: '/admin/certificates?filter=issued' },
                 ].map((kpi, idx) => (
-                    <div key={idx} onClick={() => navigate(kpi.link)} className="adamgiebl-card group cursor-pointer transition-all hover:-translate-y-1">
-                        {/* Top Header: Title Left, Icon Right */}
-                        <div className="flex items-center justify-between gap-2">
-                            <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 truncate">{kpi.title}</h3>
-                            <div className="w-8 h-8 rounded-xl bg-sky-500/10 dark:bg-white/10 border border-sky-500/20 dark:border-white/10 flex items-center justify-center text-sm shadow-sm shrink-0">
+                    <div 
+                        key={idx} 
+                        onClick={() => navigate(kpi.link)} 
+                        className="p-5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group cursor-pointer"
+                    >
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider truncate">
+                                {kpi.title}
+                            </span>
+                            <div className="w-10 h-10 rounded-full bg-sky-50 dark:bg-sky-500/20 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
                                 {kpi.icon}
                             </div>
                         </div>
 
-                        {/* Middle Stat Row: Big Bold Value + Small Decreased Trend Right Next To It */}
-                        <div className="my-2.5 flex items-baseline gap-2">
+                        <div className="mt-3">
                             {isLoading ? (
-                                <div className="h-8 w-16 bg-slate-200 dark:bg-white/10 rounded animate-pulse"></div>
+                                <div className="h-8 w-20 bg-slate-100 dark:bg-white/10 rounded animate-pulse"></div>
                             ) : (
-                                <>
-                                    <p className="text-4xl font-black tracking-tight text-slate-900 dark:text-white">
-                                        <StatValue value={kpi.value} />
-                                    </p>
-                                    <span className="text-xs font-extrabold text-slate-600 dark:text-slate-300 whitespace-nowrap truncate">{kpi.trend}</span>
-                                </>
+                                <div className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                                    <StatValue value={kpi.value} />
+                                </div>
                             )}
+                            <p className="text-xs font-semibold text-slate-500 dark:text-gray-400 mt-1 truncate">
+                                {kpi.trend}
+                            </p>
                         </div>
 
-                        {/* Bottom Row: Badge at Bottom + Arrow Indicator */}
-                        <div className="pt-2 border-t border-slate-200/60 dark:border-white/10 flex items-center justify-between">
-                            <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-sky-500/10 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-500/20">
+                        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-100 dark:border-sky-500/30">
                                 {kpi.badge}
                             </span>
-                            <span className="text-xs font-black group-hover:translate-x-1 transition-transform text-slate-600 dark:text-slate-300">→</span>
+                            <span className="text-xs font-bold text-slate-400 dark:text-gray-400 group-hover:translate-x-0.5 group-hover:text-sky-500 transition-all">→</span>
                         </div>
                     </div>
                 ))}
             </div>
 
-            {/* 4. 🔥 PRIORITY 1: COMMAND CENTER (ACTION CENTER + DEADLINES + EXCEPTION MONITOR) */}
+            {/* 4. COMMAND CENTER (ACTION CENTER + DEADLINES + EXCEPTION MONITOR) */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
                 {/* Action Center */}
-                <div className="absolutestrange-card">
-                    <div className="flex justify-between items-center pb-3 border-b border-slate-200/60 dark:border-white/10 mb-2">
+                <div className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm p-5 sm:p-6 flex flex-col">
+                    <div className="flex justify-between items-center pb-3.5 border-b border-slate-100 dark:border-white/5 mb-3">
                         <div className="flex items-center gap-2">
-                            <SirenIcon className="w-4 h-4 text-rose-500" />
-                            <h2 className="text-xs font-black uppercase tracking-wider">Action Center</h2>
+                            <div className="w-8 h-8 rounded-full bg-rose-50 dark:bg-rose-500/20 flex items-center justify-center shrink-0">
+                                <SirenIcon className="w-4 h-4 text-rose-500" />
+                            </div>
+                            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">Action Center</h2>
                         </div>
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-sky-500/10 text-sky-500 dark:text-sky-400 border border-sky-500/20">{actionCenterItems.length} items</span>
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-500/30">
+                            {actionCenterItems.length} items
+                        </span>
                     </div>
-                    <div className="space-y-1 flex-1">
+                    <div className="space-y-1.5 flex-1">
                         {actionCenterItems.map((act, i) => (
-                            <div key={i} className={`flex items-center justify-between p-2.5 rounded-xl transition-colors group cursor-pointer ${theme.hoverRow}`} onClick={() => navigate(act.link)}>
-                                <div className="flex items-center gap-2.5">
-                                    <span className="text-xs">{act.icon}</span>
-                                    <span className="text-xs font-semibold opacity-90">{act.text}</span>
+                            <div 
+                                key={i} 
+                                className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors group cursor-pointer" 
+                                onClick={() => navigate(act.link)}
+                            >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                    <span className="text-sm shrink-0">{act.icon}</span>
+                                    <span className="text-xs font-semibold text-slate-700 dark:text-gray-200 truncate">{act.text}</span>
                                 </div>
-                                <button className="text-[10px] font-extrabold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-sky-500 dark:text-sky-400">
+                                <button className="text-[10px] font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-sky-600 dark:text-sky-400 shrink-0">
                                     {act.btn} →
                                 </button>
                             </div>
@@ -474,26 +477,28 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Upcoming Deadlines */}
-                <div className="absolutestrange-card">
-                    <div className="flex justify-between items-center pb-3 border-b border-slate-200/60 dark:border-white/10 mb-3">
+                <div className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm p-5 sm:p-6 flex flex-col">
+                    <div className="flex justify-between items-center pb-3.5 border-b border-slate-100 dark:border-white/5 mb-3">
                         <div className="flex items-center gap-2">
-                            <AlarmIcon className="w-4 h-4 text-amber-500" />
-                            <h2 className="text-xs font-black uppercase tracking-wider">Upcoming Deadlines</h2>
+                            <div className="w-8 h-8 rounded-full bg-amber-50 dark:bg-amber-500/20 flex items-center justify-center shrink-0">
+                                <AlarmIcon className="w-4 h-4 text-amber-500" />
+                            </div>
+                            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">Upcoming Deadlines</h2>
                         </div>
                     </div>
-                    <div className="space-y-3.5 flex-1">
+                    <div className="space-y-3 flex-1">
                         {deadlineItems.map((dl, i) => (
                             <div 
                                 key={i} 
                                 onClick={() => navigate(dl.link || '/admin/hackathon-approvals?filter=active')}
-                                className="relative pl-4 before:absolute before:left-0 before:top-1 before:bottom-[-14px] before:w-0.5 last:before:hidden before:bg-amber-500/30 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-1.5 rounded-xl transition-all"
+                                className="relative pl-4 before:absolute before:left-0 before:top-1 before:bottom-[-14px] before:w-0.5 last:before:hidden before:bg-amber-500/30 cursor-pointer hover:bg-slate-50/80 dark:hover:bg-white/[0.02] p-2 rounded-xl transition-all"
                             >
-                                <div className={`absolute left-[-3px] top-1.5 w-2 h-2 rounded-full ${dl.dot}`}></div>
-                                <h4 className={`text-[10px] font-black uppercase tracking-wider mb-0.5 ${dl.color}`}>{dl.time}</h4>
-                                <p className="text-xs font-bold">{dl.title}</p>
-                                <div className="flex justify-between items-center mt-0.5">
-                                    <span className="text-[11px] opacity-70">{dl.desc}</span>
-                                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">{dl.remaining}</span>
+                                <div className={`absolute left-[-3px] top-2 w-2 h-2 rounded-full ${dl.dot}`}></div>
+                                <h4 className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${dl.color}`}>{dl.time}</h4>
+                                <p className="text-xs font-bold text-slate-800 dark:text-white">{dl.title}</p>
+                                <div className="flex justify-between items-center mt-1">
+                                    <span className="text-[11px] text-slate-500 dark:text-gray-400">{dl.desc}</span>
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">{dl.remaining}</span>
                                 </div>
                             </div>
                         ))}
@@ -501,26 +506,30 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Exception Monitor */}
-                <div className="absolutestrange-card">
-                    <div className="flex justify-between items-center pb-3 border-b border-rose-500/20 mb-2">
+                <div className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm p-5 sm:p-6 flex flex-col">
+                    <div className="flex justify-between items-center pb-3.5 border-b border-rose-500/20 mb-3">
                         <div className="flex items-center gap-2">
-                            <TriangleAlertIcon className="w-4 h-4 text-rose-600 dark:text-rose-400" />
-                            <h2 className="text-xs font-black text-rose-600 dark:text-rose-400 uppercase tracking-wider">Platform Exception Monitor</h2>
+                            <div className="w-8 h-8 rounded-full bg-rose-50 dark:bg-rose-500/20 flex items-center justify-center shrink-0">
+                                <TriangleAlertIcon className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                            </div>
+                            <h2 className="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider">Platform Exception Monitor</h2>
                         </div>
-                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">{exceptionItems.length} Issues</span>
+                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                            {exceptionItems.length} Issues
+                        </span>
                     </div>
                     <div className="space-y-1.5 flex-1">
                         {exceptionItems.map((ex, i) => (
                             <div 
                                 key={i} 
                                 onClick={() => navigate(ex.link || '/admin/users')}
-                                className={`flex items-center justify-between gap-2.5 p-2.5 rounded-xl transition-all cursor-pointer group ${theme.hoverRow}`}
+                                className="flex items-center justify-between gap-2.5 p-2.5 rounded-xl hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors cursor-pointer group"
                             >
                                 <div className="flex items-center gap-2 min-w-0">
-                                    <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider shrink-0 border ${ex.badgeColor || 'text-slate-600 bg-slate-500/10 border-slate-500/20'}`}>
+                                    <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider shrink-0 border ${ex.badgeColor}`}>
                                         {ex.category || 'System'}
                                     </span>
-                                    <span className="text-xs font-semibold leading-tight opacity-90 truncate">{ex.text}</span>
+                                    <span className="text-xs font-semibold text-slate-700 dark:text-gray-200 truncate">{ex.text}</span>
                                 </div>
                                 <span className="text-xs font-bold text-rose-500 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
                             </div>
@@ -529,14 +538,14 @@ const AdminDashboard = () => {
                 </div>
             </div>
 
-            {/* 5. 🔥 PRIORITY 2: HEALTH & FUNNEL INTELLIGENCE */}
+            {/* 5. HEALTH & FUNNEL INTELLIGENCE */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
                 {/* Participation Funnel */}
-                <div className="absolutestrange-card">
-                    <div className="flex justify-between items-center mb-3">
-                        <h2 className="text-xs font-black uppercase tracking-wider opacity-80">Participation Funnel</h2>
-                        <span className="text-[10px] font-bold text-sky-500 dark:text-sky-400">All Active Events</span>
+                <div className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm p-5 sm:p-6">
+                    <div className="flex justify-between items-center pb-3.5 border-b border-slate-100 dark:border-white/5 mb-4">
+                        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">Participation Funnel</h2>
+                        <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400">All Active Events</span>
                     </div>
                     <div className="space-y-3">
                         {(dashboardData?.funnel || [
@@ -549,18 +558,18 @@ const AdminDashboard = () => {
                             <div 
                                 key={i} 
                                 onClick={() => navigate(f.link || '/admin/users')}
-                                className="relative cursor-pointer p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-all group"
+                                className="p-2.5 rounded-xl hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors cursor-pointer group"
                             >
-                                <div className="flex justify-between text-xs font-bold mb-0.5">
-                                    <span className="group-hover:text-sky-500 transition-colors">{f.step}</span>
+                                <div className="flex justify-between text-xs font-bold mb-1">
+                                    <span className="text-slate-800 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">{f.step}</span>
                                     <div className="flex items-center gap-1.5">
-                                        <span className="font-mono">{f.val}</span>
-                                        <span className="text-[10px] opacity-60">({f.pct})</span>
+                                        <span className="font-mono text-slate-900 dark:text-white">{f.val}</span>
+                                        <span className="text-[10px] text-slate-500 dark:text-gray-400">({f.pct})</span>
                                     </div>
                                 </div>
-                                <p className="text-[10px] opacity-65 mb-1.5 leading-tight">{f.context || 'Platform ecosystem funnel metric'}</p>
-                                <div className="w-full h-2.5 rounded-full overflow-hidden relative bg-black/10 dark:bg-white/10">
-                                    <div className={`absolute top-0 left-0 h-full rounded-full ${f.color}`} style={{ width: f.pct }}></div>
+                                <p className="text-[10px] text-slate-500 dark:text-gray-400 mb-1.5 leading-tight">{f.context || 'Platform ecosystem funnel metric'}</p>
+                                <div className="w-full h-2 rounded-full overflow-hidden bg-slate-100 dark:bg-white/10 relative">
+                                    <div className={`h-full rounded-full ${f.color}`} style={{ width: f.pct }}></div>
                                 </div>
                             </div>
                         ))}
@@ -568,76 +577,71 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Hackathon Health */}
-                <div className="absolutestrange-card">
+                <div className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm p-5 sm:p-6 flex flex-col justify-between">
                     <div>
-                        <div className="flex justify-between items-center mb-3">
-                            <h2 className="text-xs font-black uppercase tracking-wider opacity-80">Hackathon Health Monitor</h2>
-                            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">Live Status</span>
+                        <div className="flex justify-between items-center pb-3.5 border-b border-slate-100 dark:border-white/5 mb-4">
+                            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">Hackathon Health Monitor</h2>
+                            <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">Live Status</span>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div className="grid grid-cols-2 gap-3 mb-4">
                             <div 
                                 onClick={() => navigate('/admin/hackathon-approvals?filter=approved')} 
-                                className="p-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 cursor-pointer hover:scale-[1.03] active:scale-95 transition-all"
-                                title="Active & Live Hackathons currently accepting submissions"
+                                className="p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 cursor-pointer hover:border-sky-300 dark:hover:border-sky-500/30 transition-all"
                             >
                                 <div className="flex justify-between items-center">
-                                    <p className="text-[10px] font-bold uppercase opacity-70">Running</p>
-                                    <span className="text-[9px] text-sky-500 font-bold">Live →</span>
+                                    <p className="text-[10px] font-bold uppercase text-slate-500 dark:text-gray-400">Running</p>
+                                    <span className="text-[9px] text-sky-600 dark:text-sky-400 font-bold">Live →</span>
                                 </div>
-                                <p className="text-xl font-bold mt-1">{dashboardData?.health?.running || 8}</p>
-                                <p className="text-[9px] opacity-60 mt-0.5">Active event tracks</p>
+                                <p className="text-xl font-extrabold text-slate-900 dark:text-white mt-1">{dashboardData?.health?.running || 8}</p>
+                                <p className="text-[9px] text-slate-500 dark:text-gray-400 mt-0.5">Active event tracks</p>
                             </div>
 
                             <div 
                                 onClick={() => navigate('/admin/hackathon-approvals?filter=approved')} 
-                                className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 cursor-pointer hover:scale-[1.03] active:scale-95 transition-all"
-                                title="Hackathons meeting milestone targets on schedule"
+                                className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 cursor-pointer hover:bg-emerald-500/15 transition-all"
                             >
                                 <div className="flex justify-between items-center">
                                     <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase">On Track</p>
-                                    <span className="text-[9px] text-emerald-500 font-bold">Good →</span>
+                                    <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold">Good →</span>
                                 </div>
-                                <p className="text-xl font-bold text-emerald-500 mt-1">{dashboardData?.health?.onTrack || 5}</p>
+                                <p className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">{dashboardData?.health?.onTrack || 5}</p>
                                 <p className="text-[9px] text-emerald-600/70 dark:text-emerald-400/70 mt-0.5">Meeting timeline SLAs</p>
                             </div>
 
                             <div 
                                 onClick={() => navigate('/admin/hackathon-approvals?filter=needs_revision')} 
-                                className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 cursor-pointer hover:scale-[1.03] active:scale-95 transition-all"
-                                title="At Risk: Missing judges, pending revision feedback, or sub-50% mentor coverage"
+                                className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 cursor-pointer hover:bg-amber-500/15 transition-all"
                             >
                                 <div className="flex justify-between items-center">
                                     <p className="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase">At Risk</p>
-                                    <span className="text-[9px] text-amber-500 font-bold">Fix →</span>
+                                    <span className="text-[9px] text-amber-600 dark:text-amber-400 font-bold">Fix →</span>
                                 </div>
-                                <p className="text-xl font-bold text-amber-500 mt-1">{dashboardData?.health?.atRisk || 2}</p>
+                                <p className="text-xl font-extrabold text-amber-600 dark:text-amber-400 mt-1">{dashboardData?.health?.atRisk || 2}</p>
                                 <p className="text-[9px] text-amber-600/70 dark:text-amber-400/70 mt-0.5">Needs judges/revisions</p>
                             </div>
 
                             <div 
                                 onClick={() => navigate('/admin/hackathon-approvals?filter=pending')} 
-                                className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 cursor-pointer hover:scale-[1.03] active:scale-95 transition-all"
-                                title="Critical: Open participant disputes or approval SLA overdue"
+                                className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 cursor-pointer hover:bg-rose-500/15 transition-all"
                             >
                                 <div className="flex justify-between items-center">
-                                    <p className="text-[10px] text-red-600 dark:text-red-400 font-bold uppercase">Critical</p>
-                                    <span className="text-[9px] text-red-500 font-bold">Review →</span>
+                                    <p className="text-[10px] text-rose-600 dark:text-rose-400 font-bold uppercase">Critical</p>
+                                    <span className="text-[9px] text-rose-600 dark:text-rose-400 font-bold">Review →</span>
                                 </div>
-                                <p className="text-xl font-bold text-red-500 mt-1">{dashboardData?.health?.critical || 1}</p>
-                                <p className="text-[9px] text-red-600/70 dark:text-red-400/70 mt-0.5">Disputes / SLA overdue</p>
+                                <p className="text-xl font-extrabold text-rose-600 dark:text-rose-400 mt-1">{dashboardData?.health?.critical || 1}</p>
+                                <p className="text-[9px] text-rose-600/70 dark:text-rose-400/70 mt-0.5">Disputes / SLA overdue</p>
                             </div>
                         </div>
 
-                        {/* Health context note */}
-                        <div className="p-2.5 rounded-xl bg-amber-500/5 border border-amber-500/15 text-[10px] text-slate-600 dark:text-gray-300 leading-relaxed mb-3">
-                            <span className="font-bold text-amber-600 dark:text-amber-400">Status Criteria: </span>
+                        <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-[10px] text-amber-800 dark:text-amber-300 leading-relaxed mb-4">
+                            <span className="font-bold">Status Criteria: </span>
                             <em>At Risk</em> indicates events with missing judges or pending revisions. <em>Critical</em> flags active disputes or review delays.
                         </div>
                     </div>
 
-                    <div onClick={() => navigate('/admin/hackathon-approvals?filter=approved')} className="space-y-1 cursor-pointer">
-                        <div className="w-full h-2 rounded-full overflow-hidden bg-slate-200 dark:bg-white/10">
+                    <div onClick={() => navigate('/admin/hackathon-approvals?filter=approved')} className="space-y-1.5 cursor-pointer">
+                        <div className="w-full h-2 rounded-full overflow-hidden bg-slate-100 dark:bg-white/10">
                             <div className="w-[82%] h-full bg-emerald-500"></div>
                         </div>
                         <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold text-right">82% Operational Health</p>
@@ -645,125 +649,171 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Submission Health */}
-                <div className="absolutestrange-card">
+                <div className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm p-5 sm:p-6 flex flex-col justify-between">
                     <div>
-                        <h2 className="text-xs font-black uppercase tracking-wider mb-4 opacity-80">Submission Pipeline Health</h2>
-                        <div className="grid grid-cols-2 gap-2 text-xs mb-3">
-                            <div onClick={() => navigate('/admin/submissions?filter=pending')} className="p-2 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 flex justify-between cursor-pointer hover:scale-105 active:scale-95 transition-all"><span className="opacity-70">Pending Review</span><span className="font-bold">32</span></div>
-                            <div onClick={() => navigate('/admin/submissions?filter=approved')} className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex justify-between cursor-pointer hover:scale-105 active:scale-95 transition-all"><span className="opacity-70">Approved</span><span className="font-bold text-emerald-500">180</span></div>
-                            <div onClick={() => navigate('/admin/submissions?filter=rejected')} className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/20 flex justify-between cursor-pointer hover:scale-105 active:scale-95 transition-all"><span className="opacity-70">Rejected</span><span className="font-bold text-rose-500">14</span></div>
-                            <div onClick={() => navigate('/admin/submissions?filter=flagged')} className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 flex justify-between cursor-pointer hover:scale-105 active:scale-95 transition-all"><span className="opacity-70">Incomplete</span><span className="font-bold text-amber-500">10</span></div>
+                        <div className="flex justify-between items-center pb-3.5 border-b border-slate-100 dark:border-white/5 mb-4">
+                            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">Submission Pipeline Health</h2>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2.5 text-xs mb-4">
+                            <div onClick={() => navigate('/admin/submissions?filter=pending')} className="p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 flex justify-between items-center cursor-pointer hover:border-sky-300 dark:hover:border-sky-500/30 transition-all">
+                                <span className="text-slate-500 dark:text-gray-400 font-medium">Pending Review</span>
+                                <span className="font-bold text-slate-900 dark:text-white">32</span>
+                            </div>
+                            <div onClick={() => navigate('/admin/submissions?filter=approved')} className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex justify-between items-center cursor-pointer hover:bg-emerald-500/15 transition-all">
+                                <span className="text-emerald-600 dark:text-emerald-400 font-medium">Approved</span>
+                                <span className="font-bold text-emerald-600 dark:text-emerald-400">180</span>
+                            </div>
+                            <div onClick={() => navigate('/admin/submissions?filter=rejected')} className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 flex justify-between items-center cursor-pointer hover:bg-rose-500/15 transition-all">
+                                <span className="text-rose-600 dark:text-rose-400 font-medium">Rejected</span>
+                                <span className="font-bold text-rose-600 dark:text-rose-400">14</span>
+                            </div>
+                            <div onClick={() => navigate('/admin/submissions?filter=flagged')} className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 flex justify-between items-center cursor-pointer hover:bg-amber-500/15 transition-all">
+                                <span className="text-amber-600 dark:text-amber-400 font-medium">Incomplete</span>
+                                <span className="font-bold text-amber-600 dark:text-amber-400">10</span>
+                            </div>
                         </div>
                     </div>
-                    <div onClick={() => navigate('/admin/submissions?filter=pending')} className="p-3 bg-sky-500/10 border border-sky-500/20 rounded-xl cursor-pointer hover:bg-sky-500/20 transition-colors">
-                        <p className="text-[11px] leading-relaxed font-medium">63% Submissions Approved across active stages.</p>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-sky-500 dark:text-sky-400 mt-1">Investigate Submissions →</p>
+                    <div onClick={() => navigate('/admin/submissions?filter=pending')} className="p-3.5 bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/20 rounded-xl cursor-pointer hover:bg-sky-100 dark:hover:bg-sky-500/20 transition-colors">
+                        <p className="text-xs text-sky-900 dark:text-sky-200 font-medium leading-relaxed">63% Submissions Approved across active stages.</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 mt-1">Investigate Submissions →</p>
                     </div>
                 </div>
 
             </div>
 
-            {/* 6. 🔥 PRIORITY 3: OPERATIONS & CAPACITY TRACKING */}
+            {/* 6. OPERATIONS & CAPACITY TRACKING */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
                 {/* Mentor Capacity */}
-                <div className="absolutestrange-card">
+                <div className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm p-5 sm:p-6 flex flex-col justify-between">
                     <div>
-                        <h2 className="text-xs font-black uppercase tracking-wider mb-4 opacity-80">Mentor Capacity</h2>
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div onClick={() => navigate('/admin/users?role=Mentor')} className="p-2 rounded-xl bg-slate-100 dark:bg-white/5 flex justify-between cursor-pointer hover:scale-105 active:scale-95 transition-all"><span className="opacity-70">Available</span><span className="font-bold">18</span></div>
-                            <div onClick={() => navigate('/admin/users?role=Mentor')} className="p-2 rounded-xl bg-slate-100 dark:bg-white/5 flex justify-between cursor-pointer hover:scale-105 active:scale-95 transition-all"><span className="opacity-70">Assigned</span><span className="font-bold">42</span></div>
-                            <div onClick={() => navigate('/admin/users?role=Mentor&filter=unassigned')} className="p-2 rounded-xl bg-slate-100 dark:bg-white/5 flex justify-between cursor-pointer hover:scale-105 active:scale-95 transition-all"><span className="opacity-70">Unassigned</span><span className="font-bold">11</span></div>
-                            <div onClick={() => navigate('/admin/users?role=Mentor&filter=overloaded')} className="bg-red-500/10 p-2 rounded-xl border border-red-500/20 flex justify-between cursor-pointer hover:scale-105 active:scale-95 transition-all"><span className="text-red-500 font-bold">Overloaded</span><span className="text-red-500 font-bold">5</span></div>
+                        <div className="flex justify-between items-center pb-3.5 border-b border-slate-100 dark:border-white/5 mb-4">
+                            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">Mentor Capacity</h2>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2.5 text-xs">
+                            <div onClick={() => navigate('/admin/users?role=Mentor')} className="p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 flex justify-between items-center cursor-pointer hover:border-sky-300 dark:hover:border-sky-500/30 transition-all"><span className="text-slate-500 dark:text-gray-400">Available</span><span className="font-bold text-slate-900 dark:text-white">18</span></div>
+                            <div onClick={() => navigate('/admin/users?role=Mentor')} className="p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 flex justify-between items-center cursor-pointer hover:border-sky-300 dark:hover:border-sky-500/30 transition-all"><span className="text-slate-500 dark:text-gray-400">Assigned</span><span className="font-bold text-slate-900 dark:text-white">42</span></div>
+                            <div onClick={() => navigate('/admin/users?role=Mentor&filter=unassigned')} className="p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 flex justify-between items-center cursor-pointer hover:border-sky-300 dark:hover:border-sky-500/30 transition-all"><span className="text-slate-500 dark:text-gray-400">Unassigned</span><span className="font-bold text-slate-900 dark:text-white">11</span></div>
+                            <div onClick={() => navigate('/admin/users?role=Mentor&filter=overloaded')} className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 flex justify-between items-center cursor-pointer hover:bg-rose-500/15 transition-all"><span className="text-rose-600 dark:text-rose-400 font-bold">Overloaded</span><span className="text-rose-600 dark:text-rose-400 font-bold">5</span></div>
                         </div>
                     </div>
-                    <div onClick={() => navigate('/admin/users?role=Mentor&filter=overloaded')} className="mt-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl cursor-pointer hover:bg-amber-500/20 transition-colors">
-                        <p className="text-[11px] leading-relaxed font-medium flex items-center gap-1.5"><TriangleAlertIcon className="w-3.5 h-3.5 text-amber-500 shrink-0" /> 5 mentors currently handling more teams than recommended.</p>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 mt-1">View Mentors →</p>
+                    <div onClick={() => navigate('/admin/users?role=Mentor&filter=overloaded')} className="mt-4 p-3.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors">
+                        <p className="text-xs text-amber-900 dark:text-amber-200 font-medium leading-relaxed flex items-center gap-1.5"><TriangleAlertIcon className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" /> 5 mentors currently handling more teams than recommended.</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 mt-1">View Mentors →</p>
                     </div>
                 </div>
 
                 {/* Evaluation Status */}
-                <div className="absolutestrange-card">
-                    <div>
-                        <h2 className="text-xs font-black uppercase tracking-wider mb-4 opacity-80">Evaluation Progress Status</h2>
-                        <div className="text-center mb-4">
-                            <p className="text-4xl font-black">70<span className="text-lg opacity-60">%</span></p>
-                            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider mt-1">Judges Completion Rate</p>
-                        </div>
-                        <ul className="space-y-2 text-xs font-medium p-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10">
-                            <li onClick={() => navigate('/admin/hackathon-approvals')} className="flex justify-between cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-1 rounded-lg transition-all"><span>Judges Assigned</span><span className="font-bold">54</span></li>
-                            <li onClick={() => navigate('/admin/submissions?filter=approved')} className="flex justify-between cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-1 rounded-lg transition-all"><span>Evaluations Done</span><span className="font-bold">38</span></li>
-                            <li onClick={() => navigate('/admin/submissions?filter=pending')} className="flex justify-between text-amber-500 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-1 rounded-lg transition-all"><span>Pending Scrutiny</span><span className="font-bold">16</span></li>
-                        </ul>
+                <div className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm p-5 sm:p-6">
+                    <div className="flex justify-between items-center pb-3.5 border-b border-slate-100 dark:border-white/5 mb-4">
+                        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">Evaluation Progress Status</h2>
                     </div>
+                    <div className="text-center mb-4">
+                        <p className="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">70<span className="text-xl text-slate-400 dark:text-gray-400">%</span></p>
+                        <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider mt-1">Judges Completion Rate</p>
+                    </div>
+                    <ul className="space-y-2 text-xs font-medium p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5">
+                        <li onClick={() => navigate('/admin/hackathon-approvals')} className="flex justify-between items-center cursor-pointer hover:text-sky-600 dark:hover:text-sky-400 transition-colors p-1 rounded-lg">
+                            <span className="text-slate-600 dark:text-gray-300">Judges Assigned</span>
+                            <span className="font-bold text-slate-900 dark:text-white">54</span>
+                        </li>
+                        <li onClick={() => navigate('/admin/submissions?filter=approved')} className="flex justify-between items-center cursor-pointer hover:text-sky-600 dark:hover:text-sky-400 transition-colors p-1 rounded-lg">
+                            <span className="text-slate-600 dark:text-gray-300">Evaluations Done</span>
+                            <span className="font-bold text-slate-900 dark:text-white">38</span>
+                        </li>
+                        <li onClick={() => navigate('/admin/submissions?filter=pending')} className="flex justify-between items-center cursor-pointer hover:text-amber-600 dark:hover:text-amber-400 transition-colors p-1 rounded-lg text-amber-600 dark:text-amber-400 font-bold">
+                            <span>Pending Scrutiny</span>
+                            <span>16</span>
+                        </li>
+                    </ul>
                 </div>
 
                 {/* Certificate Pipeline */}
-                <div className="absolutestrange-card">
+                <div className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm p-5 sm:p-6 flex flex-col justify-between">
                     <div>
-                        <h2 className="text-xs font-black uppercase tracking-wider mb-4 opacity-80">Certificate Minting Pipeline</h2>
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div onClick={() => navigate('/admin/certificates?filter=eligibility')} className="p-2 rounded-xl bg-slate-100 dark:bg-white/5 flex justify-between cursor-pointer hover:scale-105 active:scale-95 transition-all"><span className="opacity-70">Eligible</span><span className="font-bold">180</span></div>
-                            <div onClick={() => navigate('/admin/certificates?filter=active')} className="p-2 rounded-xl bg-slate-100 dark:bg-white/5 flex justify-between cursor-pointer hover:scale-105 active:scale-95 transition-all"><span className="opacity-70">Generated</span><span className="font-bold">168</span></div>
-                            <div onClick={() => navigate('/admin/certificates?filter=active')} className="p-2 rounded-xl bg-sky-500/10 flex justify-between cursor-pointer hover:scale-105 active:scale-95 transition-all"><span className="opacity-70">Downloaded</span><span className="font-bold text-sky-500">142</span></div>
-                            <div onClick={() => navigate('/admin/certificates?filter=verify')} className="p-2 rounded-xl bg-emerald-500/10 flex justify-between cursor-pointer hover:scale-105 active:scale-95 transition-all"><span className="opacity-70">Verified</span><span className="font-bold text-emerald-500">97</span></div>
+                        <div className="flex justify-between items-center pb-3.5 border-b border-slate-100 dark:border-white/5 mb-4">
+                            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">Certificate Minting Pipeline</h2>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2.5 text-xs">
+                            <div onClick={() => navigate('/admin/certificates?filter=eligibility')} className="p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 flex justify-between items-center cursor-pointer hover:border-sky-300 dark:hover:border-sky-500/30 transition-all"><span className="text-slate-500 dark:text-gray-400">Eligible</span><span className="font-bold text-slate-900 dark:text-white">180</span></div>
+                            <div onClick={() => navigate('/admin/certificates?filter=active')} className="p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 flex justify-between items-center cursor-pointer hover:border-sky-300 dark:hover:border-sky-500/30 transition-all"><span className="text-slate-500 dark:text-gray-400">Generated</span><span className="font-bold text-slate-900 dark:text-white">168</span></div>
+                            <div onClick={() => navigate('/admin/certificates?filter=active')} className="p-3 rounded-xl bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/20 flex justify-between items-center cursor-pointer hover:bg-sky-100 dark:hover:bg-sky-500/20 transition-all"><span className="text-sky-700 dark:text-sky-300">Downloaded</span><span className="font-bold text-sky-700 dark:text-sky-300">142</span></div>
+                            <div onClick={() => navigate('/admin/certificates?filter=verify')} className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex justify-between items-center cursor-pointer hover:bg-emerald-500/15 transition-all"><span className="text-emerald-600 dark:text-emerald-400">Verified</span><span className="font-bold text-emerald-600 dark:text-emerald-400">97</span></div>
                         </div>
                     </div>
-                    <div onClick={() => navigate('/admin/certificates?filter=active')} className="mt-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl cursor-pointer hover:bg-emerald-500/20 transition-colors">
-                        <p className="text-[11px] leading-relaxed font-medium">168 Certificates generated & ledger signed.</p>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mt-1">Manage Certificates →</p>
+                    <div onClick={() => navigate('/admin/certificates?filter=active')} className="mt-4 p-3.5 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl cursor-pointer hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors">
+                        <p className="text-xs text-emerald-900 dark:text-emerald-200 font-medium leading-relaxed">168 Certificates generated & ledger signed.</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mt-1">Manage Certificates →</p>
                     </div>
                 </div>
 
             </div>
 
-            {/* 7. 🔥 PRIORITY 4: AI & SECURITY & COMMUNITY INTELLIGENCE */}
+            {/* 7. AI & SECURITY & COMMUNITY INTELLIGENCE */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
                 {/* AI Co-Mentor Health */}
-                <div className="absolutestrange-card">
+                <div className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm p-5 sm:p-6 flex flex-col justify-between">
                     <div>
-                        <h2 className="text-xs font-black uppercase tracking-wider mb-3 flex items-center gap-2 opacity-80">
-                            <RobotIcon className="w-4 h-4 text-sky-500" /> AI Assistant Operational Health
-                        </h2>
-                        <div className="space-y-2.5 text-xs font-medium">
-                            <div className="flex justify-between"><span>Queries Today:</span><strong className="font-mono">248 queries</strong></div>
-                            <div className="flex justify-between"><span>Avg Response Time:</span><strong className="text-emerald-500 font-mono">1.1s</strong></div>
-                            <div className="flex justify-between"><span>Helpful Responses:</span><strong className="text-emerald-500">94.2%</strong></div>
-                            <div className="flex justify-between"><span>Top Question Category:</span><strong className="text-sky-500 dark:text-sky-400">Problem Alignment</strong></div>
+                        <div className="flex justify-between items-center pb-3.5 border-b border-slate-100 dark:border-white/5 mb-4">
+                            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
+                                <RobotIcon className="w-4 h-4 text-sky-600 dark:text-sky-400" /> AI Assistant Operational Health
+                            </h2>
+                        </div>
+                        <div className="space-y-3 text-xs font-medium">
+                            <div className="flex justify-between items-center"><span className="text-slate-500 dark:text-gray-400">Queries Today:</span><strong className="font-mono text-slate-900 dark:text-white">248 queries</strong></div>
+                            <div className="flex justify-between items-center"><span className="text-slate-500 dark:text-gray-400">Avg Response Time:</span><strong className="text-emerald-600 dark:text-emerald-400 font-mono">1.1s</strong></div>
+                            <div className="flex justify-between items-center"><span className="text-slate-500 dark:text-gray-400">Helpful Responses:</span><strong className="text-emerald-600 dark:text-emerald-400">94.2%</strong></div>
+                            <div className="flex justify-between items-center"><span className="text-slate-500 dark:text-gray-400">Top Question Category:</span><strong className="text-sky-600 dark:text-sky-400">Problem Alignment</strong></div>
                         </div>
                     </div>
-                    <div className="mt-3 p-2.5 bg-sky-500/10 border border-sky-500/20 rounded-xl text-xs font-medium text-sky-700 dark:text-sky-300 flex items-center gap-1.5">
-                        <ZapIcon className="w-3.5 h-3.5 text-sky-500 shrink-0" /> RAG context engine operational with zero sync errors.
+                    <div className="mt-4 p-3 bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/20 rounded-xl text-xs font-medium text-sky-800 dark:text-sky-200 flex items-center gap-2">
+                        <ZapIcon className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0" /> RAG context engine operational with zero sync errors.
                     </div>
                 </div>
 
                 {/* Protocol Shield / Security Center */}
-                <div className="absolutestrange-card">
+                <div className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm p-5 sm:p-6 flex flex-col justify-between">
                     <div>
-                        <div className="flex justify-between items-center mb-3">
-                            <h2 className="text-xs font-black uppercase tracking-wider opacity-80">Protocol Shield & Security</h2>
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 flex items-center gap-1"><CheckIcon className="w-3 h-3 text-emerald-500" /> Secure</span>
+                        <div className="flex justify-between items-center pb-3.5 border-b border-slate-100 dark:border-white/5 mb-4">
+                            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">Protocol Shield & Security</h2>
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                                <CheckIcon className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> Secure
+                            </span>
                         </div>
-                        <div className="space-y-2 text-xs font-medium">
-                            <div onClick={() => navigate('/admin/users?filter=suspended')} className="flex justify-between cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-1 rounded-lg transition-all"><span>Failed Logins Today:</span><strong className="text-amber-500 font-mono">3 attempts</strong></div>
-                            <div onClick={() => navigate('/admin/users?filter=suspicious')} className="flex justify-between cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-1 rounded-lg transition-all"><span>Suspicious Activity:</span><strong className="text-rose-500 font-mono">1 alert</strong></div>
-                            <div onClick={() => navigate('/admin/users?filter=suspended')} className="flex justify-between cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-1 rounded-lg transition-all"><span>Blocked Accounts:</span><strong className="font-mono">2 users</strong></div>
-                            <div className="flex justify-between opacity-60 text-[10px] pt-1"><span>Last Audit:</span><span>Today, 10:42 AM</span></div>
+                        <div className="space-y-2.5 text-xs font-medium">
+                            <div onClick={() => navigate('/admin/users?filter=suspended')} className="flex justify-between items-center cursor-pointer hover:bg-slate-50/80 dark:hover:bg-white/[0.02] p-1.5 rounded-lg transition-colors">
+                                <span className="text-slate-500 dark:text-gray-400">Failed Logins Today:</span>
+                                <strong className="text-amber-600 dark:text-amber-400 font-mono">3 attempts</strong>
+                            </div>
+                            <div onClick={() => navigate('/admin/users?filter=suspicious')} className="flex justify-between items-center cursor-pointer hover:bg-slate-50/80 dark:hover:bg-white/[0.02] p-1.5 rounded-lg transition-colors">
+                                <span className="text-slate-500 dark:text-gray-400">Suspicious Activity:</span>
+                                <strong className="text-rose-600 dark:text-rose-400 font-mono">1 alert</strong>
+                            </div>
+                            <div onClick={() => navigate('/admin/users?filter=suspended')} className="flex justify-between items-center cursor-pointer hover:bg-slate-50/80 dark:hover:bg-white/[0.02] p-1.5 rounded-lg transition-colors">
+                                <span className="text-slate-500 dark:text-gray-400">Blocked Accounts:</span>
+                                <strong className="font-mono text-slate-900 dark:text-white">2 users</strong>
+                            </div>
+                            <div className="flex justify-between items-center text-slate-400 dark:text-gray-500 text-[10px] pt-1">
+                                <span>Last Audit:</span>
+                                <span>Today, 10:42 AM</span>
+                            </div>
                         </div>
                     </div>
-                    <button onClick={handleRunAudit} className="mt-3 w-full py-2 bg-sky-50 dark:bg-white/10 hover:bg-sky-100 dark:hover:bg-white/20 text-sky-500 dark:text-sky-400 border border-sky-200 dark:border-white/10 font-bold text-xs rounded-2xl transition-colors shadow-sm">
+                    <button 
+                        onClick={handleRunAudit} 
+                        className="mt-4 w-full py-2.5 rounded-xl bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-gray-200 border border-slate-200 dark:border-white/10 text-xs font-bold shadow-sm transition-all cursor-pointer active:scale-95"
+                    >
                         Run Security Audit Scan
                     </button>
                 </div>
 
                 {/* Top Institutions Leaderboard */}
-                <div className="absolutestrange-card">
+                <div className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm p-5 sm:p-6 flex flex-col justify-between">
                     <div>
-                        <div className="flex justify-between items-center mb-3">
-                            <h2 className="text-xs font-black uppercase tracking-wider opacity-80">Top Participating Colleges</h2>
-                            <span className="text-[10px] font-bold text-sky-500">Leaderboard</span>
+                        <div className="flex justify-between items-center pb-3.5 border-b border-slate-100 dark:border-white/5 mb-4">
+                            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">Top Participating Colleges</h2>
+                            <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400">Leaderboard</span>
                         </div>
                         <ul className="space-y-2 text-xs">
                             {(dashboardData?.topColleges && dashboardData.topColleges.length > 0 && dashboardData.topColleges.some(c => c && c.name)
@@ -779,13 +829,13 @@ const AdminDashboard = () => {
                                 <li 
                                     key={idx} 
                                     onClick={() => navigate('/admin/analytics?focus=colleges#college-breakdown')} 
-                                    className="flex justify-between items-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-1.5 rounded-lg transition-all group"
+                                    className="flex justify-between items-center cursor-pointer hover:bg-slate-50/80 dark:hover:bg-white/[0.02] p-1.5 rounded-lg transition-colors group"
                                     title={`Click to inspect institutional analytics for ${col.name}`}
                                 >
-                                    <span className="truncate max-w-[170px] opacity-80 font-medium group-hover:text-sky-500 transition-colors">{idx + 1}. {col.name || 'Institution'}</span>
+                                    <span className="truncate max-w-[170px] text-slate-700 dark:text-gray-300 font-medium group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">{idx + 1}. {col.name || 'Institution'}</span>
                                     <div className="flex items-center gap-1.5">
-                                        <span className="font-mono font-bold text-sky-500 dark:text-sky-400">{col.participants || 0}</span>
-                                        <span className="text-[9px] text-emerald-500 font-semibold">{col.trend || '+10%'}</span>
+                                        <span className="font-mono font-bold text-sky-600 dark:text-sky-400">{col.participants || 0}</span>
+                                        <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-semibold">{col.trend || '+10%'}</span>
                                     </div>
                                 </li>
                             ))}
@@ -794,20 +844,23 @@ const AdminDashboard = () => {
 
                     <div 
                         onClick={() => navigate('/admin/analytics?focus=colleges#college-breakdown')} 
-                        className="mt-3 text-[10px] font-bold text-sky-500 dark:text-sky-400 cursor-pointer hover:underline text-right flex items-center justify-end gap-1"
+                        className="mt-4 text-xs font-bold text-sky-600 dark:text-sky-400 hover:text-sky-500 cursor-pointer flex items-center justify-end gap-1 group"
                     >
                         <span>View College Analytics</span>
-                        <span>→</span>
+                        <span className="group-hover:translate-x-0.5 transition-transform">→</span>
                     </div>
                 </div>
 
             </div>
 
             {/* 8. LIVE OPERATIONAL ACTIVITY FEED */}
-            <div className="absolutestrange-card">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                    <h2 className="text-xs font-black uppercase tracking-wider flex items-center gap-2 opacity-80">
-                        <span className="relative flex h-2.5 w-2.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-sky-500"></span></span>
+            <div className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm p-5 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-100 dark:border-white/5 mb-4">
+                    <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
+                        <span className="relative flex h-2.5 w-2.5">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-sky-500"></span>
+                        </span>
                         Live Operational Activity Stream
                     </h2>
                     
@@ -817,7 +870,11 @@ const AdminDashboard = () => {
                             <button 
                                 key={f} 
                                 onClick={() => setActivityFilter(f)}
-                                className={`px-2.5 py-1 rounded-2xl transition-all ${activityFilter === f ? 'bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-500/40 shadow-xs font-black' : 'opacity-70 hover:opacity-100 text-slate-600 dark:text-gray-400'}`}
+                                className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                                    activityFilter === f 
+                                        ? 'bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-500/30 font-bold shadow-sm' 
+                                        : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white border border-transparent'
+                                }`}
                             >
                                 {f}
                             </button>
@@ -825,12 +882,12 @@ const AdminDashboard = () => {
                     </div>
                 </div>
 
-                <div className="space-y-1.5 max-h-52 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-white/20">
+                <div className="space-y-1.5 max-h-56 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10">
                     {filteredActivities.map((act, i) => (
                         <div 
                             key={i} 
                             onClick={() => navigate(getActivityLink(act))}
-                            className="flex gap-3.5 items-center text-xs font-medium cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-2 rounded-xl transition-all group"
+                            className="flex gap-3.5 items-center text-xs font-medium cursor-pointer hover:bg-slate-50/80 dark:hover:bg-white/[0.02] p-2.5 rounded-xl transition-colors group"
                         >
                             <span className="flex h-2.5 w-2.5 relative shrink-0 items-center justify-center">
                                 <span className={`h-2 w-2 rounded-full ${
@@ -839,40 +896,39 @@ const AdminDashboard = () => {
                                     act.categoryColor === 'emerald' ? 'bg-emerald-500' : 'bg-sky-500'
                                 }`} />
                             </span>
-                            <span className="font-mono w-12 shrink-0 text-[11px] opacity-60">{act.time}</span>
-                            <span className="opacity-90 flex-1 truncate">{act.description || act.text}</span>
-                            <span className="text-sky-500 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity shrink-0">View →</span>
+                            <span className="font-mono w-14 shrink-0 text-[11px] text-slate-400 dark:text-gray-500">{act.time}</span>
+                            <span className="text-slate-700 dark:text-gray-200 flex-1 truncate">{act.description || act.text}</span>
+                            <span className="text-sky-600 dark:text-sky-400 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity shrink-0">View →</span>
                         </div>
                     ))}
                 </div>
-
             </div>
 
             {/* 9. BOTTOM: SMART AI ADMIN INTELLIGENCE */}
-            <div className="absolutestrange-card relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-sky-500/10 blur-3xl rounded-full pointer-events-none"></div>
-                <div className="flex items-start gap-5 relative z-10">
-                    <div className="p-3 rounded-2xl shrink-0 bg-sky-500/10 border border-sky-500/20 text-sky-500 dark:text-sky-400">
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+            <div className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm p-6 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-sky-500/5 dark:bg-sky-500/10 blur-3xl rounded-full pointer-events-none"></div>
+                <div className="flex flex-col sm:flex-row items-start gap-5 relative z-10">
+                    <div className="w-12 h-12 rounded-2xl shrink-0 bg-sky-50 dark:bg-sky-500/20 border border-sky-100 dark:border-sky-500/30 text-sky-600 dark:text-sky-400 flex items-center justify-center shadow-sm">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                     </div>
-                    <div className="flex-1">
-                        <h2 className="text-xs font-extrabold uppercase tracking-widest mb-3 text-sky-500 dark:text-sky-400">✦ Smart Admin Intelligence & Operator Recommendations</h2>
+                    <div className="flex-1 w-full">
+                        <h2 className="text-xs font-extrabold uppercase tracking-widest mb-3 text-sky-600 dark:text-sky-400">✦ Smart Admin Intelligence & Operator Recommendations</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div onClick={() => navigate('/admin/analytics')} className="p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
-                                <p className="text-xs font-medium mb-1">Platform participation increased <span className="text-emerald-600 dark:text-emerald-400 font-bold">18.4%</span> this month.</p>
-                                <span className="text-[10px] text-sky-500 font-bold">View Analytics →</span>
+                            <div onClick={() => navigate('/admin/analytics')} className="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 cursor-pointer hover:border-sky-300 dark:hover:border-sky-500/30 transition-all">
+                                <p className="text-xs font-medium text-slate-700 dark:text-gray-200 mb-1">Platform participation increased <span className="text-emerald-600 dark:text-emerald-400 font-bold">18.4%</span> this month.</p>
+                                <span className="text-[10px] text-sky-600 dark:text-sky-400 font-bold">View Analytics →</span>
                             </div>
-                            <div onClick={() => navigate('/admin/users?role=Mentor&filter=overloaded')} className="p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
-                                <p className="text-xs font-medium mb-1 flex items-center gap-1.5"><TriangleAlertIcon className="w-3.5 h-3.5 text-rose-500 shrink-0" /><span><span className="text-rose-600 dark:text-rose-400 font-bold">5 mentors</span> are currently overloaded.</span></p>
-                                <span className="text-[10px] text-amber-500 font-bold">Inspect Mentors →</span>
+                            <div onClick={() => navigate('/admin/users?role=Mentor&filter=overloaded')} className="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 cursor-pointer hover:border-sky-300 dark:hover:border-sky-500/30 transition-all">
+                                <p className="text-xs font-medium text-slate-700 dark:text-gray-200 mb-1 flex items-center gap-1.5"><TriangleAlertIcon className="w-3.5 h-3.5 text-rose-500 shrink-0" /><span><span className="text-rose-600 dark:text-rose-400 font-bold">5 mentors</span> are overloaded.</span></p>
+                                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">Inspect Mentors →</span>
                             </div>
-                            <div onClick={() => navigate('/admin/submissions?filter=pending')} className="p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
-                                <p className="text-xs font-medium mb-1 flex items-center gap-1.5"><TriangleAlertIcon className="w-3.5 h-3.5 text-amber-500 shrink-0" /><span><span className="text-amber-600 dark:text-amber-400 font-bold">12 teams</span> missed their milestones.</span></p>
-                                <span className="text-[10px] text-amber-500 font-bold">Check Submissions →</span>
+                            <div onClick={() => navigate('/admin/submissions?filter=pending')} className="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 cursor-pointer hover:border-sky-300 dark:hover:border-sky-500/30 transition-all">
+                                <p className="text-xs font-medium text-slate-700 dark:text-gray-200 mb-1 flex items-center gap-1.5"><TriangleAlertIcon className="w-3.5 h-3.5 text-amber-500 shrink-0" /><span><span className="text-amber-600 dark:text-amber-400 font-bold">12 teams</span> missed milestones.</span></p>
+                                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">Check Submissions →</span>
                             </div>
-                            <div className="p-4 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex flex-col justify-between">
-                                <p className="text-[11px] mb-2 font-medium"><strong className="block mb-1 uppercase tracking-wider text-[10px] text-sky-500 dark:text-sky-400">Recommendation:</strong> Assign 3 available mentors to affected teams.</p>
-                                <button onClick={() => navigate('/admin/users?role=Mentor&filter=overloaded')} className="text-xs font-bold bg-sky-50 dark:bg-sky-500/20 hover:bg-sky-100 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-500/40 py-2 rounded-2xl transition-all w-full shadow-sm">Review Issues</button>
+                            <div className="p-4 rounded-xl bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/20 flex flex-col justify-between">
+                                <p className="text-xs text-sky-900 dark:text-sky-200 mb-2 font-medium leading-relaxed"><strong className="block mb-1 uppercase tracking-wider text-[10px] text-sky-700 dark:text-sky-400">Recommendation:</strong> Assign 3 available mentors to affected teams.</p>
+                                <button onClick={() => navigate('/admin/users?role=Mentor&filter=overloaded')} className="text-xs font-bold bg-sky-600 hover:bg-sky-500 text-white py-2 rounded-xl transition-all w-full shadow-sm cursor-pointer active:scale-95">Review Issues</button>
                             </div>
                         </div>
                     </div>
@@ -884,4 +940,3 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
-

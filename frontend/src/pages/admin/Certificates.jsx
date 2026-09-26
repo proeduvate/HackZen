@@ -43,7 +43,6 @@ import {
     uploadCertificateTemplate,
     deleteCertificateTemplate
 } from '../../services/admin/adminCertificatesApi';
-import { useTheme } from '../../context/ThemeContext';
 import { usePlatformSettings } from '../../context/PlatformSettingsContext';
 
 // --- Built-in Official Certificate Templates ---
@@ -150,7 +149,7 @@ const ActionModal = ({ isOpen, onClose, title, subtitle, children, maxWidth = "m
 };
 
 // --- Live Certificate Visual Document Preview Component ---
-const CertificateDocument = ({ cert, isLightTheme, templates = [], onPreviewFull }) => {
+const CertificateDocument = ({ cert, templates = [], onPreviewFull }) => {
     if (!cert) return null;
 
     const recipient = cert.recipientName || cert.recipient?.name || 'Alex Johnson';
@@ -265,22 +264,7 @@ const CertificateDocument = ({ cert, isLightTheme, templates = [], onPreviewFull
 
 
 const Certificates = () => {
-    const { theme: currentTheme } = useTheme();
     const { prefix, platformName } = usePlatformSettings();
-    const isLightTheme = currentTheme === 'light';
-
-    const theme = {
-        cardBg: isLightTheme 
-            ? 'bg-white border border-slate-200/80 shadow-sm text-slate-700 transition-all rounded-2xl' 
-            : 'glass-strong border-white/5 bg-navy-900/40 text-white shadow-xl rounded-2xl',
-        headingText: isLightTheme ? 'text-slate-800 font-extrabold' : 'text-white font-bold',
-        subText: isLightTheme ? 'text-slate-500 font-normal' : 'text-gray-400 font-normal',
-        mutedText: isLightTheme ? 'text-slate-400 font-semibold' : 'text-gray-400 font-semibold',
-        innerBg: isLightTheme ? 'bg-slate-50/80 border border-slate-200/70 text-slate-700 rounded-2xl' : 'bg-black/20 border border-white/5 text-white rounded-2xl',
-        statBoxBg: isLightTheme ? 'bg-white border border-slate-200/70 text-slate-700 shadow-sm rounded-xl' : 'bg-white/5 border border-white/5 text-white rounded-xl',
-        hoverRow: isLightTheme ? 'hover:bg-blue-50/50' : 'hover:bg-white/5',
-        inputBg: isLightTheme ? 'bg-white border border-slate-200 text-slate-700 shadow-none focus:border-sky-500 rounded-xl' : 'bg-black/20 border border-white/10 text-white rounded-xl',
-    };
 
     const [searchParams] = useSearchParams();
     const [certificates, setCertificates] = useState([]);
@@ -975,7 +959,7 @@ const Certificates = () => {
                     customMessage: emailModal.customMessage
                 };
                 const res = await sendCertificateEmail(payload);
-                showToast(res.message || `Certificate email dispatched to ${emailModal.recipientEmail}!`, "success");
+                showToast(res.message || `Certificate email with attached PNG dispatched to ${emailModal.recipientEmail}!`, "success");
             } else {
                 const certIds = emailModal.certs.map(c => c.id || c.validationId);
                 const res = await bulkSendCertificateEmails({
@@ -984,7 +968,7 @@ const Certificates = () => {
                     certType: emailModal.certType,
                     customMessage: emailModal.customMessage
                 });
-                showToast(res.message || `Dispatched emails to ${res.sentCount} recipients!`, "success");
+                showToast(res.message || `Dispatched emails with attached certificate PNGs to ${res.sentCount} recipients!`, "success");
                 setSelectedCertIds([]);
             }
             setEmailModal(prev => ({ ...prev, isOpen: false, sending: false }));
@@ -997,7 +981,7 @@ const Certificates = () => {
     };
 
     return (
-        <div className="space-y-5 animate-in fade-in duration-500 pb-8">
+        <div className="space-y-7 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-16 max-w-7xl mx-auto">
             
             {/* Toast Notification Alert */}
             {toastMessage && (
@@ -1017,7 +1001,7 @@ const Certificates = () => {
                     <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                         Certificates Lifecycle & Verification Engine
                     </h1>
-                    <p className="text-slate-600 dark:text-gray-400 mt-0.5 text-xs sm:text-sm font-medium">
+                    <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
                         Issue, verify, track delivery, manage templates, and enforce revocation governance.
                     </p>
                 </div>
@@ -1028,7 +1012,7 @@ const Certificates = () => {
                         <button 
                             type="button"
                             onClick={() => setIsTemplatesDropdownOpen(!isTemplatesDropdownOpen)} 
-                            className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200/80 dark:bg-white/10 dark:hover:bg-white/15 text-slate-700 dark:text-slate-200 border border-slate-300/80 dark:border-white/10 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 select-none"
+                            className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200/80 dark:bg-white/10 dark:hover:bg-white/15 text-slate-700 dark:text-slate-200 border border-slate-300/80 dark:border-white/10 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 select-none cursor-pointer"
                             aria-expanded={isTemplatesDropdownOpen}
                         >
                             <TemplateIcon className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" /> 
@@ -1063,7 +1047,7 @@ const Certificates = () => {
                                             setIsTemplatesModalOpen(true);
                                             setIsTemplatesDropdownOpen(false);
                                         }}
-                                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold hover:bg-amber-50 dark:hover:bg-amber-500/10 flex items-center justify-between group transition-colors"
+                                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold hover:bg-amber-50 dark:hover:bg-amber-500/10 flex items-center justify-between group transition-colors cursor-pointer"
                                     >
                                         <div className="flex items-center gap-2.5">
                                             <div className="w-6 h-6 rounded-lg bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
@@ -1086,7 +1070,7 @@ const Certificates = () => {
                                             setIsTemplatesModalOpen(true);
                                             setIsTemplatesDropdownOpen(false);
                                         }}
-                                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold hover:bg-indigo-50 dark:hover:bg-indigo-500/10 flex items-center justify-between group transition-colors"
+                                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold hover:bg-indigo-50 dark:hover:bg-indigo-500/10 flex items-center justify-between group transition-colors cursor-pointer"
                                     >
                                         <div className="flex items-center gap-2.5">
                                             <div className="w-6 h-6 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
@@ -1109,7 +1093,7 @@ const Certificates = () => {
                                             setIsTemplatesModalOpen(true);
                                             setIsTemplatesDropdownOpen(false);
                                         }}
-                                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold hover:bg-emerald-50 dark:hover:bg-emerald-500/10 flex items-center justify-between group transition-colors"
+                                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold hover:bg-emerald-50 dark:hover:bg-emerald-500/10 flex items-center justify-between group transition-colors cursor-pointer"
                                     >
                                         <div className="flex items-center gap-2.5">
                                             <div className="w-6 h-6 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
@@ -1136,7 +1120,7 @@ const Certificates = () => {
                                             setIsTemplatesModalOpen(true);
                                             setIsTemplatesDropdownOpen(false);
                                         }}
-                                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-slate-200 flex items-center justify-between transition-colors"
+                                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-slate-200 flex items-center justify-between transition-colors cursor-pointer"
                                     >
                                         <span className="flex items-center gap-2">
                                             <FolderIcon className="w-3.5 h-3.5 text-slate-500" />
@@ -1151,7 +1135,7 @@ const Certificates = () => {
                                             setIsUploadModalOpen(true);
                                             setIsTemplatesDropdownOpen(false);
                                         }}
-                                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold bg-sky-50 dark:bg-sky-500/10 hover:bg-sky-100 dark:hover:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-500/30 flex items-center gap-2 transition-colors shadow-sm"
+                                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold bg-sky-50 dark:bg-sky-500/10 hover:bg-sky-100 dark:hover:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-500/30 flex items-center gap-2 transition-colors shadow-sm cursor-pointer"
                                     >
                                         <UploadIcon className="w-3.5 h-3.5" />
                                         <span>Upload New Certificate...</span>
@@ -1162,7 +1146,7 @@ const Certificates = () => {
                     </div>
                     <button 
                         onClick={() => { setBulkStep(1); setBulkPreviewData(null); setBulkResultData(null); setIsBulkModalOpen(true); }} 
-                        className="px-3.5 py-1.5 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-500/30 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
+                        className="px-3.5 py-1.5 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-500/30 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-95"
                     >
                         <BoxIcon className="w-3.5 h-3.5" /> 
                         <span>Bulk Issue</span>
@@ -1172,7 +1156,7 @@ const Certificates = () => {
                         disabled={selectedCertIds.length === 0}
                         className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 ${
                             selectedCertIds.length > 0 
-                            ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/25 cursor-pointer active:scale-95' 
+                            ? 'bg-sky-50 dark:bg-sky-500/20 hover:bg-sky-100 dark:hover:bg-sky-500/30 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-500/40 cursor-pointer active:scale-95' 
                             : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-gray-500 border border-slate-200/60 dark:border-white/5 cursor-not-allowed opacity-60'
                         }`}
                         title={selectedCertIds.length > 0 ? "Send personalized email to selected certificates" : "Select certificates using checkboxes below to email"}
@@ -1182,7 +1166,7 @@ const Certificates = () => {
                     </button>
                     <button 
                         onClick={() => setIsIssueModalOpen(true)} 
-                        className="px-4 py-1.5 bg-sky-50 dark:bg-sky-500/20 hover:bg-sky-100 dark:hover:bg-sky-500/30 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-500/40 font-bold text-xs rounded-xl transition-all shadow-sm flex items-center gap-1.5 active:scale-95"
+                        className="px-4 py-1.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl transition-all shadow-md shadow-sky-500/20 flex items-center gap-1.5 active:scale-95 cursor-pointer"
                     >
                         <span>+</span> 
                         <span>Issue Certificate</span>
@@ -1191,67 +1175,77 @@ const Certificates = () => {
             </div>
 
             {/* 2. Top Metric Cards (Live Computed) */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5 sm:gap-4">
                 <div 
                     onClick={() => setActiveTab('All')}
-                    className={`p-3 rounded-xl border flex flex-col justify-between cursor-pointer transition-all hover:-translate-y-0.5 ${theme.statBoxBg}`}
+                    className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm flex items-center justify-between cursor-pointer transition-all hover:-translate-y-0.5"
                 >
-                    <div className="flex items-center justify-between">
-                        <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-gray-400">Total Issued</p>
-                        <CertificateIcon className="w-4 h-4 text-sky-500" />
+                    <div>
+                        <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-gray-400">Total Issued</p>
+                        <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1">{stats.total}</p>
                     </div>
-                    <p className="text-xl font-black text-slate-900 dark:text-white mt-1">{stats.total}</p>
+                    <div className="w-10 h-10 rounded-full bg-sky-50 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
+                        <CertificateIcon className="w-5 h-5" />
+                    </div>
                 </div>
 
                 <div 
                     onClick={() => setActiveTab('Active')}
-                    className={`p-3 rounded-xl border flex flex-col justify-between cursor-pointer transition-all hover:-translate-y-0.5 ${theme.statBoxBg}`}
+                    className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm flex items-center justify-between cursor-pointer transition-all hover:-translate-y-0.5"
                 >
-                    <div className="flex items-center justify-between">
-                        <p className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Active & Valid</p>
-                        <CheckIcon className="w-4 h-4 text-emerald-500" />
+                    <div>
+                        <p className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-500">Active & Valid</p>
+                        <p className="text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">{stats.active}</p>
                     </div>
-                    <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1">{stats.active}</p>
+                    <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0">
+                        <CheckIcon className="w-5 h-5" />
+                    </div>
                 </div>
 
                 <div 
                     onClick={() => setActiveTab('Eligibility Queue')}
-                    className={`p-3 rounded-xl border flex flex-col justify-between cursor-pointer transition-all hover:-translate-y-0.5 ${theme.statBoxBg}`}
+                    className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm flex items-center justify-between cursor-pointer transition-all hover:-translate-y-0.5"
                 >
-                    <div className="flex items-center justify-between">
-                        <p className="text-[10px] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400">Eligible Queue</p>
-                        <UsersIcon className="w-4 h-4 text-blue-500" />
+                    <div>
+                        <p className="text-[11px] font-extrabold uppercase tracking-wider text-blue-500">Eligible Queue</p>
+                        <p className="text-2xl sm:text-3xl font-extrabold text-blue-600 dark:text-blue-400 mt-1">{stats.eligible}</p>
                     </div>
-                    <p className="text-xl font-black text-blue-600 dark:text-blue-400 mt-1">{stats.eligible}</p>
+                    <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-500/20 text-blue-500 flex items-center justify-center shrink-0">
+                        <UsersIcon className="w-5 h-5" />
+                    </div>
                 </div>
 
                 <div 
                     onClick={() => setActiveTab('Revoked')}
-                    className={`p-3 rounded-xl border flex flex-col justify-between cursor-pointer transition-all hover:-translate-y-0.5 ${theme.statBoxBg}`}
+                    className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm flex items-center justify-between cursor-pointer transition-all hover:-translate-y-0.5"
                 >
-                    <div className="flex items-center justify-between">
-                        <p className="text-[10px] font-extrabold uppercase tracking-wider text-rose-600 dark:text-rose-400">Revoked</p>
-                        <TriangleAlertIcon className="w-4 h-4 text-rose-500" />
+                    <div>
+                        <p className="text-[11px] font-extrabold uppercase tracking-wider text-rose-500">Revoked</p>
+                        <p className="text-2xl sm:text-3xl font-extrabold text-rose-600 dark:text-rose-400 mt-1">{stats.revoked}</p>
                     </div>
-                    <p className="text-xl font-black text-rose-600 dark:text-rose-400 mt-1">{stats.revoked}</p>
+                    <div className="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-500/20 text-rose-500 flex items-center justify-center shrink-0">
+                        <TriangleAlertIcon className="w-5 h-5" />
+                    </div>
                 </div>
 
                 <div 
                     onClick={() => setActiveTab('All')}
-                    className={`p-3 rounded-xl border flex flex-col justify-between cursor-pointer transition-all hover:-translate-y-0.5 ${theme.statBoxBg}`}
+                    className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm flex items-center justify-between cursor-pointer transition-all hover:-translate-y-0.5"
                 >
-                    <div className="flex items-center justify-between">
-                        <p className="text-[10px] font-extrabold uppercase tracking-wider text-amber-600 dark:text-amber-400">Unopened / Pending</p>
-                        <TriangleAlertIcon className="w-4 h-4 text-amber-500" />
+                    <div>
+                        <p className="text-[11px] font-extrabold uppercase tracking-wider text-amber-500">Unopened</p>
+                        <p className="text-2xl sm:text-3xl font-extrabold text-amber-600 dark:text-amber-400 mt-1">{stats.notDownloaded}</p>
                     </div>
-                    <p className="text-xl font-black text-amber-600 dark:text-amber-400 mt-1">{stats.notDownloaded}</p>
+                    <div className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-500/20 text-amber-500 flex items-center justify-center shrink-0">
+                        <TriangleAlertIcon className="w-5 h-5" />
+                    </div>
                 </div>
             </div>
 
             {/* 3. Instant Public QR Verification Engine Bar */}
-            <div className="absolutestrange-card p-3.5">
-                <form onSubmit={handleVerifySearch} className="flex flex-col sm:flex-row gap-2.5 items-center">
-                    <span className="text-xs font-black uppercase tracking-wider text-sky-600 dark:text-sky-400 shrink-0 flex items-center gap-1.5">
+            <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm">
+                <form onSubmit={handleVerifySearch} className="flex flex-col sm:flex-row gap-3 items-center">
+                    <span className="text-xs font-black uppercase tracking-wider text-sky-600 dark:text-sky-400 shrink-0 flex items-center gap-2">
                         <SearchIcon className="w-4 h-4 text-sky-500" /> Instant Public QR Verification:
                     </span>
                     <input 
@@ -1259,19 +1253,19 @@ const Certificates = () => {
                         placeholder={`Enter validation ID (e.g. ${prefix || 'PROEDU'}-2026-A1B2C3D4)...`} 
                         value={verifySearchId} 
                         onChange={(e) => setVerifySearchId(e.target.value)} 
-                        className={`flex-1 rounded-xl px-3.5 py-1.5 text-xs font-mono font-bold focus:outline-none focus:border-sky-500 ${theme.inputBg}`}
+                        className="flex-1 w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:border-sky-500"
                     />
                     <button 
                         type="submit" 
                         disabled={isVerifying}
-                        className="px-4 py-1.5 bg-sky-50 dark:bg-sky-500/20 hover:bg-sky-100 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-500/30 font-bold text-xs rounded-xl transition-all shadow-sm shrink-0"
+                        className="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow-md shadow-sky-500/20 transition-all shrink-0 cursor-pointer active:scale-95"
                     >
                         {isVerifying ? 'Verifying...' : 'Verify Authenticity'}
                     </button>
                 </form>
 
                 {verifyResult && (
-                    <div className={`mt-3 p-3 rounded-xl border text-xs font-bold animate-in fade-in flex items-center justify-between ${
+                    <div className={`mt-3 p-3.5 rounded-xl border text-xs font-bold animate-in fade-in flex items-center justify-between ${
                         verifyResult.valid ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-300 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-300' :
                         verifyResult.status === 'REVOKED' ? 'bg-rose-50 dark:bg-rose-500/10 border-rose-300 dark:border-rose-500/30 text-rose-800 dark:text-rose-300' :
                         verifyResult.status === 'REPLACED' ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-300 dark:border-amber-500/30 text-amber-800 dark:text-amber-300' :
@@ -1284,10 +1278,10 @@ const Certificates = () => {
             </div>
 
             {/* 4. Split Pane Workspace */}
-            <div className="flex flex-col lg:flex-row gap-5 min-h-[580px]">
+            <div className="flex flex-col lg:flex-row gap-6 min-h-[640px]">
                 
                 {/* LEFT PANE: Certificate Directory & Queue */}
-                <div className="w-full lg:w-1/2 flex flex-col absolutestrange-card overflow-hidden p-0 h-[640px]">
+                <div className="w-full lg:w-1/2 flex flex-col bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 rounded-2xl shadow-sm overflow-hidden h-[700px]">
                     
                     {/* Status Tabs */}
                     <div className="p-2 border-b border-slate-200 dark:border-white/5 flex gap-1 shrink-0 bg-slate-50/70 dark:bg-white/[0.02] overflow-x-auto scrollbar-hide">
@@ -1336,7 +1330,7 @@ const Certificates = () => {
                             <select 
                                 value={hackathonFilter} 
                                 onChange={(e) => setHackathonFilter(e.target.value)}
-                                className={`rounded-lg px-2.5 py-1.5 text-xs font-bold border border-slate-200 dark:border-white/10 max-w-[160px] truncate ${theme.inputBg}`}
+                                className="rounded-xl px-3 py-1.5 text-xs font-bold border border-slate-200 dark:border-white/10 max-w-[160px] truncate bg-white dark:bg-navy-800 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 shadow-sm cursor-pointer"
                                 title="Filter certificates by specific Hackathon"
                             >
                                 <option value="ALL">All Hackathons ({availableHackathons.length})</option>
@@ -1349,7 +1343,7 @@ const Certificates = () => {
                                 <select 
                                     value={typeFilter} 
                                     onChange={(e) => setTypeFilter(e.target.value)}
-                                    className={`rounded-lg px-2.5 py-1.5 text-xs font-bold border border-slate-200 dark:border-white/10 ${theme.inputBg}`}
+                                    className="rounded-xl px-3 py-1.5 text-xs font-bold border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 shadow-sm cursor-pointer"
                                 >
                                     <option value="ALL">All Types</option>
                                     <option value="WINNER">Winner</option>
@@ -1449,7 +1443,7 @@ const Certificates = () => {
                                     <button
                                         type="button"
                                         onClick={openBulkEmailModal}
-                                        className="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] rounded-lg shadow-sm transition-all flex items-center gap-1 active:scale-95"
+                                        className="px-2.5 py-1 bg-sky-50 dark:bg-sky-500/20 hover:bg-sky-100 dark:hover:bg-sky-500/30 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-500/40 font-bold text-[11px] rounded-lg shadow-sm transition-all flex items-center gap-1 active:scale-95"
                                     >
                                         <MailIcon className="w-3 h-3" />
                                         <span>Email Selected ({selectedCertIds.length})</span>
@@ -1778,14 +1772,14 @@ const Certificates = () => {
                 </div>
 
                 {/* RIGHT PANE: Certificate Inspector & Live Visual Render */}
-                <div className="w-full lg:w-1/2 absolutestrange-card flex flex-col overflow-hidden relative p-0 h-[640px]">
+                <div className="w-full lg:w-1/2 bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 rounded-2xl shadow-sm flex flex-col overflow-hidden relative h-[700px]">
                     {selectedCert ? (
                         <>
                             {/* Selected Header */}
-                            <div className="p-4 border-b border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] flex justify-between items-center shrink-0">
+                            <div className="p-4 sm:p-5 border-b border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] flex justify-between items-center shrink-0">
                                 <div>
                                     <h2 className="text-base font-black text-slate-900 dark:text-white">{selectedCert.recipientName}</h2>
-                                    <p className="text-xs text-sky-600 dark:text-sky-400 font-mono font-bold">{selectedCert.validationId}</p>
+                                    <p className="text-xs text-sky-600 dark:text-sky-400 font-mono font-bold mt-0.5">{selectedCert.validationId}</p>
                                 </div>
                                 <span className={`px-2.5 py-1 rounded-full text-[9.5px] font-black uppercase tracking-wider border ${
                                     selectedCert.status === 'Active' ? 'bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30' :
@@ -1797,7 +1791,7 @@ const Certificates = () => {
                             </div>
 
                             {/* Sub-tab Navigation */}
-                            <div className="flex border-b border-slate-200 dark:border-white/10 px-4 pt-2 gap-3 shrink-0 bg-white dark:bg-transparent">
+                            <div className="flex border-b border-slate-200/80 dark:border-white/10 px-5 pt-3 gap-4 shrink-0 bg-white dark:bg-transparent">
                                 {[
                                     { id: 'checklist', label: '1. Document & Checklist', icon: <FileTextIcon className="w-3.5 h-3.5" /> },
                                     { id: 'delivery', label: '2. Delivery & Tracking', icon: <ZapIcon className="w-3.5 h-3.5" /> },
@@ -1806,9 +1800,9 @@ const Certificates = () => {
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveDetailTab(tab.id)}
-                                        className={`pb-2 px-2 text-xs font-extrabold transition-all border-b-2 flex items-center gap-1.5 ${
+                                        className={`pb-2.5 px-2 text-xs font-extrabold transition-all border-b-2 flex items-center gap-1.5 cursor-pointer ${
                                             activeDetailTab === tab.id
-                                            ? 'border-sky-500 text-sky-700 dark:text-sky-300 dark:border-sky-400'
+                                            ? 'border-sky-600 text-sky-600 dark:text-sky-400 dark:border-sky-400'
                                             : 'border-transparent text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white'
                                         }`}
                                     >
@@ -1819,14 +1813,14 @@ const Certificates = () => {
                             </div>
 
                             {/* Main Scrollable Body */}
-                            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                            <div className="flex-1 overflow-y-auto p-5 space-y-5 custom-scrollbar">
                                 
                                 {activeDetailTab === 'checklist' && (
                                     <div className="space-y-4 animate-in fade-in duration-200">
                                         {/* Status Alert if Revoked or Replaced */}
                                         {selectedCert.status === 'Revoked' && (
-                                            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-800 dark:text-rose-300 text-xs">
-                                                <p className="font-extrabold flex items-center gap-1.5 mb-0.5">
+                                            <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-800 dark:text-rose-300 text-xs">
+                                                <p className="font-extrabold flex items-center gap-1.5 mb-1">
                                                     <TriangleAlertIcon className="w-4 h-4 text-rose-500" /> Certificate Officially Revoked:
                                                 </p>
                                                 <p className="font-medium pl-5">{selectedCert.revokeReason || 'Revoked by administrator.'}</p>
@@ -1834,8 +1828,8 @@ const Certificates = () => {
                                         )}
 
                                         {selectedCert.status === 'Replaced' && (
-                                            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs">
-                                                <p className="font-extrabold flex items-center gap-1.5 mb-0.5">
+                                            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs">
+                                                <p className="font-extrabold flex items-center gap-1.5 mb-1">
                                                     <TriangleAlertIcon className="w-4 h-4 text-amber-500" /> Superseded by Replacement:
                                                 </p>
                                                 <p className="font-medium pl-5 font-mono">New Validation ID: {selectedCert.replacedBy || 'Generated'}</p>
@@ -1845,15 +1839,13 @@ const Certificates = () => {
                                         {/* Live Visual Certificate Render */}
                                         <CertificateDocument 
                                             cert={selectedCert} 
-                                            isLightTheme={isLightTheme} 
                                             templates={templates} 
                                             onPreviewFull={(data) => setPreviewImageModal({ isOpen: true, ...data })} 
                                         />
 
-
                                         {/* 8-Point Eligibility Checklist */}
-                                        <div className={`p-4 rounded-xl border ${theme.innerBg}`}>
-                                            <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-gray-400 mb-2.5">
+                                        <div className="p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
+                                            <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-gray-400 mb-3">
                                                 8-Point Issuance Verification Checklist
                                             </h4>
                                             <div className="grid grid-cols-2 gap-2 text-xs font-semibold">
@@ -1874,39 +1866,39 @@ const Certificates = () => {
 
                                 {activeDetailTab === 'delivery' && (
                                     <div className="space-y-4 animate-in fade-in duration-200">
-                                        <div className={`p-4 rounded-xl border ${theme.innerBg}`}>
-                                            <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-gray-400 mb-3 border-b pb-2">
+                                        <div className="p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
+                                            <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-gray-400 mb-3 border-b border-slate-200/80 dark:border-white/5 pb-2.5">
                                                 Delivery & Engagement Metrics
                                             </h4>
                                             <div className="space-y-2.5 text-xs">
                                                 <div className="flex justify-between items-center">
-                                                    <span className="text-slate-500">Email Delivery:</span>
+                                                    <span className="text-slate-500 dark:text-gray-400">Email Delivery:</span>
                                                     <strong className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                                                         <CheckIcon className="w-3.5 h-3.5 text-emerald-500" />
                                                         <span>Delivered Successfully</span>
                                                     </strong>
                                                 </div>
                                                 <div className="flex justify-between items-center">
-                                                    <span className="text-slate-500">Email Opened:</span>
+                                                    <span className="text-slate-500 dark:text-gray-400">Email Opened:</span>
                                                     <strong className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                                                         <CheckIcon className="w-3.5 h-3.5 text-emerald-500" />
                                                         <span>Confirmed Opened</span>
                                                     </strong>
                                                 </div>
                                                 <div className="flex justify-between items-center">
-                                                    <span className="text-slate-500">Downloads Count:</span>
+                                                    <span className="text-slate-500 dark:text-gray-400">Downloads Count:</span>
                                                     <strong className="font-mono text-slate-800 dark:text-white">{selectedCert.deliveryStatus?.downloadsCount || 0} times</strong>
                                                 </div>
                                                 <div className="flex justify-between items-center">
-                                                    <span className="text-slate-500">Public QR Verifications:</span>
+                                                    <span className="text-slate-500 dark:text-gray-400">Public QR Verifications:</span>
                                                     <strong className="font-mono text-sky-600 dark:text-sky-400">{selectedCert.deliveryStatus?.verificationCount || 0} checks</strong>
                                                 </div>
-                                                <div className="flex justify-between items-center pt-2 border-t border-slate-200/60 dark:border-white/5">
-                                                    <span className="text-slate-500">Template Style:</span>
+                                                <div className="flex justify-between items-center pt-2 border-t border-slate-200/80 dark:border-white/5">
+                                                    <span className="text-slate-500 dark:text-gray-400">Template Style:</span>
                                                     <strong className="text-slate-800 dark:text-white">{selectedCert.template || 'Winner Certificate'}</strong>
                                                 </div>
                                                 <div className="flex justify-between items-center">
-                                                    <span className="text-slate-500">Issued Authority:</span>
+                                                    <span className="text-slate-500 dark:text-gray-400">Issued Authority:</span>
                                                     <strong className="text-slate-800 dark:text-white">{selectedCert.issuedBy || 'ProEduvate Platform'}</strong>
                                                 </div>
                                             </div>
@@ -1916,13 +1908,13 @@ const Certificates = () => {
 
                                 {activeDetailTab === 'audit' && (
                                     <div className="space-y-4 animate-in fade-in duration-200">
-                                        <div className={`p-4 rounded-xl border ${theme.innerBg}`}>
-                                            <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-gray-400 mb-3 border-b pb-2">
+                                        <div className="p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
+                                            <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-gray-400 mb-3 border-b border-slate-200/80 dark:border-white/5 pb-2.5">
                                                 Immutable Certificate Audit History
                                             </h4>
                                             <div className="space-y-2.5">
                                                 {(selectedCert.auditHistory || []).map((entry, idx) => (
-                                                    <div key={idx} className="p-2.5 bg-white dark:bg-black/30 rounded-lg border border-slate-200 dark:border-white/5 text-xs">
+                                                    <div key={idx} className="p-3 bg-white dark:bg-black/30 rounded-xl border border-slate-200/80 dark:border-white/5 text-xs shadow-sm">
                                                         <div className="flex justify-between items-center mb-1">
                                                             <span className="font-bold text-sky-600 dark:text-sky-400">{entry.event}</span>
                                                             <span className="text-[10px] font-mono text-slate-400">{entry.date}</span>
@@ -1948,17 +1940,10 @@ const Certificates = () => {
                                             <button 
                                                 onClick={() => openEmailModalForCert(selectedCert)}
                                                 disabled={actionLoading}
-                                                className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all shadow-sm shadow-blue-500/25 flex items-center gap-1.5 active:scale-95"
+                                                className="px-3.5 py-1.5 bg-sky-50 dark:bg-sky-500/20 hover:bg-sky-100 dark:hover:bg-sky-500/30 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-500/40 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center gap-1.5 active:scale-95"
                                             >
                                                 <MailIcon className="w-3.5 h-3.5" />
                                                 <span>Send Email</span>
-                                            </button>
-                                            <button 
-                                                onClick={() => handleResend(selectedCert.id || selectedCert.validationId)}
-                                                disabled={actionLoading}
-                                                className="px-3.5 py-1.5 bg-sky-50 dark:bg-sky-500/20 hover:bg-sky-100 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-500/40 text-xs font-bold rounded-xl transition-all shadow-sm"
-                                            >
-                                                Resend Email
                                             </button>
                                             <button 
                                                 onClick={() => {
@@ -2031,7 +2016,7 @@ const Certificates = () => {
                                 required 
                                 value={issueForm.recipientName} 
                                 onChange={(e) => setIssueForm({...issueForm, recipientName: e.target.value})} 
-                                className={`w-full rounded-xl px-3 py-2 text-xs focus:outline-none ${theme.inputBg}`} 
+                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-sky-500" 
                                 placeholder="e.g. Alex Johnson" 
                             />
                         </div>
@@ -2042,7 +2027,7 @@ const Certificates = () => {
                                 required 
                                 value={issueForm.recipientEmail} 
                                 onChange={(e) => setIssueForm({...issueForm, recipientEmail: e.target.value})} 
-                                className={`w-full rounded-xl px-3 py-2 text-xs focus:outline-none ${theme.inputBg}`} 
+                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-sky-500" 
                                 placeholder="alex@example.com" 
                             />
                         </div>
@@ -2065,7 +2050,7 @@ const Certificates = () => {
                                         template: matchTmpl ? matchTmpl.name : `${newType} Certificate`
                                     });
                                 }} 
-                                className={`w-full rounded-xl px-3 py-2 text-xs font-bold focus:outline-none ${theme.inputBg}`}
+                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 cursor-pointer"
                             >
                                 <option value="Winner">Winner</option>
                                 <option value="Runner Up">Runner Up</option>
@@ -2078,7 +2063,7 @@ const Certificates = () => {
                             <select 
                                 value={issueForm.template} 
                                 onChange={(e) => setIssueForm({...issueForm, template: e.target.value})} 
-                                className={`w-full rounded-xl px-3 py-2 text-xs font-bold focus:outline-none ${theme.inputBg}`}
+                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 cursor-pointer"
                             >
                                 {templates.map(t => (
                                     <option key={t.id} value={t.name}>{t.name} ({t.category})</option>
@@ -2113,7 +2098,7 @@ const Certificates = () => {
                             required 
                             value={issueForm.eventTitle} 
                             onChange={(e) => setIssueForm({...issueForm, eventTitle: e.target.value})} 
-                            className={`w-full rounded-xl px-3 py-2 text-xs focus:outline-none ${theme.inputBg}`} 
+                            className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-sky-500" 
                             placeholder="Global AI Summit 2026" 
                         />
                     </div>
@@ -2122,12 +2107,12 @@ const Certificates = () => {
                         <CheckIcon className="w-4 h-4 text-emerald-500 shrink-0" /> 8/8 Eligibility Requirements Satisfied for recipient account.
                     </div>
 
-                    <div className="flex justify-end gap-2 pt-2">
-                        <button type="button" onClick={() => setIsIssueModalOpen(false)} className="px-4 py-2 text-xs text-slate-500 font-bold">Cancel</button>
+                    <div className="flex justify-end gap-2.5 pt-2">
+                        <button type="button" onClick={() => setIsIssueModalOpen(false)} className="px-4 py-2 text-xs text-slate-500 dark:text-gray-400 font-bold hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer">Cancel</button>
                         <button 
                             type="submit" 
                             disabled={actionLoading} 
-                            className="px-5 py-2 bg-sky-50 dark:bg-sky-500/20 hover:bg-sky-100 dark:hover:bg-sky-500/30 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-500/40 font-bold text-xs rounded-xl shadow-sm transition-all"
+                            className="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow-md shadow-sky-500/20 transition-all active:scale-95 cursor-pointer"
                         >
                             {actionLoading ? 'Issuing...' : 'Confirm & Issue'}
                         </button>
@@ -2148,7 +2133,7 @@ const Certificates = () => {
                         <select 
                             value={revokeForm.reason} 
                             onChange={(e) => setRevokeForm({...revokeForm, reason: e.target.value})} 
-                            className={`w-full rounded-xl px-3 py-2 text-xs font-bold focus:outline-none ${theme.inputBg}`}
+                            className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-rose-500 cursor-pointer"
                         >
                             <option value="Incorrect information">Incorrect information</option>
                             <option value="Fraudulent certificate">Fraudulent certificate</option>
@@ -2163,16 +2148,16 @@ const Certificates = () => {
                         rows="3" 
                         value={revokeForm.notes} 
                         onChange={(e) => setRevokeForm({...revokeForm, notes: e.target.value})} 
-                        className={`w-full rounded-xl px-3 py-2 text-xs focus:outline-none resize-none ${theme.inputBg}`}
+                        className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-rose-500 resize-none"
                     ></textarea>
 
                     <div className="p-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-xl text-xs font-bold text-rose-700 dark:text-rose-300 flex items-center gap-1.5">
                         <TriangleAlertIcon className="w-4 h-4 text-rose-500 shrink-0" /> WARNING: Revoking invalidates public QR verification immediately.
                     </div>
 
-                    <div className="flex justify-end gap-2 pt-2">
-                        <button type="button" onClick={() => setIsRevokeModalOpen(false)} className="px-4 py-2 text-xs text-slate-500 font-bold">Cancel</button>
-                        <button type="submit" disabled={actionLoading} className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs rounded-xl shadow-md">
+                    <div className="flex justify-end gap-2.5 pt-2">
+                        <button type="button" onClick={() => setIsRevokeModalOpen(false)} className="px-4 py-2 text-xs text-slate-500 dark:text-gray-400 font-bold hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer">Cancel</button>
+                        <button type="submit" disabled={actionLoading} className="px-5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl shadow-md transition-all active:scale-95 cursor-pointer">
                             {actionLoading ? 'Revoking...' : 'Confirm Revocation'}
                         </button>
                     </div>
@@ -2195,7 +2180,7 @@ const Certificates = () => {
                                 required 
                                 value={replacementForm.recipientName} 
                                 onChange={(e) => setReplacementForm({...replacementForm, recipientName: e.target.value})} 
-                                className={`w-full rounded-xl px-3 py-2 text-xs focus:outline-none ${theme.inputBg}`} 
+                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-sky-500" 
                             />
                         </div>
                         <div>
@@ -2205,7 +2190,7 @@ const Certificates = () => {
                                 required 
                                 value={replacementForm.recipientEmail} 
                                 onChange={(e) => setReplacementForm({...replacementForm, recipientEmail: e.target.value})} 
-                                className={`w-full rounded-xl px-3 py-2 text-xs focus:outline-none ${theme.inputBg}`} 
+                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-sky-500" 
                             />
                         </div>
                     </div>
@@ -2217,14 +2202,14 @@ const Certificates = () => {
                             required 
                             value={replacementForm.reason} 
                             onChange={(e) => setReplacementForm({...replacementForm, reason: e.target.value})} 
-                            className={`w-full rounded-xl px-3 py-2 text-xs focus:outline-none ${theme.inputBg}`} 
+                            className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-sky-500" 
                             placeholder="e.g. Typo correction on recipient name" 
                         />
                     </div>
 
-                    <div className="flex justify-end gap-2 pt-2">
-                        <button type="button" onClick={() => setIsReplacementModalOpen(false)} className="px-4 py-2 text-xs text-slate-500 font-bold">Cancel</button>
-                        <button type="submit" disabled={actionLoading} className="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow-sm transition-all active:scale-95">
+                    <div className="flex justify-end gap-2.5 pt-2">
+                        <button type="button" onClick={() => setIsReplacementModalOpen(false)} className="px-4 py-2 text-xs text-slate-500 dark:text-gray-400 font-bold hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer">Cancel</button>
+                        <button type="submit" disabled={actionLoading} className="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow-md shadow-sky-500/20 transition-all active:scale-95 cursor-pointer">
                             {actionLoading ? 'Issuing...' : 'Issue Replacement'}
                         </button>
                     </div>
@@ -2249,7 +2234,7 @@ const Certificates = () => {
                                 rows="6" 
                                 value={bulkText} 
                                 onChange={(e) => setBulkText(e.target.value)} 
-                                className="w-full bg-slate-50 dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl p-3 text-xs font-mono focus:outline-none focus:border-indigo-500"
+                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-xs font-mono text-slate-800 dark:text-white focus:outline-none focus:border-sky-500"
                                 placeholder="Alex Johnson, alex@example.com, Global AI Summit 2026, Winner"
                             ></textarea>
                         </div>
@@ -2261,7 +2246,7 @@ const Certificates = () => {
                             <select 
                                 value={bulkTemplate} 
                                 onChange={(e) => setBulkTemplate(e.target.value)} 
-                                className={`w-full rounded-xl px-3 py-2 text-xs font-bold border ${theme.inputBg}`}
+                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 cursor-pointer"
                             >
                                 {templates.map(t => (
                                     <option key={t.id} value={t.name}>{t.name} ({t.category})</option>
@@ -2289,7 +2274,7 @@ const Certificates = () => {
                             <button 
                                 onClick={handleBulkPreview} 
                                 disabled={actionLoading}
-                                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl shadow-md"
+                                className="px-5 py-2 bg-indigo-50 dark:bg-indigo-500/20 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-500/40 font-bold text-xs rounded-xl shadow-sm transition-all"
                             >
                                 {actionLoading ? 'Validating...' : 'Step 1: Preview Batch'}
                             </button>
@@ -2325,7 +2310,7 @@ const Certificates = () => {
                             <button 
                                 onClick={handleBulkConfirm} 
                                 disabled={actionLoading || bulkPreviewData?.readyCount === 0}
-                                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-md"
+                                className="px-5 py-2 bg-emerald-50 dark:bg-emerald-500/20 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/40 font-bold text-xs rounded-xl shadow-sm transition-all"
                             >
                                 {actionLoading ? 'Issuing...' : `Step 2: Confirm & Issue ${bulkPreviewData?.readyCount || 0} Certificates`}
                             </button>
@@ -2591,7 +2576,7 @@ const Certificates = () => {
                             placeholder="e.g. HackZen AI First Prize Certificate"
                             value={uploadForm.name}
                             onChange={(e) => setUploadForm(prev => ({ ...prev, name: e.target.value }))}
-                            className={`w-full rounded-xl px-3 py-2 text-xs focus:outline-none ${theme.inputBg}`}
+                            className="w-full rounded-xl px-3.5 py-2 text-xs bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500"
                         />
                     </div>
 
@@ -2603,7 +2588,7 @@ const Certificates = () => {
                         <select
                             value={uploadForm.category}
                             onChange={(e) => setUploadForm(prev => ({ ...prev, category: e.target.value }))}
-                            className={`w-full rounded-xl px-3 py-2 text-xs font-bold focus:outline-none ${theme.inputBg}`}
+                            className="w-full rounded-xl px-3.5 py-2 text-xs font-bold bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500"
                         >
                             <option value="Winner">Winner (1st / Champion)</option>
                             <option value="Runner Up">Runner Up (2nd / 3rd Place)</option>
@@ -2623,7 +2608,7 @@ const Certificates = () => {
                             rows="2"
                             value={uploadForm.description}
                             onChange={(e) => setUploadForm(prev => ({ ...prev, description: e.target.value }))}
-                            className={`w-full rounded-xl px-3 py-2 text-xs focus:outline-none resize-none ${theme.inputBg}`}
+                            className="w-full rounded-xl px-3.5 py-2 text-xs bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 resize-none"
                         ></textarea>
                     </div>
 
@@ -2639,7 +2624,7 @@ const Certificates = () => {
                         <button
                             type="submit"
                             disabled={uploading || !uploadForm.file}
-                            className="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50 active:scale-95"
+                            className="px-5 py-2 bg-sky-50 dark:bg-sky-500/20 hover:bg-sky-100 dark:hover:bg-sky-500/30 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-500/40 font-bold text-xs rounded-xl shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50 active:scale-95"
                         >
                             {uploading ? (
                                 <>
@@ -2687,7 +2672,7 @@ const Certificates = () => {
                                         type="text" 
                                         value={emailModal.recipientName}
                                         onChange={(e) => setEmailModal(prev => ({ ...prev, recipientName: e.target.value }))}
-                                        className={`w-full px-3 py-1.5 rounded-xl border font-bold text-xs ${theme.inputBg}`}
+                                        className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 text-slate-800 dark:text-white font-bold text-xs focus:outline-none focus:border-sky-500"
                                         required
                                     />
                                 </div>
@@ -2699,7 +2684,7 @@ const Certificates = () => {
                                         type="email" 
                                         value={emailModal.recipientEmail}
                                         onChange={(e) => setEmailModal(prev => ({ ...prev, recipientEmail: e.target.value }))}
-                                        className={`w-full px-3 py-1.5 rounded-xl border font-bold text-xs ${theme.inputBg}`}
+                                        className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 text-slate-800 dark:text-white font-bold text-xs focus:outline-none focus:border-sky-500"
                                         required
                                     />
                                 </div>
@@ -2718,6 +2703,17 @@ const Certificates = () => {
                                 ))}
                             </div>
                         )}
+                    </div>
+
+                    {/* PNG Attachment Notice Banner */}
+                    <div className="p-3 rounded-xl bg-sky-50 dark:bg-sky-500/10 border border-sky-200/80 dark:border-sky-500/20 text-xs flex items-center gap-2.5 text-sky-900 dark:text-sky-200">
+                        <span className="text-base">📎</span>
+                        <div className="min-w-0 flex-1">
+                            <span className="font-extrabold text-[11px] block">High-Resolution Certificate PNG Attachment Included</span>
+                            <span className="text-[10px] text-sky-700 dark:text-sky-300">
+                                The official high-resolution PNG certificate matching the selected template will be attached to each recipient's email.
+                            </span>
+                        </div>
                     </div>
 
                     {/* Template Picker Pills */}
@@ -2773,7 +2769,7 @@ const Certificates = () => {
                             value={emailModal.customMessage}
                             onChange={(e) => setEmailModal(prev => ({ ...prev, customMessage: e.target.value }))}
                             placeholder="Type personalized congratulatory message..."
-                            className={`w-full p-3 rounded-xl border text-xs font-normal leading-relaxed focus:outline-none focus:border-sky-500 ${theme.inputBg}`}
+                            className="w-full p-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 text-slate-800 dark:text-white text-xs font-normal leading-relaxed focus:outline-none focus:border-sky-500"
                         />
                         <p className="text-[10px] text-slate-400 dark:text-gray-500 mt-1">
                             Available dynamic tags: <code className="text-sky-600 font-bold">{'{name}'}</code>, <code className="text-sky-600 font-bold">{'{hackathon}'}</code>, <code className="text-sky-600 font-bold">{'{certId}'}</code>
@@ -2829,8 +2825,24 @@ const Certificates = () => {
                                     </div>
                                 </div>
 
+                                {/* PNG Attachment Callout in Live Preview */}
+                                <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-[11px] flex items-center gap-2.5 text-emerald-900 dark:text-emerald-300">
+                                    <span className="text-lg">📎</span>
+                                    <div className="min-w-0 flex-1">
+                                        <span className="font-extrabold uppercase tracking-wider text-[9px] block text-emerald-700 dark:text-emerald-400">
+                                            Attached High-Resolution File:
+                                        </span>
+                                        <span className="font-mono text-[11px] font-bold truncate block text-emerald-950 dark:text-emerald-200">
+                                            Certificate_{emailModal.cert?.validationId || 'CERT-ID'}_{emailModal.mode === 'single' ? (emailModal.recipientName || 'Recipient').replace(/\s+/g, '_') : 'Recipient'}.png
+                                        </span>
+                                    </div>
+                                    <span className="text-[9px] px-2 py-0.5 rounded-md font-black bg-emerald-200/70 dark:bg-emerald-500/30 text-emerald-800 dark:text-emerald-200 shrink-0 uppercase tracking-wider">
+                                        PNG
+                                    </span>
+                                </div>
+
                                 <div className="pt-1 text-center">
-                                    <span className="inline-block px-4 py-1.5 rounded-full text-[11px] font-bold bg-slate-800 dark:bg-sky-600 text-white shadow-sm">
+                                    <span className="inline-block px-4 py-1.5 rounded-full text-[11px] font-bold bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-500/40 shadow-sm">
                                         Verify Certificate Online &rarr;
                                     </span>
                                 </div>
@@ -2850,7 +2862,7 @@ const Certificates = () => {
                         <button
                             type="submit"
                             disabled={emailModal.sending}
-                            className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-sm shadow-blue-500/25 transition-all flex items-center gap-1.5 disabled:opacity-50 active:scale-95"
+                            className="px-5 py-2 rounded-xl text-xs font-bold bg-sky-50 dark:bg-sky-500/20 hover:bg-sky-100 dark:hover:bg-sky-500/30 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-500/40 shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50 active:scale-95"
                         >
                             {emailModal.sending ? (
                                 <>

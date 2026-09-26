@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { FileTextIcon, ShieldIcon, CheckIcon, UsersIcon, TeacherIcon, TriangleAlertIcon } from '../../components/AdminIcons';
 import { 
     fetchUsers, 
@@ -8,7 +8,6 @@ import {
     updateUserStatus, 
     performBulkUserAction 
 } from '../../services/admin/usersManagementApi';
-import { useTheme } from '../../context/ThemeContext';
 
 // SVG Icons requested for Profile Inspector Sub-Tabs
 const ActivityIcon = ({ className = "w-4 h-4" }) => (
@@ -42,25 +41,26 @@ const CheckCircle2Icon = ({ className = "w-3.5 h-3.5" }) => (
     </svg>
 );
 
-// --- Reusable Modal Component ---
+// --- Standardized Reusable Modal Component ---
 const ActionModal = ({ isOpen, onClose, title, children }) => {
     if (!isOpen) return null;
     return (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-
-            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-2xl p-6 w-full max-w-lg shadow-2xl relative text-slate-900 dark:text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-2xl p-6 w-full max-w-lg shadow-2xl relative text-slate-900 dark:text-white space-y-4 animate-in zoom-in-95 duration-200">
                 <button 
                     onClick={onClose} 
-                    className="absolute top-4 right-4 text-slate-400 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors p-1 rounded-lg"
+                    className="absolute top-5 right-5 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors p-1 rounded-lg cursor-pointer"
                     aria-label="Close modal"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"/>
                         <line x1="6" y1="6" x2="18" y2="18"/>
                     </svg>
                 </button>
 
-                <h2 className="text-xl font-black text-slate-900 dark:text-white mb-4 uppercase tracking-wider">{title}</h2>
+                <div className="border-b border-slate-100 dark:border-white/10 pb-3">
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">{title}</h2>
+                </div>
                 {children}
             </div>
         </div>
@@ -69,53 +69,30 @@ const ActionModal = ({ isOpen, onClose, title, children }) => {
 
 // --- Avatar Color safelist map ---
 const avatarColorMap = {
-    blue: 'bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-500/30',
-    purple: 'bg-purple-100 text-purple-700 border border-purple-200 dark:bg-purple-500/20 dark:text-purple-300 dark:border-purple-500/30',
+    blue: 'bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-500/20 dark:text-sky-300 dark:border-sky-500/30',
+    purple: 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-500/20 dark:text-purple-300 dark:border-purple-500/30',
     slate: 'bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-500/20 dark:text-slate-300 dark:border-slate-500/30',
-    amber: 'bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/30',
-    red: 'bg-rose-100 text-rose-700 border border-rose-200 dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-500/30',
+    amber: 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/30',
+    red: 'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-500/30',
 };
 
 const avatarBadgeMap = {
-    blue: 'bg-blue-500/20 border-blue-500/30 text-blue-500',
-    purple: 'bg-purple-500/20 border-purple-500/30 text-purple-500',
-    slate: 'bg-slate-500/20 border-slate-500/30 text-slate-400',
-    amber: 'bg-amber-500/20 border-amber-500/30 text-amber-500',
-    red: 'bg-rose-500/20 border-rose-500/30 text-rose-500',
+    blue: 'bg-sky-500/10 border-sky-500/20 text-sky-600 dark:text-sky-400',
+    purple: 'bg-purple-500/10 border-purple-500/20 text-purple-600 dark:text-purple-400',
+    slate: 'bg-slate-500/10 border-slate-500/20 text-slate-600 dark:text-slate-400',
+    amber: 'bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400',
+    red: 'bg-rose-500/10 border-rose-500/20 text-rose-600 dark:text-rose-400',
 };
 
 // Role Badge safe styles
 const roleColors = {
-    'ORGANIZER': 'bg-purple-50 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/30 font-bold',
-    'STUDENT': 'bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 font-bold',
-    'MENTOR': 'bg-amber-50 dark:bg-amber-500/20 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30 font-bold',
-    'ADMIN': 'bg-slate-100 dark:bg-slate-500/20 text-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-500/30 font-bold',
+    'ORGANIZER': 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 font-bold',
+    'STUDENT': 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 font-bold',
+    'MENTOR': 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-bold',
+    'ADMIN': 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20 font-bold',
 };
 
 const UsersManagement = () => {
-    const { theme: currentTheme } = useTheme();
-    const isLightTheme = currentTheme === 'light';
-
-    const theme = {
-        cardBg: isLightTheme 
-            ? 'bg-white border border-slate-200/80 shadow-sm text-slate-700 transition-all rounded-2xl' 
-            : 'glass-strong border-white/5 bg-navy-900/40 text-white shadow-xl rounded-2xl',
-        cardHeader: isLightTheme 
-            ? 'border-b border-slate-100 bg-slate-50/60 text-slate-700 font-bold' 
-            : 'border-b border-white/5 bg-white/[0.02] text-white',
-        headingText: isLightTheme ? 'text-slate-800 font-extrabold' : 'text-white font-bold',
-        subText: isLightTheme ? 'text-slate-500 font-normal' : 'text-gray-400 font-normal',
-        mutedText: isLightTheme ? 'text-slate-400 font-semibold' : 'text-gray-400 font-semibold',
-        innerBg: isLightTheme ? 'bg-slate-50/70 border border-slate-200/60 text-slate-700 rounded-2xl' : 'bg-black/20 border border-white/5 text-white rounded-2xl',
-        statBoxBg: isLightTheme ? 'bg-white border border-slate-200/60 text-slate-700 rounded-2xl' : 'bg-white/5 border border-white/5 text-white rounded-2xl',
-        hoverRow: isLightTheme ? 'hover:bg-sky-50/70' : 'hover:bg-white/5',
-        inputBg: isLightTheme ? 'bg-white border border-slate-200 text-slate-700 focus:border-sky-500 rounded-2xl' : 'bg-black/20 border border-white/10 text-white rounded-2xl',
-        tabActive: isLightTheme ? 'bg-sky-100 text-sky-700 border border-sky-300 shadow-sm font-extrabold' : 'bg-sky-500/20 text-sky-300 border border-sky-500/30 shadow-sm font-extrabold',
-        tabInactive: isLightTheme ? 'text-slate-500 hover:text-slate-800 font-medium' : 'text-gray-400 hover:text-white',
-        tableHead: isLightTheme ? 'bg-slate-100/80 text-slate-700 border-b border-slate-200' : 'bg-white/[0.02] text-gray-400 border-b border-white/5',
-        tableBorder: isLightTheme ? 'divide-slate-200' : 'divide-white/5'
-    };
-
     const [searchParams, setSearchParams] = useSearchParams();
     const [users, setUsers] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
@@ -139,7 +116,7 @@ const UsersManagement = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
-    // Profile Drawer Sub-tab (Two-Page View to eliminate empty space)
+    // Profile Drawer Sub-tab
     const [profileTab, setProfileTab] = useState('overview'); // 'overview' | 'activity'
     const [mentorTeamsTab, setMentorTeamsTab] = useState('active'); // 'active' | 'past'
 
@@ -241,7 +218,7 @@ const UsersManagement = () => {
         loadUsers();
     }, []);
 
-    // Summary Cards Counts (Separating Active Concurrency Overload)
+    // Summary Cards Counts
     const populationStats = useMemo(() => {
         return {
             total: users.length,
@@ -348,7 +325,7 @@ const UsersManagement = () => {
         showToast(nextState ? `Email verified for ${user.name}` : `Verification revoked for ${user.name}`);
     };
 
-    // Reassign Team Quick Simulation (Decreases active present teams load)
+    // Reassign Team Quick Simulation
     const handleReassignTeam = (teamName, mentorName) => {
         showToast(`Team "${teamName}" reassigned to an available mentor from ${mentorName}.`);
         setUsers(prev => prev.map(u => {
@@ -492,22 +469,22 @@ const UsersManagement = () => {
     const currentUsers = filteredUsers.slice(startIndex, startIndex + itemsPerPage);
 
     const renderPaginationBar = (position) => (
-        <div className={`flex flex-wrap items-center justify-between px-4 py-2.5 border-slate-200/80 dark:border-white/10 ${isLightTheme ? 'bg-slate-50/90' : 'bg-black/20'} shrink-0 text-xs font-medium ${position === 'top' ? 'border-b rounded-t-2xl' : 'border-t rounded-b-2xl mt-auto'}`}>
-            <div className={`text-[11px] font-bold ${theme.mutedText}`}>
-                Showing <span className={isLightTheme ? 'text-slate-900 font-extrabold' : 'text-white font-extrabold'}>{filteredUsers.length === 0 ? 0 : startIndex + 1}</span> to <span className={isLightTheme ? 'text-slate-900 font-extrabold' : 'text-white font-extrabold'}>{Math.min(startIndex + itemsPerPage, filteredUsers.length)}</span> of <span className={isLightTheme ? 'text-slate-900 font-extrabold' : 'text-white font-extrabold'}>{filteredUsers.length}</span> Users • Page {currentPage} of {totalPages}
+        <div className={`flex flex-wrap items-center justify-between px-4 py-3 border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02] shrink-0 text-xs font-medium ${position === 'top' ? 'border-b rounded-t-2xl' : 'border-t rounded-b-2xl mt-auto'}`}>
+            <div className="text-[11px] font-bold text-slate-500 dark:text-gray-400">
+                Showing <span className="text-slate-900 dark:text-white font-extrabold">{filteredUsers.length === 0 ? 0 : startIndex + 1}</span> to <span className="text-slate-900 dark:text-white font-extrabold">{Math.min(startIndex + itemsPerPage, filteredUsers.length)}</span> of <span className="text-slate-900 dark:text-white font-extrabold">{filteredUsers.length}</span> Users • Page {currentPage} of {totalPages}
             </div>
             
             <div className="flex items-center gap-1.5">
                 <button
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
-                    className={`px-3 py-1 rounded-xl text-xs font-bold transition-all border ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer active:scale-95 ${
                         currentPage === 1
                             ? 'opacity-40 cursor-not-allowed border-slate-200 dark:border-white/10 text-slate-400'
-                            : 'bg-sky-50 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 border-sky-200 dark:border-sky-500/30 hover:bg-sky-100 shadow-sm'
+                            : 'bg-white dark:bg-navy-800 text-slate-700 dark:text-gray-200 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-navy-700 shadow-xs'
                     }`}
                 >
-                    ← Prev Page
+                    ← Prev
                 </button>
 
                 <div className="flex items-center gap-1">
@@ -515,10 +492,10 @@ const UsersManagement = () => {
                         <button
                             key={i}
                             onClick={() => setCurrentPage(i + 1)}
-                            className={`w-7 h-7 flex items-center justify-center rounded-lg text-xs font-bold transition-all ${
+                            className={`w-7 h-7 flex items-center justify-center rounded-xl text-xs font-bold transition-all cursor-pointer ${
                                 currentPage === i + 1 
-                                    ? 'bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-500/40 shadow-xs font-black' 
-                                    : (isLightTheme ? 'text-slate-600 hover:bg-slate-200' : 'text-gray-400 hover:text-white')
+                                    ? 'bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-500/30 font-bold shadow-xs' 
+                                    : 'text-slate-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'
                             }`}
                         >
                             {i + 1}
@@ -529,55 +506,53 @@ const UsersManagement = () => {
                 <button
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages || filteredUsers.length === 0}
-                    className={`px-3 py-1 rounded-xl text-xs font-bold transition-all border ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer active:scale-95 ${
                         currentPage === totalPages || filteredUsers.length === 0
                             ? 'opacity-40 cursor-not-allowed border-slate-200 dark:border-white/10 text-slate-400'
-                            : 'bg-sky-50 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 border-sky-200 dark:border-sky-500/30 hover:bg-sky-100 shadow-sm'
+                            : 'bg-white dark:bg-navy-800 text-slate-700 dark:text-gray-200 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-navy-700 shadow-xs'
                     }`}
                 >
-                    Next Page →
+                    Next →
                 </button>
             </div>
         </div>
     );
 
     return (
-        <div className={`space-y-6 animate-in fade-in duration-700 pb-16 relative ${isLightTheme ? 'text-slate-900' : 'text-white'}`}>
+        <div className="space-y-7 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-16 max-w-7xl mx-auto">
             
-            {/* Toast Notification Banner */}
+            {/* Notification Toast */}
             {toastMessage && (
-                <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-top-4 fade-in duration-300 pointer-events-none">
-                    <div className={`px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2.5 font-bold text-xs border backdrop-blur-md transition-all ${
-                        toastMessage.type === 'warning'
-                            ? 'bg-amber-50/95 dark:bg-amber-950/80 border-amber-200 dark:border-amber-500/30 text-amber-900 dark:text-amber-200 shadow-amber-500/10'
-                            : toastMessage.type === 'error'
-                            ? 'bg-rose-50/95 dark:bg-rose-950/80 border-rose-200 dark:border-rose-500/30 text-rose-900 dark:text-rose-200 shadow-rose-500/10'
-                            : 'bg-white/95 dark:bg-slate-900/90 border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-slate-100 shadow-slate-900/10'
-                    }`}>
-                        {toastMessage.type === 'warning' ? (
-                            <TriangleAlertIcon className="w-4 h-4 text-amber-500 shrink-0" />
-                        ) : toastMessage.type === 'error' ? (
-                            <TriangleAlertIcon className="w-4 h-4 text-rose-500 shrink-0" />
-                        ) : (
-                            <CheckIcon className="w-4 h-4 text-emerald-500 shrink-0" />
-                        )}
-                        <span>{toastMessage.text}</span>
-                    </div>
+                <div className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 border backdrop-blur-md transition-all duration-300 animate-in slide-in-from-bottom-5 ${
+                    toastMessage.type === 'error'
+                        ? 'bg-rose-950/90 border-rose-500/30 text-rose-200'
+                        : toastMessage.type === 'warning'
+                        ? 'bg-amber-950/90 border-amber-500/30 text-amber-200'
+                        : 'bg-emerald-950/90 border-emerald-500/30 text-emerald-200'
+                }`}>
+                    <span className="text-base">
+                        {toastMessage.type === 'error' ? '⚠️' : toastMessage.type === 'warning' ? '⚡' : '✓'}
+                    </span>
+                    <span className="text-sm font-medium">{toastMessage.text}</span>
                 </div>
             )}
 
             {/* Header & Main Control */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className={`text-3xl font-extrabold tracking-tight ${isLightTheme ? 'text-slate-900' : 'text-white'}`}>Users Management Command Center</h1>
-                    <p className={`mt-1 text-sm ${theme.subText}`}>Audit accounts, investigate user profiles, modify roles, monitor mentor loads, and enforce governance policy.</p>
+                    <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                        Users Management
+                    </h1>
+                    <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
+                        Audit accounts, investigate user profiles, modify roles, monitor mentor loads, and enforce governance policy.
+                    </p>
                 </div>
                 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5 flex-wrap">
                     {activeFiltersCount > 0 && (
                         <button 
                             onClick={handleResetFilters}
-                            className="px-3.5 py-2 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 text-slate-700 dark:text-gray-200 border border-slate-300 dark:border-white/10 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                            className="px-3.5 py-2.5 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-700 dark:text-gray-200 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
                         >
                             <span>Reset ({activeFiltersCount})</span>
                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -589,16 +564,17 @@ const UsersManagement = () => {
 
                     <button 
                         onClick={exportToCSV}
-                        className="px-4 py-2 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-500/30 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-sm"
+                        className="px-4 py-2.5 rounded-xl bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-gray-200 border border-slate-200 dark:border-white/10 text-xs font-bold shadow-sm flex items-center gap-2 transition-all cursor-pointer active:scale-95"
                     >
-                        <FileTextIcon className="w-3.5 h-3.5" /> Export CSV
+                        <FileTextIcon className="w-3.5 h-3.5 text-slate-500 dark:text-gray-400" /> Export CSV
                     </button>
                     <button 
                         onClick={loadUsers} 
+                        disabled={isLoading}
                         title="Refresh Directory"
-                        className="p-2.5 bg-blue-50 dark:bg-blue-500/20 hover:bg-blue-100 dark:hover:bg-blue-500/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 rounded-full transition-all flex items-center justify-center shadow-sm"
+                        className="p-2.5 rounded-xl bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-gray-200 border border-slate-200 dark:border-white/10 text-xs font-bold shadow-sm transition-all flex items-center justify-center cursor-pointer active:scale-95 disabled:opacity-60"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-rotate-ccw">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`lucide lucide-rotate-ccw ${isLoading ? 'animate-spin' : ''}`}>
                             <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
                             <path d="M3 3v5h5" />
                         </svg>
@@ -606,18 +582,18 @@ const UsersManagement = () => {
                 </div>
             </div>
 
-            {/* 1. USER POPULATION SUMMARY CARDS (Spacious 2-Row Grid) */}
+            {/* 1. USER POPULATION SUMMARY CARDS */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
                 {[
                     { label: 'Total Users', val: populationStats.total, icon: <UsersIcon className="w-4 h-4 text-sky-500" />, filterRole: 'All Roles', filterTab: 'All Users' },
-                    { label: 'Students', val: populationStats.students, color: 'text-blue-600 dark:text-blue-400', icon: <UsersIcon className="w-4 h-4 text-blue-500" />, filterRole: 'Student' },
+                    { label: 'Students', val: populationStats.students, color: 'text-sky-600 dark:text-sky-400', icon: <UsersIcon className="w-4 h-4 text-sky-500" />, filterRole: 'Student' },
                     { label: 'Mentors', val: populationStats.mentors, color: 'text-amber-600 dark:text-amber-400', icon: <TeacherIcon className="w-4 h-4 text-amber-500" />, filterRole: 'Mentor' },
                     { label: 'Overloaded Mentors', val: populationStats.overloadedMentors, color: 'text-rose-600 dark:text-rose-400', icon: <TriangleAlertIcon className="w-4 h-4 text-rose-500" />, specialFilter: 'overloaded' },
                     { label: 'Organizers', val: populationStats.organizers, color: 'text-purple-600 dark:text-purple-400', icon: <ShieldIcon className="w-4 h-4 text-purple-500" />, filterRole: 'Organizer' },
                     { label: 'System Admins', val: populationStats.admins, color: 'text-slate-700 dark:text-slate-300', icon: <ShieldIcon className="w-4 h-4 text-slate-500" />, filterRole: 'Admin' },
                     { label: 'Active Accounts', val: populationStats.active, color: 'text-emerald-600 dark:text-emerald-400', icon: <CheckIcon className="w-4 h-4 text-emerald-500" />, filterTab: 'Active' },
-                    { label: 'Suspended Accounts', val: populationStats.suspended, color: 'text-rose-600 dark:text-red-400', icon: <TriangleAlertIcon className="w-4 h-4 text-rose-500" />, filterTab: 'Suspended' },
-                    { label: 'Pending Verification', val: populationStats.verificationPending, color: 'text-amber-600 dark:text-amber-300', icon: <ShieldIcon className="w-4 h-4 text-amber-500" />, filterTab: 'Verification Required' }
+                    { label: 'Suspended Accounts', val: populationStats.suspended, color: 'text-rose-600 dark:text-rose-400', icon: <TriangleAlertIcon className="w-4 h-4 text-rose-500" />, filterTab: 'Suspended' },
+                    { label: 'Pending Verification', val: populationStats.verificationPending, color: 'text-amber-600 dark:text-amber-400', icon: <ShieldIcon className="w-4 h-4 text-amber-500" />, filterTab: 'Verification Required' }
                 ].map((stat, i) => (
                     <div 
                         key={i} 
@@ -637,20 +613,20 @@ const UsersManagement = () => {
                             }
                             setCurrentPage(1);
                         }} 
-                        className="adamgiebl-card group cursor-pointer transition-all hover:-translate-y-1 p-3.5 flex flex-col justify-between"
+                        className="p-4 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group cursor-pointer flex flex-col justify-between"
                     >
                         <div className="flex items-center justify-between gap-1.5 mb-1.5">
-                            <h3 className="text-[11px] font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 whitespace-normal leading-tight">{stat.label}</h3>
-                            <div className="w-6 h-6 rounded-lg bg-sky-500/10 dark:bg-white/10 border border-sky-500/20 dark:border-white/10 flex items-center justify-center shrink-0">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400 truncate">{stat.label}</h3>
+                            <div className="w-8 h-8 rounded-full bg-sky-50 dark:bg-sky-500/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                                 {stat.icon}
                             </div>
                         </div>
                         <div className="my-1">
-                            <p className={`text-2xl font-black tracking-tight ${stat.color || (isLightTheme ? 'text-slate-900' : 'text-white')}`}>{stat.val}</p>
+                            <p className={`text-2xl font-extrabold tracking-tight ${stat.color || 'text-slate-900 dark:text-white'}`}>{stat.val}</p>
                         </div>
-                        <div className="pt-1.5 border-t border-slate-200/60 dark:border-white/10 flex items-center justify-between text-[9px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-400">
                             <span>Filter Directory</span>
-                            <span className="group-hover:translate-x-1 transition-transform opacity-60">→</span>
+                            <span className="group-hover:translate-x-0.5 group-hover:text-sky-500 transition-all">→</span>
                         </div>
                     </div>
                 ))}
@@ -661,7 +637,7 @@ const UsersManagement = () => {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     
                     {/* Status Tabs with Dynamic Counts */}
-                    <div className={`flex p-1.5 rounded-xl border overflow-x-auto ${isLightTheme ? 'bg-slate-100 border-slate-200' : 'bg-black/20 border-white/5'}`}>
+                    <div className="p-1.5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm flex overflow-x-auto gap-1">
                         {[
                             { name: 'All Users', count: populationStats.total },
                             { name: 'Active', count: populationStats.active },
@@ -671,13 +647,17 @@ const UsersManagement = () => {
                             <button
                                 key={tab.name}
                                 onClick={() => { setActiveTab(tab.name); setCurrentPage(1); }}
-                                className={`px-4 py-2 text-xs rounded-lg transition-all whitespace-nowrap flex items-center gap-2 ${activeTab === tab.name ? theme.tabActive : theme.tabInactive}`}
+                                className={`px-4 py-2 text-xs rounded-xl transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer ${
+                                    activeTab === tab.name 
+                                        ? 'bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-500/30 font-bold shadow-xs' 
+                                        : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white border border-transparent'
+                                }`}
                             >
                                 <span>{tab.name}</span>
-                                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
                                     activeTab === tab.name 
                                     ? 'bg-sky-200/80 dark:bg-sky-500/30 text-sky-800 dark:text-sky-200' 
-                                    : 'bg-black/10 dark:bg-white/10 text-slate-600 dark:text-gray-300'
+                                    : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-gray-300'
                                 }`}>
                                     {tab.count}
                                 </span>
@@ -688,13 +668,13 @@ const UsersManagement = () => {
                     {/* Right Filter Inputs */}
                     <div className="flex items-center gap-3 w-full md:w-auto">
                         <div className="relative flex-1 md:w-64">
-                            <svg className={`w-4 h-4 absolute left-3 top-2.5 ${isLightTheme ? 'text-slate-400' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                            <svg className="w-3.5 h-3.5 absolute left-3.5 top-3 text-slate-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                             <input 
                                 type="text"
                                 placeholder="Search by name or email..."
                                 value={searchQuery}
                                 onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                                className={`w-full rounded-lg pl-9 pr-4 py-2 text-xs focus:outline-none ${theme.inputBg}`}
+                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl pl-9 pr-3.5 py-2 text-xs text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-sky-500 transition-colors"
                             />
                         </div>
 
@@ -702,7 +682,7 @@ const UsersManagement = () => {
                             <select 
                                 value={roleDropdown}
                                 onChange={(e) => { setRoleDropdown(e.target.value); setCurrentPage(1); }}
-                                className={`appearance-none pr-8 pl-3.5 py-2 rounded-full border border-slate-200 dark:border-white/10 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer transition-all ${theme.inputBg}`}
+                                className="w-full bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-xl pr-8 pl-3.5 py-2 text-xs font-bold text-slate-700 dark:text-white focus:outline-none focus:border-sky-500 transition-colors appearance-none cursor-pointer shadow-sm"
                             >
                                 <option value="All Roles">All Roles</option>
                                 <option value="Student">Student</option>
@@ -711,7 +691,7 @@ const UsersManagement = () => {
                                 <option value="Admin">Admin</option>
                             </select>
                             <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center">
-                                <svg className="w-3.5 h-3.5 text-slate-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-3.5 h-3.5 text-slate-400 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="m6 9 6 6 6-6" />
                                 </svg>
                             </div>
@@ -719,11 +699,15 @@ const UsersManagement = () => {
 
                         <button 
                             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                            className={`px-3 py-2 border rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${showAdvancedFilters ? 'bg-sky-100 dark:bg-sky-500/20 border-sky-300 dark:border-sky-500/40 text-sky-700 dark:text-sky-300 font-bold' : (isLightTheme ? 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50' : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10')} shadow-sm`}
+                            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm ${
+                                showAdvancedFilters 
+                                    ? 'bg-sky-50 dark:bg-sky-500/20 border border-sky-200 dark:border-sky-500/30 text-sky-700 dark:text-sky-300' 
+                                    : 'bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-navy-700'
+                            }`}
                         >
-                            <span>Advanced Filters</span>
+                            <span>Advanced</span>
                             {activeFiltersCount > 0 && (
-                                <span className="bg-sky-200 dark:bg-sky-500/30 text-sky-800 dark:text-sky-200 text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-black">
+                                <span className="bg-sky-200 dark:bg-sky-500/30 text-sky-800 dark:text-sky-200 text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
                                     {activeFiltersCount}
                                 </span>
                             )}
@@ -734,31 +718,31 @@ const UsersManagement = () => {
 
                 {/* Advanced Filter Drawer */}
                 {showAdvancedFilters && (
-                    <div className={`p-4 rounded-xl border ${isLightTheme ? 'bg-slate-50 border-slate-200' : 'bg-black/20 border-white/5'} grid grid-cols-1 sm:grid-cols-3 gap-4 animate-in fade-in duration-200`}>
+                    <div className="p-5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-4 animate-in fade-in duration-200">
                         <div>
-                            <label className={`text-[10px] font-bold uppercase tracking-wider mb-1 block ${theme.mutedText}`}>College / Institution</label>
+                            <label className="text-xs font-bold text-slate-700 dark:text-gray-300 uppercase tracking-wider mb-1.5 block">College / Institution</label>
                             <input 
                                 type="text"
                                 placeholder="Filter by college name..."
                                 value={collegeFilter}
                                 onChange={(e) => setCollegeFilter(e.target.value)}
-                                className={`w-full rounded-lg px-3 py-2 text-xs focus:outline-none ${theme.inputBg}`}
+                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 transition-colors"
                             />
                         </div>
                         <div>
-                            <label className={`text-[10px] font-bold uppercase tracking-wider mb-1 block ${theme.mutedText}`}>Department</label>
+                            <label className="text-xs font-bold text-slate-700 dark:text-gray-300 uppercase tracking-wider mb-1.5 block">Department</label>
                             <input 
                                 type="text"
                                 placeholder="Filter by department..."
                                 value={departmentFilter}
                                 onChange={(e) => setDepartmentFilter(e.target.value)}
-                                className={`w-full rounded-lg px-3 py-2 text-xs focus:outline-none ${theme.inputBg}`}
+                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 transition-colors"
                             />
                         </div>
                         <div className="flex items-end">
                             <button 
                                 onClick={handleResetFilters}
-                                className="w-full py-2 bg-slate-200 dark:bg-white/10 hover:bg-slate-300 text-slate-800 dark:text-white rounded-lg text-xs font-bold transition-all shadow-sm"
+                                className="w-full py-2.5 rounded-xl bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-gray-200 border border-slate-200 dark:border-white/10 text-xs font-bold shadow-sm transition-all cursor-pointer"
                             >
                                 Reset All Filters
                             </button>
@@ -769,14 +753,14 @@ const UsersManagement = () => {
 
             {/* Overloaded Mentors Active Filter Alert Banner */}
             {isOverloadedFilter && (
-                <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-between text-xs font-bold text-amber-700 dark:text-amber-300 shadow-sm animate-in fade-in">
+                <div className="p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl flex items-center justify-between text-xs font-bold text-amber-800 dark:text-amber-300 shadow-sm animate-in fade-in">
                     <div className="flex items-center gap-2.5">
                         <TriangleAlertIcon className="w-4 h-4 text-amber-500 shrink-0" />
-                        <span>Showing {filteredUsers.length} mentors currently handling more teams than the recommended platform limit (Platform Threshold: 6 Teams max).</span>
+                        <span>Showing {filteredUsers.length} mentors currently handling more teams than the recommended platform limit (Platform Threshold: 5 Teams max).</span>
                     </div>
                     <button 
                         onClick={() => { setSearchParams({}); setRoleDropdown('All Roles'); }}
-                        className="px-3 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-800 dark:text-amber-200 rounded-lg text-[10px] uppercase font-bold transition-colors"
+                        className="px-3 py-1 bg-amber-200/60 dark:bg-amber-500/20 hover:bg-amber-300/60 text-amber-900 dark:text-amber-200 rounded-lg text-[10px] uppercase font-bold transition-colors cursor-pointer"
                     >
                         Clear Filter ✕
                     </button>
@@ -785,82 +769,82 @@ const UsersManagement = () => {
 
             {/* Bulk Action Header Bar */}
             {selectedUserIds.length > 0 && (
-                <div className="p-3 bg-[#0ea5e9] text-white rounded-xl flex items-center justify-between text-xs font-bold animate-in fade-in shadow-md">
+                <div className="p-3.5 bg-sky-600 text-white rounded-2xl flex items-center justify-between text-xs font-bold animate-in fade-in shadow-md shadow-sky-500/20">
                     <span>{selectedUserIds.length} Users Selected for Bulk Governance</span>
                     <div className="flex items-center gap-2">
-                        <button onClick={() => handleBulkAction('activate')} className="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 rounded text-[10px] uppercase">Activate</button>
-                        <button onClick={() => handleBulkAction('suspend')} className="px-3 py-1 bg-rose-500 hover:bg-rose-600 rounded text-[10px] uppercase">Suspend</button>
-                        <button onClick={() => setBulkRoleConfig({ isOpen: true, targetRole: 'STUDENT' })} className="px-3 py-1 bg-purple-600 hover:bg-purple-700 rounded text-[10px] uppercase">Change Role</button>
-                        <button onClick={() => setIsBulkNotifyOpen(true)} className="px-3 py-1 bg-amber-500 hover:bg-amber-600 rounded text-[10px] uppercase">Send Notice</button>
-                        <button onClick={() => setSelectedUserIds([])} className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-[10px]">Clear</button>
+                        <button onClick={() => handleBulkAction('activate')} className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-[10px] uppercase font-bold transition-all cursor-pointer">Activate</button>
+                        <button onClick={() => handleBulkAction('suspend')} className="px-3 py-1.5 bg-rose-500 hover:bg-rose-600 rounded-lg text-[10px] uppercase font-bold transition-all cursor-pointer">Suspend</button>
+                        <button onClick={() => setBulkRoleConfig({ isOpen: true, targetRole: 'STUDENT' })} className="px-3 py-1.5 bg-purple-500 hover:bg-purple-600 rounded-lg text-[10px] uppercase font-bold transition-all cursor-pointer">Change Role</button>
+                        <button onClick={() => setIsBulkNotifyOpen(true)} className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 rounded-lg text-[10px] uppercase font-bold transition-all cursor-pointer">Send Notice</button>
+                        <button onClick={() => setSelectedUserIds([])} className="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-[10px] font-bold cursor-pointer">Clear</button>
                     </div>
                 </div>
             )}
 
-            {/* SPLIT PANE WORKSPACE (Balanced 60/40 Ratio, Sticky Drawer, Zero Empty Space) */}
+            {/* SPLIT PANE WORKSPACE */}
             <div className="flex flex-col lg:flex-row gap-6 items-start">
                 
                 {/* LEFT PANE: Directory Table (60% Width, 10 Items Per Page) */}
-                <div className="w-full lg:w-[60%] flex flex-col absolutestrange-card overflow-hidden shadow-xl p-0">
+                <div className="w-full lg:w-[60%] flex flex-col rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm overflow-hidden">
                     
                     {/* TOP PAGINATION */}
                     {renderPaginationBar('top')}
 
                     <div className="overflow-x-auto relative scrollbar-none">
                         <table className="w-full text-left border-collapse table-auto">
-                            <thead className={`sticky top-0 z-10 text-[9.5px] uppercase tracking-wider font-extrabold ${theme.tableHead}`}>
-                                <tr>
-                                    <th className="w-8 px-2 py-3 text-center">
+                            <thead>
+                                <tr className="border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
+                                    <th className="w-8 px-3 py-3 text-center">
                                         <input 
                                             type="checkbox" 
                                             checked={currentUsers.length > 0 && selectedUserIds.length === currentUsers.length}
                                             onChange={toggleSelectAll}
-                                            className="rounded bg-white dark:bg-black/20 border-slate-300 dark:border-white/20 text-[#0052cc]"
+                                            className="rounded border-slate-300 dark:border-white/20 text-sky-600"
                                         />
                                     </th>
-                                    <th className="px-2.5 py-3 text-left">User</th>
-                                    <th className="w-24 px-2 py-3 text-left">Role</th>
-                                    <th className="w-16 px-2 py-3 text-left">Status</th>
-                                    <th className="w-24 px-2 py-3 text-left">Last Active</th>
-                                    <th className="w-24 px-2.5 py-3 text-right">Actions</th>
+                                    <th className="py-3 px-3 text-[11px] font-bold text-slate-400 dark:text-gray-400 uppercase tracking-wider text-left">User</th>
+                                    <th className="w-24 py-3 px-3 text-[11px] font-bold text-slate-400 dark:text-gray-400 uppercase tracking-wider text-left">Role</th>
+                                    <th className="w-16 py-3 px-3 text-[11px] font-bold text-slate-400 dark:text-gray-400 uppercase tracking-wider text-left">Status</th>
+                                    <th className="w-24 py-3 px-3 text-[11px] font-bold text-slate-400 dark:text-gray-400 uppercase tracking-wider text-left">Last Active</th>
+                                    <th className="w-24 py-3 px-3 text-[11px] font-bold text-slate-400 dark:text-gray-400 uppercase tracking-wider text-right">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className={`divide-y ${theme.tableBorder}`}>
+                            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                                 {isLoading ? (
-                                    <tr><td colSpan="6" className="px-4 py-8 text-center text-xs text-[#0052cc] font-bold animate-pulse">Loading Live User Records...</td></tr>
+                                    <tr><td colSpan="6" className="px-4 py-8 text-center text-xs text-sky-600 dark:text-sky-400 font-bold animate-pulse">Loading Live User Records...</td></tr>
                                 ) : currentUsers.length === 0 ? (
-                                    <tr><td colSpan="6" className={`px-4 py-8 text-center text-xs ${theme.mutedText}`}>No user records match the specified filters.</td></tr>
+                                    <tr><td colSpan="6" className="px-4 py-8 text-center text-xs text-slate-400 dark:text-gray-500">No user records match the specified filters.</td></tr>
                                 ) : (
                                     currentUsers.map((user) => (
                                         <tr 
                                             key={user.id} 
-                                            className={`${theme.hoverRow} transition-colors ${selectedUser?.id === user.id ? (isLightTheme ? 'bg-blue-50/90' : 'bg-blue-500/10') : ''}`}
+                                            className={`hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors ${selectedUser?.id === user.id ? 'bg-sky-50/60 dark:bg-sky-500/10' : ''}`}
                                         >
-                                            <td className="w-8 px-2 py-2.5 text-center">
+                                            <td className="w-8 px-3 py-2.5 text-center">
                                                 <input 
                                                     type="checkbox" 
                                                     checked={selectedUserIds.includes(user.id)}
                                                     onChange={() => toggleSelectUser(user.id)}
-                                                    className="rounded bg-white dark:bg-black/20 border-slate-300 dark:border-white/20 text-[#0052cc]"
+                                                    className="rounded border-slate-300 dark:border-white/20 text-sky-600"
                                                 />
                                             </td>
-                                            <td className="px-2.5 py-2.5 cursor-pointer" onClick={() => handleSelectUser(user)}>
+                                            <td className="px-3 py-2.5 cursor-pointer" onClick={() => handleSelectUser(user)}>
                                                 <div className="flex items-center gap-2.5 min-w-0">
-                                                    <div className={`w-7 h-7 rounded-full ${avatarColorMap[user.color] || avatarColorMap.blue} flex items-center justify-center font-bold text-[11px] shrink-0 shadow-xs`}>
+                                                    <div className={`w-8 h-8 rounded-full ${avatarColorMap[user.color] || avatarColorMap.blue} flex items-center justify-center font-bold text-[11px] shrink-0 shadow-xs`}>
                                                         {user.initials}
                                                     </div>
                                                     <div className="min-w-0 flex-1">
-                                                        <div className={`text-xs font-bold flex items-center gap-1 truncate ${theme.headingText}`}>
+                                                        <div className="text-xs font-bold flex items-center gap-1 truncate text-slate-900 dark:text-white">
                                                             <span className="truncate">{user.name}</span>
-                                                            {user.emailVerified && <span className="text-[#0052cc] dark:text-blue-400 text-[10px] shrink-0" title="Email Verified"><CheckIcon className="w-3 h-3" /></span>}
+                                                            {user.emailVerified && <span className="text-sky-600 dark:text-sky-400 text-[10px] shrink-0" title="Email Verified"><CheckIcon className="w-3 h-3" /></span>}
                                                             {user.orgVerified && <span className="text-purple-600 dark:text-purple-400 text-[10px] shrink-0" title="Organization Verified"><ShieldIcon className="w-3 h-3" /></span>}
                                                         </div>
-                                                        <div className={`text-[10px] truncate ${theme.mutedText}`}>{user.email}</div>
+                                                        <div className="text-[10px] text-slate-400 dark:text-gray-500 truncate">{user.email}</div>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="w-24 px-2 py-2.5 whitespace-nowrap">
-                                                <span className={`px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase border inline-flex items-center gap-1 ${roleColors[user.role] || 'bg-slate-100 text-slate-700 border-slate-300'}`}>
+                                            <td className="w-24 px-3 py-2.5 whitespace-nowrap">
+                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border inline-flex items-center gap-1 ${roleColors[user.role] || 'bg-slate-500/10 text-slate-600 border-slate-500/20'}`}>
                                                     <span>{user.role}</span>
                                                     {user.role === 'MENTOR' && (user.isOverloaded || (user.activeTeamsCount > 5) || (user.activityStats?.teams > 6)) && (
                                                         <span title={`Overloaded (${user.activeTeamsCount || user.activeSupervisedTeams?.length || 6} active teams assigned)`} className="text-amber-600 dark:text-amber-400 inline-flex items-center">
@@ -869,22 +853,22 @@ const UsersManagement = () => {
                                                     )}
                                                 </span>
                                             </td>
-                                            <td className="w-16 px-2 py-2.5 whitespace-nowrap">
-                                                <span className={`text-[11px] font-extrabold ${user.status === 'Active' ? (isLightTheme ? 'text-emerald-700' : 'text-emerald-400') : (isLightTheme ? 'text-rose-700' : 'text-red-400')}`}>
+                                            <td className="w-16 px-3 py-2.5 whitespace-nowrap">
+                                                <span className={`text-[11px] font-bold ${user.status === 'Active' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                                                     {user.status}
                                                 </span>
                                             </td>
-                                            <td className={`w-24 px-2 py-2.5 text-[10px] font-mono font-medium whitespace-nowrap ${theme.subText}`}>
+                                            <td className="w-24 px-3 py-2.5 text-[10px] font-mono text-slate-400 dark:text-gray-500 whitespace-nowrap">
                                                 {user.lastActive}
                                             </td>
-                                            <td className="w-24 px-2.5 py-2.5 text-right whitespace-nowrap">
-                                                <div className="flex items-center justify-end gap-1">
+                                            <td className="w-24 px-3 py-2.5 text-right whitespace-nowrap">
+                                                <div className="flex items-center justify-end gap-1.5">
                                                     <button 
                                                         onClick={() => handleSelectUser(user)}
                                                         title="View Profile"
-                                                        className="p-1.5 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 border border-blue-200 dark:border-blue-500/20 rounded-full text-blue-600 dark:text-blue-400 transition-all shadow-xs flex items-center justify-center"
+                                                        className="p-1.5 bg-sky-50 dark:bg-sky-500/10 hover:bg-sky-100 dark:hover:bg-sky-500/20 border border-sky-200 dark:border-sky-500/20 rounded-lg text-sky-600 dark:text-sky-400 transition-all shadow-xs flex items-center justify-center cursor-pointer"
                                                     >
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-eye">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                             <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
                                                             <circle cx="12" cy="12" r="3" />
                                                         </svg>
@@ -892,9 +876,9 @@ const UsersManagement = () => {
                                                     <button 
                                                         onClick={() => openRoleModal(user)}
                                                         title="Edit Role"
-                                                        className="p-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 rounded-full text-slate-700 dark:text-gray-300 transition-all shadow-xs flex items-center justify-center"
+                                                        className="p-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-gray-300 transition-all shadow-xs flex items-center justify-center cursor-pointer"
                                                     >
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-square-pen">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                             <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                                                             <path d="M18.375 2.625a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z" />
                                                         </svg>
@@ -902,13 +886,13 @@ const UsersManagement = () => {
                                                     <button 
                                                         onClick={() => openSuspendModal(user)}
                                                         title={user.status === 'Active' ? 'Suspend User' : 'Restore User'}
-                                                        className={`p-1.5 rounded-full border transition-all shadow-xs flex items-center justify-center ${
+                                                        className={`p-1.5 rounded-lg border transition-all shadow-xs flex items-center justify-center cursor-pointer ${
                                                             user.status === 'Active' 
                                                             ? 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 hover:bg-rose-100' 
                                                             : 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100'
                                                         }`}
                                                     >
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-ban">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                             <circle cx="12" cy="12" r="10" />
                                                             <path d="m4.9 4.9 14.2 14.2" />
                                                         </svg>
@@ -927,39 +911,39 @@ const UsersManagement = () => {
                 </div>
 
                 {/* RIGHT PANE: Detailed User Profile Workspace (40% Width, Sticky & 2-Tab Two-Page Inspector) */}
-                <div className="w-full lg:w-[40%] absolutestrange-card flex flex-col sticky top-4 max-h-[calc(100vh-5rem)] overflow-y-auto custom-scrollbar">
+                <div className="w-full lg:w-[40%] rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm overflow-hidden flex flex-col sticky top-4 max-h-[calc(100vh-5rem)] overflow-y-auto custom-scrollbar">
                     {selectedUser ? (
                         <div className="p-5 space-y-4 flex-1 flex flex-col justify-between">
                             
                             {/* Profile Top Bar */}
                             <div>
-                                <div className="flex items-start justify-between border-b border-slate-200 dark:border-white/10 pb-3 mb-3">
+                                <div className="flex items-start justify-between border-b border-slate-100 dark:border-white/5 pb-3.5 mb-3.5">
                                     <div className="flex items-center gap-3">
-                                        <div className={`w-11 h-11 rounded-2xl ${avatarBadgeMap[selectedUser.color] || avatarBadgeMap.blue} border flex items-center justify-center text-lg font-bold shadow-md shrink-0`}>
+                                        <div className={`w-11 h-11 rounded-2xl ${avatarBadgeMap[selectedUser.color] || avatarBadgeMap.blue} border flex items-center justify-center text-base font-bold shadow-xs shrink-0`}>
                                             {selectedUser.initials}
                                         </div>
                                         <div className="min-w-0">
                                             <h3 className="text-base font-extrabold text-slate-900 dark:text-white leading-tight truncate">{selectedUser.name}</h3>
-                                            <p className="text-[11px] text-slate-500 dark:text-gray-400 font-semibold truncate">{selectedUser.role} • {selectedUser.college}</p>
+                                            <p className="text-[11px] text-slate-500 dark:text-gray-400 font-medium truncate mt-0.5">{selectedUser.role} • {selectedUser.college}</p>
                                         </div>
                                     </div>
-                                    <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase border shrink-0 ${selectedUser.status === 'Active' ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' : 'bg-rose-500/20 text-rose-600 dark:text-red-400 border-rose-500/30'}`}>
+                                    <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase border shrink-0 ${selectedUser.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'}`}>
                                         {selectedUser.status}
                                     </span>
                                 </div>
 
                                 {/* 2-Tab Inspector Mode (Two-Page View) */}
-                                <div className="flex p-1 bg-black/5 dark:bg-white/5 rounded-xl border border-slate-200/80 dark:border-white/10 text-xs font-bold gap-1 mb-4">
+                                <div className="flex p-1 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-200/80 dark:border-white/10 text-xs font-bold gap-1 mb-4">
                                     <button 
                                         onClick={() => setProfileTab('overview')}
-                                        className={`flex-1 py-1.5 rounded-lg transition-all text-[10px] font-black uppercase flex items-center justify-center gap-1.5 ${profileTab === 'overview' ? 'bg-white dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 shadow-sm border border-slate-200/80 dark:border-sky-500/30 font-black' : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
+                                        className={`flex-1 py-1.5 rounded-lg transition-all text-[11px] font-bold flex items-center justify-center gap-1.5 cursor-pointer ${profileTab === 'overview' ? 'bg-white dark:bg-navy-800 text-sky-600 dark:text-sky-300 shadow-sm border border-slate-200/80 dark:border-white/10' : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
                                     >
                                         <NotepadTextIcon className="w-3.5 h-3.5 shrink-0" />
                                         <span>Overview & Teams</span>
                                     </button>
                                     <button 
                                         onClick={() => setProfileTab('activity')}
-                                        className={`flex-1 py-1.5 rounded-lg transition-all text-[10px] font-black uppercase flex items-center justify-center gap-1.5 ${profileTab === 'activity' ? 'bg-white dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 shadow-sm border border-slate-200/80 dark:border-sky-500/30 font-black' : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
+                                        className={`flex-1 py-1.5 rounded-lg transition-all text-[11px] font-bold flex items-center justify-center gap-1.5 cursor-pointer ${profileTab === 'activity' ? 'bg-white dark:bg-navy-800 text-sky-600 dark:text-sky-300 shadow-sm border border-slate-200/80 dark:border-white/10' : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
                                     >
                                         <ActivityIcon className="w-3.5 h-3.5 shrink-0" />
                                         <span>Activity & Risk</span>
@@ -974,80 +958,80 @@ const UsersManagement = () => {
                                         {selectedUser.role === 'MENTOR' && (
                                             <div className={`p-4 rounded-xl border space-y-3 ${
                                                 selectedUser.isOverloaded || (selectedUser.activeTeamsCount > 5)
-                                                    ? 'bg-rose-50/70 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/30' 
-                                                    : theme.innerBg
+                                                    ? 'bg-rose-50/70 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20' 
+                                                    : 'bg-slate-50/70 dark:bg-white/[0.02] border-slate-200/70 dark:border-white/5'
                                             }`}>
                                                 {/* Header & Status Pill */}
                                                 <div className="flex justify-between items-center">
-                                                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300 flex items-center gap-1.5">
                                                         <TeacherIcon className="w-3.5 h-3.5 text-amber-500" />
                                                         <span>Mentorship Capacity & Portfolio</span>
                                                     </span>
-                                                    <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase border ${
+                                                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase border ${
                                                         selectedUser.isOverloaded || (selectedUser.activeTeamsCount > 5)
-                                                            ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300 border-rose-500/30'
-                                                            : 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
+                                                            ? 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/20'
+                                                            : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20'
                                                     }`}>
-                                                        {selectedUser.isOverloaded || (selectedUser.activeTeamsCount > 5) ? 'Overloaded' : 'Optimal Capacity'}
+                                                        {selectedUser.isOverloaded || (selectedUser.activeTeamsCount > 5) ? 'Overloaded' : 'Optimal'}
                                                     </span>
                                                 </div>
 
-                                                {/* 3-Metric KPI Grid (Active vs Completed vs Total Career) */}
+                                                {/* 3-Metric KPI Grid */}
                                                 <div className="grid grid-cols-3 gap-2 text-center">
-                                                    <div className={`p-2 rounded-lg border ${
+                                                    <div className={`p-2.5 rounded-xl border ${
                                                         selectedUser.isOverloaded || (selectedUser.activeTeamsCount > 5)
                                                             ? 'bg-rose-100/80 dark:bg-rose-500/20 border-rose-300 dark:border-rose-500/40 text-rose-900 dark:text-rose-200'
-                                                            : 'bg-emerald-100/80 dark:bg-emerald-500/20 border-emerald-300 dark:border-emerald-500/40 text-emerald-900 dark:text-emerald-200'
+                                                            : 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-800 dark:text-emerald-300'
                                                     }`}>
-                                                        <p className="text-base font-black leading-tight">
+                                                        <p className="text-lg font-extrabold leading-tight">
                                                             {selectedUser.activeTeamsCount ?? selectedUser.activeSupervisedTeams?.length ?? (selectedUser.isOverloaded ? 7 : 2)}
                                                         </p>
-                                                        <p className="text-[8px] font-extrabold uppercase mt-0.5 flex items-center justify-center gap-0.5">
+                                                        <p className="text-[9px] font-bold uppercase mt-0.5 flex items-center justify-center gap-0.5">
                                                             <ZapIcon className="w-2.5 h-2.5 text-current shrink-0" />
                                                             <span>Active</span>
                                                         </p>
                                                     </div>
 
-                                                    <div className="p-2 rounded-lg border bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20 text-blue-900 dark:text-blue-200">
-                                                        <p className="text-base font-black leading-tight">
+                                                    <div className="p-2.5 rounded-xl border bg-sky-50 dark:bg-sky-500/10 border-sky-200 dark:border-sky-500/20 text-sky-800 dark:text-sky-300">
+                                                        <p className="text-lg font-extrabold leading-tight">
                                                             {selectedUser.pastTeamsCount ?? selectedUser.pastSupervisedTeams?.length ?? (selectedUser.isOverloaded ? 5 : 2)}
                                                         </p>
-                                                        <p className="text-[8px] font-extrabold uppercase mt-0.5 flex items-center justify-center gap-0.5">
-                                                            <CheckCircle2Icon className="w-2.5 h-2.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                                                        <p className="text-[9px] font-bold uppercase mt-0.5 flex items-center justify-center gap-0.5">
+                                                            <CheckCircle2Icon className="w-2.5 h-2.5 text-sky-600 dark:text-sky-400 shrink-0" />
                                                             <span>Completed</span>
                                                         </p>
                                                     </div>
 
-                                                    <div className="p-2 rounded-lg border bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-200">
-                                                        <p className="text-base font-black leading-tight">
+                                                    <div className="p-2.5 rounded-xl border bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-200">
+                                                        <p className="text-lg font-extrabold leading-tight">
                                                             {(selectedUser.activeTeamsCount ?? selectedUser.activeSupervisedTeams?.length ?? (selectedUser.isOverloaded ? 7 : 2)) + 
                                                              (selectedUser.pastTeamsCount ?? selectedUser.pastSupervisedTeams?.length ?? (selectedUser.isOverloaded ? 5 : 2))}
                                                         </p>
-                                                        <p className="text-[8px] font-extrabold uppercase mt-0.5">Total Career</p>
+                                                        <p className="text-[9px] font-bold uppercase mt-0.5">Total</p>
                                                     </div>
                                                 </div>
 
                                                 {/* Live Active Concurrency Gauge */}
                                                 <div className="space-y-1.5 pt-1">
                                                     <div className="flex justify-between text-[10px] font-bold">
-                                                        <span className="opacity-75">Active Concurrency Capacity</span>
+                                                        <span className="text-slate-500 dark:text-gray-400">Active Concurrency Capacity</span>
                                                         <span className={selectedUser.isOverloaded || (selectedUser.activeTeamsCount > 5) ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}>
                                                             {selectedUser.activeTeamsCount ?? selectedUser.activeSupervisedTeams?.length ?? (selectedUser.isOverloaded ? 7 : 2)} / 5 optimal teams
                                                         </span>
                                                     </div>
-                                                    <div className="w-full h-2 rounded-full overflow-hidden bg-black/10 dark:bg-white/10">
+                                                    <div className="w-full h-2 rounded-full overflow-hidden bg-slate-100 dark:bg-white/10">
                                                         <div 
                                                             className={`h-full ${selectedUser.isOverloaded || (selectedUser.activeTeamsCount > 5) ? 'bg-rose-500' : 'bg-emerald-500'}`} 
                                                             style={{ width: `${Math.min(100, (((selectedUser.activeTeamsCount ?? selectedUser.activeSupervisedTeams?.length ?? (selectedUser.isOverloaded ? 7 : 2)) / 5) * 100))}%` }}
                                                         ></div>
                                                     </div>
                                                     {selectedUser.isOverloaded || (selectedUser.activeTeamsCount > 5) ? (
-                                                        <p className="text-[9.5px] text-rose-700 dark:text-rose-300 font-medium flex items-center gap-1 leading-tight">
+                                                        <p className="text-[10px] text-rose-700 dark:text-rose-300 font-medium flex items-center gap-1 leading-tight">
                                                             <TriangleAlertIcon className="w-3.5 h-3.5 text-rose-500 shrink-0" />
                                                             <span>Overloaded by {Math.max(1, (selectedUser.activeTeamsCount ?? selectedUser.activeSupervisedTeams?.length ?? 7) - 5)} active teams above optimal limit (5 max). Reassign recommended.</span>
                                                         </p>
                                                     ) : (
-                                                        <p className="text-[9.5px] text-emerald-700 dark:text-emerald-300 font-medium flex items-center gap-1">
+                                                        <p className="text-[10px] text-emerald-700 dark:text-emerald-300 font-medium flex items-center gap-1">
                                                             <CheckCircle2Icon className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                                                             <span>Active mentorship workload is healthy and within optimal capacity.</span>
                                                         </p>
@@ -1055,14 +1039,14 @@ const UsersManagement = () => {
                                                 </div>
 
                                                 {/* Interactive Active vs Completed Teams Sub-Tabs */}
-                                                <div className="pt-2 border-t border-slate-200 dark:border-white/10">
-                                                    <div className="flex p-0.5 bg-black/5 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 text-[9px] font-bold mb-2">
+                                                <div className="pt-2 border-t border-slate-200/60 dark:border-white/5">
+                                                    <div className="flex p-1 bg-slate-100 dark:bg-black/20 rounded-xl border border-slate-200/80 dark:border-white/10 text-[10px] font-bold mb-2">
                                                         <button
                                                             onClick={() => setMentorTeamsTab('active')}
-                                                            className={`flex-1 py-1 rounded transition-all flex items-center justify-center gap-1.5 ${
+                                                            className={`flex-1 py-1 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                                                                 mentorTeamsTab === 'active' 
-                                                                    ? 'bg-white dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 shadow-xs border border-slate-200/80 dark:border-sky-500/30 font-black' 
-                                                                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+                                                                    ? 'bg-white dark:bg-navy-800 text-sky-600 dark:text-sky-300 shadow-xs border border-slate-200/80 dark:border-white/10' 
+                                                                    : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
                                                             }`}
                                                         >
                                                             <ZapIcon className="w-3 h-3 shrink-0" />
@@ -1070,10 +1054,10 @@ const UsersManagement = () => {
                                                         </button>
                                                         <button
                                                             onClick={() => setMentorTeamsTab('past')}
-                                                            className={`flex-1 py-1 rounded transition-all flex items-center justify-center gap-1.5 ${
+                                                            className={`flex-1 py-1 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                                                                 mentorTeamsTab === 'past' 
-                                                                    ? 'bg-white dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 shadow-xs border border-slate-200/80 dark:border-sky-500/30 font-black' 
-                                                                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+                                                                    ? 'bg-white dark:bg-navy-800 text-sky-600 dark:text-sky-300 shadow-xs border border-slate-200/80 dark:border-white/10' 
+                                                                    : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
                                                             }`}
                                                         >
                                                             <CheckCircle2Icon className="w-3 h-3 shrink-0" />
@@ -1085,20 +1069,20 @@ const UsersManagement = () => {
                                                     {mentorTeamsTab === 'active' && (
                                                         <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1 custom-scrollbar animate-in fade-in duration-150">
                                                             {(selectedUser.activeSupervisedTeams || selectedUser.supervisedTeams || []).map((t, idx) => (
-                                                                <div key={idx} className="p-2 rounded-lg bg-white/70 dark:bg-black/30 border border-slate-200/80 dark:border-white/5 flex items-center justify-between text-xs">
+                                                                <div key={idx} className="p-2.5 rounded-xl bg-white dark:bg-black/20 border border-slate-200/60 dark:border-white/5 flex items-center justify-between text-xs">
                                                                     <div className="min-w-0 pr-2">
                                                                         <div className="flex items-center gap-1.5">
                                                                             <p className="font-bold text-slate-800 dark:text-white leading-tight truncate">{t.name}</p>
-                                                                            <span className="text-[8px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 uppercase flex items-center gap-0.5">
+                                                                            <span className="text-[8px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 uppercase flex items-center gap-0.5">
                                                                                 <ZapIcon className="w-2 h-2 shrink-0" />
                                                                                 <span>Active</span>
                                                                             </span>
                                                                         </div>
-                                                                        <p className="text-[9px] text-slate-500 dark:text-gray-400 truncate mt-0.5">{t.hackathon} • {t.milestone}</p>
+                                                                        <p className="text-[9px] text-slate-400 dark:text-gray-500 truncate mt-0.5">{t.hackathon} • {t.milestone}</p>
                                                                     </div>
                                                                     <button 
                                                                         onClick={() => handleReassignTeam(t.name, selectedUser.name)}
-                                                                        className="text-[9px] px-2 py-0.5 bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 rounded font-bold transition-colors shrink-0"
+                                                                        className="text-[9px] px-2.5 py-1 bg-sky-50 dark:bg-sky-500/10 hover:bg-sky-100 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-500/20 rounded-lg font-bold transition-colors shrink-0 cursor-pointer"
                                                                         title="Reassign team to an available mentor"
                                                                     >
                                                                         Reassign
@@ -1117,18 +1101,18 @@ const UsersManagement = () => {
                                                                 { id: 'pst_def3', name: 'Team OmniMatrix', hackathon: 'Global AI 2024', milestone: 'Completed', outcome: 'Winner Category', year: '2024' },
                                                                 { id: 'pst_def4', name: 'Team CodePulse', hackathon: 'Campus Hack 2024', milestone: 'Completed', outcome: 'Graduated', year: '2024' }
                                                             ]).map((t, idx) => (
-                                                                <div key={idx} className="p-2 rounded-lg bg-slate-50/80 dark:bg-black/20 border border-slate-200/60 dark:border-white/5 flex items-center justify-between text-xs opacity-95">
+                                                                <div key={idx} className="p-2.5 rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200/60 dark:border-white/5 flex items-center justify-between text-xs opacity-95">
                                                                     <div className="min-w-0 pr-2">
                                                                         <div className="flex items-center gap-1.5">
                                                                             <p className="font-bold text-slate-700 dark:text-slate-200 leading-tight truncate">{t.name}</p>
-                                                                            <span className="text-[8px] font-bold px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 uppercase flex items-center gap-0.5">
+                                                                            <span className="text-[8px] font-bold px-1.5 py-0.2 rounded-full bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 uppercase flex items-center gap-0.5">
                                                                                 <CheckCircle2Icon className="w-2 h-2 shrink-0" />
                                                                                 <span>Completed</span>
                                                                             </span>
                                                                         </div>
-                                                                        <p className="text-[9px] text-slate-400 dark:text-gray-400 truncate mt-0.5">{t.hackathon} • {t.year || 'Past Event'}</p>
+                                                                        <p className="text-[9px] text-slate-400 dark:text-gray-500 truncate mt-0.5">{t.hackathon} • {t.year || 'Past Event'}</p>
                                                                     </div>
-                                                                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
+                                                                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
                                                                         {t.outcome || 'Completed'}
                                                                     </span>
                                                                 </div>
@@ -1141,33 +1125,32 @@ const UsersManagement = () => {
 
                                         {/* Profile & Account Details Grid */}
                                         <div className="grid grid-cols-2 gap-3">
-                                            <div className={`p-3 rounded-xl border space-y-1.5 ${theme.innerBg}`}>
-                                                <h4 className={`text-[9px] font-black uppercase tracking-wider mb-1 ${theme.mutedText}`}>Academic Info</h4>
-                                                <div><p className="text-[9px] text-slate-400">Department</p><p className="text-xs font-bold text-slate-800 dark:text-white truncate">{selectedUser.department}</p></div>
-                                                <div><p className="text-[9px] text-slate-400">Year / Title</p><p className="text-xs font-bold text-slate-800 dark:text-white truncate">{selectedUser.year}</p></div>
+                                            <div className="p-3.5 rounded-xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/70 dark:border-white/5 space-y-2">
+                                                <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-500 mb-1">Academic Info</h4>
+                                                <div><p className="text-[10px] text-slate-400">Department</p><p className="text-xs font-bold text-slate-800 dark:text-white truncate">{selectedUser.department}</p></div>
+                                                <div><p className="text-[10px] text-slate-400">Year / Title</p><p className="text-xs font-bold text-slate-800 dark:text-white truncate">{selectedUser.year}</p></div>
                                             </div>
-                                            <div className={`p-3 rounded-xl border space-y-1.5 ${theme.innerBg}`}>
-                                                <h4 className={`text-[9px] font-black uppercase tracking-wider mb-1 ${theme.mutedText}`}>Account Meta</h4>
-                                                <div><p className="text-[9px] text-slate-400">Joined Date</p><p className="text-xs font-bold text-slate-800 dark:text-white">{selectedUser.joinedDate}</p></div>
+                                            <div className="p-3.5 rounded-xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/70 dark:border-white/5 space-y-2">
+                                                <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-500 mb-1">Account Meta</h4>
+                                                <div><p className="text-[10px] text-slate-400">Joined Date</p><p className="text-xs font-bold text-slate-800 dark:text-white">{selectedUser.joinedDate}</p></div>
                                                 <div>
-                                                    <p className="text-[9px] text-slate-400">Verification</p>
+                                                    <p className="text-[10px] text-slate-400">Verification</p>
                                                     <button 
                                                         onClick={() => handleToggleVerification(selectedUser)}
-                                                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded border transition-colors ${
+                                                        className={`text-[9px] font-bold px-2 py-0.5 rounded-full border transition-colors cursor-pointer mt-0.5 ${
                                                             selectedUser.emailVerified 
-                                                                ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30' 
-                                                                : 'bg-amber-500/10 text-amber-600 border-amber-500/30'
+                                                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' 
+                                                                : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
                                                         }`}
                                                     >
                                                         {selectedUser.emailVerified ? 'Verified' : 'Click to Verify'}
                                                     </button>
-
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className={`p-3 rounded-xl border text-xs ${theme.innerBg}`}>
-                                            <p className="text-[9px] font-black uppercase text-slate-400 mb-0.5">Email Address</p>
+                                        <div className="p-3.5 rounded-xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/70 dark:border-white/5 text-xs">
+                                            <p className="text-[10px] font-bold uppercase text-slate-400 dark:text-gray-500 mb-0.5">Email Address</p>
                                             <p className="font-mono font-bold text-slate-800 dark:text-white text-xs truncate">{selectedUser.email}</p>
                                         </div>
 
@@ -1179,19 +1162,19 @@ const UsersManagement = () => {
                                     <div className="space-y-3.5 animate-in fade-in duration-200">
                                         
                                         {/* Risk Indicator */}
-                                        <div className={`p-3.5 rounded-xl border space-y-2 ${
+                                        <div className={`p-4 rounded-xl border space-y-2.5 ${
                                             selectedUser.riskLevel === 'CRITICAL' || selectedUser.riskLevel === 'HIGH'
-                                            ? 'bg-rose-50 dark:bg-red-500/10 border-rose-200 dark:border-red-500/30'
+                                            ? 'bg-rose-500/10 border-rose-500/20'
                                             : selectedUser.riskLevel === 'MEDIUM'
-                                            ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30'
-                                            : theme.innerBg
+                                            ? 'bg-amber-500/10 border-amber-500/20'
+                                            : 'bg-slate-50/70 dark:bg-white/[0.02] border-slate-200/70 dark:border-white/5'
                                         }`}>
                                             <div className="flex justify-between items-center">
                                                 <div>
-                                                    <p className="text-[9px] font-black uppercase text-slate-500">Risk Assessment</p>
-                                                    <p className={`text-xs font-black flex items-center gap-1.5 ${
+                                                    <p className="text-[10px] font-bold uppercase text-slate-400">Risk Assessment</p>
+                                                    <p className={`text-xs font-bold flex items-center gap-1.5 mt-0.5 ${
                                                         selectedUser.riskLevel === 'CRITICAL' || selectedUser.riskLevel === 'HIGH'
-                                                        ? 'text-rose-600 dark:text-red-400'
+                                                        ? 'text-rose-600 dark:text-rose-400'
                                                         : selectedUser.riskLevel === 'MEDIUM'
                                                         ? 'text-amber-600 dark:text-amber-400'
                                                         : 'text-emerald-600 dark:text-emerald-400'
@@ -1204,17 +1187,17 @@ const UsersManagement = () => {
                                                             : 'bg-emerald-500'
                                                         }`} />
                                                         <span>{selectedUser.riskLevel || 'LOW'} RISK</span>
-                                                        <span className="text-[9px] font-mono ml-1 opacity-70">({selectedUser.riskScore || 0} pts)</span>
+                                                        <span className="text-[10px] font-mono ml-1 opacity-70">({selectedUser.riskScore || 0} pts)</span>
                                                     </p>
                                                 </div>
                                                 <span className="text-[10px] font-mono text-slate-400">Last active: {selectedUser.lastActive}</span>
                                             </div>
 
-                                            <div className="pt-1.5 border-t border-slate-200 dark:border-white/10 text-xs">
-                                                <p className="text-[9px] font-black uppercase text-slate-500 mb-1">Indicators:</p>
+                                            <div className="pt-2 border-t border-slate-200/60 dark:border-white/5 text-xs">
+                                                <p className="text-[10px] font-bold uppercase text-slate-400 mb-1">Indicators:</p>
                                                 <ul className="space-y-1">
                                                     {(selectedUser.riskFactors || ["No suspicious activities flagged", "Account status clean"]).map((factor, idx) => (
-                                                        <li key={idx} className="flex items-center gap-1.5 text-[10px] font-medium text-slate-700 dark:text-gray-300">
+                                                        <li key={idx} className="flex items-center gap-1.5 text-[11px] font-medium text-slate-700 dark:text-gray-300">
                                                             <span className={selectedUser.riskLevel === 'LOW' ? 'text-emerald-500' : 'text-amber-500'}>•</span>
                                                             <span className="truncate">{factor}</span>
                                                         </li>
@@ -1223,48 +1206,48 @@ const UsersManagement = () => {
                                             </div>
                                         </div>
 
-                                        {/* Platform Participation Metrics (Rich breakdown for Mentors vs Others) */}
-                                        <div className={`p-3.5 rounded-xl border ${theme.innerBg}`}>
-                                            <h4 className={`text-[9px] font-black uppercase tracking-wider mb-2 ${theme.mutedText}`}>Participation Overview</h4>
+                                        {/* Platform Participation Metrics */}
+                                        <div className="p-4 rounded-xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/70 dark:border-white/5">
+                                            <h4 className="text-[10px] font-bold uppercase tracking-wider mb-2.5 text-slate-400 dark:text-gray-500">Participation Overview</h4>
                                             {selectedUser.role === 'MENTOR' ? (
-                                                <div className="grid grid-cols-3 gap-2 text-center">
-                                                    <div className={`p-2 rounded border ${theme.statBoxBg}`}>
+                                                <div className="grid grid-cols-3 gap-2.5 text-center">
+                                                    <div className="p-2.5 rounded-xl bg-white dark:bg-navy-800/50 border border-slate-200/70 dark:border-white/10 shadow-xs">
                                                         <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{selectedUser.activeTeamsCount ?? selectedUser.activeSupervisedTeams?.length ?? 0}</p>
-                                                        <p className="text-[8px] text-slate-500 uppercase flex items-center justify-center gap-0.5">
+                                                        <p className="text-[9px] text-slate-400 uppercase flex items-center justify-center gap-0.5 mt-0.5">
                                                             <ZapIcon className="w-2.5 h-2.5 text-emerald-500" />
                                                             <span>Active</span>
                                                         </p>
                                                     </div>
-                                                    <div className={`p-2 rounded border ${theme.statBoxBg}`}>
-                                                        <p className="text-sm font-bold text-blue-600 dark:text-blue-400">{selectedUser.pastTeamsCount ?? selectedUser.pastSupervisedTeams?.length ?? 0}</p>
-                                                        <p className="text-[8px] text-slate-500 uppercase flex items-center justify-center gap-0.5">
-                                                            <CheckCircle2Icon className="w-2.5 h-2.5 text-blue-500" />
+                                                    <div className="p-2.5 rounded-xl bg-white dark:bg-navy-800/50 border border-slate-200/70 dark:border-white/10 shadow-xs">
+                                                        <p className="text-sm font-bold text-sky-600 dark:text-sky-400">{selectedUser.pastTeamsCount ?? selectedUser.pastSupervisedTeams?.length ?? 0}</p>
+                                                        <p className="text-[9px] text-slate-400 uppercase flex items-center justify-center gap-0.5 mt-0.5">
+                                                            <CheckCircle2Icon className="w-2.5 h-2.5 text-sky-500" />
                                                             <span>Completed</span>
                                                         </p>
                                                     </div>
-                                                    <div className={`p-2 rounded border ${theme.statBoxBg}`}><p className="text-sm font-bold text-slate-900 dark:text-white">{selectedUser.activityStats?.hackathons || 4}</p><p className="text-[8px] text-slate-500 uppercase">Hackathons</p></div>
-                                                    <div className={`p-2 rounded border ${theme.statBoxBg}`}><p className="text-sm font-bold text-slate-900 dark:text-white">{selectedUser.activityStats?.submissions || 4}</p><p className="text-[8px] text-slate-500 uppercase">Submissions</p></div>
-                                                    <div className={`p-2 rounded border ${theme.statBoxBg} col-span-2`}><p className="text-sm font-bold text-slate-900 dark:text-white">{selectedUser.activityStats?.mentorSessions || 18}</p><p className="text-[8px] text-slate-500 uppercase">Mentor Sessions</p></div>
+                                                    <div className="p-2.5 rounded-xl bg-white dark:bg-navy-800/50 border border-slate-200/70 dark:border-white/10 shadow-xs"><p className="text-sm font-bold text-slate-900 dark:text-white">{selectedUser.activityStats?.hackathons || 4}</p><p className="text-[9px] text-slate-400 uppercase mt-0.5">Hackathons</p></div>
+                                                    <div className="p-2.5 rounded-xl bg-white dark:bg-navy-800/50 border border-slate-200/70 dark:border-white/10 shadow-xs"><p className="text-sm font-bold text-slate-900 dark:text-white">{selectedUser.activityStats?.submissions || 4}</p><p className="text-[9px] text-slate-400 uppercase mt-0.5">Submissions</p></div>
+                                                    <div className="p-2.5 rounded-xl bg-white dark:bg-navy-800/50 border border-slate-200/70 dark:border-white/10 shadow-xs col-span-2"><p className="text-sm font-bold text-slate-900 dark:text-white">{selectedUser.activityStats?.mentorSessions || 18}</p><p className="text-[9px] text-slate-400 uppercase mt-0.5">Mentor Sessions</p></div>
                                                 </div>
                                             ) : (
-                                                <div className="grid grid-cols-3 gap-2 text-center">
-                                                    <div className={`p-2 rounded border ${theme.statBoxBg}`}><p className="text-sm font-bold text-slate-900 dark:text-white">{selectedUser.activityStats?.hackathons || 4}</p><p className="text-[8px] text-slate-500 uppercase">Hackathons</p></div>
-                                                    <div className={`p-2 rounded border ${theme.statBoxBg}`}><p className="text-sm font-bold text-slate-900 dark:text-white">{selectedUser.activityStats?.teams || 3}</p><p className="text-[8px] text-slate-500 uppercase">Teams</p></div>
-                                                    <div className={`p-2 rounded border ${theme.statBoxBg}`}><p className="text-sm font-bold text-slate-900 dark:text-white">{selectedUser.activityStats?.submissions || 4}</p><p className="text-[8px] text-slate-500 uppercase">Submissions</p></div>
-                                                    <div className={`p-2 rounded border ${theme.statBoxBg}`}><p className="text-sm font-bold text-slate-900 dark:text-white">{selectedUser.activityStats?.certificates || 3}</p><p className="text-[8px] text-slate-500 uppercase">Certificates</p></div>
-                                                    <div className={`p-2 rounded border ${theme.statBoxBg} col-span-2`}><p className="text-sm font-bold text-slate-900 dark:text-white">{selectedUser.activityStats?.mentorSessions || 7}</p><p className="text-[8px] text-slate-500 uppercase">Mentor Sessions</p></div>
+                                                <div className="grid grid-cols-3 gap-2.5 text-center">
+                                                    <div className="p-2.5 rounded-xl bg-white dark:bg-navy-800/50 border border-slate-200/70 dark:border-white/10 shadow-xs"><p className="text-sm font-bold text-slate-900 dark:text-white">{selectedUser.activityStats?.hackathons || 4}</p><p className="text-[9px] text-slate-400 uppercase mt-0.5">Hackathons</p></div>
+                                                    <div className="p-2.5 rounded-xl bg-white dark:bg-navy-800/50 border border-slate-200/70 dark:border-white/10 shadow-xs"><p className="text-sm font-bold text-slate-900 dark:text-white">{selectedUser.activityStats?.teams || 3}</p><p className="text-[9px] text-slate-400 uppercase mt-0.5">Teams</p></div>
+                                                    <div className="p-2.5 rounded-xl bg-white dark:bg-navy-800/50 border border-slate-200/70 dark:border-white/10 shadow-xs"><p className="text-sm font-bold text-slate-900 dark:text-white">{selectedUser.activityStats?.submissions || 4}</p><p className="text-[9px] text-slate-400 uppercase mt-0.5">Submissions</p></div>
+                                                    <div className="p-2.5 rounded-xl bg-white dark:bg-navy-800/50 border border-slate-200/70 dark:border-white/10 shadow-xs"><p className="text-sm font-bold text-slate-900 dark:text-white">{selectedUser.activityStats?.certificates || 3}</p><p className="text-[9px] text-slate-400 uppercase mt-0.5">Certificates</p></div>
+                                                    <div className="p-2.5 rounded-xl bg-white dark:bg-navy-800/50 border border-slate-200/70 dark:border-white/10 shadow-xs col-span-2"><p className="text-sm font-bold text-slate-900 dark:text-white">{selectedUser.activityStats?.mentorSessions || 7}</p><p className="text-[9px] text-slate-400 uppercase mt-0.5">Mentor Sessions</p></div>
                                                 </div>
                                             )}
                                         </div>
 
                                         {/* Recent Activity Timeline */}
-                                        <div className={`p-3.5 rounded-xl border ${theme.innerBg}`}>
-                                            <h4 className={`text-[9px] font-black uppercase tracking-wider mb-2 ${theme.mutedText}`}>Recent Activity</h4>
+                                        <div className="p-4 rounded-xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/70 dark:border-white/5">
+                                            <h4 className="text-[10px] font-bold uppercase tracking-wider mb-2.5 text-slate-400 dark:text-gray-500">Recent Activity</h4>
                                             <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1 scrollbar-thin">
                                                 {(selectedUser.recentActivity || []).map((act, i) => (
-                                                    <div key={i} className={`flex justify-between items-center text-xs p-1.5 rounded border ${theme.statBoxBg}`}>
-                                                        <span className="text-slate-800 dark:text-gray-300 font-medium text-[10px] truncate max-w-[170px]">{act.event}</span>
-                                                        <span className="text-[9px] text-slate-400 font-mono shrink-0">{act.time}</span>
+                                                    <div key={i} className="flex justify-between items-center text-xs p-2 rounded-xl bg-white dark:bg-navy-800/50 border border-slate-200/60 dark:border-white/5">
+                                                        <span className="text-slate-800 dark:text-gray-300 font-medium text-[11px] truncate max-w-[170px]">{act.event}</span>
+                                                        <span className="text-[10px] text-slate-400 font-mono shrink-0">{act.time}</span>
                                                     </div>
                                                 ))}
                                             </div>
@@ -1275,27 +1258,37 @@ const UsersManagement = () => {
 
                             </div>
 
-                            {/* Quick Action Inspector Footer (Always Visible Docked) */}
-                            <div className="pt-3 border-t border-slate-200 dark:border-white/10 flex gap-2">
+                            {/* Quick Action Inspector Footer */}
+                            <div className="pt-3.5 border-t border-slate-100 dark:border-white/5 flex gap-2">
                                 <button 
                                     onClick={() => setContactModalConfig({ isOpen: true, user: selectedUser, subject: 'Official Admin Inquiry', body: '' })}
-                                    className="py-2 px-3 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 text-slate-800 dark:text-white font-bold text-xs rounded-xl transition-colors border border-slate-200 dark:border-white/10 shadow-sm"
+                                    className="py-2.5 px-3.5 rounded-xl bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-gray-200 border border-slate-200 dark:border-white/10 text-xs font-bold shadow-sm transition-all cursor-pointer active:scale-95"
                                 >
                                     Contact
                                 </button>
-                                <button onClick={() => openRoleModal(selectedUser)} className="flex-1 py-2 bg-blue-50 dark:bg-blue-600/20 hover:bg-blue-100 text-[#0052cc] dark:text-blue-400 font-bold text-xs rounded-xl transition-colors border border-blue-200 dark:border-blue-500/30 shadow-sm">
+                                <button 
+                                    onClick={() => openRoleModal(selectedUser)} 
+                                    className="flex-1 py-2.5 rounded-xl bg-sky-50 dark:bg-sky-500/20 hover:bg-sky-100 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-500/30 text-xs font-bold shadow-sm transition-all cursor-pointer active:scale-95"
+                                >
                                     Edit Role
                                 </button>
-                                <button onClick={() => openSuspendModal(selectedUser)} className={`flex-1 py-2 font-bold text-xs rounded-xl transition-colors border shadow-sm ${selectedUser.status === 'Active' ? 'bg-rose-50 dark:bg-red-500/20 text-rose-700 dark:text-red-400 border-rose-200 dark:border-red-500/30 hover:bg-rose-100' : 'bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30 hover:bg-emerald-100'}`}>
+                                <button 
+                                    onClick={() => openSuspendModal(selectedUser)} 
+                                    className={`flex-1 py-2.5 font-bold text-xs rounded-xl transition-all border shadow-sm cursor-pointer active:scale-95 ${
+                                        selectedUser.status === 'Active' 
+                                            ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/20 hover:bg-rose-100' 
+                                            : 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20 hover:bg-emerald-100'
+                                    }`}
+                                >
                                     {selectedUser.status === 'Active' ? 'Suspend' : 'Restore'}
                                 </button>
                             </div>
 
                         </div>
                     ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-6 text-center min-h-[300px]">
-                            <svg className="w-16 h-16 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                            <p className="font-bold text-sm">Select a user to view profile and activity timeline</p>
+                        <div className="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-gray-500 p-8 text-center min-h-[300px]">
+                            <svg className="w-16 h-16 mb-4 opacity-20 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                            <p className="font-bold text-sm text-slate-700 dark:text-gray-300">Select a user to view profile and activity timeline</p>
                         </div>
                     )}
                 </div>
@@ -1305,18 +1298,22 @@ const UsersManagement = () => {
             <ActionModal isOpen={roleModalConfig.isOpen} onClose={() => setRoleModalConfig({ isOpen: false, user: null, selectedRole: '', reason: '' })} title="Change User Role">
                 {roleModalConfig.user && (
                     <div className="space-y-4">
-                        <div className={`p-3 rounded-lg border text-xs ${theme.innerBg}`}>
+                        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-xs text-slate-700 dark:text-gray-300">
                             Target User: <strong className="text-slate-900 dark:text-white">{roleModalConfig.user.name}</strong> ({roleModalConfig.user.email})
                         </div>
 
                         <div>
-                            <label className={`text-[10px] font-black uppercase tracking-wider mb-2 block ${theme.mutedText}`}>Select New Role</label>
+                            <label className="text-xs font-bold text-slate-700 dark:text-gray-300 uppercase tracking-wider mb-2 block">Select New Role</label>
                             <div className="grid grid-cols-2 gap-2">
                                 {['STUDENT', 'MENTOR', 'ORGANIZER', 'ADMIN'].map(role => (
                                     <button 
                                         key={role}
                                         onClick={() => setRoleModalConfig(prev => ({ ...prev, selectedRole: role }))}
-                                        className={`py-2 text-xs font-bold rounded-lg border transition-all ${roleModalConfig.selectedRole === role ? 'bg-[#0052cc] border-blue-600 text-white shadow-md' : theme.inputBg}`}
+                                        className={`py-2.5 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
+                                            roleModalConfig.selectedRole === role 
+                                                ? 'bg-sky-600 border-sky-500 text-white shadow-md shadow-sky-500/20' 
+                                                : 'bg-slate-50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-100'
+                                        }`}
                                     >
                                         {role}
                                     </button>
@@ -1325,7 +1322,7 @@ const UsersManagement = () => {
                         </div>
 
                         {roleModalConfig.selectedRole === 'ADMIN' && (
-                            <div className="p-3 bg-rose-50 dark:bg-red-500/10 border border-rose-200 dark:border-red-500/30 rounded-lg text-xs text-rose-700 dark:text-red-300 font-bold">
+                            <div className="p-3.5 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl text-xs text-rose-700 dark:text-rose-300 font-medium">
                                 ⚠ <strong>Warning:</strong> Granting ADMIN role gives this user full control over platform governance, user moderation, and data.
                             </div>
                         )}
@@ -1335,12 +1332,12 @@ const UsersManagement = () => {
                             rows="3"
                             value={roleModalConfig.reason}
                             onChange={(e) => setRoleModalConfig(prev => ({ ...prev, reason: e.target.value }))}
-                            className={`w-full rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-500 resize-none ${theme.inputBg}`}
+                            className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-sky-500 transition-colors resize-none"
                         ></textarea>
 
-                        <div className="flex justify-end gap-2 pt-2">
-                            <button onClick={() => setRoleModalConfig({ isOpen: false, user: null, selectedRole: '', reason: '' })} className="px-4 py-2 text-xs text-slate-500 font-bold">Cancel</button>
-                            <button onClick={handleRoleChangeConfirm} className="px-5 py-2 bg-sky-50 dark:bg-sky-500/20 hover:bg-sky-100 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-500/30 text-xs font-bold rounded-lg shadow-sm">Confirm Change</button>
+                        <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-white/10">
+                            <button onClick={() => setRoleModalConfig({ isOpen: false, user: null, selectedRole: '', reason: '' })} className="px-4 py-2.5 rounded-xl bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-gray-200 border border-slate-200 dark:border-white/10 text-xs font-bold shadow-sm transition-all cursor-pointer">Cancel</button>
+                            <button onClick={handleRoleChangeConfirm} className="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-xl shadow-md shadow-sky-500/30 transition-all active:scale-95 cursor-pointer">Confirm Change</button>
                         </div>
                     </div>
                 )}
@@ -1350,18 +1347,18 @@ const UsersManagement = () => {
             <ActionModal isOpen={suspendModalConfig.isOpen} onClose={() => setSuspendModalConfig({ isOpen: false, user: null, action: '', reason: '', duration: '', message: '' })} title={`${suspendModalConfig.action} User Account`}>
                 {suspendModalConfig.user && (
                     <div className="space-y-4">
-                        <div className={`p-3 rounded-lg border text-xs ${theme.innerBg}`}>
+                        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-xs text-slate-700 dark:text-gray-300">
                             Target User: <strong className="text-slate-900 dark:text-white">{suspendModalConfig.user.name}</strong> ({suspendModalConfig.user.email})
                         </div>
 
                         {suspendModalConfig.action === 'Suspend' && (
                             <>
                                 <div>
-                                    <label className={`text-[10px] font-black uppercase tracking-wider mb-1 block ${theme.mutedText}`}>Suspension Reason</label>
+                                    <label className="text-xs font-bold text-slate-700 dark:text-gray-300 uppercase tracking-wider mb-1.5 block">Suspension Reason</label>
                                     <select 
                                         value={suspendModalConfig.reason}
                                         onChange={(e) => setSuspendModalConfig(prev => ({ ...prev, reason: e.target.value }))}
-                                        className={`w-full rounded-lg px-3 py-2 text-xs focus:outline-none ${theme.inputBg}`}
+                                        className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 transition-colors"
                                     >
                                         <option value="Policy violation">Policy violation</option>
                                         <option value="Suspicious activity">Suspicious activity</option>
@@ -1371,11 +1368,11 @@ const UsersManagement = () => {
                                 </div>
 
                                 <div>
-                                    <label className={`text-[10px] font-black uppercase tracking-wider mb-1 block ${theme.mutedText}`}>Duration</label>
+                                    <label className="text-xs font-bold text-slate-700 dark:text-gray-300 uppercase tracking-wider mb-1.5 block">Duration</label>
                                     <select 
                                         value={suspendModalConfig.duration}
                                         onChange={(e) => setSuspendModalConfig(prev => ({ ...prev, duration: e.target.value }))}
-                                        className={`w-full rounded-lg px-3 py-2 text-xs focus:outline-none ${theme.inputBg}`}
+                                        className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 transition-colors"
                                     >
                                         <option value="24 hours">24 hours</option>
                                         <option value="7 days">7 days</option>
@@ -1389,14 +1386,14 @@ const UsersManagement = () => {
                                     rows="3"
                                     value={suspendModalConfig.message}
                                     onChange={(e) => setSuspendModalConfig(prev => ({ ...prev, message: e.target.value }))}
-                                    className={`w-full rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-rose-500 resize-none ${theme.inputBg}`}
+                                    className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-rose-500 transition-colors resize-none"
                                 ></textarea>
                             </>
                         )}
 
-                        <div className="flex justify-end gap-2 pt-2">
-                            <button onClick={() => setSuspendModalConfig({ isOpen: false, user: null, action: '', reason: '', duration: '', message: '' })} className="px-4 py-2 text-xs text-slate-500 font-bold">Cancel</button>
-                            <button onClick={handleSuspendConfirm} className={`px-5 py-2 text-white text-xs font-bold rounded-lg shadow-md ${suspendModalConfig.action === 'Suspend' ? 'bg-rose-600 hover:bg-rose-500' : 'bg-emerald-600 hover:bg-emerald-500'}`}>
+                        <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-white/10">
+                            <button onClick={() => setSuspendModalConfig({ isOpen: false, user: null, action: '', reason: '', duration: '', message: '' })} className="px-4 py-2.5 rounded-xl bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-gray-200 border border-slate-200 dark:border-white/10 text-xs font-bold shadow-sm transition-all cursor-pointer">Cancel</button>
+                            <button onClick={handleSuspendConfirm} className={`px-5 py-2 text-white text-xs font-bold rounded-xl shadow-md transition-all active:scale-95 cursor-pointer ${suspendModalConfig.action === 'Suspend' ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-500/20' : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/20'}`}>
                                 Confirm {suspendModalConfig.action}
                             </button>
                         </div>
@@ -1407,17 +1404,17 @@ const UsersManagement = () => {
             {/* BULK NOTIFY MODAL */}
             <ActionModal isOpen={isBulkNotifyOpen} onClose={() => setIsBulkNotifyOpen(false)} title="Broadcast Bulk Notice to Selected Users">
                 <div className="space-y-4">
-                    <p className="text-xs text-slate-500">Dispatch broadcast notification to {selectedUserIds.length} selected users.</p>
+                    <p className="text-xs text-slate-500 dark:text-gray-400">Dispatch broadcast notification to {selectedUserIds.length} selected users.</p>
                     <textarea 
                         placeholder="Enter broadcast message text..."
                         rows="4"
                         value={bulkNotifyMessage}
                         onChange={(e) => setBulkNotifyMessage(e.target.value)}
-                        className={`w-full rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-500 resize-none ${theme.inputBg}`}
+                        className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-sky-500 transition-colors resize-none"
                     ></textarea>
-                    <div className="flex justify-end gap-2 pt-2">
-                        <button onClick={() => setIsBulkNotifyOpen(false)} className="px-4 py-2 text-xs text-slate-500 font-bold">Cancel</button>
-                        <button onClick={() => handleBulkAction('notify', bulkNotifyMessage)} className="px-5 py-2 bg-sky-50 dark:bg-sky-500/20 hover:bg-sky-100 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-500/30 font-bold text-xs rounded-lg shadow-sm">Dispatch Notice</button>
+                    <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-white/10">
+                        <button onClick={() => setIsBulkNotifyOpen(false)} className="px-4 py-2.5 rounded-xl bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-gray-200 border border-slate-200 dark:border-white/10 text-xs font-bold shadow-sm transition-all cursor-pointer">Cancel</button>
+                        <button onClick={() => handleBulkAction('notify', bulkNotifyMessage)} className="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow-md shadow-sky-500/30 transition-all active:scale-95 cursor-pointer">Dispatch Notice</button>
                     </div>
                 </div>
             </ActionModal>
@@ -1425,21 +1422,25 @@ const UsersManagement = () => {
             {/* BULK CHANGE ROLE MODAL */}
             <ActionModal isOpen={bulkRoleConfig.isOpen} onClose={() => setBulkRoleConfig({ isOpen: false, targetRole: 'STUDENT' })} title={`Change Role for ${selectedUserIds.length} Selected Users`}>
                 <div className="space-y-4">
-                    <p className="text-xs text-slate-500">Select the new platform role to assign to all {selectedUserIds.length} selected accounts:</p>
+                    <p className="text-xs text-slate-500 dark:text-gray-400">Select the new platform role to assign to all {selectedUserIds.length} selected accounts:</p>
                     <div className="grid grid-cols-2 gap-2">
                         {['STUDENT', 'MENTOR', 'ORGANIZER', 'ADMIN'].map(role => (
                             <button 
                                 key={role}
                                 onClick={() => setBulkRoleConfig(prev => ({ ...prev, targetRole: role }))}
-                                className={`py-2 text-xs font-bold rounded-lg border transition-all ${bulkRoleConfig.targetRole === role ? 'bg-[#0052cc] border-blue-600 text-white shadow-md' : theme.inputBg}`}
+                                className={`py-2.5 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
+                                    bulkRoleConfig.targetRole === role 
+                                        ? 'bg-sky-600 border-sky-500 text-white shadow-md shadow-sky-500/20' 
+                                        : 'bg-slate-50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-100'
+                                }`}
                             >
                                 {role}
                             </button>
                         ))}
                     </div>
-                    <div className="flex justify-end gap-2 pt-2">
-                        <button onClick={() => setBulkRoleConfig({ isOpen: false, targetRole: 'STUDENT' })} className="px-4 py-2 text-xs text-slate-500 font-bold">Cancel</button>
-                        <button onClick={() => handleBulkAction('change_role', bulkRoleConfig.targetRole)} className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-lg shadow-sm">Apply Role Change</button>
+                    <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-white/10">
+                        <button onClick={() => setBulkRoleConfig({ isOpen: false, targetRole: 'STUDENT' })} className="px-4 py-2.5 rounded-xl bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-gray-200 border border-slate-200 dark:border-white/10 text-xs font-bold shadow-sm transition-all cursor-pointer">Cancel</button>
+                        <button onClick={() => handleBulkAction('change_role', bulkRoleConfig.targetRole)} className="px-5 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl shadow-md shadow-purple-500/20 transition-all active:scale-95 cursor-pointer">Apply Role Change</button>
                     </div>
                 </div>
             </ActionModal>
@@ -1448,32 +1449,32 @@ const UsersManagement = () => {
             <ActionModal isOpen={contactModalConfig.isOpen} onClose={() => setContactModalConfig({ isOpen: false, user: null, subject: '', body: '' })} title={`Dispatch Direct Notice to ${contactModalConfig.user?.name}`}>
                 {contactModalConfig.user && (
                     <div className="space-y-4">
-                        <div className={`p-3 rounded-lg border text-xs ${theme.innerBg}`}>
+                        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-xs text-slate-700 dark:text-gray-300">
                             Recipient: <strong className="text-slate-900 dark:text-white">{contactModalConfig.user.name}</strong> ({contactModalConfig.user.email})
                         </div>
                         <div>
-                            <label className={`text-[10px] font-black uppercase tracking-wider mb-1 block ${theme.mutedText}`}>Subject</label>
+                            <label className="text-xs font-bold text-slate-700 dark:text-gray-300 uppercase tracking-wider mb-1.5 block">Subject</label>
                             <input 
                                 type="text"
                                 value={contactModalConfig.subject}
                                 onChange={(e) => setContactModalConfig(prev => ({ ...prev, subject: e.target.value }))}
                                 placeholder="Subject title..."
-                                className={`w-full rounded-lg px-3 py-2 text-xs focus:outline-none ${theme.inputBg}`}
+                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 transition-colors"
                             />
                         </div>
                         <div>
-                            <label className={`text-[10px] font-black uppercase tracking-wider mb-1 block ${theme.mutedText}`}>Message Body</label>
+                            <label className="text-xs font-bold text-slate-700 dark:text-gray-300 uppercase tracking-wider mb-1.5 block">Message Body</label>
                             <textarea 
                                 placeholder="Write direct message to user..."
                                 rows="4"
                                 value={contactModalConfig.body}
                                 onChange={(e) => setContactModalConfig(prev => ({ ...prev, body: e.target.value }))}
-                                className={`w-full rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-500 resize-none ${theme.inputBg}`}
+                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-sky-500 transition-colors resize-none"
                             ></textarea>
                         </div>
-                        <div className="flex justify-end gap-2 pt-2">
-                            <button onClick={() => setContactModalConfig({ isOpen: false, user: null, subject: '', body: '' })} className="px-4 py-2 text-xs text-slate-500 font-bold">Cancel</button>
-                            <button onClick={handleContactUserConfirm} className="px-5 py-2 bg-sky-50 dark:bg-sky-500/20 hover:bg-sky-100 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-500/40 font-bold text-xs rounded-xl shadow-sm transition-all">Send Message</button>
+                        <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-white/10">
+                            <button onClick={() => setContactModalConfig({ isOpen: false, user: null, subject: '', body: '' })} className="px-4 py-2.5 rounded-xl bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-gray-200 border border-slate-200 dark:border-white/10 text-xs font-bold shadow-sm transition-all cursor-pointer">Cancel</button>
+                            <button onClick={handleContactUserConfirm} className="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow-md shadow-sky-500/30 transition-all active:scale-95 cursor-pointer">Send Message</button>
                         </div>
                     </div>
                 )}

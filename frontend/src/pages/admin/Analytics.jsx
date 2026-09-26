@@ -22,11 +22,9 @@ import {
 import { useTheme } from '../../context/ThemeContext';
 
 // --- EMPTY STATE COMPONENT ---
-
-// Empty Analytics State Component
 const EmptyAnalyticsState = ({ title = "No Analytics Data Recorded", message = "Data will populate automatically as users register, participate, and submit projects.", height = "h-52" }) => (
-    <div className={`w-full ${height} flex flex-col items-center justify-center text-center p-6 rounded-xl border border-dashed border-slate-300 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.01]`}>
-        <div className="w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-2.5 text-blue-500 shadow-sm">
+    <div className={`w-full ${height} flex flex-col items-center justify-center text-center p-6 rounded-2xl border border-dashed border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.01]`}>
+        <div className="w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/20 flex items-center justify-center mb-2.5 text-sky-500 shadow-sm">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
         </div>
         <h4 className="text-xs font-bold text-slate-800 dark:text-white mb-0.5">{title}</h4>
@@ -35,22 +33,18 @@ const EmptyAnalyticsState = ({ title = "No Analytics Data Recorded", message = "
 );
 
 // Custom Theme-Aware Tooltip Component for all Recharts Graphs
-const CustomChartTooltip = ({ active, payload, label, isLightTheme }) => {
+const CustomChartTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
         return (
-            <div className={`p-3.5 rounded-2xl border shadow-xl backdrop-blur-md transition-all ${
-                isLightTheme 
-                ? 'bg-white/95 border-slate-200/90 text-slate-900 shadow-slate-300/50' 
-                : 'bg-[#1A1F2C]/95 border-white/10 text-white shadow-black/80'
-            }`}>
-                {label && <p className="text-xs font-black text-[#0ea5e9] dark:text-sky-400 mb-1.5 uppercase tracking-wider">{label}</p>}
+            <div className="p-3.5 rounded-xl border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-navy-900/95 backdrop-blur-md shadow-xl text-slate-900 dark:text-white">
+                {label && <p className="text-xs font-extrabold text-sky-600 dark:text-sky-400 mb-1.5 uppercase tracking-wider">{label}</p>}
                 {payload.map((entry, index) => (
                     <div key={`item-${index}`} className="text-xs font-semibold flex items-center justify-between gap-4 my-1">
-                        <span className="flex items-center gap-1.5 opacity-90" style={{ color: isLightTheme ? '#334155' : '#e2e8f0' }}>
+                        <span className="flex items-center gap-1.5 text-slate-600 dark:text-gray-300">
                             <span className="w-2.5 h-2.5 rounded-full inline-block shrink-0 shadow-sm" style={{ backgroundColor: entry.color || '#0ea5e9' }}></span>
                             {entry.name || entry.dataKey}:
                         </span>
-                        <span className="font-extrabold font-mono" style={{ color: entry.color || (isLightTheme ? '#0f172a' : '#ffffff') }}>
+                        <span className="font-extrabold font-mono text-slate-900 dark:text-white">
                             {entry.value}
                         </span>
                     </div>
@@ -62,37 +56,35 @@ const CustomChartTooltip = ({ active, payload, label, isLightTheme }) => {
 };
 
 // Reusable Top KPI Card Component
-const KpiCard = ({ title, value, change, isPositive, icon, onClick }) => (
-    <div onClick={onClick} className="adamgiebl-card group cursor-pointer transition-all hover:-translate-y-1 p-4 flex flex-col justify-between w-full h-full">
-        <div className="flex items-center justify-between gap-1 mb-1">
-            <h3 className="text-[11px] font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 truncate">{title}</h3>
-            <div className="w-7 h-7 rounded-lg bg-sky-500/10 dark:bg-white/10 border border-sky-500/20 dark:border-white/10 flex items-center justify-center shrink-0">
+const KpiCard = ({ title, value, change, isPositive, icon, onClick, iconBg }) => (
+    <div 
+        onClick={onClick} 
+        className="rounded-2xl p-4 sm:p-5 bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group cursor-pointer flex flex-col justify-between w-full h-full"
+    >
+        <div className="flex items-center justify-between gap-1 mb-2">
+            <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-gray-400 truncate">{title}</h3>
+            <div className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 ${iconBg || 'bg-sky-50 dark:bg-sky-500/10 border-sky-200 dark:border-sky-500/20'}`}>
                 {icon}
             </div>
         </div>
-        <div className="my-2 flex items-baseline gap-1.5">
-            <p className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">{value}</p>
-            <span className={`text-[10px] font-extrabold whitespace-nowrap ${isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+        <div className="my-1 flex items-baseline gap-2">
+            <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">{value}</p>
+            <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ${isPositive ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400'}`}>
                 {isPositive ? '↑' : '↓'} {change}
             </span>
         </div>
-        <div className="pt-1.5 border-t border-slate-200/60 dark:border-white/10 flex items-center justify-between text-[9px] font-extrabold">
-            <span className="text-slate-500 dark:text-slate-400 uppercase tracking-wider">vs last mo</span>
-            <span className="group-hover:translate-x-1 transition-transform opacity-60">→</span>
+        <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[10px] font-bold text-slate-400 dark:text-gray-500">
+            <span className="uppercase tracking-wider">vs last mo</span>
+            <span className="group-hover:translate-x-1 transition-transform opacity-70">→</span>
         </div>
     </div>
 );
 
-
 // Reusable Compact Division Metric Card Component (High Density, Sleek & Fully Visible)
-const MetricItemCard = ({ label, value, valueColor, isLightTheme }) => (
-    <div className={`p-2.5 rounded-xl border transition-all hover:-translate-y-0.5 flex flex-col justify-between min-h-[58px] ${
-        isLightTheme 
-            ? 'bg-slate-100/90 border-slate-200/90 text-slate-900 shadow-sm hover:bg-white hover:border-blue-400' 
-            : 'bg-white/[0.04] border-white/10 text-white shadow-sm hover:bg-white/[0.08] hover:border-blue-500/40'
-    }`}>
-        <p className="text-[9.5px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">{label}</p>
-        <p className={`text-base sm:text-lg font-black tracking-tight leading-tight mt-1 ${valueColor || (isLightTheme ? 'text-slate-900' : 'text-white')}`}>
+const MetricItemCard = ({ label, value, valueColor }) => (
+    <div className="p-3 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-black/20 text-slate-800 dark:text-white shadow-sm hover:-translate-y-0.5 transition-all flex flex-col justify-between min-h-[58px]">
+        <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-gray-400 truncate">{label}</p>
+        <p className={`text-base sm:text-lg font-extrabold tracking-tight leading-tight mt-1 ${valueColor || 'text-slate-900 dark:text-white'}`}>
             {value}
         </p>
     </div>
@@ -100,19 +92,19 @@ const MetricItemCard = ({ label, value, valueColor, isLightTheme }) => (
 
 // Reusable Collapsible Analytics Section Frame
 const AnalyticsSection = ({ id, title, icon, isExpanded, onToggle, children }) => (
-    <div id={`section-${id}`} className="absolutestrange-card overflow-hidden transition-all p-0 scroll-mt-6">
+    <div id={`section-${id}`} className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 shadow-sm overflow-hidden transition-all p-0 scroll-mt-6">
         <button 
             onClick={onToggle}
-            className="w-full p-5 flex items-center justify-between border-b border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02] text-left focus:outline-none"
+            className="w-full p-5 flex items-center justify-between border-b border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02] text-left focus:outline-none cursor-pointer hover:bg-slate-100/60 dark:hover:bg-white/[0.04] transition-colors"
         >
-            <div className="flex items-center gap-3">
-                <span className="text-xl p-2 rounded-xl bg-blue-50 dark:bg-white/5 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-white/10">{icon}</span>
+            <div className="flex items-center gap-3.5">
+                <span className="text-xl p-2.5 rounded-xl bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-500/20">{icon}</span>
                 <div>
-                    <h2 className="text-base font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">{title}</h2>
-                    <p className="text-xs text-slate-500 dark:text-gray-400">Detailed metric breakdown and trend indicators</p>
+                    <h2 className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight">{title}</h2>
+                    <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">Detailed metric breakdown and trend indicators</p>
                 </div>
             </div>
-            <div className="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400">
+            <div className="flex items-center gap-2 text-xs font-bold text-sky-600 dark:text-sky-400">
                 <span>{isExpanded ? 'Collapse' : 'Expand'}</span>
                 <span className={`transform transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>▾</span>
             </div>
@@ -136,17 +128,6 @@ const AdminAnalytics = () => {
     const showToast = (text, type = 'info') => {
         setToastMessage({ text, type });
         setTimeout(() => setToastMessage(null), 3500);
-    };
-
-    const theme = {
-        cardBg: isLightTheme 
-            ? 'bg-white border border-slate-300 shadow-sm text-slate-900' 
-            : 'glass-strong border-white/5 bg-navy-900/40 text-white shadow-xl',
-        headingText: isLightTheme ? 'text-slate-900 font-extrabold' : 'text-white font-bold',
-        subText: isLightTheme ? 'text-slate-600 font-medium' : 'text-gray-400 font-medium',
-        mutedText: isLightTheme ? 'text-slate-500 font-bold' : 'text-gray-400 font-bold',
-        innerBg: isLightTheme ? 'bg-slate-50 border border-slate-200 text-slate-800 shadow-sm' : 'bg-black/20 border border-white/5 text-white',
-        inputBg: isLightTheme ? 'bg-white border border-slate-300 text-slate-900 shadow-sm focus:border-blue-600' : 'bg-black/20 border border-white/10 text-white'
     };
 
     // Filter Controls State
@@ -446,7 +427,7 @@ const AdminAnalytics = () => {
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500 pb-16">
+        <div className="space-y-7 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-16 max-w-7xl mx-auto">
 
             {/* In-App Toast Alert */}
             {toastMessage && (
@@ -462,81 +443,81 @@ const AdminAnalytics = () => {
             {/* 1. TOP HEADER & EXPORT ACTION BUTTONS */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Central Analytics Command</h1>
-                    <p className="text-slate-600 dark:text-gray-400 mt-1 text-sm font-medium">Real-time platform intelligence, cross-module monitoring, and AI insights.</p>
+                    <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Central Analytics Command</h1>
+                    <p className="text-slate-500 dark:text-gray-400 mt-1 text-sm font-medium">Real-time platform intelligence, cross-module monitoring, and AI insights.</p>
                 </div>
                 
                 {/* Export Action Buttons */}
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2.5">
                     <button 
                         disabled={isExporting !== null}
                         onClick={() => handleExport('PDF')} 
-                        className={`px-4 py-2 bg-sky-50 dark:bg-sky-500/20 hover:bg-sky-100 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-500/30 rounded-2xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95 ${isExporting === 'PDF' ? 'opacity-70 cursor-wait' : ''}`}
+                        className={`px-4 py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-sky-500/20 flex items-center gap-1.5 active:scale-95 cursor-pointer ${isExporting === 'PDF' ? 'opacity-70 cursor-wait' : ''}`}
                     >
                         {isExporting === 'PDF' ? (
                             <>
-                                <svg className="animate-spin -ml-0.5 mr-1 h-3.5 w-3.5 text-sky-600 dark:text-sky-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <svg className="animate-spin -ml-0.5 mr-1 h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                Generating PDF...
+                                <span>Generating PDF...</span>
                             </>
                         ) : (
                             <>
-                                <FileTextIcon className="w-3.5 h-3.5" /> Export PDF
+                                <FileTextIcon className="w-3.5 h-3.5 text-white" /> <span>Export PDF</span>
                             </>
                         )}
                     </button>
                     <button 
                         disabled={isExporting !== null}
                         onClick={() => handleExport('Excel')} 
-                        className={`px-4 py-2 bg-emerald-50 dark:bg-emerald-500/20 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 rounded-2xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95 ${isExporting === 'Excel' ? 'opacity-70 cursor-wait' : ''}`}
+                        className={`px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-emerald-500/20 flex items-center gap-1.5 active:scale-95 cursor-pointer ${isExporting === 'Excel' ? 'opacity-70 cursor-wait' : ''}`}
                     >
                         {isExporting === 'Excel' ? (
                             <>
-                                <svg className="animate-spin -ml-0.5 mr-1 h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <svg className="animate-spin -ml-0.5 mr-1 h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                Generating Excel...
+                                <span>Generating Excel...</span>
                             </>
                         ) : (
                             <>
-                                <ExcelSheetIcon className="w-3.5 h-3.5" /> Export Excel
+                                <ExcelSheetIcon className="w-3.5 h-3.5 text-white" /> <span>Export Excel</span>
                             </>
                         )}
                     </button>
                     <button 
                         disabled={isExporting !== null}
                         onClick={() => handleExport('CSV')} 
-                        className="px-4 py-2 bg-purple-50 dark:bg-purple-500/20 hover:bg-purple-100 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/30 rounded-2xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95"
+                        className="px-4 py-2.5 bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95 cursor-pointer"
                     >
-                        <FileTextIcon className="w-3.5 h-3.5" /> Export CSV
+                        <FileTextIcon className="w-3.5 h-3.5 text-slate-500 dark:text-gray-400" /> <span>Export CSV</span>
                     </button>
                     <button 
                         disabled={isExporting !== null}
                         onClick={() => window.print()} 
-                        className="px-4 py-2 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-white/10 rounded-2xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95"
+                        className="px-4 py-2.5 bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95 cursor-pointer"
                     >
-                        <PrinterIcon className="w-3.5 h-3.5" /> Print Report
+                        <PrinterIcon className="w-3.5 h-3.5 text-slate-500 dark:text-gray-400" /> <span>Print Report</span>
                     </button>
                 </div>
             </div>
 
             {/* 2. ADVANCED TOP FILTER CONTROLS BAR */}
-            <div className={`p-4 rounded-2xl border ${theme.cardBg} flex flex-wrap items-center justify-between gap-3 shadow-md`}>
+            <div className="p-4 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 flex flex-wrap items-center justify-between gap-3 shadow-sm">
                 <div className="flex flex-wrap items-center gap-3">
                     <div className="flex items-center gap-1.5">
-                        <span className={`text-[10px] font-black uppercase tracking-wider ${theme.mutedText}`}>Date Range:</span>
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-gray-400">Date Range:</span>
                         <div className="relative inline-flex items-center">
-                            <select value={dateRange} onChange={(e) => setDateRange(e.target.value)} className={`appearance-none pr-8 pl-3.5 py-1.5 rounded-full text-xs font-bold cursor-pointer outline-none transition-all border ${theme.inputBg}`}>
+                            <select value={dateRange} onChange={(e) => setDateRange(e.target.value)} className="appearance-none pr-8 pl-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer outline-none transition-all border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 text-slate-800 dark:text-white focus:border-sky-500">
                                 <option>Last 30 Days</option>
                                 <option>Last 7 Days</option>
                                 <option>This Month</option>
                                 <option>All Time</option>
                             </select>
                             <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center">
-                                <svg className="w-3 h-3 text-slate-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-3 h-3 text-slate-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="m6 9 6 6 6-6" />
                                 </svg>
                             </div>
@@ -544,16 +525,16 @@ const AdminAnalytics = () => {
                     </div>
 
                     <div className="flex items-center gap-1.5">
-                        <span className={`text-[10px] font-black uppercase tracking-wider ${theme.mutedText}`}>Hackathon:</span>
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-gray-400">Hackathon:</span>
                         <div className="relative inline-flex items-center">
-                            <select value={selectedHackathon} onChange={(e) => setSelectedHackathon(e.target.value)} className={`appearance-none pr-8 pl-3.5 py-1.5 rounded-full text-xs font-bold cursor-pointer outline-none transition-all border ${theme.inputBg}`}>
+                            <select value={selectedHackathon} onChange={(e) => setSelectedHackathon(e.target.value)} className="appearance-none pr-8 pl-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer outline-none transition-all border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 text-slate-800 dark:text-white focus:border-sky-500">
                                 <option>All Events</option>
                                 <option>Global AI Summit 2026</option>
                                 <option>CyberKnights Shield</option>
                                 <option>EcoTech Green Sprint</option>
                             </select>
                             <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center">
-                                <svg className="w-3 h-3 text-slate-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-3 h-3 text-slate-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="m6 9 6 6 6-6" />
                                 </svg>
                             </div>
@@ -561,9 +542,9 @@ const AdminAnalytics = () => {
                     </div>
 
                     <div className="flex items-center gap-1.5">
-                        <span className={`text-[10px] font-black uppercase tracking-wider ${theme.mutedText}`}>College:</span>
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-gray-400">College:</span>
                         <div className="relative inline-flex items-center">
-                            <select value={selectedCollege} onChange={(e) => setSelectedCollege(e.target.value)} className={`appearance-none pr-8 pl-3.5 py-1.5 rounded-full text-xs font-bold cursor-pointer outline-none transition-all border ${theme.inputBg}`}>
+                            <select value={selectedCollege} onChange={(e) => setSelectedCollege(e.target.value)} className="appearance-none pr-8 pl-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer outline-none transition-all border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 text-slate-800 dark:text-white focus:border-sky-500">
                                 <option>All Colleges</option>
                                 <option>ABC Engineering College</option>
                                 <option>VIT Chennai</option>
@@ -571,7 +552,7 @@ const AdminAnalytics = () => {
                                 <option>IIT Madras</option>
                             </select>
                             <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center">
-                                <svg className="w-3 h-3 text-slate-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-3 h-3 text-slate-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="m6 9 6 6 6-6" />
                                 </svg>
                             </div>
@@ -579,9 +560,9 @@ const AdminAnalytics = () => {
                     </div>
 
                     <div className="flex items-center gap-1.5">
-                        <span className={`text-[10px] font-black uppercase tracking-wider ${theme.mutedText}`}>Role:</span>
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-gray-400">Role:</span>
                         <div className="relative inline-flex items-center">
-                            <select value={selectedRole} onChange={(e) => setSelectedRole(e.target.value)} className={`appearance-none pr-8 pl-3.5 py-1.5 rounded-full text-xs font-bold cursor-pointer outline-none transition-all border ${theme.inputBg}`}>
+                            <select value={selectedRole} onChange={(e) => setSelectedRole(e.target.value)} className="appearance-none pr-8 pl-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer outline-none transition-all border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 text-slate-800 dark:text-white focus:border-sky-500">
                                 <option>All Roles</option>
                                 <option>Students</option>
                                 <option>Mentors</option>
@@ -589,7 +570,7 @@ const AdminAnalytics = () => {
                                 <option>Admins</option>
                             </select>
                             <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center">
-                                <svg className="w-3 h-3 text-slate-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-3 h-3 text-slate-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="m6 9 6 6 6-6" />
                                 </svg>
                             </div>
@@ -598,48 +579,48 @@ const AdminAnalytics = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <button onClick={expandAll} className="px-3 py-1.5 bg-blue-50 dark:bg-white/5 border border-blue-200 dark:border-white/10 rounded-lg text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-white/10 transition-colors active:scale-95">
+                    <button onClick={expandAll} className="px-3 py-1.5 bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/30 rounded-xl text-xs font-bold text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-500/20 transition-all active:scale-95 cursor-pointer">
                         Expand All
                     </button>
-                    <button onClick={collapseAll} className="px-3 py-1.5 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-[11px] font-bold text-slate-700 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors active:scale-95">
+                    <button onClick={collapseAll} className="px-3 py-1.5 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-bold text-slate-700 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-all active:scale-95 cursor-pointer">
                         Collapse All
                     </button>
                 </div>
             </div>
 
             {/* 3. MASTER SEARCH OMNIBAR */}
-            <div className="relative z-40" ref={searchRef}>
+            <div className="relative z-30" ref={searchRef}>
                 <div className="relative">
-                    <svg className="w-5 h-5 absolute left-4 top-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    <svg className="w-5 h-5 absolute left-4 top-3.5 text-sky-600 dark:text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                     <input
                         type="text"
-                        className="block w-full pl-12 pr-4 py-3.5 bg-white dark:bg-black/30 border border-slate-200 dark:border-blue-500/30 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-600 transition-all shadow-md text-sm font-medium"
+                        className="block w-full pl-12 pr-4 py-3 bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-sky-500 transition-all shadow-sm text-xs sm:text-sm font-medium"
                         placeholder="Master Search: Track User, College, Team Code, or Hackathon ID..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                     {isSearching && (
-                        <div className="absolute right-4 top-4">
-                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                        <div className="absolute right-4 top-3.5">
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-sky-600 border-t-transparent"></div>
                         </div>
                     )}
                 </div>
                 {searchResults && (
-                    <div className="absolute mt-2 w-full bg-navy-900 border border-white/10 rounded-xl shadow-2xl p-4 animate-in fade-in z-50">
-                        <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Contextual Search Results</h4>
+                    <div className="absolute mt-2 w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl p-4 animate-in fade-in z-50">
+                        <h4 className="text-[10px] font-extrabold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">Contextual Search Results</h4>
                         {searchResults.users?.length > 0 && (
                             <div className="space-y-2 mb-2">
                                 {searchResults.users.map((u, i) => (
                                     <div 
                                         key={i} 
                                         onClick={() => navigate('/admin/users')}
-                                        className="bg-black/20 p-3 rounded-lg border border-white/5 flex justify-between items-center hover:bg-white/5 cursor-pointer"
+                                        className="bg-slate-50 dark:bg-black/20 p-3 rounded-xl border border-slate-200/60 dark:border-white/5 flex justify-between items-center hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer transition-colors"
                                     >
                                         <div>
-                                            <p className="text-sm font-bold text-white">{u.name || u.email} <span className="text-[10px] bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded ml-2 uppercase">{u.role || 'USER'}</span></p>
-                                            <p className="text-xs text-gray-400">{u.email}</p>
+                                            <p className="text-sm font-bold text-slate-900 dark:text-white">{u.name || u.email} <span className="text-[10px] bg-sky-100 dark:bg-sky-500/20 text-sky-800 dark:text-sky-300 font-bold px-2 py-0.5 rounded-full ml-2 uppercase">{u.role || 'USER'}</span></p>
+                                            <p className="text-xs text-slate-500 dark:text-gray-400">{u.email}</p>
                                         </div>
-                                        <span className="text-xs text-sky-400 font-bold">View User →</span>
+                                        <span className="text-xs text-sky-600 dark:text-sky-400 font-bold">View User →</span>
                                     </div>
                                 ))}
                             </div>
@@ -650,14 +631,15 @@ const AdminAnalytics = () => {
 
             {/* 4. TOP 8 PLATFORM KPI CARDS GRID */}
             <div>
-                <h2 className={`text-xs font-black uppercase tracking-wider mb-3 ${theme.mutedText}`}>Live Platform Overview</h2>
+                <h2 className="text-xs font-extrabold uppercase tracking-wider mb-3 text-slate-500 dark:text-gray-400">Live Platform Overview</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
                     <KpiCard 
                         title="Total Users" 
                         value={kpis?.totalUsers?.val || "1,248"} 
                         change={kpis?.totalUsers?.change || "12.4%"} 
                         isPositive={kpis?.totalUsers?.isPositive ?? true} 
-                        icon={<UsersIcon className="w-4 h-4 text-sky-500" />} 
+                        icon={<UsersIcon className="w-5 h-5 text-sky-500" />} 
+                        iconBg="bg-sky-50 dark:bg-sky-500/10 border-sky-200 dark:border-sky-500/20"
                         onClick={() => scrollToSection('users')}
                     />
                     <KpiCard 
@@ -665,7 +647,8 @@ const AdminAnalytics = () => {
                         value={kpis?.runningHacks?.val || "4"} 
                         change={kpis?.runningHacks?.change || "+2"} 
                         isPositive={kpis?.runningHacks?.isPositive ?? true} 
-                        icon={<RocketIcon className="w-4 h-4 text-sky-500" />} 
+                        icon={<RocketIcon className="w-5 h-5 text-sky-500" />} 
+                        iconBg="bg-sky-50 dark:bg-sky-500/10 border-sky-200 dark:border-sky-500/20"
                         onClick={() => scrollToSection('hackathons')}
                     />
                     <KpiCard 
@@ -673,7 +656,8 @@ const AdminAnalytics = () => {
                         value={kpis?.completedHacks?.val || "12"} 
                         change={kpis?.completedHacks?.change || "+4"} 
                         isPositive={kpis?.completedHacks?.isPositive ?? true} 
-                        icon={<FlagIcon className="w-4 h-4 text-emerald-500" />} 
+                        icon={<FlagIcon className="w-5 h-5 text-emerald-500" />} 
+                        iconBg="bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20"
                         onClick={() => scrollToSection('hackathons')}
                     />
                     <KpiCard 
@@ -681,7 +665,8 @@ const AdminAnalytics = () => {
                         value={kpis?.pendingApprovals?.val || "17"} 
                         change={kpis?.pendingApprovals?.change || "Action"} 
                         isPositive={kpis?.pendingApprovals?.isPositive ?? false} 
-                        icon={<TriangleAlertIcon className="w-4 h-4 text-rose-500" />} 
+                        icon={<TriangleAlertIcon className="w-5 h-5 text-rose-500" />} 
+                        iconBg="bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20"
                         onClick={() => navigate('/admin/approvals')}
                     />
                     <KpiCard 
@@ -689,7 +674,8 @@ const AdminAnalytics = () => {
                         value={kpis?.activeTeams?.val || "324"} 
                         change={kpis?.activeTeams?.change || "8.7%"} 
                         isPositive={kpis?.activeTeams?.isPositive ?? true} 
-                        icon={<ShieldIcon className="w-4 h-4 text-purple-500" />} 
+                        icon={<ShieldIcon className="w-5 h-5 text-purple-500" />} 
+                        iconBg="bg-purple-50 dark:bg-purple-500/10 border-purple-200 dark:border-purple-500/20"
                         onClick={() => scrollToSection('teamsSubmissions')}
                     />
                     <KpiCard 
@@ -697,7 +683,8 @@ const AdminAnalytics = () => {
                         value={kpis?.submissions?.val || "3,842"} 
                         change={kpis?.submissions?.change || "18.2%"} 
                         isPositive={kpis?.submissions?.isPositive ?? true} 
-                        icon={<BoxIcon className="w-4 h-4 text-indigo-500" />} 
+                        icon={<BoxIcon className="w-5 h-5 text-indigo-500" />} 
+                        iconBg="bg-indigo-50 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/20"
                         onClick={() => scrollToSection('teamsSubmissions')}
                     />
                     <KpiCard 
@@ -705,7 +692,8 @@ const AdminAnalytics = () => {
                         value={kpis?.certificates?.val || "1,126"} 
                         change={kpis?.certificates?.change || "31%"} 
                         isPositive={kpis?.certificates?.isPositive ?? true} 
-                        icon={<CertificateIcon className="w-4 h-4 text-amber-500" />} 
+                        icon={<CertificateIcon className="w-5 h-5 text-amber-500" />} 
+                        iconBg="bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20"
                         onClick={() => scrollToSection('aiCertificates')}
                     />
                     <KpiCard 
@@ -713,12 +701,12 @@ const AdminAnalytics = () => {
                         value={kpis?.uptime?.val || "99.98%"} 
                         change={kpis?.uptime?.change || "100%"} 
                         isPositive={kpis?.uptime?.isPositive ?? true} 
-                        icon={<ZapIcon className="w-4 h-4 text-emerald-500" />} 
+                        icon={<ZapIcon className="w-5 h-5 text-emerald-500" />} 
+                        iconBg="bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20"
                         onClick={() => scrollToSection('securityPerformance')}
                     />
                 </div>
             </div>
-
 
             {/* SECTION 1: USER ANALYTICS */}
             <AnalyticsSection 
@@ -730,22 +718,22 @@ const AdminAnalytics = () => {
             >
                 {/* Compact High-Density User Cards Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
-                    <MetricItemCard label="New Today" value={userMetrics?.newToday || 48} isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Weekly Growth" value={userMetrics?.weeklyGrowth || "+14%"} valueColor="text-emerald-600 dark:text-emerald-400" isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Monthly Growth" value={userMetrics?.monthlyGrowth || "+28%"} valueColor="text-emerald-600 dark:text-emerald-400" isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Retention Rate" value={userMetrics?.retentionRate || "78%"} isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Active Users" value={userMetrics?.activeUsers || 846} isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Inactive" value={userMetrics?.inactive || 380} isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Suspended" value={userMetrics?.suspended || 22} valueColor="text-rose-600 dark:text-rose-400" isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Verified Users" value={userMetrics?.verified || 1180} valueColor="text-emerald-600 dark:text-emerald-400" isLightTheme={isLightTheme} />
+                    <MetricItemCard label="New Today" value={userMetrics?.newToday || 48} />
+                    <MetricItemCard label="Weekly Growth" value={userMetrics?.weeklyGrowth || "+14%"} valueColor="text-emerald-600 dark:text-emerald-400" />
+                    <MetricItemCard label="Monthly Growth" value={userMetrics?.monthlyGrowth || "+28%"} valueColor="text-emerald-600 dark:text-emerald-400" />
+                    <MetricItemCard label="Retention Rate" value={userMetrics?.retentionRate || "78%"} />
+                    <MetricItemCard label="Active Users" value={userMetrics?.activeUsers || 846} />
+                    <MetricItemCard label="Inactive" value={userMetrics?.inactive || 380} />
+                    <MetricItemCard label="Suspended" value={userMetrics?.suspended || 22} valueColor="text-rose-600 dark:text-rose-400" />
+                    <MetricItemCard label="Verified Users" value={userMetrics?.verified || 1180} valueColor="text-emerald-600 dark:text-emerald-400" />
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Registration Trend Chart */}
-                    <div className={`lg:col-span-2 p-5 rounded-2xl border transition-all duration-500 hover:shadow-xl hover:border-sky-500/30 animate-in fade-in zoom-in-[0.98] slide-in-from-bottom-3 ${theme.cardBg}`}>
+                    <div className="lg:col-span-2 p-5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 shadow-sm transition-all duration-300 hover:shadow-md">
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className={`text-sm font-black ${theme.headingText}`}>User Registration Trend by Role</h3>
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+                            <h3 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight">User Registration Trend by Role</h3>
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-500/20">
                                 <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse"></span>
                                 Live Feed
                             </span>
@@ -757,15 +745,15 @@ const AdminAnalytics = () => {
                                         <CartesianGrid strokeDasharray="3 3" stroke={isLightTheme ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)'} vertical={false} />
                                         <XAxis dataKey="name" stroke={isLightTheme ? '#475569' : '#64748b'} fontSize={10} tickLine={false} />
                                         <YAxis stroke={isLightTheme ? '#475569' : '#64748b'} fontSize={10} tickLine={false} />
-                                        <Tooltip content={<CustomChartTooltip isLightTheme={isLightTheme} />} />
+                                        <Tooltip content={<CustomChartTooltip />} />
                                         <Line 
                                             type="monotone" 
                                             dataKey="students" 
                                             name="Students" 
-                                            stroke="#0052cc" 
+                                            stroke="#0ea5e9" 
                                             strokeWidth={3} 
-                                            dot={{r: 4, fill: '#0052cc', strokeWidth: 2, stroke: isLightTheme ? '#ffffff' : '#0f172a'}} 
-                                            activeDot={{r: 6, stroke: '#0052cc', strokeWidth: 2}}
+                                            dot={{r: 4, fill: '#0ea5e9', strokeWidth: 2, stroke: isLightTheme ? '#ffffff' : '#0f172a'}} 
+                                            activeDot={{r: 6, stroke: '#0ea5e9', strokeWidth: 2}}
                                             isAnimationActive={true}
                                             animationDuration={1600}
                                             animationEasing="ease-out"
@@ -804,10 +792,10 @@ const AdminAnalytics = () => {
                     </div>
 
                     {/* Role Distribution Pie Chart */}
-                    <div className={`p-5 rounded-2xl border flex flex-col items-center justify-center transition-all duration-500 hover:shadow-xl hover:border-purple-500/30 animate-in fade-in zoom-in-[0.98] slide-in-from-bottom-3 ${theme.cardBg}`}>
+                    <div className="p-5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 shadow-sm flex flex-col items-center justify-center transition-all duration-300 hover:shadow-md">
                         <div className="w-full flex justify-between items-center mb-2">
-                            <h3 className={`text-sm font-black self-start ${theme.headingText}`}>Role Distribution</h3>
-                            <span className="text-[10px] font-bold text-purple-500">Breakdown</span>
+                            <h3 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight self-start">Role Distribution</h3>
+                            <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400">Breakdown</span>
                         </div>
                         {roleDistData && roleDistData.length > 0 && roleDistData.some(r => (r.value > 0 || r.count > 0)) ? (
                             <>
@@ -829,15 +817,15 @@ const AdminAnalytics = () => {
                                                     <Cell key={`cell-${index}`} fill={entry.color} />
                                                 ))}
                                             </Pie>
-                                            <Tooltip content={<CustomChartTooltip isLightTheme={isLightTheme} />} />
+                                            <Tooltip content={<CustomChartTooltip />} />
                                         </PieChart>
                                     </ResponsiveContainer>
                                 </div>
                                 <div className="w-full grid grid-cols-2 gap-2 mt-2">
                                     {roleDistData.map(r => (
-                                        <div key={r.name} className={`flex items-center gap-2 text-[10px] font-bold ${theme.subText}`}>
+                                        <div key={r.name} className="flex items-center gap-2 text-[10px] font-bold text-slate-600 dark:text-gray-400">
                                             <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: r.color}}></div>
-                                            {r.name} ({r.value}%)
+                                            <span>{r.name} ({r.value}%)</span>
                                         </div>
                                     ))}
                                 </div>
@@ -849,10 +837,10 @@ const AdminAnalytics = () => {
                 </div>
 
                 {/* College-wise breakdown */}
-                <div id="college-breakdown" className={`p-5 rounded-2xl border transition-all duration-500 hover:shadow-xl hover:border-sky-500/30 animate-in fade-in zoom-in-[0.98] slide-in-from-bottom-3 ${theme.cardBg}`}>
+                <div id="college-breakdown" className="p-5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 shadow-sm transition-all duration-300 hover:shadow-md">
                     <div className="flex justify-between items-center mb-3">
-                        <h3 className={`text-sm font-black ${theme.headingText}`}>Top Registered Colleges & Institutions</h3>
-                        <span className="text-[10px] font-bold text-sky-500">Institution Breakdown</span>
+                        <h3 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight">Top Registered Colleges & Institutions</h3>
+                        <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400">Institution Breakdown</span>
                     </div>
                     {collegeDistData && collegeDistData.length > 0 ? (
                         <div className="h-[160px]">
@@ -861,10 +849,10 @@ const AdminAnalytics = () => {
                                     <CartesianGrid strokeDasharray="3 3" stroke={isLightTheme ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)'} horizontal={false} />
                                     <XAxis type="number" hide />
                                     <YAxis dataKey="college" type="category" stroke={isLightTheme ? '#475569' : '#94a3b8'} fontSize={10} axisLine={false} tickLine={false} />
-                                    <Tooltip content={<CustomChartTooltip isLightTheme={isLightTheme} />} />
+                                    <Tooltip content={<CustomChartTooltip />} />
                                     <Bar 
                                         dataKey="students" 
-                                        fill="#0052cc" 
+                                        fill="#0ea5e9" 
                                         radius={[0, 6, 6, 0]} 
                                         barSize={16}
                                         isAnimationActive={true}
@@ -890,35 +878,35 @@ const AdminAnalytics = () => {
                 onToggle={() => toggleSection('hackathons')}
             >
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-                    <MetricItemCard label="Running Events" value={hackathonMetrics?.running ?? 4} valueColor="text-emerald-600 dark:text-emerald-400" isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Upcoming" value={hackathonMetrics?.upcoming ?? 6} isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Completed" value={hackathonMetrics?.completed ?? 12} isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Cancelled" value={hackathonMetrics?.cancelled ?? 0} isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Avg Registrations" value={hackathonMetrics?.avgRegistrations ?? 310} isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Completion Rate" value={hackathonMetrics?.completionRate || "84%"} valueColor="text-emerald-600 dark:text-emerald-400" isLightTheme={isLightTheme} />
+                    <MetricItemCard label="Running Events" value={hackathonMetrics?.running ?? 4} valueColor="text-emerald-600 dark:text-emerald-400" />
+                    <MetricItemCard label="Upcoming" value={hackathonMetrics?.upcoming ?? 6} />
+                    <MetricItemCard label="Completed" value={hackathonMetrics?.completed ?? 12} />
+                    <MetricItemCard label="Cancelled" value={hackathonMetrics?.cancelled ?? 0} />
+                    <MetricItemCard label="Avg Registrations" value={hackathonMetrics?.avgRegistrations ?? 310} />
+                    <MetricItemCard label="Completion Rate" value={hackathonMetrics?.completionRate || "84%"} valueColor="text-emerald-600 dark:text-emerald-400" />
                 </div>
 
                 {/* Top Hackathons Leaderboard Table */}
-                <div className={`rounded-2xl border overflow-hidden transition-all duration-500 hover:shadow-xl ${theme.cardBg}`}>
-                    <div className="p-4 border-b border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
-                        <h3 className={`text-xs font-black uppercase tracking-wider ${theme.headingText}`}>Highest Registered & Most Active Hackathons</h3>
+                <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+                    <div className="p-4 border-b border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02]">
+                        <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white">Highest Registered & Most Active Hackathons</h3>
                     </div>
                     {topHackathonsData && topHackathonsData.length > 0 ? (
                         <div className="overflow-x-auto p-2">
                             <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className={`border-b text-[10px] font-bold uppercase tracking-wider ${isLightTheme ? 'border-slate-200 text-slate-500' : 'border-white/10 text-gray-500'}`}>
+                                    <tr className="border-b border-slate-200 dark:border-white/10 text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-gray-400">
                                         <th className="px-4 py-2.5">Rank / Hackathon</th>
                                         <th className="px-4 py-2.5">Participants</th>
                                         <th className="px-4 py-2.5">Submissions</th>
                                         <th className="px-4 py-2.5">Completion Rate</th>
                                     </tr>
                                 </thead>
-                                <tbody className={`divide-y ${isLightTheme ? 'divide-slate-200' : 'divide-white/5'}`}>
+                                <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                                     {topHackathonsData.map((h, i) => (
-                                        <tr key={i} className={theme.hoverRow}>
+                                        <tr key={i} className="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors">
                                             <td className="px-4 py-3 text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                                <span>{h.rank}</span> {h.name}
+                                                <span className="font-mono text-sky-600 dark:text-sky-400 font-extrabold">{h.rank}</span> {h.name}
                                             </td>
                                             <td className="px-4 py-3 text-xs font-mono text-slate-600 dark:text-gray-300">{h.participants}</td>
                                             <td className="px-4 py-3 text-xs font-mono text-slate-600 dark:text-gray-300">{h.submissions}</td>
@@ -945,21 +933,21 @@ const AdminAnalytics = () => {
                 onToggle={() => toggleSection('teamsSubmissions')}
             >
                 <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
-                    <MetricItemCard label="Teams Created" value={teamsMetrics?.teamsCreated || 324} isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Avg Team Size" value={teamsMetrics?.avgTeamSize || 3.4} isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Solo Teams" value={teamsMetrics?.soloTeams || 42} isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Full Teams" value={teamsMetrics?.fullTeams || 282} isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Submissions" value={teamsMetrics?.submissions || 3842} isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Reviewed" value={teamsMetrics?.reviewed || 3100} valueColor="text-blue-600 dark:text-blue-400" isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Approved" value={teamsMetrics?.approved || 2680} valueColor="text-emerald-600 dark:text-emerald-400" isLightTheme={isLightTheme} />
-                    <MetricItemCard label="GitHub %" value={teamsMetrics?.githubPct || "92%"} valueColor="text-purple-600 dark:text-purple-400" isLightTheme={isLightTheme} />
+                    <MetricItemCard label="Teams Created" value={teamsMetrics?.teamsCreated || 324} />
+                    <MetricItemCard label="Avg Team Size" value={teamsMetrics?.avgTeamSize || 3.4} />
+                    <MetricItemCard label="Solo Teams" value={teamsMetrics?.soloTeams || 42} />
+                    <MetricItemCard label="Full Teams" value={teamsMetrics?.fullTeams || 282} />
+                    <MetricItemCard label="Submissions" value={teamsMetrics?.submissions || 3842} />
+                    <MetricItemCard label="Reviewed" value={teamsMetrics?.reviewed || 3100} valueColor="text-sky-600 dark:text-sky-400" />
+                    <MetricItemCard label="Approved" value={teamsMetrics?.approved || 2680} valueColor="text-emerald-600 dark:text-emerald-400" />
+                    <MetricItemCard label="GitHub %" value={teamsMetrics?.githubPct || "92%"} valueColor="text-purple-600 dark:text-purple-400" />
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Submission Timeline Area Chart */}
-                    <div className={`p-5 rounded-2xl border transition-all duration-500 hover:shadow-xl hover:border-purple-500/30 animate-in fade-in zoom-in-[0.98] slide-in-from-bottom-3 ${theme.cardBg}`}>
+                    <div className="p-5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 shadow-sm transition-all duration-300 hover:shadow-md">
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className={`text-sm font-black ${theme.headingText}`}>Submission Progress & Evaluation Timeline</h3>
+                            <h3 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight">Submission Progress & Evaluation Timeline</h3>
                             <span className="text-[10px] font-bold text-purple-500">Timeline</span>
                         </div>
                         {submissionTimeline && submissionTimeline.length > 0 ? (
@@ -979,7 +967,7 @@ const AdminAnalytics = () => {
                                         <CartesianGrid strokeDasharray="3 3" stroke={isLightTheme ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)'} vertical={false} />
                                         <XAxis dataKey="week" stroke={isLightTheme ? '#475569' : '#64748b'} fontSize={10} tickLine={false} />
                                         <YAxis stroke={isLightTheme ? '#475569' : '#64748b'} fontSize={10} tickLine={false} />
-                                        <Tooltip content={<CustomChartTooltip isLightTheme={isLightTheme} />} />
+                                        <Tooltip content={<CustomChartTooltip />} />
                                         <Area 
                                             type="monotone" 
                                             dataKey="submissions" 
@@ -1013,10 +1001,10 @@ const AdminAnalytics = () => {
                     </div>
 
                     {/* Technology Stack Distribution Bar Chart */}
-                    <div className={`p-5 rounded-2xl border transition-all duration-500 hover:shadow-xl hover:border-sky-500/30 animate-in fade-in zoom-in-[0.98] slide-in-from-bottom-3 ${theme.cardBg}`}>
+                    <div className="p-5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 shadow-sm transition-all duration-300 hover:shadow-md">
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className={`text-sm font-black ${theme.headingText}`}>Most Popular Tech Stacks Used</h3>
-                            <span className="text-[10px] font-bold text-sky-500">Frameworks</span>
+                            <h3 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight">Most Popular Tech Stacks Used</h3>
+                            <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400">Frameworks</span>
                         </div>
                         {techStackData && techStackData.length > 0 ? (
                             <div className="h-[200px]">
@@ -1025,10 +1013,10 @@ const AdminAnalytics = () => {
                                         <CartesianGrid strokeDasharray="3 3" stroke={isLightTheme ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)'} horizontal={false} />
                                         <XAxis type="number" hide />
                                         <YAxis dataKey="tech" type="category" stroke={isLightTheme ? '#475569' : '#94a3b8'} fontSize={10} axisLine={false} tickLine={false} />
-                                        <Tooltip content={<CustomChartTooltip isLightTheme={isLightTheme} />} />
+                                        <Tooltip content={<CustomChartTooltip />} />
                                         <Bar 
                                             dataKey="count" 
-                                            fill="#3b82f6" 
+                                            fill="#0ea5e9" 
                                             radius={[0, 6, 6, 0]} 
                                             barSize={16}
                                             isAnimationActive={true}
@@ -1055,34 +1043,34 @@ const AdminAnalytics = () => {
                 onToggle={() => toggleSection('mentorsJudges')}
             >
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
-                    <MetricItemCard label="Total Mentors" value={mentorsMetrics?.totalMentors || 150} isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Active Mentors" value={mentorsMetrics?.activeMentors || 110} valueColor="text-emerald-600 dark:text-emerald-400" isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Available Capacity" value={mentorsMetrics?.availableCapacity || 38} isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Judges Assigned" value={mentorsMetrics?.judgesAssigned || 24} isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Avg Eval Time" value={mentorsMetrics?.avgEvalTime || "12 min"} valueColor="text-purple-600 dark:text-purple-400" isLightTheme={isLightTheme} />
+                    <MetricItemCard label="Total Mentors" value={mentorsMetrics?.totalMentors || 150} />
+                    <MetricItemCard label="Active Mentors" value={mentorsMetrics?.activeMentors || 110} valueColor="text-emerald-600 dark:text-emerald-400" />
+                    <MetricItemCard label="Available Capacity" value={mentorsMetrics?.availableCapacity || 38} />
+                    <MetricItemCard label="Judges Assigned" value={mentorsMetrics?.judgesAssigned || 24} />
+                    <MetricItemCard label="Avg Eval Time" value={mentorsMetrics?.avgEvalTime || "12 min"} valueColor="text-purple-600 dark:text-purple-400" />
                 </div>
 
                 {/* Top Mentors Leaderboard */}
-                <div className={`rounded-2xl border overflow-hidden transition-all duration-500 hover:shadow-xl ${theme.cardBg}`}>
-                    <div className="p-4 border-b border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
-                        <h3 className={`text-xs font-black uppercase tracking-wider ${theme.headingText}`}>Top Mentors Leaderboard</h3>
+                <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+                    <div className="p-4 border-b border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02]">
+                        <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white">Top Mentors Leaderboard</h3>
                     </div>
                     {topMentorsData && topMentorsData.length > 0 ? (
                         <div className="overflow-x-auto p-2">
                             <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className={`border-b text-[10px] font-bold uppercase tracking-wider ${isLightTheme ? 'border-slate-200 text-slate-500' : 'border-white/10 text-gray-500'}`}>
+                                    <tr className="border-b border-slate-200 dark:border-white/10 text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-gray-400">
                                         <th className="px-4 py-2.5">Rank / Mentor</th>
                                         <th className="px-4 py-2.5">Organization</th>
                                         <th className="px-4 py-2.5">Sessions Conducted</th>
                                         <th className="px-4 py-2.5">Rating</th>
                                     </tr>
                                 </thead>
-                                <tbody className={`divide-y ${isLightTheme ? 'divide-slate-200' : 'divide-white/5'}`}>
+                                <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                                     {topMentorsData.map((m, i) => (
-                                        <tr key={i} className={theme.hoverRow}>
+                                        <tr key={i} className="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors">
                                             <td className="px-4 py-3 text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                                <span>{m.rank}</span> {m.name}
+                                                <span className="font-mono text-sky-600 dark:text-sky-400 font-extrabold">{m.rank}</span> {m.name}
                                             </td>
                                             <td className="px-4 py-3 text-xs font-medium text-slate-600 dark:text-gray-300">{m.company}</td>
                                             <td className="px-4 py-3 text-xs font-mono text-slate-600 dark:text-gray-300">{m.sessions} sessions</td>
@@ -1109,19 +1097,19 @@ const AdminAnalytics = () => {
                 onToggle={() => toggleSection('aiCertificates')}
             >
                 <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
-                    <MetricItemCard label="AI Queries" value={aiCertMetrics?.aiQueries || 14280} isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Unique Users" value={aiCertMetrics?.uniqueUsers || 1040} isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Avg Latency" value={aiCertMetrics?.avgLatency || "1.1s"} valueColor="text-emerald-600 dark:text-emerald-400" isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Helpful Rate" value={aiCertMetrics?.helpfulRate || "94.2%"} valueColor="text-emerald-600 dark:text-emerald-400" isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Cert Minted" value={aiCertMetrics?.certsMinted || 1126} isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Downloaded" value={aiCertMetrics?.downloaded || 892} valueColor="text-blue-600 dark:text-blue-400" isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Verified" value={aiCertMetrics?.verified || 640} valueColor="text-emerald-600 dark:text-emerald-400" isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Revoked" value={aiCertMetrics?.revoked || 2} valueColor="text-rose-600 dark:text-rose-400" isLightTheme={isLightTheme} />
+                    <MetricItemCard label="AI Queries" value={aiCertMetrics?.aiQueries || 14280} />
+                    <MetricItemCard label="Unique Users" value={aiCertMetrics?.uniqueUsers || 1040} />
+                    <MetricItemCard label="Avg Latency" value={aiCertMetrics?.avgLatency || "1.1s"} valueColor="text-emerald-600 dark:text-emerald-400" />
+                    <MetricItemCard label="Helpful Rate" value={aiCertMetrics?.helpfulRate || "94.2%"} valueColor="text-emerald-600 dark:text-emerald-400" />
+                    <MetricItemCard label="Cert Minted" value={aiCertMetrics?.certsMinted || 1126} />
+                    <MetricItemCard label="Downloaded" value={aiCertMetrics?.downloaded || 892} valueColor="text-sky-600 dark:text-sky-400" />
+                    <MetricItemCard label="Verified" value={aiCertMetrics?.verified || 640} valueColor="text-emerald-600 dark:text-emerald-400" />
+                    <MetricItemCard label="Revoked" value={aiCertMetrics?.revoked || 2} valueColor="text-rose-600 dark:text-rose-400" />
                 </div>
 
-                <div className={`p-5 rounded-2xl border transition-all duration-500 hover:shadow-xl hover:border-emerald-500/30 animate-in fade-in zoom-in-[0.98] slide-in-from-bottom-3 ${theme.cardBg}`}>
+                <div className="p-5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 shadow-sm transition-all duration-300 hover:shadow-md">
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className={`text-sm font-black ${theme.headingText}`}>Daily AI Assistant Queries Volume</h3>
+                        <h3 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight">Daily AI Assistant Queries Volume</h3>
                         <span className="text-[10px] font-bold text-emerald-500">AI Traffic</span>
                     </div>
                     {aiQueriesData && aiQueriesData.length > 0 ? (
@@ -1137,7 +1125,7 @@ const AdminAnalytics = () => {
                                     <CartesianGrid strokeDasharray="3 3" stroke={isLightTheme ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)'} vertical={false} />
                                     <XAxis dataKey="day" stroke={isLightTheme ? '#475569' : '#64748b'} fontSize={10} tickLine={false} />
                                     <YAxis stroke={isLightTheme ? '#475569' : '#64748b'} fontSize={10} tickLine={false} />
-                                    <Tooltip content={<CustomChartTooltip isLightTheme={isLightTheme} />} />
+                                    <Tooltip content={<CustomChartTooltip />} />
                                     <Area 
                                         type="monotone" 
                                         dataKey="queries" 
@@ -1168,18 +1156,18 @@ const AdminAnalytics = () => {
                 onToggle={() => toggleSection('securityPerformance')}
             >
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-                    <MetricItemCard label="Failed Logins" value={securityMetrics?.failedLogins || 14} valueColor="text-amber-500" isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Blocked IPs" value={securityMetrics?.blockedIps || 2} isLightTheme={isLightTheme} />
-                    <MetricItemCard label="API Latency" value={securityMetrics?.apiLatency || "42ms"} valueColor="text-emerald-600 dark:text-emerald-400" isLightTheme={isLightTheme} />
-                    <MetricItemCard label="CPU Load" value={securityMetrics?.cpuLoad || "18%"} isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Memory Used" value={securityMetrics?.memoryUsed || "34%"} isLightTheme={isLightTheme} />
-                    <MetricItemCard label="Server Uptime" value={securityMetrics?.serverUptime || "99.98%"} valueColor="text-emerald-600 dark:text-emerald-400" isLightTheme={isLightTheme} />
+                    <MetricItemCard label="Failed Logins" value={securityMetrics?.failedLogins || 14} valueColor="text-amber-500" />
+                    <MetricItemCard label="Blocked IPs" value={securityMetrics?.blockedIps || 2} />
+                    <MetricItemCard label="API Latency" value={securityMetrics?.apiLatency || "42ms"} valueColor="text-emerald-600 dark:text-emerald-400" />
+                    <MetricItemCard label="CPU Load" value={securityMetrics?.cpuLoad || "18%"} />
+                    <MetricItemCard label="Memory Used" value={securityMetrics?.memoryUsed || "34%"} />
+                    <MetricItemCard label="Server Uptime" value={securityMetrics?.serverUptime || "99.98%"} valueColor="text-emerald-600 dark:text-emerald-400" />
                 </div>
 
-                <div className={`p-5 rounded-2xl border transition-all duration-500 hover:shadow-xl hover:border-sky-500/30 animate-in fade-in zoom-in-[0.98] slide-in-from-bottom-3 ${theme.cardBg}`}>
+                <div className="p-5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 shadow-sm transition-all duration-300 hover:shadow-md">
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className={`text-sm font-black ${theme.headingText}`}>API Response Time & System Load (24 Hours)</h3>
-                        <span className="text-[10px] font-bold text-sky-500">Latency & CPU</span>
+                        <h3 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight">API Response Time & System Load (24 Hours)</h3>
+                        <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400">Latency & CPU</span>
                     </div>
                     {systemPerfData && systemPerfData.length > 0 ? (
                         <div className="h-[200px]">
@@ -1188,14 +1176,14 @@ const AdminAnalytics = () => {
                                     <CartesianGrid strokeDasharray="3 3" stroke={isLightTheme ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.05)'} vertical={false} />
                                     <XAxis dataKey="time" stroke={isLightTheme ? '#475569' : '#64748b'} fontSize={10} tickLine={false} />
                                     <YAxis stroke={isLightTheme ? '#475569' : '#64748b'} fontSize={10} tickLine={false} />
-                                    <Tooltip content={<CustomChartTooltip isLightTheme={isLightTheme} />} />
+                                    <Tooltip content={<CustomChartTooltip />} />
                                     <Line 
                                         type="monotone" 
                                         dataKey="latency" 
                                         name="Latency (ms)" 
-                                        stroke="#3b82f6" 
+                                        stroke="#0ea5e9" 
                                         strokeWidth={2.5} 
-                                        dot={{r: 3, fill: '#3b82f6'}}
+                                        dot={{r: 3, fill: '#0ea5e9'}}
                                         isAnimationActive={true}
                                         animationDuration={1600}
                                         animationEasing="ease-out"
@@ -1223,49 +1211,49 @@ const AdminAnalytics = () => {
             </AnalyticsSection>
 
             {/* SECTION 7: SMART AI ADMIN INSIGHTS (BOTTOM) */}
-            <div className={`p-6 rounded-2xl border relative overflow-hidden shadow-xl ${isLightTheme ? 'bg-gradient-to-r from-blue-50 via-indigo-50 to-slate-50 border-blue-200 text-slate-900' : 'bg-gradient-to-r from-blue-900/30 via-navy-900/50 to-purple-900/30 border-blue-500/30 text-white'}`}>
+            <div className="p-6 rounded-2xl border border-sky-200 dark:border-sky-500/20 bg-sky-50/60 dark:bg-navy-900 shadow-sm relative overflow-hidden">
                 <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-2xl bg-sky-100 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-500/30 flex items-center justify-center text-2xl shrink-0 shadow-sm">
                         ✦
                     </div>
                     <div className="flex-1">
                         <div className="flex items-center justify-between mb-3">
-                            <h2 className="text-sm font-extrabold uppercase tracking-widest text-[#0052cc] dark:text-blue-400">Smart Admin Intelligence (AI Summary)</h2>
-                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">Updated Just Now</span>
+                            <h2 className="text-sm font-extrabold uppercase tracking-widest text-sky-700 dark:text-sky-300">Smart Admin Intelligence (AI Summary)</h2>
+                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-500/30">Updated Just Now</span>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs font-medium leading-relaxed">
                             {aiInsights.length > 0 ? (
                                 aiInsights.map((insight, idx) => (
-                                    <div key={idx} className={`p-3.5 rounded-xl border ${theme.innerBg}`}>
-                                        <p className={`font-bold mb-1 ${insight.type === 'danger' ? 'text-rose-600 dark:text-rose-400' : insight.type === 'warning' ? 'text-amber-600 dark:text-amber-400' : insight.type === 'purple' ? 'text-purple-600 dark:text-purple-400' : 'text-emerald-600 dark:text-emerald-400'}`}>{insight.title}</p>
-                                        <p className={theme.subText}>{insight.content}</p>
+                                    <div key={idx} className="p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-800/80 shadow-sm">
+                                        <p className={`font-bold mb-1.5 ${insight.type === 'danger' ? 'text-rose-600 dark:text-rose-400' : insight.type === 'warning' ? 'text-amber-600 dark:text-amber-400' : insight.type === 'purple' ? 'text-purple-600 dark:text-purple-400' : 'text-emerald-600 dark:text-emerald-400'}`}>{insight.title}</p>
+                                        <p className="text-slate-600 dark:text-gray-400 text-xs">{insight.content}</p>
                                     </div>
                                 ))
                             ) : (
                                 <>
-                                    <div className={`p-3.5 rounded-xl border ${theme.innerBg}`}>
-                                        <p className="font-bold text-emerald-600 dark:text-emerald-400 mb-1 flex items-center gap-1.5"><ZapIcon className="w-4 h-4 text-emerald-500" /> User Growth Surge</p>
-                                        <p className={theme.subText}>User registrations increased by <strong>18%</strong> compared to last month. Peak registration occurred during AI Summit announcement.</p>
+                                    <div className="p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-800/80 shadow-sm">
+                                        <p className="font-bold text-emerald-600 dark:text-emerald-400 mb-1.5 flex items-center gap-1.5"><ZapIcon className="w-4 h-4 text-emerald-500" /> User Growth Surge</p>
+                                        <p className="text-slate-600 dark:text-gray-400 text-xs">User registrations increased by <strong className="text-slate-800 dark:text-white">18%</strong> compared to last month. Peak registration occurred during AI Summit announcement.</p>
                                     </div>
-                                    <div className={`p-3.5 rounded-xl border ${theme.innerBg}`}>
-                                        <p className="font-bold text-blue-600 dark:text-blue-400 mb-1 flex items-center gap-1.5"><RocketIcon className="w-4 h-4 text-blue-500" /> Top Event Participation</p>
-                                        <p className={theme.subText}><strong>Global AI Summit</strong> has the highest participation with <strong>642 registered students</strong> and an 88% completion rate.</p>
+                                    <div className="p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-800/80 shadow-sm">
+                                        <p className="font-bold text-sky-600 dark:text-sky-400 mb-1.5 flex items-center gap-1.5"><RocketIcon className="w-4 h-4 text-sky-500" /> Top Event Participation</p>
+                                        <p className="text-slate-600 dark:text-gray-400 text-xs"><strong className="text-slate-800 dark:text-white">Global AI Summit</strong> has the highest participation with <strong className="text-slate-800 dark:text-white">642 registered students</strong> and an 88% completion rate.</p>
                                     </div>
-                                    <div className={`p-3.5 rounded-xl border ${theme.innerBg}`}>
-                                        <p className="font-bold text-amber-600 dark:text-amber-400 mb-1 flex items-center gap-1.5"><TriangleAlertIcon className="w-4 h-4 text-amber-500" /> Mentor Workload Alert</p>
-                                        <p className={theme.subText}>Mentor <strong>Priya Sharma</strong> currently mentors <strong>8 teams</strong>, exceeding the recommended max capacity of 5 teams.</p>
+                                    <div className="p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-800/80 shadow-sm">
+                                        <p className="font-bold text-amber-600 dark:text-amber-400 mb-1.5 flex items-center gap-1.5"><TriangleAlertIcon className="w-4 h-4 text-amber-500" /> Mentor Workload Alert</p>
+                                        <p className="text-slate-600 dark:text-gray-400 text-xs">Mentor <strong className="text-slate-800 dark:text-white">Priya Sharma</strong> currently mentors <strong className="text-slate-800 dark:text-white">8 teams</strong>, exceeding the recommended max capacity of 5 teams.</p>
                                     </div>
-                                    <div className={`p-3.5 rounded-xl border ${theme.innerBg}`}>
-                                        <p className="font-bold text-purple-600 dark:text-purple-400 mb-1 flex items-center gap-1.5"><TeacherIcon className="w-4 h-4 text-purple-500" /> College Performance</p>
-                                        <p className={theme.subText}><strong>ABC Engineering College</strong> achieved the highest submission success rate at <strong>94%</strong> across all participating teams.</p>
+                                    <div className="p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-800/80 shadow-sm">
+                                        <p className="font-bold text-purple-600 dark:text-purple-400 mb-1.5 flex items-center gap-1.5"><TeacherIcon className="w-4 h-4 text-purple-500" /> College Performance</p>
+                                        <p className="text-slate-600 dark:text-gray-400 text-xs"><strong className="text-slate-800 dark:text-white">ABC Engineering College</strong> achieved the highest submission success rate at <strong className="text-slate-800 dark:text-white">94%</strong> across all participating teams.</p>
                                     </div>
-                                    <div className={`p-3.5 rounded-xl border ${theme.innerBg}`}>
-                                        <p className="font-bold text-emerald-600 dark:text-emerald-400 mb-1 flex items-center gap-1.5"><CertificateIcon className="w-4 h-4 text-emerald-500" /> Certificate Velocity</p>
-                                        <p className={theme.subText}>Certificate downloads spiked by <strong>31%</strong> following the AI Summit winner announcements.</p>
+                                    <div className="p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-800/80 shadow-sm">
+                                        <p className="font-bold text-emerald-600 dark:text-emerald-400 mb-1.5 flex items-center gap-1.5"><CertificateIcon className="w-4 h-4 text-emerald-500" /> Certificate Velocity</p>
+                                        <p className="text-slate-600 dark:text-gray-400 text-xs">Certificate downloads spiked by <strong className="text-slate-800 dark:text-white">31%</strong> following the AI Summit winner announcements.</p>
                                     </div>
-                                    <div className={`p-3.5 rounded-xl border ${theme.innerBg}`}>
-                                        <p className="font-bold text-rose-600 dark:text-rose-400 mb-1 flex items-center gap-1.5"><SirenIcon className="w-4 h-4 text-rose-500" /> Deadline Action Required</p>
-                                        <p className={theme.subText}><strong>12 teams</strong> have not submitted their final project repositories prior to the upcoming 5 PM deadline.</p>
+                                    <div className="p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-800/80 shadow-sm">
+                                        <p className="font-bold text-rose-600 dark:text-rose-400 mb-1.5 flex items-center gap-1.5"><SirenIcon className="w-4 h-4 text-rose-500" /> Deadline Action Required</p>
+                                        <p className="text-slate-600 dark:text-gray-400 text-xs"><strong className="text-slate-800 dark:text-white">12 teams</strong> have not submitted their final project repositories prior to the upcoming 5 PM deadline.</p>
                                     </div>
                                 </>
                             )}

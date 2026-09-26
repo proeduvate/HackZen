@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import apiClient from '../../api/api';
-import { useTheme } from '../../context/ThemeContext';
+
 import { 
     CheckIcon, 
     ShieldIcon, 
@@ -19,8 +19,6 @@ import { revokeSession, revokeAllOtherSessions } from '../../services/admin/admi
 
 const AdminProfile = () => {
     const navigate = useNavigate();
-    const { theme: currentTheme } = useTheme();
-    const isLightTheme = currentTheme === 'light';
 
     // Core Control Center State
     const [loading, setLoading] = useState(true);
@@ -89,17 +87,6 @@ const AdminProfile = () => {
         window.addEventListener('user-update', fetchControlCenterData);
         return () => window.removeEventListener('user-update', fetchControlCenterData);
     }, []);
-
-    const themeStyles = {
-        cardBg: isLightTheme 
-            ? 'bg-white border border-slate-200 shadow-sm text-slate-900' 
-            : 'bg-navy-900/60 border border-white/10 text-white shadow-xl',
-        headingText: isLightTheme ? 'text-slate-900 font-extrabold' : 'text-white font-bold',
-        subText: isLightTheme ? 'text-slate-600 font-medium' : 'text-gray-400 font-medium',
-        mutedText: isLightTheme ? 'text-slate-500 font-bold' : 'text-gray-400 font-bold',
-        innerBg: isLightTheme ? 'bg-slate-50 border border-slate-200 text-slate-800' : 'bg-black/20 border border-white/5 text-white',
-        inputBg: isLightTheme ? 'bg-white border border-slate-300 text-slate-900 shadow-sm' : 'bg-black/20 border border-white/10 text-white'
-    };
 
     // Action Handlers
     const handleSignOutSession = async (sessionId) => {
@@ -200,10 +187,10 @@ const AdminProfile = () => {
     const recentActions = controlData?.recentActions || [];
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in duration-500 pb-24">
+        <div className="space-y-7 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             
             {/* 1. TOP HERO & ADMIN ACCOUNT INFORMATION CARD */}
-            <div className={`rounded-3xl border overflow-hidden transition-all shadow-sm ${themeStyles.cardBg}`}>
+            <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 shadow-sm overflow-hidden transition-all">
                 {/* Banner Gradient */}
                 <div className="h-40 sm:h-44 bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 relative overflow-hidden">
                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
@@ -270,32 +257,32 @@ const AdminProfile = () => {
                 {/* Extended Account Information Grid */}
                 <div className="px-6 sm:px-8 pb-6 pt-5 border-t border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02]">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className={`p-4 rounded-xl border ${themeStyles.innerBg} flex flex-col justify-center`}>
-                            <p className={`text-[10px] font-black uppercase tracking-wider ${themeStyles.mutedText}`}>Full Name</p>
+                        <div className={`p-4 rounded-xl border bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white rounded-xl flex flex-col justify-center`}>
+                            <p className={`text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-gray-400 font-extrabold`}>Full Name</p>
                             <p className={`text-sm font-bold mt-1 text-slate-900 dark:text-white`}>{info.fullName}</p>
                         </div>
-                        <div className={`p-4 rounded-xl border ${themeStyles.innerBg} flex flex-col justify-center`}>
-                            <p className={`text-[10px] font-black uppercase tracking-wider ${themeStyles.mutedText}`}>Email Address</p>
+                        <div className={`p-4 rounded-xl border bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white rounded-xl flex flex-col justify-center`}>
+                            <p className={`text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-gray-400 font-extrabold`}>Email Address</p>
                             <p className={`text-sm font-bold mt-1 text-slate-900 dark:text-white break-all`}>{info.email}</p>
                         </div>
-                        <div className={`p-4 rounded-xl border ${themeStyles.innerBg} flex flex-col justify-center`}>
-                            <p className={`text-[10px] font-black uppercase tracking-wider ${themeStyles.mutedText}`}>Role Designation</p>
+                        <div className={`p-4 rounded-xl border bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white rounded-xl flex flex-col justify-center`}>
+                            <p className={`text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-gray-400 font-extrabold`}>Role Designation</p>
                             <p className="text-sm font-extrabold mt-1 text-sky-700 dark:text-sky-400">{info.role}</p>
                         </div>
-                        <div className={`p-4 rounded-xl border ${themeStyles.innerBg} flex flex-col justify-center`}>
-                            <p className={`text-[10px] font-black uppercase tracking-wider ${themeStyles.mutedText}`}>Department</p>
+                        <div className={`p-4 rounded-xl border bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white rounded-xl flex flex-col justify-center`}>
+                            <p className={`text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-gray-400 font-extrabold`}>Department</p>
                             <p className={`text-sm font-bold mt-1 text-slate-900 dark:text-white`}>{info.department}</p>
                         </div>
-                        <div className={`p-4 rounded-xl border ${themeStyles.innerBg} flex flex-col justify-center`}>
-                            <p className={`text-[10px] font-black uppercase tracking-wider ${themeStyles.mutedText}`}>Admin ID</p>
+                        <div className={`p-4 rounded-xl border bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white rounded-xl flex flex-col justify-center`}>
+                            <p className={`text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-gray-400 font-extrabold`}>Admin ID</p>
                             <p className="text-sm font-mono font-bold mt-1 text-purple-600 dark:text-purple-400">{info.adminId}</p>
                         </div>
-                        <div className={`p-4 rounded-xl border ${themeStyles.innerBg} flex flex-col justify-center`}>
-                            <p className={`text-[10px] font-black uppercase tracking-wider ${themeStyles.mutedText}`}>Account Created</p>
+                        <div className={`p-4 rounded-xl border bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white rounded-xl flex flex-col justify-center`}>
+                            <p className={`text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-gray-400 font-extrabold`}>Account Created</p>
                             <p className={`text-sm font-bold mt-1 text-slate-900 dark:text-white`}>{info.accountCreated}</p>
                         </div>
-                        <div className={`p-4 rounded-xl border ${themeStyles.innerBg} flex flex-col justify-center sm:col-span-2 lg:col-span-2`}>
-                            <p className={`text-[10px] font-black uppercase tracking-wider ${themeStyles.mutedText}`}>Account Status</p>
+                        <div className={`p-4 rounded-xl border bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white rounded-xl flex flex-col justify-center sm:col-span-2 lg:col-span-2`}>
+                            <p className={`text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-gray-400 font-extrabold`}>Account Status</p>
                             <div className="flex items-center gap-2 mt-1">
                                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
                                 <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{info.status || 'Active'} • Operational Full Access</span>
@@ -307,10 +294,10 @@ const AdminProfile = () => {
 
             {/* 2. STATS ROW */}
             <div>
-                <h2 className={`text-xs font-black uppercase tracking-wider mb-3 ${themeStyles.mutedText}`}>Personal Administrative Output & Impact</h2>
+                <h2 className={`text-xs font-black uppercase tracking-wider mb-3 text-slate-500 dark:text-gray-400 font-extrabold`}>Personal Administrative Output & Impact</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                     {/* Approvals Granted */}
-                    <div className="adamgiebl-card group cursor-pointer transition-all hover:-translate-y-1 p-5 flex flex-col justify-between w-full h-full">
+                    <div className="rounded-2xl p-5 bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group cursor-pointer flex flex-col justify-between w-full h-full">
                         <div className="flex items-center justify-between gap-2 mb-2">
                             <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-400">Approvals Granted</h3>
                             <div className="w-9 h-9 rounded-xl bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/20 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
@@ -327,7 +314,7 @@ const AdminProfile = () => {
                     </div>
 
                     {/* Disputes Resolved */}
-                    <div className="adamgiebl-card group cursor-pointer transition-all hover:-translate-y-1 p-5 flex flex-col justify-between w-full h-full">
+                    <div className="rounded-2xl p-5 bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group cursor-pointer flex flex-col justify-between w-full h-full">
                         <div className="flex items-center justify-between gap-2 mb-2">
                             <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-400">Disputes Resolved</h3>
                             <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
@@ -344,7 +331,7 @@ const AdminProfile = () => {
                     </div>
 
                     {/* Users Managed */}
-                    <div className="adamgiebl-card group cursor-pointer transition-all hover:-translate-y-1 p-5 flex flex-col justify-between w-full h-full">
+                    <div className="rounded-2xl p-5 bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group cursor-pointer flex flex-col justify-between w-full h-full">
                         <div className="flex items-center justify-between gap-2 mb-2">
                             <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-400">Users Managed</h3>
                             <div className="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
@@ -361,7 +348,7 @@ const AdminProfile = () => {
                     </div>
 
                     {/* Certificates Issued */}
-                    <div className="adamgiebl-card group cursor-pointer transition-all hover:-translate-y-1 p-5 flex flex-col justify-between w-full h-full">
+                    <div className="rounded-2xl p-5 bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group cursor-pointer flex flex-col justify-between w-full h-full">
                         <div className="flex items-center justify-between gap-2 mb-2">
                             <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-400">Certificates Issued</h3>
                             <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
@@ -386,7 +373,7 @@ const AdminProfile = () => {
                 <div className="lg:col-span-8 space-y-8">
                     
                     {/* SECURITY CENTER (MOST IMPORTANT) */}
-                    <div className="absolutestrange-card p-8 space-y-6 relative overflow-hidden">
+                    <div className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm p-8 space-y-6 relative overflow-hidden">
                         <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-4">
                             <div className="flex items-center gap-3">
                                 <span className="p-2.5 rounded-2xl bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-500/20 flex items-center justify-center">
@@ -412,7 +399,7 @@ const AdminProfile = () => {
 
                         {/* Security Controls Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className={`p-4 rounded-2xl border ${themeStyles.innerBg} flex items-center justify-between`}>
+                            <div className={`p-4 rounded-2xl border bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white rounded-xl flex items-center justify-between`}>
                                 <div>
                                     <p className="text-xs font-extrabold text-slate-900 dark:text-white">Password Credentials</p>
                                     <p className="text-[10px] text-slate-500 dark:text-gray-400 font-medium">Last changed {security.passwordLastChanged}</p>
@@ -425,7 +412,7 @@ const AdminProfile = () => {
                                 </button>
                             </div>
 
-                            <div className={`p-4 rounded-2xl border ${themeStyles.innerBg} flex items-center justify-between`}>
+                            <div className={`p-4 rounded-2xl border bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white rounded-xl flex items-center justify-between`}>
                                 <div>
                                     <p className="text-xs font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
                                         <span>Two-Factor Authentication (2FA)</span>
@@ -441,14 +428,14 @@ const AdminProfile = () => {
                                 </button>
                             </div>
 
-                            <div className={`p-4 rounded-2xl border ${themeStyles.innerBg} flex items-center justify-between`}>
+                            <div className={`p-4 rounded-2xl border bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white rounded-xl flex items-center justify-between`}>
                                 <div>
                                     <p className="text-xs font-extrabold text-slate-900 dark:text-white">Recovery Email Address</p>
                                     <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">✓ Verified ({security.recoveryEmail})</p>
                                 </div>
                             </div>
 
-                            <div className={`p-4 rounded-2xl border ${themeStyles.innerBg} flex items-center justify-between`}>
+                            <div className={`p-4 rounded-2xl border bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white rounded-xl flex items-center justify-between`}>
                                 <div>
                                     <p className="text-xs font-extrabold text-slate-900 dark:text-white">Suspicious Login Alerts</p>
                                     <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">● Active & Monitoring</p>
@@ -479,7 +466,7 @@ const AdminProfile = () => {
                     </div>
 
                     {/* ACTIVE SESSIONS & DEVICE MANAGEMENT */}
-                    <div className="absolutestrange-card p-8 space-y-6">
+                    <div className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm p-8 space-y-6">
                         <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-4">
                             <div className="flex items-center gap-3">
                                 <span className="p-2.5 rounded-2xl bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20 flex items-center justify-center">
@@ -501,7 +488,7 @@ const AdminProfile = () => {
 
                         <div className="space-y-3">
                             {sessions.map((sess) => (
-                                <div key={sess.id} className={`p-4 rounded-2xl border ${sess.isCurrent ? 'border-sky-300 bg-sky-50/40 dark:bg-sky-900/10' : themeStyles.innerBg} flex items-center justify-between gap-4 transition-all`}>
+                                <div key={sess.id} className={`p-4 rounded-xl border ${sess.isCurrent ? 'border-sky-300 dark:border-sky-500/40 bg-sky-50/40 dark:bg-sky-900/10' : 'bg-slate-50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-800 dark:text-white'} flex items-center justify-between gap-4 transition-all`}>
                                     <div className="flex items-center gap-3.5">
                                         <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${sess.isCurrent ? 'bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-500/40' : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-gray-300 border border-slate-200 dark:border-white/10'}`}>
                                             <ZapIcon className="w-4 h-4" />
@@ -531,7 +518,7 @@ const AdminProfile = () => {
                     </div>
 
                     {/* SECURITY & LOGIN ACTIVITY TIMELINE */}
-                    <div className="absolutestrange-card p-8 space-y-6">
+                    <div className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm p-8 space-y-6">
                         <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-4">
                             <div className="flex items-center gap-3">
                                 <span className="p-2.5 rounded-2xl bg-amber-50 dark:bg-amber-500/10 text-amber-500 border border-amber-200 dark:border-amber-500/20 flex items-center justify-center">
@@ -546,7 +533,7 @@ const AdminProfile = () => {
 
                         <div className="space-y-4">
                             {securityActivity.map((sec, idx) => (
-                                <div key={idx} className={`p-4 rounded-2xl border ${themeStyles.innerBg} flex items-center justify-between text-xs`}>
+                                <div key={idx} className={`p-4 rounded-2xl border bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white rounded-xl flex items-center justify-between text-xs`}>
                                     <div className="flex items-center gap-3">
                                         <span className="w-2 h-2 rounded-full bg-sky-500"></span>
                                         <div>
@@ -569,7 +556,7 @@ const AdminProfile = () => {
                 <div className="lg:col-span-4 space-y-8">
                     
                     {/* CURRENT ADMIN WORKLOAD CARD */}
-                    <div className="absolutestrange-card p-6 space-y-5">
+                    <div className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm p-6 space-y-5">
                         <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-3">
                             <h3 className="text-xs font-black text-sky-600 dark:text-sky-400 uppercase tracking-widest flex items-center gap-2">
                                 <ZapIcon className="w-4 h-4 text-sky-600 dark:text-sky-400" />
@@ -613,7 +600,7 @@ const AdminProfile = () => {
                     </div>
 
                     {/* ADMIN ACCESS & DETAILED PRIVILEGES */}
-                    <div className="absolutestrange-card p-6 space-y-5">
+                    <div className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm p-6 space-y-5">
                         <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-3">
                             <h3 className="text-xs font-black text-sky-600 dark:text-sky-400 uppercase tracking-widest flex items-center gap-2">
                                 <LockIcon className="w-4 h-4 text-sky-600 dark:text-sky-400" />
@@ -645,7 +632,7 @@ const AdminProfile = () => {
                     </div>
 
                     {/* ENRICHED RECENT ADMIN ACTIONS (AUDIT SHORTCUT) */}
-                    <div className="absolutestrange-card p-6 space-y-5">
+                    <div className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm p-6 space-y-5">
                         <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-3">
                             <h3 className="text-xs font-black text-sky-600 dark:text-sky-400 uppercase tracking-widest flex items-center gap-2">
                                 <FileTextIcon className="w-4 h-4 text-sky-600 dark:text-sky-400" />
@@ -674,7 +661,7 @@ const AdminProfile = () => {
                     </div>
 
                     {/* NOTIFICATION PREFERENCES */}
-                    <div className="absolutestrange-card p-6 space-y-4">
+                    <div className="rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm p-6 space-y-4">
                         <h3 className="text-xs font-black text-sky-600 dark:text-sky-400 uppercase tracking-widest">
                             Notification Preferences
                         </h3>
@@ -702,7 +689,7 @@ const AdminProfile = () => {
                     </div>
 
                     {/* DANGER ZONE & BREAK-GLASS CONTROLS */}
-                    <div className="p-6 rounded-[2.5rem] bg-rose-50/70 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-500/20 space-y-3">
+                    <div className="p-6 rounded-2xl bg-rose-50/70 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-500/20 space-y-3">
                         <h3 className="text-xs font-black text-rose-600 dark:text-rose-400 uppercase tracking-widest">
                             Emergency Security Controls
                         </h3>
@@ -732,8 +719,8 @@ const AdminProfile = () => {
 
             {/* 1. PERMISSION MATRIX MODAL */}
             {showPermissionMatrix && (
-                <div className="fixed inset-0 z-[999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-[2.5rem] max-w-4xl w-full p-8 space-y-6 shadow-2xl animate-in zoom-in-95 duration-200">
+                <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-2xl max-w-4xl w-full p-8 space-y-6 shadow-2xl animate-in zoom-in-95 duration-200">
                         <div className="flex justify-between items-center border-b border-slate-200 dark:border-white/10 pb-4">
                             <div>
                                 <h2 className="text-xl font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">Role Access & Permission Matrix</h2>
@@ -796,7 +783,7 @@ const AdminProfile = () => {
 
             {/* 2. CHANGE PASSWORD MODAL */}
             {showChangePassword && (
-                <div className="fixed inset-0 z-[999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
                     <form onSubmit={handleChangePasswordSubmit} className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-3xl max-w-md w-full p-8 space-y-5 shadow-2xl">
                         <h2 className="text-xl font-extrabold text-slate-900 dark:text-white">Change Admin Password</h2>
                         <div className="space-y-3 text-xs font-bold">
@@ -838,8 +825,8 @@ const AdminProfile = () => {
 
             {/* 3. EDIT ADMIN PROFILE MODAL */}
             {showEditProfile && (
-                <div className="fixed inset-0 z-[999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-[2.5rem] max-w-lg w-full p-8 space-y-5 shadow-2xl">
+                <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-2xl max-w-lg w-full p-8 space-y-5 shadow-2xl">
                         <div className="flex justify-between items-center border-b border-slate-200 dark:border-white/10 pb-3">
                             <h2 className="text-xl font-extrabold text-slate-900 dark:text-white">Edit Admin Account Info</h2>
                             <button 
@@ -902,8 +889,8 @@ const AdminProfile = () => {
 
             {/* 4. SECURITY IDENTITY RE-VERIFICATION MODAL */}
             {showVerificationModal && (
-                <div className="fixed inset-0 z-[999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-navy-900 border border-rose-500/30 rounded-[2.5rem] max-w-md w-full p-8 space-y-5 shadow-2xl">
+                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-navy-900 border border-rose-500/30 rounded-2xl max-w-md w-full p-8 space-y-5 shadow-2xl">
                         <div className="text-center space-y-2">
                             <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-500/20 border border-rose-200 dark:border-rose-500/30 flex items-center justify-center text-rose-600 dark:text-rose-400 mx-auto">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">

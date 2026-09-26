@@ -57,7 +57,7 @@ const EditAdminProfile = () => {
 
         } catch (err) {
             console.error("Save failed:", err);
-            alert("Failed to synchronize administrative intelligence.");
+            alert("Failed to synchronize administrative profile.");
         } finally {
             setSaving(false);
         }
@@ -65,83 +65,94 @@ const EditAdminProfile = () => {
 
     if (loading) return (
         <div className="flex items-center justify-center h-64">
-            <div className="w-8 h-8 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-4 border-sky-500/20 border-t-sky-500 rounded-full animate-spin"></div>
         </div>
     );
 
     return (
-        <div className="max-w-5xl mx-auto space-y-12 pb-20 animate-in fade-in slide-in-from-bottom-5 duration-700">
+        <div className="space-y-7 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-16 max-w-4xl mx-auto">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-2 tracking-tight">
-                        System Authority Profile
+                    <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                        Edit Admin Authority Profile
                     </h1>
-                    <p className="text-slate-600 dark:text-gray-400 font-medium italic">Define your administrative presence and operational credentials.</p>
+                    <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">Define your administrative presence and operational credentials.</p>
                 </div>
 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                     <button
+                        type="button"
                         onClick={() => navigate(-1)}
-                        className="px-6 py-2.5 bg-white dark:bg-navy-950/50 hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white rounded-xl font-bold text-sm transition-all border border-slate-200 dark:border-white/5 shadow-sm"
+                        className="px-5 py-2.5 bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-gray-200 rounded-xl font-bold text-xs transition-all border border-slate-200 dark:border-white/10 shadow-sm active:scale-95 cursor-pointer"
                     >
                         Cancel
                     </button>
                     <button
+                        type="button"
                         onClick={handleSave}
                         disabled={saving}
-                        className={`px-8 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-2xl text-white text-sm font-bold shadow-md hover:scale-105 active:scale-95 transition-all ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`px-6 py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold shadow-md shadow-sky-500/20 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                        {saving ? 'Syncing...' : 'Save Changes'}
+                        {saving ? (
+                            <>
+                                <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                </svg>
+                                <span>Syncing...</span>
+                            </>
+                        ) : (
+                            <span>Save Changes</span>
+                        )}
                     </button>
                 </div>
-
             </div>
 
-            {/* Form Sections */}
-            <div className="bg-white dark:bg-navy-900/40 border border-slate-200 dark:border-white/5 rounded-[2.5rem] overflow-hidden shadow-md">
-                <div className="p-8 border-b border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
-                    <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
-                        <span className="w-1.5 h-6 bg-blue-600 rounded-full"></span>
+            {/* Form Section: Identity */}
+            <div className="bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm">
+                <div className="px-6 py-4 border-b border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02]">
+                    <h2 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+                        <span className="w-1.5 h-4 bg-sky-600 rounded-full"></span>
                         Admin Identity
                     </h2>
                 </div>
 
-                <div className="p-10 grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-3">
-                        <label className="text-sm font-bold text-slate-700 dark:text-gray-400 ml-1">Full Name</label>
-
+                <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-gray-400">Full Name</label>
                         <input
                             type="text"
                             value={profileData.name}
                             onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                            className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white px-5 py-4 rounded-2xl focus:border-blue-600 outline-none transition-all font-medium italic shadow-sm"
+                            className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white px-3.5 py-2 rounded-xl text-xs font-medium focus:outline-none focus:border-sky-500 transition-all shadow-sm"
                         />
                     </div>
-                    <div className="space-y-3">
-                        <label className="text-sm font-bold text-slate-700 dark:text-gray-400 ml-1">Assigned Department</label>
-
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-gray-400">Assigned Department</label>
                         <input
                             type="text"
                             value={profileData.institution}
                             onChange={(e) => setProfileData({ ...profileData, institution: e.target.value })}
-                            className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white px-5 py-4 rounded-2xl focus:border-blue-600 outline-none transition-all font-medium italic shadow-sm"
+                            className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white px-3.5 py-2 rounded-xl text-xs font-medium focus:outline-none focus:border-sky-500 transition-all shadow-sm"
                         />
                     </div>
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-navy-900/40 border border-slate-200 dark:border-white/5 rounded-[2.5rem] p-10 shadow-md">
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight mb-6">Operational Summary</h2>
-
-                <div className="space-y-3">
-                    <textarea
-                        value={profileData.bio}
-                        onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
-                        rows="5"
-                        className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white p-6 rounded-[2rem] focus:border-blue-600 outline-none transition-all resize-none font-medium italic shadow-sm"
-                    />
-                </div>
+            {/* Form Section: Operational Summary */}
+            <div className="bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 rounded-2xl p-6 shadow-sm space-y-3">
+                <h2 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+                    <span className="w-1.5 h-4 bg-sky-600 rounded-full"></span>
+                    Operational Summary & Bio
+                </h2>
+                <textarea
+                    value={profileData.bio}
+                    onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
+                    rows="4"
+                    placeholder="Describe administrative responsibilities and domain authority..."
+                    className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white p-3.5 rounded-xl text-xs font-medium focus:outline-none focus:border-sky-500 transition-all resize-none shadow-sm leading-relaxed"
+                />
             </div>
         </div>
     );

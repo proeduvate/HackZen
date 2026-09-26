@@ -34,7 +34,7 @@ import {
     CertificateIcon,
     ToolsIcon
 } from '../../components/AdminIcons';
-import { useTheme } from '../../context/ThemeContext';
+
 import { usePlatformSettings } from '../../context/PlatformSettingsContext';
 
 // --- Animated Subtle Toggle Component ---
@@ -82,21 +82,9 @@ const ActionModal = ({ isOpen, onClose, title, subtitle, children, maxWidth = "m
 };
 
 const Settings = () => {
-    const { theme: currentTheme } = useTheme();
     const { broadcastSettingsUpdate } = usePlatformSettings();
-    const isLightTheme = currentTheme === 'light';
 
-    const theme = {
-        cardBg: isLightTheme 
-            ? 'bg-white border border-slate-200/80 shadow-sm text-slate-700 transition-all rounded-2xl' 
-            : 'glass-strong border-white/5 bg-navy-900/40 text-white shadow-xl rounded-2xl',
-        headingText: isLightTheme ? 'text-slate-800 font-extrabold' : 'text-white font-bold',
-        mutedText: isLightTheme ? 'text-slate-400 font-semibold' : 'text-gray-400 font-semibold',
-        innerBg: isLightTheme ? 'bg-slate-50/70 border border-slate-200/60 text-slate-700 rounded-2xl' : 'bg-black/20 border border-white/5 text-white rounded-2xl',
-        inputBg: isLightTheme ? 'bg-white border border-slate-200 text-slate-700 focus:border-sky-500 rounded-xl' : 'bg-black/20 border border-white/10 text-white rounded-xl'
-    };
-
-    // Navigation Tabs
+// Navigation Tabs
     const tabs = [
         { id: 'General', label: 'General', icon: ToolsIcon },
         { id: 'Security', label: 'Security & Access', icon: ShieldIcon },
@@ -523,7 +511,7 @@ const Settings = () => {
     };
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500 pb-20">
+        <div className="space-y-7 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-16 max-w-7xl mx-auto">
 
             {/* Toast Alert */}
             {toastMessage && (
@@ -561,7 +549,7 @@ const Settings = () => {
                     <button 
                         onClick={handleSaveChanges}
                         disabled={isSaving}
-                        className="px-5 py-2 bg-sky-50 dark:bg-sky-500/20 hover:bg-sky-100 dark:hover:bg-sky-500/30 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-500/40 text-xs font-bold rounded-xl shadow-sm transition-all active:scale-95 disabled:opacity-50 flex items-center gap-1.5"
+                        className="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-sky-500/20 active:scale-95 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
                     >
                         <CheckIcon className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
                         <span>{isSaving ? 'Saving Changes...' : 'Save Configuration'}</span>
@@ -573,7 +561,7 @@ const Settings = () => {
             <div className="flex flex-col lg:flex-row gap-6 items-start">
                 
                 {/* LEFT SIDEBAR: Domain Navigation */}
-                <div className="w-full lg:w-1/4 flex flex-col absolutestrange-card overflow-hidden p-0 h-fit lg:sticky lg:top-4">
+                <div className="w-full lg:w-1/4 flex flex-col rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm overflow-hidden p-0 h-fit lg:sticky lg:top-4">
                     <div className="p-3.5 border-b border-slate-200 dark:border-white/5 bg-slate-50/70 dark:bg-white/[0.02]">
                         <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-gray-400">Settings Domains</span>
                     </div>
@@ -607,7 +595,7 @@ const Settings = () => {
                 </div>
 
                 {/* RIGHT MAIN CONTENT AREA */}
-                <div className="w-full lg:w-3/4 absolutestrange-card p-6 sm:p-8 flex flex-col pb-12">
+                <div className="w-full lg:w-3/4 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm p-6 sm:p-8 flex flex-col pb-12">
                     
                     {/* ========================================================= */}
                     {/* 1. GENERAL TAB */}
@@ -615,60 +603,60 @@ const Settings = () => {
                     {activeTab === 'General' && (
                         <div className="space-y-6 animate-in fade-in duration-300">
                             <div>
-                                <h3 className={`text-xs font-black uppercase tracking-wider mb-3 border-b pb-2 ${theme.headingText} ${isLightTheme ? 'border-slate-200' : 'border-white/10'}`}>
+                                <h3 className={`text-xs font-black uppercase tracking-wider mb-3 border-b pb-2 text-slate-900 dark:text-white font-extrabold border-slate-200 dark:border-white/10`}>
                                     Platform Identification & Support
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className={`text-[10px] font-bold uppercase block mb-1 ${theme.mutedText}`}>Platform Name</label>
+                                        <label className={`text-[10px] font-bold uppercase block mb-1 text-slate-500 dark:text-gray-400 font-extrabold`}>Platform Name</label>
                                         <input 
                                             type="text" 
                                             value={config.general.platformName}
                                             onChange={(e) => handleInputChange('general', 'platformName', e.target.value)}
-                                            className={`w-full px-3.5 py-2 text-xs focus:outline-none ${theme.inputBg}`} 
+                                            className={`w-full px-3.5 py-2 text-xs focus:outline-none rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`} 
                                         />
                                     </div>
                                     <div>
-                                        <label className={`text-[10px] font-bold uppercase block mb-1 ${theme.mutedText}`}>Official Website URL</label>
+                                        <label className={`text-[10px] font-bold uppercase block mb-1 text-slate-500 dark:text-gray-400 font-extrabold`}>Official Website URL</label>
                                         <input 
                                             type="text" 
                                             value={config.general.website}
                                             onChange={(e) => handleInputChange('general', 'website', e.target.value)}
-                                            className={`w-full px-3.5 py-2 text-xs focus:outline-none ${theme.inputBg}`} 
+                                            className={`w-full px-3.5 py-2 text-xs focus:outline-none rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`} 
                                         />
                                     </div>
                                     <div>
-                                        <label className={`text-[10px] font-bold uppercase block mb-1 ${theme.mutedText}`}>Support Email</label>
+                                        <label className={`text-[10px] font-bold uppercase block mb-1 text-slate-500 dark:text-gray-400 font-extrabold`}>Support Email</label>
                                         <input 
                                             type="email" 
                                             value={config.general.supportEmail}
                                             onChange={(e) => handleInputChange('general', 'supportEmail', e.target.value)}
-                                            className={`w-full px-3.5 py-2 text-xs focus:outline-none ${theme.inputBg}`} 
+                                            className={`w-full px-3.5 py-2 text-xs focus:outline-none rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`} 
                                         />
                                     </div>
                                     <div>
-                                        <label className={`text-[10px] font-bold uppercase block mb-1 ${theme.mutedText}`}>Support Phone Hotline</label>
+                                        <label className={`text-[10px] font-bold uppercase block mb-1 text-slate-500 dark:text-gray-400 font-extrabold`}>Support Phone Hotline</label>
                                         <input 
                                             type="text" 
                                             value={config.general.supportPhone}
                                             onChange={(e) => handleInputChange('general', 'supportPhone', e.target.value)}
-                                            className={`w-full px-3.5 py-2 text-xs focus:outline-none ${theme.inputBg}`} 
+                                            className={`w-full px-3.5 py-2 text-xs focus:outline-none rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`} 
                                         />
                                     </div>
                                 </div>
                             </div>
 
                             <div>
-                                <h3 className={`text-xs font-black uppercase tracking-wider mb-3 border-b pb-2 ${theme.headingText} ${isLightTheme ? 'border-slate-200' : 'border-white/10'}`}>
+                                <h3 className={`text-xs font-black uppercase tracking-wider mb-3 border-b pb-2 text-slate-900 dark:text-white font-extrabold border-slate-200 dark:border-white/10`}>
                                     Localization & System Region
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
-                                        <label className={`text-[10px] font-bold uppercase block mb-1 ${theme.mutedText}`}>Default Timezone</label>
+                                        <label className={`text-[10px] font-bold uppercase block mb-1 text-slate-500 dark:text-gray-400 font-extrabold`}>Default Timezone</label>
                                         <select 
                                             value={config.general.timezone}
                                             onChange={(e) => handleInputChange('general', 'timezone', e.target.value)}
-                                            className={`w-full px-3.5 py-2 text-xs focus:outline-none cursor-pointer ${theme.inputBg}`}
+                                            className={`w-full px-3.5 py-2 text-xs focus:outline-none cursor-pointer rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`}
                                         >
                                             <option value="Asia/Kolkata (IST)">Asia/Kolkata (IST)</option>
                                             <option value="UTC">UTC</option>
@@ -677,11 +665,11 @@ const Settings = () => {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className={`text-[10px] font-bold uppercase block mb-1 ${theme.mutedText}`}>Country / Headquarters</label>
+                                        <label className={`text-[10px] font-bold uppercase block mb-1 text-slate-500 dark:text-gray-400 font-extrabold`}>Country / Headquarters</label>
                                         <select 
                                             value={config.general.country}
                                             onChange={(e) => handleInputChange('general', 'country', e.target.value)}
-                                            className={`w-full px-3.5 py-2 text-xs focus:outline-none cursor-pointer ${theme.inputBg}`}
+                                            className={`w-full px-3.5 py-2 text-xs focus:outline-none cursor-pointer rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`}
                                         >
                                             <option value="India">India</option>
                                             <option value="United States">United States</option>
@@ -690,11 +678,11 @@ const Settings = () => {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className={`text-[10px] font-bold uppercase block mb-1 ${theme.mutedText}`}>Date Format</label>
+                                        <label className={`text-[10px] font-bold uppercase block mb-1 text-slate-500 dark:text-gray-400 font-extrabold`}>Date Format</label>
                                         <select 
                                             value={config.general.dateFormat}
                                             onChange={(e) => handleInputChange('general', 'dateFormat', e.target.value)}
-                                            className={`w-full px-3.5 py-2 text-xs focus:outline-none cursor-pointer ${theme.inputBg}`}
+                                            className={`w-full px-3.5 py-2 text-xs focus:outline-none cursor-pointer rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`}
                                         >
                                             <option value="MMM DD, YYYY">MMM DD, YYYY</option>
                                             <option value="DD/MM/YYYY">DD/MM/YYYY</option>
@@ -705,11 +693,11 @@ const Settings = () => {
                             </div>
 
                             <div>
-                                <h3 className={`text-xs font-black uppercase tracking-wider mb-3 border-b pb-2 ${theme.headingText} ${isLightTheme ? 'border-slate-200' : 'border-white/10'}`}>
+                                <h3 className={`text-xs font-black uppercase tracking-wider mb-3 border-b pb-2 text-slate-900 dark:text-white font-extrabold border-slate-200 dark:border-white/10`}>
                                     Operations & Public Access
                                 </h3>
                                 <div className="space-y-3">
-                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border ${theme.innerBg}`}>
+                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border bg-slate-50/70 dark:bg-black/20 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-gray-300 rounded-xl`}>
                                         <div>
                                             <h4 className="text-xs font-bold text-slate-800 dark:text-white">Allow Public Student & Organizer Registrations</h4>
                                             <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">When disabled, new signups are blocked and only invited accounts can log in.</p>
@@ -720,7 +708,7 @@ const Settings = () => {
                                         />
                                     </div>
 
-                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border ${theme.innerBg}`}>
+                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border bg-slate-50/70 dark:bg-black/20 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-gray-300 rounded-xl`}>
                                         <div>
                                             <h4 className="text-xs font-bold text-slate-800 dark:text-white">Maintenance Mode</h4>
                                             <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Temporarily restrict platform access for non-administrators with a maintenance banner.</p>
@@ -743,11 +731,11 @@ const Settings = () => {
                     {activeTab === 'Security' && (
                         <div className="space-y-6 animate-in fade-in duration-300">
                             <div>
-                                <h3 className={`text-xs font-black uppercase tracking-wider mb-3 border-b pb-2 ${theme.headingText} ${isLightTheme ? 'border-slate-200' : 'border-white/10'}`}>
+                                <h3 className={`text-xs font-black uppercase tracking-wider mb-3 border-b pb-2 text-slate-900 dark:text-white font-extrabold border-slate-200 dark:border-white/10`}>
                                     Authentication & Lockout Policies
                                 </h3>
                                 <div className="space-y-3">
-                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border ${theme.innerBg}`}>
+                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border bg-slate-50/70 dark:bg-black/20 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-gray-300 rounded-xl`}>
                                         <div>
                                             <h4 className="text-xs font-bold text-slate-800 dark:text-white">Require Two-Factor Authentication (2FA) for Admins</h4>
                                             <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Enforce authenticator app verification upon login for all administrator and moderator accounts.</p>
@@ -760,11 +748,11 @@ const Settings = () => {
 
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div>
-                                            <label className={`text-[10px] font-bold uppercase block mb-1 ${theme.mutedText}`}>Admin Session Timeout</label>
+                                            <label className={`text-[10px] font-bold uppercase block mb-1 text-slate-500 dark:text-gray-400 font-extrabold`}>Admin Session Timeout</label>
                                             <select 
                                                 value={config.security.sessionTimeout}
                                                 onChange={(e) => handleInputChange('security', 'sessionTimeout', e.target.value)}
-                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none cursor-pointer ${theme.inputBg}`}
+                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none cursor-pointer rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`}
                                             >
                                                 <option value="15 Minutes">15 Minutes</option>
                                                 <option value="30 Minutes">30 Minutes</option>
@@ -773,11 +761,11 @@ const Settings = () => {
                                             </select>
                                         </div>
                                         <div>
-                                            <label className={`text-[10px] font-bold uppercase block mb-1 ${theme.mutedText}`}>Max Login Attempts</label>
+                                            <label className={`text-[10px] font-bold uppercase block mb-1 text-slate-500 dark:text-gray-400 font-extrabold`}>Max Login Attempts</label>
                                             <select 
                                                 value={config.security.maxLoginAttempts}
                                                 onChange={(e) => handleInputChange('security', 'maxLoginAttempts', e.target.value)}
-                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none cursor-pointer ${theme.inputBg}`}
+                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none cursor-pointer rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`}
                                             >
                                                 <option value="3 Attempts">3 Attempts</option>
                                                 <option value="5 Attempts">5 Attempts</option>
@@ -785,11 +773,11 @@ const Settings = () => {
                                             </select>
                                         </div>
                                         <div>
-                                            <label className={`text-[10px] font-bold uppercase block mb-1 ${theme.mutedText}`}>Lockout Duration</label>
+                                            <label className={`text-[10px] font-bold uppercase block mb-1 text-slate-500 dark:text-gray-400 font-extrabold`}>Lockout Duration</label>
                                             <select 
                                                 value={config.security.lockoutDuration}
                                                 onChange={(e) => handleInputChange('security', 'lockoutDuration', e.target.value)}
-                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none cursor-pointer ${theme.inputBg}`}
+                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none cursor-pointer rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`}
                                             >
                                                 <option value="15 Minutes">15 Minutes</option>
                                                 <option value="30 Minutes">30 Minutes</option>
@@ -805,7 +793,7 @@ const Settings = () => {
                             <div>
                                 <div className="flex justify-between items-center mb-3 border-b border-slate-200 dark:border-white/10 pb-2">
                                     <div>
-                                        <h3 className={`text-xs font-black uppercase tracking-wider ${theme.headingText}`}>
+                                        <h3 className={`text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white font-extrabold`}>
                                             Active Administrator Sessions
                                         </h3>
                                         <p className="text-[11px] text-slate-500 dark:text-gray-400">Authenticated devices currently connected to the administration control deck.</p>
@@ -867,7 +855,7 @@ const Settings = () => {
                         <div className="space-y-6 animate-in fade-in duration-300">
                             <div className="flex justify-between items-center border-b border-slate-200 dark:border-white/10 pb-3">
                                 <div>
-                                    <h3 className={`text-xs font-black uppercase tracking-wider ${theme.headingText}`}>
+                                    <h3 className={`text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white font-extrabold`}>
                                         Role-Based Access Control (RBAC)
                                     </h3>
                                     <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">
@@ -955,14 +943,14 @@ const Settings = () => {
                     {activeTab === 'Notifications' && (
                         <div className="space-y-6 animate-in fade-in duration-300">
                             <div>
-                                <h3 className={`text-xs font-black uppercase tracking-wider mb-3 border-b pb-2 ${theme.headingText} ${isLightTheme ? 'border-slate-200' : 'border-white/10'}`}>
+                                <h3 className={`text-xs font-black uppercase tracking-wider mb-3 border-b pb-2 text-slate-900 dark:text-white font-extrabold border-slate-200 dark:border-white/10`}>
                                     System & Administrative Alerts
                                 </h3>
                                 <p className="text-xs text-slate-500 dark:text-gray-400 mb-4">
                                     Configure which high-priority platform events trigger real-time administrator notifications, inboxes, and toast alerts.
                                 </p>
                                 <div className="space-y-3">
-                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border ${theme.innerBg}`}>
+                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border bg-slate-50/70 dark:bg-black/20 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-gray-300 rounded-xl`}>
                                         <div>
                                             <h4 className="text-xs font-bold text-slate-800 dark:text-white">Organizer Application Requests</h4>
                                             <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Notify when a new organizer submits organization credentials for verification.</p>
@@ -982,7 +970,7 @@ const Settings = () => {
                                         </div>
                                     </div>
 
-                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border ${theme.innerBg}`}>
+                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border bg-slate-50/70 dark:bg-black/20 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-gray-300 rounded-xl`}>
                                         <div>
                                             <h4 className="text-xs font-bold text-slate-800 dark:text-white">New Dispute Escalations</h4>
                                             <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Notify immediately when a participant or judge files an official dispute or plagiarism claim.</p>
@@ -1002,7 +990,7 @@ const Settings = () => {
                                         </div>
                                     </div>
 
-                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border ${theme.innerBg}`}>
+                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border bg-slate-50/70 dark:bg-black/20 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-gray-300 rounded-xl`}>
                                         <div>
                                             <h4 className="text-xs font-bold text-slate-800 dark:text-white">Certificate Verification Anomaly Alerts</h4>
                                             <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Send alerts whenever public QR verification attempts encounter a revoked or forged certificate ID.</p>
@@ -1022,7 +1010,7 @@ const Settings = () => {
                                         </div>
                                     </div>
 
-                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border ${theme.innerBg}`}>
+                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border bg-slate-50/70 dark:bg-black/20 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-gray-300 rounded-xl`}>
                                         <div>
                                             <h4 className="text-xs font-bold text-slate-800 dark:text-white">System Exceptions & Background Failures</h4>
                                             <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Forward backend unhandled exceptions, Celery task failures, and database connection timeouts.</p>
@@ -1042,7 +1030,7 @@ const Settings = () => {
                                         </div>
                                     </div>
 
-                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border ${theme.innerBg}`}>
+                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border bg-slate-50/70 dark:bg-black/20 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-gray-300 rounded-xl`}>
                                         <div>
                                             <h4 className="text-xs font-bold text-slate-800 dark:text-white">Security Alerts & Rate Limit Breaches</h4>
                                             <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Send high-priority notifications when anomalous IP traffic or repeated failed logins trigger Protocol Shield.</p>
@@ -1068,7 +1056,7 @@ const Settings = () => {
                             <div className="pt-4 border-t border-slate-200 dark:border-white/10">
                                 <div className="flex justify-between items-center mb-3">
                                     <div>
-                                        <h3 className={`text-xs font-black uppercase tracking-wider ${theme.headingText}`}>
+                                        <h3 className={`text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white font-extrabold`}>
                                             Broadcast Platform Announcement
                                         </h3>
                                         <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">
@@ -1076,7 +1064,7 @@ const Settings = () => {
                                         </p>
                                     </div>
                                 </div>
-                                <form onSubmit={handleBroadcastSubmit} className={`p-4 rounded-xl border space-y-3.5 ${theme.innerBg}`}>
+                                <form onSubmit={handleBroadcastSubmit} className={`p-4 rounded-xl border space-y-3.5 bg-slate-50/70 dark:bg-black/20 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-gray-300 rounded-xl`}>
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                         <div className="sm:col-span-2">
                                             <label className="text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-1 block">Announcement Headline *</label>
@@ -1085,7 +1073,7 @@ const Settings = () => {
                                                 placeholder="e.g. Scheduled System Upgrade at 2 AM IST" 
                                                 value={broadcastForm.title}
                                                 onChange={(e) => setBroadcastForm(prev => ({ ...prev, title: e.target.value }))}
-                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none ${theme.inputBg}`} 
+                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`} 
                                             />
                                         </div>
                                         <div>
@@ -1093,7 +1081,7 @@ const Settings = () => {
                                             <select 
                                                 value={broadcastForm.audience}
                                                 onChange={(e) => setBroadcastForm(prev => ({ ...prev, audience: e.target.value }))}
-                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none cursor-pointer ${theme.inputBg}`}
+                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none cursor-pointer rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`}
                                             >
                                                 <option value="all">All Platform Users</option>
                                                 <option value="student">Students & Participants</option>
@@ -1111,7 +1099,7 @@ const Settings = () => {
                                             placeholder="Write your broadcast message..." 
                                             value={broadcastForm.message}
                                             onChange={(e) => setBroadcastForm(prev => ({ ...prev, message: e.target.value }))}
-                                            className={`w-full px-3.5 py-2 text-xs focus:outline-none ${theme.inputBg}`} 
+                                            className={`w-full px-3.5 py-2 text-xs focus:outline-none rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`} 
                                         />
                                     </div>
 
@@ -1155,7 +1143,7 @@ const Settings = () => {
                             <div className="pt-4 border-t border-slate-200 dark:border-white/10">
                                 <div className="flex justify-between items-center mb-3">
                                     <div>
-                                        <h3 className={`text-xs font-black uppercase tracking-wider ${theme.headingText}`}>
+                                        <h3 className={`text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white font-extrabold`}>
                                             Outbound SMTP Mail Gateway & Verification
                                         </h3>
                                         <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">
@@ -1169,7 +1157,7 @@ const Settings = () => {
                                     </span>
                                 </div>
 
-                                <div className={`p-4 rounded-xl border space-y-3.5 ${theme.innerBg}`}>
+                                <div className={`p-4 rounded-xl border space-y-3.5 bg-slate-50/70 dark:bg-black/20 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-gray-300 rounded-xl`}>
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                         <div className="sm:col-span-2">
                                             <label className="text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase mb-1 block">SMTP Host / Server *</label>
@@ -1178,7 +1166,7 @@ const Settings = () => {
                                                 placeholder="e.g. smtp.gmail.com or smtp.sendgrid.net" 
                                                 value={config.notifications.smtpHost || ''}
                                                 onChange={(e) => handleInputChange('notifications', 'smtpHost', e.target.value)}
-                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none ${theme.inputBg}`} 
+                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`} 
                                             />
                                         </div>
                                         <div>
@@ -1188,7 +1176,7 @@ const Settings = () => {
                                                 placeholder="587" 
                                                 value={config.notifications.smtpPort || 587}
                                                 onChange={(e) => handleInputChange('notifications', 'smtpPort', e.target.value)}
-                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none ${theme.inputBg}`} 
+                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`} 
                                             />
                                         </div>
                                     </div>
@@ -1201,7 +1189,7 @@ const Settings = () => {
                                                 placeholder="notifications@hackzen.org" 
                                                 value={config.notifications.smtpUser || ''}
                                                 onChange={(e) => handleInputChange('notifications', 'smtpUser', e.target.value)}
-                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none ${theme.inputBg}`} 
+                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`} 
                                             />
                                         </div>
                                         <div>
@@ -1211,7 +1199,7 @@ const Settings = () => {
                                                 placeholder="••••••••••••" 
                                                 value={config.notifications.smtpPassword || ''}
                                                 onChange={(e) => handleInputChange('notifications', 'smtpPassword', e.target.value)}
-                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none ${theme.inputBg}`} 
+                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`} 
                                             />
                                         </div>
                                     </div>
@@ -1224,7 +1212,7 @@ const Settings = () => {
                                                 placeholder="HackZen Platform <notifications@hackzen.org>" 
                                                 value={config.notifications.smtpFrom || ''}
                                                 onChange={(e) => handleInputChange('notifications', 'smtpFrom', e.target.value)}
-                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none ${theme.inputBg}`} 
+                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`} 
                                             />
                                         </div>
                                         <div className="flex flex-col justify-end">
@@ -1246,7 +1234,7 @@ const Settings = () => {
                                                 placeholder="Test recipient email (defaults to admin)"
                                                 value={smtpTestRecipient}
                                                 onChange={(e) => setSmtpTestRecipient(e.target.value)}
-                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none ${theme.inputBg}`}
+                                                className={`w-full px-3.5 py-2 text-xs focus:outline-none rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`}
                                             />
                                         </div>
                                         <button 
@@ -1288,7 +1276,7 @@ const Settings = () => {
                             {/* Recent Notification Dispatches Feed */}
                             {notificationHistory.length > 0 && (
                                 <div className="pt-4 border-t border-slate-200 dark:border-white/10">
-                                    <h3 className={`text-xs font-black uppercase tracking-wider mb-3 ${theme.headingText}`}>
+                                    <h3 className={`text-xs font-black uppercase tracking-wider mb-3 text-slate-900 dark:text-white font-extrabold`}>
                                         Recent Notification Dispatches & Alerts ({notificationHistory.length})
                                     </h3>
                                     <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-white/10">
@@ -1343,7 +1331,7 @@ const Settings = () => {
                     {activeTab === 'Hackathons' && (
                         <div className="space-y-6 animate-in fade-in duration-300">
                             <div>
-                                <h3 className={`text-xs font-black uppercase tracking-wider mb-3 border-b pb-2 ${theme.headingText} ${isLightTheme ? 'border-slate-200' : 'border-white/10'}`}>
+                                <h3 className={`text-xs font-black uppercase tracking-wider mb-3 border-b pb-2 text-slate-900 dark:text-white font-extrabold border-slate-200 dark:border-white/10`}>
                                     Default Platform Hackathon Rules
                                 </h3>
                                 <p className="text-xs text-slate-500 dark:text-gray-400 mb-4">
@@ -1352,31 +1340,31 @@ const Settings = () => {
                                 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                     <div>
-                                        <label className={`text-[10px] font-bold uppercase block mb-1 ${theme.mutedText}`}>Maximum Team Size Limit</label>
+                                        <label className={`text-[10px] font-bold uppercase block mb-1 text-slate-500 dark:text-gray-400 font-extrabold`}>Maximum Team Size Limit</label>
                                         <input 
                                             type="number" 
                                             min={1} 
                                             max={12}
                                             value={config.hackathons.maxTeamSize}
                                             onChange={(e) => handleInputChange('hackathons', 'maxTeamSize', parseInt(e.target.value) || 4)}
-                                            className={`w-full px-3.5 py-2 text-xs focus:outline-none ${theme.inputBg}`} 
+                                            className={`w-full px-3.5 py-2 text-xs focus:outline-none rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`} 
                                         />
                                     </div>
                                     <div>
-                                        <label className={`text-[10px] font-bold uppercase block mb-1 ${theme.mutedText}`}>Minimum Team Size Limit</label>
+                                        <label className={`text-[10px] font-bold uppercase block mb-1 text-slate-500 dark:text-gray-400 font-extrabold`}>Minimum Team Size Limit</label>
                                         <input 
                                             type="number" 
                                             min={1} 
                                             max={4}
                                             value={config.hackathons.minTeamSize}
                                             onChange={(e) => handleInputChange('hackathons', 'minTeamSize', parseInt(e.target.value) || 1)}
-                                            className={`w-full px-3.5 py-2 text-xs focus:outline-none ${theme.inputBg}`} 
+                                            className={`w-full px-3.5 py-2 text-xs focus:outline-none rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`} 
                                         />
                                     </div>
                                 </div>
 
                                 <div className="space-y-3">
-                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border ${theme.innerBg}`}>
+                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border bg-slate-50/70 dark:bg-black/20 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-gray-300 rounded-xl`}>
                                         <div>
                                             <h4 className="text-xs font-bold text-slate-800 dark:text-white">Allow Team Composition Changes After Registration</h4>
                                             <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Permit students to invite or remove members before final submission freeze.</p>
@@ -1387,7 +1375,7 @@ const Settings = () => {
                                         />
                                     </div>
 
-                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border ${theme.innerBg}`}>
+                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border bg-slate-50/70 dark:bg-black/20 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-gray-300 rounded-xl`}>
                                         <div>
                                             <h4 className="text-xs font-bold text-slate-800 dark:text-white">Allow Late Submissions (Auto-Flagged)</h4>
                                             <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Accept late project uploads with automated audit flag for judge discretion.</p>
@@ -1398,7 +1386,7 @@ const Settings = () => {
                                         />
                                     </div>
 
-                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border ${theme.innerBg}`}>
+                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border bg-slate-50/70 dark:bg-black/20 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-gray-300 rounded-xl`}>
                                         <div>
                                             <h4 className="text-xs font-bold text-slate-800 dark:text-white">Enable Public Live Leaderboard During Evaluation</h4>
                                             <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Display real-time scoring updates on the public hackathon page.</p>
@@ -1409,7 +1397,7 @@ const Settings = () => {
                                         />
                                     </div>
 
-                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border ${theme.innerBg}`}>
+                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border bg-slate-50/70 dark:bg-black/20 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-gray-300 rounded-xl`}>
                                         <div>
                                             <h4 className="text-xs font-bold text-slate-800 dark:text-white">Enforce AI Originality & Plagiarism Analysis</h4>
                                             <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Run automatic commit vector similarity and repository duplication checks.</p>
@@ -1430,7 +1418,7 @@ const Settings = () => {
                     {activeTab === 'Submissions' && (
                         <div className="space-y-6 animate-in fade-in duration-300">
                             <div>
-                                <h3 className={`text-xs font-black uppercase tracking-wider mb-3 border-b pb-2 ${theme.headingText} ${isLightTheme ? 'border-slate-200' : 'border-white/10'}`}>
+                                <h3 className={`text-xs font-black uppercase tracking-wider mb-3 border-b pb-2 text-slate-900 dark:text-white font-extrabold border-slate-200 dark:border-white/10`}>
                                     Global Submission Deliverable Policies
                                 </h3>
                                 <p className="text-xs text-slate-500 dark:text-gray-400 mb-4">
@@ -1439,11 +1427,11 @@ const Settings = () => {
                                 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                     <div>
-                                        <label className={`text-[10px] font-bold uppercase block mb-1 ${theme.mutedText}`}>Maximum Upload File Size</label>
+                                        <label className={`text-[10px] font-bold uppercase block mb-1 text-slate-500 dark:text-gray-400 font-extrabold`}>Maximum Upload File Size</label>
                                         <select 
                                             value={config.submissions.maxUploadFileSize}
                                             onChange={(e) => handleInputChange('submissions', 'maxUploadFileSize', e.target.value)}
-                                            className={`w-full px-3.5 py-2 text-xs focus:outline-none cursor-pointer ${theme.inputBg}`}
+                                            className={`w-full px-3.5 py-2 text-xs focus:outline-none cursor-pointer rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`}
                                         >
                                             <option value="25 MB">25 MB</option>
                                             <option value="50 MB">50 MB</option>
@@ -1453,7 +1441,7 @@ const Settings = () => {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className={`text-[10px] font-bold uppercase block mb-2 ${theme.mutedText}`}>Allowed Deliverable File Types</label>
+                                        <label className={`text-[10px] font-bold uppercase block mb-2 text-slate-500 dark:text-gray-400 font-extrabold`}>Allowed Deliverable File Types</label>
                                         <div className="flex flex-wrap gap-2">
                                             {['ZIP', 'PDF', 'PPTX', 'DOCX', 'MP4', 'TAR.GZ'].map(ext => {
                                                 const isSelected = (config.submissions.allowedFileTypes || []).includes(ext);
@@ -1477,7 +1465,7 @@ const Settings = () => {
                                 </div>
 
                                 <div className="space-y-3">
-                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border ${theme.innerBg}`}>
+                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border bg-slate-50/70 dark:bg-black/20 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-gray-300 rounded-xl`}>
                                         <div>
                                             <h4 className="text-xs font-bold text-slate-800 dark:text-white">Require GitHub Repository URL</h4>
                                             <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Students must submit a valid public repository link for commit auditing.</p>
@@ -1488,7 +1476,7 @@ const Settings = () => {
                                         />
                                     </div>
 
-                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border ${theme.innerBg}`}>
+                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border bg-slate-50/70 dark:bg-black/20 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-gray-300 rounded-xl`}>
                                         <div>
                                             <h4 className="text-xs font-bold text-slate-800 dark:text-white">Require Live Demo URL</h4>
                                             <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Require an active deployment link (Vercel, Render, AWS) for judge verification.</p>
@@ -1509,7 +1497,7 @@ const Settings = () => {
                     {activeTab === 'Certificates' && (
                         <div className="space-y-6 animate-in fade-in duration-300">
                             <div>
-                                <h3 className={`text-xs font-black uppercase tracking-wider mb-3 border-b pb-2 ${theme.headingText} ${isLightTheme ? 'border-slate-200' : 'border-white/10'}`}>
+                                <h3 className={`text-xs font-black uppercase tracking-wider mb-3 border-b pb-2 text-slate-900 dark:text-white font-extrabold border-slate-200 dark:border-white/10`}>
                                     Certificate Automation & Credential Engine
                                 </h3>
                                 <p className="text-xs text-slate-500 dark:text-gray-400 mb-4">
@@ -1518,7 +1506,7 @@ const Settings = () => {
                                 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                     <div>
-                                        <label className={`text-[10px] font-bold uppercase block mb-1 ${theme.mutedText}`}>Global Certificate Prefix</label>
+                                        <label className={`text-[10px] font-bold uppercase block mb-1 text-slate-500 dark:text-gray-400 font-extrabold`}>Global Certificate Prefix</label>
                                         <input 
                                             type="text" 
                                             value={config.certificates.prefix}
@@ -1527,11 +1515,11 @@ const Settings = () => {
                                                 handleInputChange('certificates', 'prefix', sanitized);
                                             }}
                                             placeholder="PROEDU"
-                                            className={`w-full px-3.5 py-2 text-xs font-mono font-bold focus:outline-none ${theme.inputBg}`} 
+                                            className={`w-full px-3.5 py-2 text-xs font-mono font-bold focus:outline-none rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`} 
                                         />
                                     </div>
                                     <div>
-                                        <label className={`text-[10px] font-bold uppercase block mb-1 ${theme.mutedText}`}>Validation ID Format Template</label>
+                                        <label className={`text-[10px] font-bold uppercase block mb-1 text-slate-500 dark:text-gray-400 font-extrabold`}>Validation ID Format Template</label>
                                         <input 
                                             type="text" 
                                             disabled 
@@ -1542,7 +1530,7 @@ const Settings = () => {
                                 </div>
 
                                 <div className="space-y-3">
-                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border ${theme.innerBg}`}>
+                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border bg-slate-50/70 dark:bg-black/20 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-gray-300 rounded-xl`}>
                                         <div>
                                             <h4 className="text-xs font-bold text-slate-800 dark:text-white">Auto-Generate Winner & Runner-Up Certificates</h4>
                                             <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Automatically issue verified winner certificates when organizer marks event concluded.</p>
@@ -1553,7 +1541,7 @@ const Settings = () => {
                                         />
                                     </div>
 
-                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border ${theme.innerBg}`}>
+                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border bg-slate-50/70 dark:bg-black/20 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-gray-300 rounded-xl`}>
                                         <div>
                                             <h4 className="text-xs font-bold text-slate-800 dark:text-white">Auto-Generate Participant Certificates</h4>
                                             <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Generate participation credentials for all valid submissions upon closing.</p>
@@ -1564,7 +1552,7 @@ const Settings = () => {
                                         />
                                     </div>
 
-                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border ${theme.innerBg}`}>
+                                    <div className={`flex justify-between items-center p-3.5 rounded-xl border bg-slate-50/70 dark:bg-black/20 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-gray-300 rounded-xl`}>
                                         <div>
                                             <h4 className="text-xs font-bold text-slate-800 dark:text-white">Enable Public QR Verification Portal</h4>
                                             <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Allow public recruiters and third parties to scan and verify certificate authenticity online.</p>
@@ -1586,7 +1574,7 @@ const Settings = () => {
                         <div className="space-y-4 animate-in fade-in duration-300">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-200 dark:border-white/10 pb-3">
                                 <div>
-                                    <h3 className={`text-xs font-black uppercase tracking-wider ${theme.headingText}`}>
+                                    <h3 className={`text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white font-extrabold`}>
                                         Immutable Administrator Audit Ledger
                                     </h3>
                                     <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Real-time log of administrative policy modifications and security actions.</p>
@@ -1675,7 +1663,7 @@ const Settings = () => {
                                 placeholder="e.g. Sarah Chen" 
                                 value={newAdminForm.name}
                                 onChange={(e) => setNewAdminForm(prev => ({ ...prev, name: e.target.value }))}
-                                className={`w-full px-3 py-2 text-xs focus:outline-none ${theme.inputBg}`} 
+                                className={`w-full px-3 py-2 text-xs focus:outline-none rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`} 
                             />
                         </div>
                         <div>
@@ -1686,7 +1674,7 @@ const Settings = () => {
                                 placeholder="sarah@proeduvate.com" 
                                 value={newAdminForm.email}
                                 onChange={(e) => setNewAdminForm(prev => ({ ...prev, email: e.target.value }))}
-                                className={`w-full px-3 py-2 text-xs focus:outline-none ${theme.inputBg}`} 
+                                className={`w-full px-3 py-2 text-xs focus:outline-none rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`} 
                             />
                         </div>
                     </div>
@@ -1696,7 +1684,7 @@ const Settings = () => {
                         <select 
                             value={newAdminForm.role}
                             onChange={(e) => setNewAdminForm(prev => ({ ...prev, role: e.target.value }))}
-                            className={`w-full px-3 py-2 text-xs focus:outline-none cursor-pointer ${theme.inputBg}`}
+                            className={`w-full px-3 py-2 text-xs focus:outline-none cursor-pointer rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`}
                         >
                             <option value="Admin">Admin (Standard Governance)</option>
                             <option value="Moderator">Moderator (Disputes & Submissions)</option>
@@ -1761,7 +1749,7 @@ const Settings = () => {
                             <select 
                                 value={editingAdmin.role}
                                 onChange={(e) => setEditingAdmin(prev => ({ ...prev, role: e.target.value }))}
-                                className={`w-full px-3 py-2 text-xs focus:outline-none cursor-pointer ${theme.inputBg}`}
+                                className={`w-full px-3 py-2 text-xs focus:outline-none cursor-pointer rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500`}
                             >
                                 <option value="Super Admin">Super Admin</option>
                                 <option value="Admin">Admin</option>
