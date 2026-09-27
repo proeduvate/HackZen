@@ -50,95 +50,93 @@ const HackathonRegistrationStepOne = () => {
         }
     };
 
+    const [selectedParticipation, setSelectedParticipation] = useState('individual');
+
     return (
-        <div className="space-y-8">
-            <div>
-                <h3 className="text-2xl font-bold text-white mb-2">Team Basics</h3>
-                <p className="text-sm text-gray-400 italic">Set up your team identity before inviting members.</p>
-            </div>
-
-            <div className="grid grid-cols-1 xl:grid-cols-[1.25fr_0.75fr] gap-6 items-start">
-                <div className="glass p-6 rounded-2xl border border-white/5 space-y-5">
-                    <div className="space-y-1">
-                        <label className="text-xs font-semibold text-gray-500 ml-1">Team Name</label>
-                        <input
-                            value={formData.teamName}
-                            onChange={(e) => {
-                                setFormData((prev) => ({ ...prev, teamName: e.target.value }));
-                                setErrors((prev) => ({ ...prev, teamName: '' }));
-                            }}
-                            placeholder="Enter team name"
-                            className={`w-full bg-navy-900/50 border ${errors.teamName ? 'border-red-500/50' : 'border-white/10'} text-white p-3 rounded-xl focus:outline-none focus:border-purple-500/50 transition-colors`}
-                        />
-                        {errors.teamName ? <p className="text-xs text-red-400">{errors.teamName}</p> : null}
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold text-gray-500 ml-1">Team Size</label>
-                            <select
-                                value={formData.teamSize}
-                                onChange={(e) => setFormData((prev) => ({ ...prev, teamSize: Number(e.target.value) }))}
-                                className="w-full bg-navy-900/50 border border-white/10 text-white p-3 rounded-xl focus:outline-none"
-                            >
-                                {config ? Array.from({ length: config.maxTeamSize - 1 }, (_, index) => index + 2).map((size) => (
-                                    <option key={size} value={size}>{size} Members</option>
-                                )) : null}
-                            </select>
-                        </div>
-
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold text-gray-500 ml-1">Leader</label>
-                            <input
-                                value={formData.leaderName}
-                                onChange={(e) => setFormData((prev) => ({ ...prev, leaderName: e.target.value }))}
-                                className="w-full bg-navy-900/20 border border-white/5 text-gray-300 p-3 rounded-xl focus:outline-none"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="space-y-1">
-                        <label className="text-xs font-semibold text-gray-500 ml-1">Leader Email</label>
-                        <input
-                            type="email"
-                            value={formData.leaderEmail}
-                            onChange={(e) => {
-                                setFormData((prev) => ({ ...prev, leaderEmail: e.target.value }));
-                                setErrors((prev) => ({ ...prev, leaderEmail: '' }));
-                            }}
-                            placeholder="Enter leader email"
-                            className={`w-full bg-navy-900/50 border ${errors.leaderEmail ? 'border-red-500/50' : 'border-white/10'} text-white p-3 rounded-xl focus:outline-none focus:border-purple-500/50 transition-colors`}
-                        />
-                        {errors.leaderEmail ? <p className="text-xs text-red-400">{errors.leaderEmail}</p> : null}
+        <div className="space-y-7">
+            <div className="space-y-5">
+                <div className="space-y-2">
+                    <label className="text-[11px] font-black uppercase tracking-[0.22em] text-[#6e7483]">Registration Type *</label>
+                    <div className="relative">
+                        <select
+                            value={formData.teamSize || ''}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, teamSize: Number(e.target.value) }))}
+                            className="w-full appearance-none rounded-xl border border-[#dfe3ee] bg-white px-4 py-3.5 pr-10 text-base text-[#4d5363] outline-none transition focus:border-[#6d58db] focus:ring-2 focus:ring-[#6d58db]/10"
+                        >
+                            <option value="">Select Registration Type</option>
+                            <option value="solo">Solo</option>
+                            <option value="team">Team</option>
+                            <option value="hybrid">Hybrid</option>
+                        </select>
+                        <svg className="pointer-events-none absolute right-4 top-4 h-5 w-5 text-[#7d8291]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="m6 9 6 6 6-6" />
+                        </svg>
                     </div>
                 </div>
 
-                <div className="glass p-6 rounded-2xl border border-white/5 space-y-4">
-                    <h4 className="text-lg font-bold text-white">Step Summary</h4>
-                    <div className="space-y-3 text-sm">
-                        <div className="flex justify-between gap-4">
-                            <span className="text-gray-400">Hackathon</span>
-                            <span className="text-white font-semibold text-right">{hackathon.title}</span>
-                        </div>
-                        <div className="flex justify-between gap-4">
-                            <span className="text-gray-400">Organizer</span>
-                            <span className="text-white font-semibold text-right">{hackathon.organizer}</span>
-                        </div>
-                        <div className="flex justify-between gap-4">
-                            <span className="text-gray-400">Team Limit</span>
-                            <span className="text-white font-semibold text-right">{hackathon.teamSizeLimit} Members</span>
-                        </div>
+                <div className="space-y-2">
+                    <label className="text-[11px] font-black uppercase tracking-[0.22em] text-[#6e7483]">Participation Type *</label>
+                    <div className="grid gap-3 md:grid-cols-3">
+                        {[
+                            { key: 'individual', label: 'Individual' },
+                            { key: 'new-team', label: 'Create New Team' },
+                            { key: 'existing-team', label: 'Join Existing Team' },
+                        ].map((option) => {
+                            const isSelected = selectedParticipation === option.key;
+                            return (
+                                <button
+                                    key={option.key}
+                                    type="button"
+                                    onClick={() => setSelectedParticipation(option.key)}
+                                    className={`flex items-center gap-3 rounded-xl border px-4 py-3.5 text-left text-base font-medium transition ${
+                                        isSelected
+                                            ? 'border-[#6d58db] bg-[#f0edff] text-[#2d2b45] shadow-[0_0_0_1px_rgba(109,88,219,0.15)]'
+                                            : 'border-[#dfe3ee] bg-white text-[#4c5363] hover:border-[#cfd6ea]'
+                                    }`}
+                                >
+                                    <span className={`flex h-5 w-5 items-center justify-center rounded-full border ${isSelected ? 'border-[#5d4ad8] bg-[#5d4ad8]' : 'border-[#b7bdca] bg-white'}`}>
+                                        {isSelected ? <span className="h-2.5 w-2.5 rounded-full bg-white" /> : null}
+                                    </span>
+                                    <span>{option.label}</span>
+                                </button>
+                            );
+                        })}
                     </div>
+                </div>
+
+                <div className="space-y-2">
+                    <label className="text-[11px] font-black uppercase tracking-[0.22em] text-[#6e7483]">Problem Statement Preference *</label>
+                    <textarea
+                        value={formData.teamName || ''}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, teamName: e.target.value }))}
+                        placeholder="Describe the problem below you want to solve..."
+                        className="h-24 w-full resize-none rounded-xl border border-[#dfe3ee] bg-white px-4 py-3 text-base text-[#4d5363] outline-none placeholder:text-[#8d93a5] focus:border-[#6d58db] focus:ring-2 focus:ring-[#6d58db]/10"
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <label className="text-[11px] font-black uppercase tracking-[0.22em] text-[#6e7483]">Why Do You Want to Participate? *</label>
+                    <textarea
+                        value={formData.leaderName || ''}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, leaderName: e.target.value }))}
+                        placeholder="Tell us your motivation..."
+                        className="h-24 w-full resize-none rounded-xl border border-[#dfe3ee] bg-white px-4 py-3 text-base text-[#4d5363] outline-none placeholder:text-[#8d93a5] focus:border-[#6d58db] focus:ring-2 focus:ring-[#6d58db]/10"
+                    />
                 </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="pt-2">
                 <button
+                    type="button"
                     onClick={handleContinue}
                     disabled={isSaving}
-                    className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl font-bold text-white shadow-lg shadow-purple-600/20 hover:shadow-purple-600/40 transition-all"
+                    className="flex w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-[#5b45d7] to-[#4a3cc0] px-6 py-4 text-lg font-bold text-white shadow-[0_10px_25px_rgba(93,74,216,0.35)] transition hover:brightness-105 disabled:opacity-80"
                 >
-                    {isSaving ? 'Saving...' : 'Continue to Step 2'}
+                    <span>{isSaving ? 'Saving...' : 'Complete Registration'}</span>
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 12h14" />
+                        <path d="m13 5 7 7-7 7" />
+                    </svg>
                 </button>
             </div>
         </div>

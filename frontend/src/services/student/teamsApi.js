@@ -10,7 +10,9 @@ import apiClient from '../../api/api';
  */
 export const fetchMyTeams = async () => {
     try {
-        const { data } = await apiClient.get('/teams/my');
+        const { data } = await apiClient.get('/teams/my-teams');
+        const currentUser = JSON.parse(sessionStorage.getItem('user') || localStorage.getItem('user') || '{}');
+
         return data.map((team, idx) => ({
             id: team._id,
             name: team.teamName,
@@ -24,7 +26,7 @@ export const fetchMyTeams = async () => {
             progress: 0,
             members: team.members?.length || 1,
             domain: 'Technology',
-            roleInTeam: team.leaderId === JSON.parse(localStorage.getItem('user') || '{}')._id ? 'Team Lead' : 'Member',
+            roleInTeam: team.leaderId === currentUser._id ? 'Team Lead' : 'Member',
             activity: []
         }));
     } catch (error) {

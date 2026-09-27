@@ -65,7 +65,11 @@ const Login = () => {
             
             setTimeout(() => window.dispatchEvent(new Event('user-update')), 0);
         } catch (err) {
-            setError(err.detail || 'Login failed. Please check your credentials.');
+            const errorMessage = err?.response?.data?.detail ||
+                err?.response?.data?.message ||
+                err?.message ||
+                'Login failed. Please check your credentials.';
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }

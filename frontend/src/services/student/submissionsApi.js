@@ -6,18 +6,38 @@ import apiClient from '../../api/api';
 
 export const fetchSubmissions = async (teamId) => {
     try {
-        if (!teamId) return [];
+        if (!teamId) {
+            const { data: teams } = await apiClient.get('/teams/my-teams');
+            if (!teams || teams.length === 0) return [];
+
+            const results = await Promise.all(
+                teams.map((team) => apiClient.get(`/submissions/team/${team._id || team.id}`))
+            );
+
+            return results
+                .flatMap((response) => response.data || [])
+                .map((sub) => ({
+                    id: sub._id,
+                    project: sub.project || `Project Submission v${sub.version || 1}`,
+                    hackathon: sub.hackathonTitle || 'Current Hackathon',
+                    submittedAt: new Date(sub.submittedAt).toLocaleDateString(),
+                    status: sub.status || 'Submitted',
+                    score: sub.score ?? null,
+                    feedback: sub.feedback ?? null,
+                    resources: sub.fileUrl ? ['Download Project'] : ['Submission File']
+                }));
+        }
+
         const { data } = await apiClient.get(`/submissions/team/${teamId}`);
-        
-        return data.map(sub => ({
+        return data.map((sub) => ({
             id: sub._id,
-            project: 'Project Submission v' + sub.version,
-            hackathon: 'Current Hackathon', // Placeholder until hackathon title is joined
+            project: sub.project || `Project Submission v${sub.version || 1}`,
+            hackathon: sub.hackathonTitle || 'Current Hackathon',
             submittedAt: new Date(sub.submittedAt).toLocaleDateString(),
-            status: 'Submitted',
-            score: null,
-            feedback: null,
-            resources: ['Download Project']
+            status: sub.status || 'Submitted',
+            score: sub.score ?? null,
+            feedback: sub.feedback ?? null,
+            resources: sub.fileUrl ? ['Download Project'] : ['Submission File']
         }));
     } catch (error) {
         console.error('Failed to fetch student submissions:', error);
@@ -34,6 +54,10 @@ export const submitProject = async (submissionData) => {
             teamId: submissionData.teamId,
             stageId: submissionData.stageId || 'initial_stage',
             fileUrl: submissionData.fileUrl || 'pending_upload',
+            project: submissionData.project || 'Untitled Project',
+            desc: submissionData.desc || '',
+            category: submissionData.category || 'General',
+            status: submissionData.status || 'Pending',
             version: nextVersion
         };
 

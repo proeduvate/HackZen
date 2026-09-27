@@ -9,10 +9,14 @@ const StudentAIAssistant = () => {
     const [inputValue, setInputValue] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [isAITyping, setIsAITyping] = useState(false);
+    const [isUnavailable, setIsUnavailable] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     useEffect(() => {
         const loadInitialData = async () => {
             setIsLoading(true);
+            setIsUnavailable(false);
+            setErrorMessage('');
             try {
                 const [initialMsgs, triggers] = await Promise.all([
                     fetchInitialMessages(),
@@ -22,6 +26,8 @@ const StudentAIAssistant = () => {
                 setQuickStarters(triggers);
             } catch (error) {
                 console.error('Failed to load AI data:', error);
+                setIsUnavailable(true);
+                setErrorMessage(error?.message || 'AI Co-Mentor is currently unavailable.');
             } finally {
                 setIsLoading(false);
             }
@@ -30,7 +36,7 @@ const StudentAIAssistant = () => {
     }, []);
 
     const handleSendMessage = async () => {
-        if (!inputValue.trim()) return;
+        if (!inputValue.trim() || isUnavailable) return;
 
         const userMsg = {
             id: Date.now(),
@@ -48,10 +54,27 @@ const StudentAIAssistant = () => {
             setMessages(prev => [...prev, aiResponse]);
         } catch (error) {
             console.error('AI Assistant error:', error);
+            setIsUnavailable(true);
+            setErrorMessage(error?.message || 'AI Co-Mentor is currently unavailable.');
         } finally {
             setIsAITyping(false);
         }
     };
+
+    if (isUnavailable) {
+        return (
+            <div className="mx-auto flex min-h-[420px] max-w-2xl items-center justify-center px-4 py-12">
+                <div className="w-full rounded-[2rem] border border-white/10 bg-white/5 p-10 text-center shadow-2xl">
+                    <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-amber-500/30 bg-amber-500/10 text-3xl text-amber-300">
+                        ⚠️
+                    </div>
+                    <h1 className="text-3xl font-bold text-white">AI Assistant unavailable</h1>
+                    <p className="mt-4 text-base text-slate-300">{errorMessage}</p>
+                    <p className="mt-3 text-sm text-slate-400">The AI Co-Mentor backend is not configured or is temporarily offline for this demo environment.</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="animate-in fade-in slide-in-from-bottom-5 duration-500 min-h-[calc(100vh-14rem)] max-w-6xl mx-auto px-4 md:px-0 py-8">
