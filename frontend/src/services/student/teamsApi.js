@@ -11,24 +11,55 @@ import apiClient from '../../api/api';
 export const fetchMyTeams = async () => {
     try {
         const { data } = await apiClient.get('/teams/my-teams');
-        const currentUser = JSON.parse(sessionStorage.getItem('user') || localStorage.getItem('user') || '{}');
 
-        return data.map((team, idx) => ({
-            id: team._id,
-            name: team.teamName,
-            hackathon: team.hackathonId || 'Active Hackathon',
-            status: 'Active',
-            lastMessage: 'Check workspace for updates',
-            time: 'Active',
-            unread: 0,
-            gradient: idx % 2 === 0 ? 'from-blue-600 to-indigo-600' : 'from-emerald-500 to-teal-600',
-            isOnline: true,
-            progress: 0,
-            members: team.members?.length || 1,
-            domain: 'Technology',
-            roleInTeam: team.leaderId === currentUser._id ? 'Team Lead' : 'Member',
-            activity: []
+        const mappedTeams = await Promise.all(data.map(async (team, idx) => {
+            let hackathonName = 'Hackathon';
+            let memberCount = 1;
+            let progress = 0;
+
+            if (team.hackathonId) {
+                try {
+                    const hackathonRes = await apiClient.get(`/hackathon/${team.hackathonId}`);
+                    hackathonName = hackathonRes?.data?.title || hackathonName;
+                } catch (error) {
+                    // Ignore missing hackathon metadata; keep the fallback label.
+                }
+            }
+
+            try {
+                const membersRes = await apiClient.get(`/teams/${team._id}/members`);
+                memberCount = Array.isArray(membersRes.data) ? membersRes.data.length : memberCount;
+            } catch (error) {
+                // Ignore missing teammate metadata; keep a safe fallback.
+            }
+
+            try {
+                const progressRes = await apiClient.get(`/progress/team/${team._id}`);
+                const percentage = progressRes?.data?.percentage ?? progressRes?.data?.progress ?? 0;
+                progress = Number(percentage) || 0;
+            } catch (error) {
+                // No progress data is valid for a newly created team.
+            }
+
+            return {
+                id: team._id,
+                name: team.teamName,
+                hackathon: hackathonName,
+                status: 'Active',
+                lastMessage: 'Workspace ready',
+                time: 'Active',
+                unread: 0,
+                gradient: idx % 2 === 0 ? 'from-blue-600 to-indigo-600' : 'from-emerald-500 to-teal-600',
+                isOnline: true,
+                progress,
+                members: memberCount,
+                domain: 'Technology',
+                roleInTeam: 'Member',
+                activity: []
+            };
         }));
+
+        return mappedTeams;
     } catch (error) {
         console.error('Failed to fetch teams:', error);
         return [];
@@ -83,8 +114,17 @@ export const fetchTeamWorkspace = async (teamId) => {
  */
 export const createTeam = async (teamData) => {
     try {
-        const { data } = await apiClient.post('/teams/', teamData);
-        return { success: true, team: data };
+        const normalizedPayload = {
+            hackathonId: teamData.hackathonId || teamData.hackathon,
+            teamName: teamData.teamName || teamData.name,
+        };
+
+        if (!normalizedPayload.hackathonId || !normalizedPayload.teamName) {
+            throw new Error('A valid hackathon and team name are required.');
+        }
+
+        const { data } = await apiClient.post('/teams/', normalizedPayload);
+        return { success: true, team: data, message: 'Team created successfully.' };
     } catch (error) {
         console.error('Failed to create team:', error);
         throw error;
@@ -139,19 +179,34 @@ export const updateTaskStatus = async (teamId, taskId, newStatus) => {
 export const fetchTeamsMeta = async () => {
     try {
         const [inboxRes, appsRes] = await Promise.all([
-            apiClient.get('/inbox/'),
-            apiClient.get('/applications/my')
+            apiClient.get('/inbox/').catch(() => ({ data: [] })),
+            apiClient.get('/applications/my').catch(() => ({ data: [] }))
         ]);
 
-        return {
-            alerts: inboxRes.data.filter(n => !n.isRead).map(n => ({ id: n._id, type: 'warning', message: n.title })),
-            registrations: appsRes.data.map(app => ({
+        const registrations = await Promise.all((appsRes.data || []).map(async (app) => {
+            let name = 'Hackathon';
+
+            if (app.hackathonId) {
+                try {
+                    const hackathonRes = await apiClient.get(`/hackathon/${app.hackathonId}`);
+                    name = hackathonRes?.data?.title || name;
+                } catch (error) {
+                    // Keep the fallback label when metadata is unavailable.
+                }
+            }
+
+            return {
                 id: app._id,
-                name: app.hackathonId,
-                date: new Date(app.appliedAt).toLocaleDateString(),
+                name,
+                date: app.appliedAt ? new Date(app.appliedAt).toLocaleDateString() : 'N/A',
                 status: app.status,
                 color: 'text-blue-400'
-            }))
+            };
+        }));
+
+        return {
+            alerts: (inboxRes.data || []).filter((n) => !n.isRead).map((n) => ({ id: n._id, type: 'warning', message: n.title })),
+            registrations,
         };
     } catch (error) {
         console.error('Failed to fetch teams meta:', error);

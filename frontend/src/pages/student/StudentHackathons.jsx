@@ -21,7 +21,28 @@ const modeFor = (location) => {
     return `In-person (${location})`;
 };
 
+const isUpcomingHackathon = (hackathon) => {
+    const status = `${hackathon.status || ''}`.toLowerCase();
+    if (['draft', 'completed', 'results announced'].includes(status)) {
+        return false;
+    }
+
+    const hasValidStart = hackathon.hackathonStart && !Number.isNaN(new Date(hackathon.hackathonStart).getTime());
+    if (!hasValidStart) {
+        return true;
+    }
+
+    const start = new Date(hackathon.hackathonStart);
+    const end = new Date(hackathon.hackathonEnd || start);
+    const now = new Date();
+    return end >= now;
+};
+
 const matchesDateFilter = (hackathon, filter) => {
+    if (!isUpcomingHackathon(hackathon)) {
+        return false;
+    }
+
     if (filter === 'anytime') return true;
     const start = new Date(hackathon.hackathonStart);
     if (Number.isNaN(start.getTime())) return false;

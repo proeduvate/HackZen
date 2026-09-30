@@ -39,7 +39,7 @@ const StudentHackathonRegistration = () => {
             try {
                 const nextHackathon = await fetchHackathonById(hackathonId);
                 const storedUser = JSON.parse(
-                    sessionStorage.getItem('user') || '{"name":"Hari","email":"hari@proeduvate.com"}'
+                    sessionStorage.getItem('user') || localStorage.getItem('user') || '{"name":"Student","email":""}'
                 );
                 const nextDraft = await getRegistrationDraft(nextHackathon, storedUser);
                 setHackathon(nextHackathon);

@@ -29,12 +29,7 @@ const HackathonRegistrationStepThree = () => {
                 ...draft,
                 acceptedTerms,
             });
-            navigate('/student/hackathons', {
-                state: {
-                    registrationComplete: true,
-                    hackathonId,
-                },
-            });
+            navigate(`/student/hackathons/${hackathonId}/register/success`);
         } catch (submitError) {
             console.error('Failed to submit registration:', submitError);
             setError('Registration could not be completed. Please try again.');

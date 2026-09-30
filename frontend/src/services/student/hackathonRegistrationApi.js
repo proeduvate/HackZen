@@ -17,7 +17,7 @@ const writeDrafts = (drafts) => {
 export const createInitialRegistrationDraft = (hackathon, user) => ({
     hackathonId: hackathon.id || hackathon._id,
     teamName: '',
-    teamSize: Math.min(2, hackathon.teamSizeLimit || 2),
+    teamSize: Math.max(2, Number(hackathon.minTeamSize || hackathon.teamSizeLimit || 2)),
     leaderName: user?.name || 'Student',
     leaderEmail: user?.email || '',
     memberEmails: [''],
@@ -51,6 +51,8 @@ export const submitHackathonRegistration = async (hackathonId, draft) => {
     try {
         const payload = {
             hackathonId,
+            teamName: draft?.teamName || '',
+            notes: draft?.notes || '',
         };
 
         const { data } = await apiClient.post('/applications/', payload);
@@ -61,7 +63,7 @@ export const submitHackathonRegistration = async (hackathonId, draft) => {
 
         return {
             success: true,
-            registrationId: data.id,
+            registrationId: data.id || data._id,
             timestamp: data.appliedAt,
             draft,
         };

@@ -18,7 +18,7 @@ const HackathonRegistrationStepOne = () => {
 
     useEffect(() => {
         const storedUser = JSON.parse(
-            sessionStorage.getItem('user') || '{"name":"Hari","email":"hari@proeduvate.com"}'
+            sessionStorage.getItem('user') || localStorage.getItem('user') || '{"name":"Student","email":""}'
         );
 
         getStepOneConfig(hackathon, storedUser).then(setConfig);
