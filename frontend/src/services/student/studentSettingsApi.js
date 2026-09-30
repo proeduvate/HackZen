@@ -3,11 +3,8 @@ import apiClient from '../../api/api';
 /**
  * Student Settings API
  *
- * Manages user preferences using localStorage for persistence.
- * Falls back to defaults if no saved settings exist.
+ * Manages user preferences through the authenticated backend API.
  */
-
-const SETTINGS_KEY = 'student_settings';
 
 const DEFAULT_SETTINGS = {
     profileMode: 'Public',
@@ -21,12 +18,12 @@ const DEFAULT_SETTINGS = {
 };
 
 /**
- * Fetches the current student settings from localStorage.
+ * Fetches the current student's saved MongoDB settings.
  */
 export const fetchStudentSettings = async () => {
     try {
-        const saved = localStorage.getItem(SETTINGS_KEY);
-        return saved ? { ...DEFAULT_SETTINGS, ...JSON.parse(saved) } : { ...DEFAULT_SETTINGS };
+        const { data } = await apiClient.get('/settings/me');
+        return { ...DEFAULT_SETTINGS, ...(data.settings || {}) };
     } catch (error) {
         console.error('Failed to fetch student settings:', error);
         return { ...DEFAULT_SETTINGS };
@@ -34,17 +31,15 @@ export const fetchStudentSettings = async () => {
 };
 
 /**
- * Updates specific settings for the student and persists to localStorage.
+ * Updates specific settings for the student in MongoDB.
  */
 export const updateStudentSettings = async (updatedSettings) => {
     try {
-        const current = await fetchStudentSettings();
-        const merged = { ...current, ...updatedSettings };
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify(merged));
+        const { data } = await apiClient.put('/settings/me', updatedSettings);
         return {
-            success: true,
+            success: data.success,
             message: 'Preferences updated successfully',
-            updatedAt: new Date().toISOString()
+            settings: { ...DEFAULT_SETTINGS, ...(data.settings || {}) }
         };
     } catch (error) {
         console.error('Failed to update student settings:', error);
@@ -76,10 +71,10 @@ export const deactivateStudentAccount = async () => {
 export const toggleStudentSetting = async (key) => {
     try {
         const current = await fetchStudentSettings();
-        const updated = { ...current, [key]: !current[key] };
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify(updated));
+        const updated = { [key]: !current[key] };
+        const { data } = await apiClient.put('/settings/me', updated);
         return {
-            success: true,
+            success: data.success,
             key,
             newValue: updated[key],
             message: 'Setting toggled successfully'

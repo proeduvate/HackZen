@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation, Outlet } from 'react-router-dom';
+import ThemeToggle from './ThemeToggle';
 
 const DashboardLayout = () => {
     const navigate = useNavigate();
@@ -101,21 +102,21 @@ const DashboardLayout = () => {
 
     // Style configurations
     const indicatorStyles = {
-        purple: "bg-purple-400 shadow-[0_0_10px_rgba(192,132,252,0.5)]",
-        cyan: "bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]",
-        blue: "bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.5)]"
+        purple: "bg-purple-600 dark:bg-purple-400 shadow-[0_0_8px_rgba(147,51,234,0.4)]",
+        cyan: "bg-cyan-600 dark:bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.4)]",
+        blue: "bg-blue-600 dark:bg-blue-400 shadow-[0_0_8px_rgba(37,99,235,0.4)]"
     };
 
     const iconStyles = {
-        purple: "group-hover:text-purple-400 group-hover:drop-shadow-[0_0_8px_rgba(192,132,252,0.5)]",
-        cyan: "group-hover:text-cyan-400 group-hover:drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]",
-        blue: "group-hover:text-blue-400 group-hover:drop-shadow-[0_0_8px_rgba(96,165,250,0.5)]"
+        purple: "text-purple-600 dark:text-purple-400 group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors",
+        cyan: "text-cyan-600 dark:text-cyan-400 group-hover:text-cyan-700 dark:group-hover:text-cyan-300 transition-colors",
+        blue: "text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors"
     };
 
     const activeStyles = {
-        purple: "bg-purple-500/10 text-white border-purple-500/30",
-        cyan: "bg-cyan-500/10 text-white border-cyan-500/30",
-        blue: "bg-blue-500/10 text-white border-blue-500/30"
+        purple: "bg-purple-50 text-purple-700 border-purple-200 shadow-sm dark:bg-purple-500/10 dark:text-white dark:border-purple-500/30",
+        cyan: "bg-cyan-50 text-cyan-700 border-cyan-200 shadow-sm dark:bg-cyan-500/10 dark:text-white dark:border-cyan-500/30",
+        blue: "bg-blue-50 text-blue-700 border-blue-200 shadow-sm dark:bg-blue-500/10 dark:text-white dark:border-blue-500/30"
     };
 
     const handleLogout = () => {
@@ -264,7 +265,7 @@ const DashboardLayout = () => {
             )
         },
         {
-            name: 'Mentorship Requests', path: '/mentor/mentorship-requests', icon: (
+            name: 'Mentorship Requests', path: '/mentor/requests', icon: (
                 <svg className=" w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
             )
         },
@@ -303,7 +304,7 @@ const DashboardLayout = () => {
     }
 
     return (
-        <div className="flex h-screen bg-navy-900 bg-radial text-white overflow-hidden font-sans">
+        <div className="flex h-screen bg-slate-50 dark:bg-navy-900 bg-radial text-slate-800 dark:text-white overflow-hidden font-sans transition-colors duration-200">
             {/* Mobile Overlay */}
             {sidebarOpen && (
                 <div
@@ -314,15 +315,22 @@ const DashboardLayout = () => {
 
             {/* Sidebar */}
             <aside className={`
-                fixed lg:relative z-50 w-64 h-full glass-strong border-r border-white/10 flex flex-col transition-transform duration-300 ease-in-out
+                fixed lg:relative z-50 w-64 h-full bg-white/95 dark:bg-navy-900/90 glass-strong border-r border-slate-200 dark:border-white/10 flex flex-col transition-transform duration-300 ease-in-out shadow-sm dark:shadow-none
                 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
             `}>
                 {/* Logo Area */}
-                <Link to="/" className="py-6 w-full flex items-center justify-center border-b border-white/10 group">
+                <Link to="/" className="py-6 w-full flex items-center justify-center border-b border-slate-200 dark:border-white/10 group" aria-label="ProEduvate home">
+                    {/* The original asset has white "Pro" lettering, so use the dark-text version on the light sidebar. */}
+                    <img
+                        src="/proeduvate-dark-text.png"
+                        alt="ProEduvate"
+                        className="mx-auto h-14 w-auto transition-transform duration-300 group-hover:scale-110 dark:hidden"
+                    />
                     <img
                         src="/proeduvatee-removebg-preview.png"
-                        alt="ProEduvate"
-                        className="mx-auto h-14 w-auto transition-transform duration-300 group-hover:scale-110 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]"
+                        alt=""
+                        aria-hidden="true"
+                        className="mx-auto hidden h-14 w-auto transition-transform duration-300 group-hover:scale-110 dark:block drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]"
                     />
                 </Link>
 
@@ -343,8 +351,8 @@ const DashboardLayout = () => {
                                 className={`
                                     flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group
                                     ${isActive
-                                        ? `${activeStyles[themeColor] || activeStyles.purple} border`
-                                        : 'text-gray-400 hover:text-white hover:bg-white/5'}
+                                        ? `${activeStyles[themeColor] || activeStyles.purple} border font-bold`
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/5'}
                                 `}
                             >
                                 <span className={`transition-transform duration-300 ${iconStyles[themeColor] || iconStyles.purple}`}>
@@ -362,13 +370,13 @@ const DashboardLayout = () => {
 
                 {/* Bottom Badge */}
                 <div className="p-4 mt-auto">
-                    <div className="glass p-4 rounded-xl flex items-center gap-3 border border-white/5">
+                    <div className="glass p-4 rounded-xl flex items-center gap-3 border border-slate-200 dark:border-white/5 bg-slate-50/90 dark:bg-navy-950/40 shadow-sm">
                         <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${currentRole.avatarGradient} flex items-center justify-center`}>
                             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                         </div>
                         <div>
-                            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-0.5">Deployment Role</p>
-                            <p className="text-sm font-bold text-white tracking-tight uppercase">{currentRole.roleName}</p>
+                            <p className="text-[10px] font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-0.5">Deployment Role</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight uppercase">{currentRole.roleName}</p>
                         </div>
                     </div>
                 </div>
@@ -377,11 +385,11 @@ const DashboardLayout = () => {
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col h-full relative overflow-hidden">
                 {/* Header */}
-                <header className="h-20 glass-strong border-b border-white/10 flex items-center justify-between px-6 lg:px-10 sticky top-0 z-30">
+                <header className="h-20 bg-white/90 dark:bg-navy-900/80 glass-strong border-b border-slate-200 dark:border-white/10 flex items-center justify-between px-6 lg:px-10 sticky top-0 z-30 transition-colors duration-200">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => setSidebarOpen(true)}
-                            className="lg:hidden p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                            className="lg:hidden p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-white/10 rounded-lg transition-colors"
                         >
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                         </button>
@@ -389,23 +397,26 @@ const DashboardLayout = () => {
                         {/* Search Bar - Common for dashboard */}
                         <div className="relative hidden md:block w-96 group">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg className={`w-5 h-5 text-gray-400 group-focus-within:text-${themeColor}-400 transition-colors`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                <svg className={`w-5 h-5 text-slate-400 dark:text-gray-400 group-focus-within:text-${themeColor}-500 transition-colors`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                             </div>
                             <input
                                 type="text"
                                 placeholder={isAdmin ? "SEARCH USERS, HACKATHONS..." : "SEARCH..."}
-                                className={`w-full pl-10 pr-4 py-2.5 bg-navy-900/50 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-${themeColor}-500/50 transition-all`}
+                                className={`w-full pl-10 pr-4 py-2.5 bg-slate-100 dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-${themeColor}-500/50 transition-all`}
                             />
                         </div>
                     </div>
 
                     {/* Right Actions */}
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-4 sm:gap-6">
+                        {/* Theme Toggle Button */}
+                        <ThemeToggle />
+
                         {/* Notifications */}
                         <div className="relative">
                             <button
                                 onClick={() => setShowNotifications(!showNotifications)}
-                                className="relative p-2 text-gray-300 hover:text-white transition-colors"
+                                className="relative p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-white/10 rounded-xl transition-colors"
                             >
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                                 {unreadCount > 0 && (
@@ -417,11 +428,11 @@ const DashboardLayout = () => {
 
                             {/* Notification Dropdown */}
                             {showNotifications && (
-                                <div className="absolute right-0 mt-2 w-80 glass-strong border border-white/10 rounded-xl shadow-2xl py-2 animate-in fade-in slide-in-from-top-2 duration-200 transform origin-top-right z-50">
-                                    <div className="px-4 py-3 border-b border-white/10 flex justify-between items-center">
-                                        <h3 className="font-semibold text-white">Notifications</h3>
+                                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-navy-900 glass-strong border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl py-2 animate-in fade-in slide-in-from-top-2 duration-200 transform origin-top-right z-50">
+                                    <div className="px-4 py-3 border-b border-slate-200 dark:border-white/10 flex justify-between items-center">
+                                        <h3 className="font-semibold text-slate-900 dark:text-white">Notifications</h3>
                                         {unreadCount > 0 && (
-                                            <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-[10px] font-bold">
+                                            <span className="px-2 py-0.5 rounded-full bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400 text-[10px] font-bold">
                                                 {unreadCount} NEW
                                             </span>
                                         )}
@@ -429,23 +440,23 @@ const DashboardLayout = () => {
                                     <div className="max-h-64 overflow-y-auto">
                                         {notifications.length > 0 ? (
                                             notifications.map((notif, i) => (
-                                                <div key={notif.id || i} className="px-4 py-3 hover:bg-white/5 cursor-pointer border-b border-white/5 last:border-0 transition-colors">
-                                                    <p className="text-sm text-gray-300">{notif.message}</p>
-                                                    <span className="text-xs text-gray-500 mt-1 block">
+                                                <div key={notif.id || i} className="px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer border-b border-slate-100 dark:border-white/5 last:border-0 transition-colors">
+                                                    <p className="text-sm text-slate-700 dark:text-gray-300">{notif.message}</p>
+                                                    <span className="text-xs text-slate-400 dark:text-gray-500 mt-1 block">
                                                         {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </span>
                                                 </div>
                                             ))
                                         ) : (
                                             <div className="px-4 py-8 text-center">
-                                                <p className="text-sm text-gray-500 italic">No notifications yet</p>
+                                                <p className="text-sm text-slate-400 dark:text-gray-500 italic">No notifications yet</p>
                                             </div>
                                         )}
                                     </div>
-                                    <div className="p-2 border-t border-white/10 text-center">
+                                    <div className="p-2 border-t border-slate-200 dark:border-white/10 text-center">
                                         <button 
                                             onClick={handleMarkAllRead}
-                                            className={`text-xs text-${themeColor}-400 hover:text-${themeColor}-300 font-medium transition-colors`}
+                                            className={`text-xs text-${themeColor}-600 dark:text-${themeColor}-400 hover:underline font-semibold transition-colors`}
                                         >
                                             Mark all as read
                                         </button>
@@ -458,27 +469,27 @@ const DashboardLayout = () => {
                         <div className="relative">
                             <button
                                 onClick={() => setShowProfileMenu(!showProfileMenu)}
-                                className="flex items-center gap-3 hover:bg-white/5 py-1.5 px-3 rounded-full transition-all border border-transparent hover:border-white/10"
+                                className="flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-white/5 py-1.5 px-3 rounded-full transition-all border border-transparent hover:border-slate-200 dark:hover:border-white/10"
                             >
                                 <div className={`w-9 h-9 rounded-full bg-gradient-to-r ${currentRole.avatarGradient} flex items-center justify-center text-white font-black shadow-lg shadow-purple-500/20 ring-2 ring-white/10 italic`}>
                                     {currentRole.name.charAt(0)}
                                 </div>
-                                <span className="hidden md:block text-[12px] font-bold text-white uppercase tracking-wider">
+                                <span className="hidden md:block text-[12px] font-bold text-slate-800 dark:text-white uppercase tracking-wider">
                                     {currentRole.fullName.toUpperCase()}
                                 </span>
-                                <svg className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showProfileMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                <svg className={`w-4 h-4 text-slate-400 dark:text-gray-400 transition-transform duration-200 ${showProfileMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
 
                             {showProfileMenu && (
-                                <div className="absolute right-0 mt-3 w-56 glass-strong border border-white/10 rounded-xl shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                                    <div className="px-4 py-3 border-b border-white/10 mb-2">
-                                        <p className="text-sm font-medium text-white">{currentRole.fullName}</p>
-                                        <p className="text-xs text-gray-400 truncate">{currentRole.email}</p>
+                                <div className="absolute right-0 mt-3 w-56 bg-white dark:bg-navy-900 glass-strong border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <div className="px-4 py-3 border-b border-slate-200 dark:border-white/10 mb-2">
+                                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{currentRole.fullName}</p>
+                                        <p className="text-xs text-slate-500 dark:text-gray-400 truncate">{currentRole.email}</p>
                                     </div>
-                                    <Link to={`/${currentRole.path}/profile`} className="block px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors">My Profile</Link>
-                                    <Link to={`/${currentRole.path}/settings`} className="block px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors">Settings</Link>
-                                    <div className="h-px bg-white/10 my-2"></div>
-                                    <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors">
+                                    <Link to={`/${currentRole.path}/profile`} className="block px-4 py-2 text-sm text-slate-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-colors">My Profile</Link>
+                                    <Link to={`/${currentRole.path}/settings`} className="block px-4 py-2 text-sm text-slate-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-colors">Settings</Link>
+                                    <div className="h-px bg-slate-200 dark:bg-white/10 my-2"></div>
+                                    <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors">
                                         Logout
                                     </button>
                                 </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import apiClient from '../../api/api';
 import { getMyTeams } from '../../api/teamApi';
+import { fetchTeamFiles, uploadTeamFile } from '../../services/student/teamsApi';
 
 const StudentWorkspace = () => {
     // State management
@@ -9,6 +10,7 @@ const StudentWorkspace = () => {
     const [activeTab, setActiveTab] = useState('Chat');
     const [messageInput, setMessageInput] = useState('');
     const [teamMessages, setTeamMessages] = useState({});
+    const [teamFiles, setTeamFiles] = useState({});
     const [isLoading, setIsLoading] = useState(true);
     const chatEndRef = useRef(null);
     const socketRef = useRef(null);
@@ -127,6 +129,11 @@ const StudentWorkspace = () => {
         fetchHistory();
     }, [selectedTeam, activeTab, userId, userName]);
 
+    useEffect(() => {
+        if (!selectedTeam || activeTab !== 'Files') return;
+        fetchTeamFiles(selectedTeam).then(items => setTeamFiles(prev => ({ ...prev, [selectedTeam]: items }))).catch(console.error);
+    }, [selectedTeam, activeTab]);
+
     // 4. Tasks Integration
     const [tasks, setTasks] = useState([]);
     useEffect(() => {
@@ -157,35 +164,28 @@ const StudentWorkspace = () => {
         scrollToBottom();
     }, [teamMessages, selectedTeam, activeTab]);
 
-    const handleSendMessage = (e) => {
+    const handleSendMessage = async (e) => {
         e.preventDefault();
         if (!messageInput.trim()) return;
 
-        // Send via WebSocket if connected
-        if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-            const messageData = {
-                content: messageInput,
-                type: 'text'
-            };
-            socketRef.current.send(JSON.stringify(messageData));
-        }
+        try {
+            const { data } = await apiClient.post(`/chat/${selectedTeam}/messages`, { content: messageInput, messageType: 'text' });
+            setTeamMessages(prev => ({ ...prev, [selectedTeam]: [...(prev[selectedTeam] || []), {
+                id: data._id || data.id, text: data.content, sender: 'me', user: data.senderName || userName,
+                time: new Date(data.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), type: data.messageType
+            }] }));
+            setMessageInput('');
+        } catch (err) { console.error('Message send failed:', err); }
+    };
 
-        // Optimistically update UI
-        const newMessage = {
-            id: Date.now(),
-            text: messageInput,
-            sender: 'me',
-            user: userName,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            type: 'text'
-        };
-
-        setTeamMessages(prev => ({
-            ...prev,
-            [selectedTeam]: [...(prev[selectedTeam] || []), newMessage]
-        }));
-        
-        setMessageInput('');
+    const handleFileUpload = async (event) => {
+        const file = event.target.files?.[0];
+        if (!file || !selectedTeam) return;
+        try {
+            const uploaded = await uploadTeamFile(selectedTeam, file);
+            setTeamFiles(prev => ({ ...prev, [selectedTeam]: [uploaded, ...(prev[selectedTeam] || [])] }));
+        } catch (err) { console.error('File upload failed:', err); }
+        event.target.value = '';
     };
 
     if (isLoading) return (
@@ -392,10 +392,12 @@ const StudentWorkspace = () => {
                             {activeTab === 'Files' && (
                                 <div className="flex-1 flex flex-col items-center justify-center text-gray-500 space-y-4">
                                     <div className="text-6xl">📁</div>
-                                    <p className="text-xl font-medium">Team files will appear here</p>
-                                    <button className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl border border-white/10 transition-colors">
+                                    <p className="text-xl font-medium">Shared team files</p>
+                                    <label className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl border border-white/10 transition-colors cursor-pointer">
                                         Upload Document
-                                    </button>
+                                        <input type="file" className="hidden" accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.py,.js,.jsx,.ts,.tsx,.txt,.md" onChange={handleFileUpload} />
+                                    </label>
+                                    <div className="w-full max-w-xl space-y-2 overflow-y-auto">{(teamFiles[selectedTeam] || []).map(file => <a key={file._id || file.id} href={file.url} target="_blank" rel="noreferrer" className="block rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-white hover:bg-white/10">{file.name} <span className="text-xs text-gray-400">· {file.uploadedByName || 'Team member'}</span></a>)}</div>
                                 </div>
                             )}
                         </div>

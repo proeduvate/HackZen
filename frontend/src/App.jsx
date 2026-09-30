@@ -4,7 +4,6 @@ import Footer from './components/Footer';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/SignUp';
-import RoleSelection from './pages/RoleSelection';
 import ForgotPassword from './pages/ForgotPassword';
 import StudentDashboard from './pages/student/StudentDashboard';
 import StudentCertificates from './pages/student/StudentCertificates';
@@ -36,7 +35,15 @@ import ManageHackathon from './pages/organizer/ManageHackathon';
 import MentorDashboard from './pages/mentor/MentorDashboard';
 import MentorshipRequests from './pages/mentor/MentorshipRequests';
 import Feedback from './pages/mentor/Feedback';
+import TeamMaterials from './pages/mentor/TeamMaterials';
 import MentorProfile from './pages/mentor/MentorProfile';
+import MentorLayout from './components/mentor/MentorLayout';
+import { MentorProvider } from './context/MentorContext';
+import TeamDetails from './pages/mentor/TeamDetails';
+import MentorSessions from './pages/mentor/MentorSessions';
+import MentorHackathons from './pages/mentor/MentorHackathons';
+import MentorMessages from './pages/mentor/MentorMessages';
+import MentorResources from './pages/mentor/MentorResources';
 import AdminDashboard from './pages/admin/Dashboard';
 import Unauthorized from './pages/Unauthorized';
 import OrganizerApprovals from './pages/admin/OrganizerApprovals';
@@ -57,10 +64,13 @@ import CreateTeam from './pages/mentor/CreateTeam';
 import EditOrganizerProfile from './pages/organizer/EditOrganizerProfile';
 import EditMentorProfile from './pages/mentor/EditMentorProfile';
 import EditAdminProfile from './pages/admin/EditAdminProfile';
+
 import EvaluationCriteria from './pages/organizer/EvaluationCriteria';
 import InitializeEvent from './pages/organizer/InitializeEvent';
 import InviteMentors from './pages/organizer/InviteMentors';
-
+import MentorWorkspace from './pages/mentor/MentorWorkspace';
+import MentorAICoMentor from './pages/mentor/MentorAICoMentor';
+import TeamMentorshipWorkspace from './pages/mentor/TeamMentorshipWorkspace';
 
 import './App.css';
 
@@ -101,13 +111,13 @@ function AppContent() {
     location.pathname.startsWith('/unauthorized');
 
   return (
-    <div className="flex flex-col min-h-screen text-white bg-navy-900">
+    <div className="flex flex-col min-h-screen text-slate-800 dark:text-white bg-slate-50 dark:bg-navy-950 transition-colors duration-200">
       <Routes>
         {/* Main Landing Page */}
         <Route path="/" element={<Home />} />
 
-        {/* Role Selection - Step 1: Choose Your Role */}
-        <Route path="/get-started" element={<RoleSelection />} />
+        {/* Mentor-focused onboarding */}
+        <Route path="/get-started" element={<Navigate to="/signup" replace />} />
 
         {/* Signup - Step 2: Create Account (role pre-filled) */}
         <Route path="/signup" element={<Signup />} />
@@ -183,7 +193,6 @@ function AppContent() {
             <Route path="edit" element={<EditOrganizerProfile />} />
           </Route>
           <Route path="settings" element={<OrganizerSettings />} />
-
         </Route>
 
         {/* Mentor Dashboard Routes */}
@@ -191,26 +200,37 @@ function AppContent() {
           path="/mentor"
           element={
             <ProtectedRoute requiredRole="mentor">
-              <DashboardLayout />
+              <MentorProvider>
+                <MentorLayout />
+              </MentorProvider>
             </ProtectedRoute>
           }
         >
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<MentorDashboard />} />
+          <Route path="hackathons" element={<MentorHackathons />} />
           <Route path="mentorship-requests" element={<MentorshipRequests />} />
+          <Route path="requests" element={<MentorshipRequests />} />
           <Route path="teams">
             <Route index element={<AssignedTeams />} />
-            <Route path=":teamId/workspace" element={<TeamsPage />} />
+            <Route path=":teamId" element={<TeamDetails />} />
+            <Route path=":teamId/workspace" element={<TeamDetails />} />
             <Route path="join" element={<DiscoverTeams />} />
             <Route path="create" element={<CreateTeam />} />
           </Route>
+          <Route path="sessions" element={<MentorSessions />} />
+          <Route path="messages" element={<MentorMessages />} />
+          <Route path="resources" element={<MentorResources />} />
+          <Route path="materials" element={<MentorResources />} />
           <Route path="feedback" element={<Feedback />} />
+          <Route path="reviews" element={<MentorWorkspace initialTab="reviews" />} />
+          <Route path="forum" element={<MentorWorkspace initialTab="forum" />} />
+          <Route path="ai-co-mentor" element={<MentorAICoMentor />} />
           <Route path="profile">
             <Route index element={<MentorProfile />} />
             <Route path="edit" element={<EditMentorProfile />} />
           </Route>
           <Route path="settings" element={<MentorSettings />} />
-
         </Route>
 
         {/* Admin Dashboard Routes - Protected */}

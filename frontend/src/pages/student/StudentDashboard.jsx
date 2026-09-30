@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchDashboardData } from '../../services/student/dashboardApi';
+import ProgressChart from '../../components/student/ProgressChart';
 
 const StudentDashboard = () => {
     const navigate = useNavigate();
@@ -39,10 +40,17 @@ const StudentDashboard = () => {
                 loadDashboardData(false); // Refresh stats without full spinner
             }
         };
+        const handleProgressUpdate = () => loadDashboardData(false);
         window.addEventListener('user-update', handleUserUpdate);
+        window.addEventListener('progress-updated', handleProgressUpdate);
 
         loadDashboardData(true);
-        return () => window.removeEventListener('user-update', handleUserUpdate);
+        const refreshTimer = window.setInterval(() => loadDashboardData(false), 30000);
+        return () => {
+            window.removeEventListener('user-update', handleUserUpdate);
+            window.removeEventListener('progress-updated', handleProgressUpdate);
+            window.clearInterval(refreshTimer);
+        };
     }, []);
 
     const analyticsCards = [
@@ -126,6 +134,7 @@ const StudentDashboard = () => {
             </section>
 
             <section className="space-y-8">
+                <ProgressChart teams={trackedHackathons} />
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                     <div className="flex gap-3 rounded-2xl bg-black/40 p-1.5 border border-white/5 w-max shadow-2xl">
                         {['milestones', 'tracking'].map((tab) => (
@@ -206,10 +215,10 @@ const StudentDashboard = () => {
                                     <div className="space-y-3">
                                         <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-gray-500">
                                             <span className="italic">Synchronization</span>
-                                            <span className="text-blue-400">{item.progress}%</span>
+                                            <span className="text-blue-400">{item.progress ?? 0}%</span>
                                         </div>
                                         <div className="h-1.5 rounded-full bg-white/5 overflow-hidden border border-white/5 p-[1px]">
-                                            <div className="h-full rounded-full bg-gradient-to-r from-blue-600 via-indigo-500 to-cyan-400 shadow-[0_0_12px_rgba(59,130,246,0.2)]" style={{ width: `${item.progress}%` }} />
+                                            <div className="h-full rounded-full bg-gradient-to-r from-blue-600 via-indigo-500 to-cyan-400 shadow-[0_0_12px_rgba(59,130,246,0.2)]" style={{ width: `${item.progress ?? 0}%` }} />
                                         </div>
                                     </div>
                                 </div>

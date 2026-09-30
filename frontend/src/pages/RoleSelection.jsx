@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import ThemeToggle from '../components/ThemeToggle';
 
 const RoleSelection = () => {
     const navigate = useNavigate();
@@ -31,11 +32,7 @@ const RoleSelection = () => {
 
     const handleContinue = () => {
         if (!selectedRole) return;
-
-        // State Persistence: Store the selected role for RBAC logic downstream
         sessionStorage.setItem('temp_selected_role', selectedRole);
-
-        // Find the target path
         const roleConfig = roles.find(r => r.id === selectedRole);
         if (roleConfig) {
             navigate(roleConfig.path);
@@ -43,23 +40,28 @@ const RoleSelection = () => {
     };
 
     return (
-        <div className="min-h-screen px-4 py-8 bg-navy-900 sm:py-12 flex flex-col items-center">
+        <div className="relative min-h-screen px-4 py-8 bg-slate-50 dark:bg-navy-900 bg-radial sm:py-12 flex flex-col items-center transition-colors duration-200">
+            {/* Top Right Theme Toggle */}
+            <div className="absolute top-6 right-6">
+                <ThemeToggle />
+            </div>
+
             {/* Back Button */}
             <div className="w-full max-w-5xl mb-12">
-                <Link to="/" className="inline-flex items-center gap-2 text-gray-400 transition hover:text-white group">
+                <Link to="/" className="inline-flex items-center gap-2 text-slate-600 dark:text-gray-400 transition hover:text-purple-600 dark:hover:text-white group">
                     <svg className="w-5 h-5 transition group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
-                    <span className="font-medium">Back to Home</span>
+                    <span className="font-semibold text-sm">Back to Home</span>
                 </Link>
             </div>
 
             {/* Header */}
             <div className="max-w-3xl mx-auto mb-12 text-center">
-                <h1 className="mb-4 text-3xl font-black text-white sm:text-4xl md:text-5xl tracking-tight">
-                    Define Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">Identity</span>
+                <h1 className="mb-4 text-3xl font-black text-slate-900 dark:text-white sm:text-4xl md:text-5xl tracking-tight">
+                    Define Your <span className="gradient-text">Identity</span>
                 </h1>
-                <p className="text-gray-400 text-lg max-w-xl mx-auto">
+                <p className="text-slate-600 dark:text-gray-400 text-base sm:text-lg max-w-xl mx-auto">
                     Select a path below to customize your ProEduvate experience. You can't change this later without a new account.
                 </p>
             </div>
@@ -70,17 +72,17 @@ const RoleSelection = () => {
                     <div
                         key={role.id}
                         className={`
-                            relative flex-1 p-8 rounded-3xl transition-all duration-500 cursor-pointer group
+                            relative flex-1 p-8 rounded-3xl transition-all duration-300 cursor-pointer group
                             ${selectedRole === role.id
-                                ? 'bg-gradient-to-b from-purple-600/20 to-blue-600/20 border-2 border-purple-500 shadow-[0_0_30px_rgba(168,85,247,0.2)] scale-[1.02]'
-                                : 'bg-navy-800/50 border border-white/10 hover:border-white/20 hover:scale-[1.01] grayscale-[0.5] hover:grayscale-0'
+                                ? 'bg-purple-50 dark:bg-gradient-to-b dark:from-purple-600/20 dark:to-blue-600/20 border-2 border-purple-600 shadow-xl scale-[1.02]'
+                                : 'bg-white dark:bg-navy-800/50 border border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-white/20 hover:scale-[1.01] shadow-sm'
                             }
                         `}
                         onClick={() => setSelectedRole(role.id)}
                     >
                         {/* Selection Indicator */}
                         {selectedRole === role.id && (
-                            <div className="absolute top-4 right-4 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center animate-bounce-in">
+                            <div className="absolute top-4 right-4 w-7 h-7 bg-purple-600 rounded-full flex items-center justify-center animate-bounce-in shadow-md">
                                 <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                                 </svg>
@@ -89,22 +91,22 @@ const RoleSelection = () => {
 
                         {/* Icon Container */}
                         <div className={`
-                            w-16 h-16 rounded-2xl mb-6 flex items-center justify-center text-4xl shadow-2xl transition-transform group-hover:scale-110 duration-500
-                            ${selectedRole === role.id ? 'bg-purple-500 text-white' : 'bg-navy-900 border border-white/10 text-gray-400'}
+                            w-16 h-16 rounded-2xl mb-6 flex items-center justify-center text-4xl shadow-md transition-transform group-hover:scale-110 duration-300
+                            ${selectedRole === role.id ? 'bg-purple-600 text-white' : 'bg-slate-100 dark:bg-navy-900 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-400'}
                         `}>
                             {role.icon}
                         </div>
 
-                        <h2 className={`mb-3 text-2xl font-bold transition-colors ${selectedRole === role.id ? 'text-white' : 'text-gray-300'}`}>
+                        <h2 className={`mb-3 text-2xl font-bold transition-colors ${selectedRole === role.id ? 'text-purple-700 dark:text-white' : 'text-slate-900 dark:text-gray-300'}`}>
                             {role.title}
                         </h2>
 
-                        <p className="text-gray-400 leading-relaxed text-sm mb-4">
+                        <p className="text-slate-600 dark:text-gray-400 leading-relaxed text-sm mb-4">
                             {role.description}
                         </p>
 
                         <div className={`
-                            h-1 w-0 bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-500
+                            h-1 w-0 bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-500 rounded-full
                             ${selectedRole === role.id ? 'w-full' : 'group-hover:w-1/3'}
                         `}></div>
                     </div>
@@ -120,7 +122,7 @@ const RoleSelection = () => {
                         w-full sm:w-80 py-4 px-8 rounded-2xl font-black uppercase tracking-widest transition-all duration-300 transform
                         ${selectedRole
                             ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-xl hover:shadow-purple-500/40 hover:-translate-y-1 active:scale-95'
-                            : 'bg-white/5 text-gray-500 cursor-not-allowed border border-white/5 opacity-50'
+                            : 'bg-slate-200 dark:bg-white/5 text-slate-400 dark:text-gray-500 cursor-not-allowed border border-slate-300 dark:border-white/5 opacity-60'
                         }
                     `}
                 >
@@ -128,19 +130,13 @@ const RoleSelection = () => {
                 </button>
 
                 <div className="text-center">
-                    <p className="text-gray-500 text-sm">
+                    <p className="text-slate-500 dark:text-gray-500 text-sm">
                         Prefer to jump straight in?{' '}
-                        <Link to="/login" className="text-blue-400 font-bold hover:text-blue-300 transition-colors underline-offset-4 hover:underline">
+                        <Link to="/login" className="text-purple-600 dark:text-blue-400 font-bold hover:underline">
                             Login to existing account
                         </Link>
                     </p>
                 </div>
-            </div>
-
-            {/* Background Aesthetics */}
-            <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-600/10 rounded-full blur-[120px] animate-pulse"></div>
-                <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-600/10 rounded-full blur-[120px] animate-pulse [animation-delay:2s]"></div>
             </div>
         </div>
     );

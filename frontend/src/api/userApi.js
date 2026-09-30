@@ -10,25 +10,8 @@ export const setAuthToken = (token) => {
 
 export const register = async (userData) => {
     try {
-        console.log('Mocking Platform Registration for:', userData.email);
-        
-        // Simulating network delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        /* REAL API CALL
         const { data } = await apiClient.post('/auth/register', userData);
         return data;
-        */
-
-        return {
-            message: "User registered successfully (Mock)",
-            user: {
-                id: "mock_user_" + Math.random().toString(36).substr(2, 9),
-                name: userData.name || "Mock Student",
-                email: userData.email,
-                role: userData.role || "student"
-            }
-        };
     } catch (error) {
         console.error('Registration failed:', error);
         throw error;

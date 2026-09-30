@@ -49,28 +49,14 @@ export const saveRegistrationDraft = async (hackathonId, nextDraft) => {
 
 export const submitHackathonRegistration = async (hackathonId, draft) => {
     try {
-        console.log('Mocking Registration submission for:', hackathonId, draft);
-        
-        // Simulating network delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        /* REAL API CALL - Commented out for mock flow
+        const user = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
         const payload = {
             hackathonId: hackathonId,
-            teamName: draft.teamName,
-            teamSize: parseInt(draft.teamSize),
-            members: draft.memberEmails.filter(email => email.trim() !== ''),
-            notes: draft.notes
+            userId: user._id || user.id || user.sub,
+            status: 'pending'
         };
 
         const { data } = await apiClient.post('/applications/', payload);
-        */
-
-        // Mock response data
-        const mockData = {
-            _id: 'mock_reg_' + Math.random().toString(36).substr(2, 9),
-            appliedAt: new Date().toISOString(),
-        };
         
         // Clean up local draft on success
         const drafts = readDrafts();
@@ -79,8 +65,8 @@ export const submitHackathonRegistration = async (hackathonId, draft) => {
 
         return {
             success: true,
-            registrationId: mockData._id,
-            timestamp: mockData.appliedAt,
+            registrationId: data._id,
+            timestamp: data.appliedAt,
             draft,
         };
     } catch (error) {

@@ -2,6 +2,8 @@ from fastapi import Depends, Security, HTTPException, status
 from typing import List, Dict, Any
 from core.security import get_current_user
 from services.userService import UserService
+from database import get_db
+from datetime import datetime
 
 
 async def with_auth(
@@ -22,6 +24,13 @@ async def with_auth(
 
     #  Ensure  backward  compatibility  with  code  expecting  'sub'
     user["sub"] = str(user["_id"])
+    # Presence is based on real authenticated activity.  Dashboard consumers
+    # classify it as active/idle/offline; no status is randomly assigned.
+    try:
+        await get_db().users.update_one({"_id": user["_id"]}, {"$set": {"lastActive": datetime.utcnow()}})
+        user["lastActive"] = datetime.utcnow()
+    except Exception:
+        pass
     return user
 
 

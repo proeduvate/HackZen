@@ -13,7 +13,7 @@ import apiClient from '../../api/api';
  */
 export const fetchMyHackathons = async () => {
     try {
-        const { data } = await apiClient.get('/hackathons/myhackathons');
+        const { data } = await apiClient.get('/hackathon/myhackathons');
         
         return data.map(h => ({
             id: h._id,
@@ -42,8 +42,8 @@ export const fetchMyHackathons = async () => {
  */
 export const toggleHackathonVisibility = async (id) => {
     try {
-        const { data: current } = await apiClient.get(`/hackathons/${id}`);
-        const { data: updated } = await apiClient.put(`/hackathons/${id}`, {
+        const { data: current } = await apiClient.get(`/hackathon/${id}`);
+        const { data: updated } = await apiClient.put(`/hackathon/${id}`, {
             isPublic: !current.isPublic
         });
 
@@ -69,10 +69,10 @@ export const toggleHackathonVisibility = async (id) => {
  */
 export const toggleHackathonRegistration = async (id) => {
     try {
-        const { data: current } = await apiClient.get(`/hackathons/${id}`);
+        const { data: current } = await apiClient.get(`/hackathon/${id}`);
         const newStatus = current.status === 'Active' ? 'Draft' : 'Active';
         
-        const { data: updated } = await apiClient.put(`/hackathons/${id}`, {
+        const { data: updated } = await apiClient.put(`/hackathon/${id}`, {
             status: newStatus
         });
 

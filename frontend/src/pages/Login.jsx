@@ -1,6 +1,23 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { login } from '../api/userApi';
+import ThemeToggle from '../components/ThemeToggle';
+
+const getLoginErrorMessage = (error) => {
+    if (!error.response || error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED') {
+        return 'Unable to connect to the server. Please try again.';
+    }
+
+    if (error.response.status === 401) {
+        return 'Invalid email or password.';
+    }
+
+    if (error.response.status >= 500) {
+        return 'Something went wrong. Please try again later.';
+    }
+
+    return error.response?.data?.error?.message || error.response?.data?.detail || 'Unable to sign in. Please check your details and try again.';
+};
 
 const Login = () => {
     const navigate = useNavigate();
@@ -19,9 +36,25 @@ const Login = () => {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [socialLoading, setSocialLoading] = useState('');
+
+    const completeLogin = (response) => {
+        const { token, user } = response;
+        const storageData = { isLoggedIn: 'true', userRole: user.role, user: JSON.stringify(user), token };
+        Object.entries(storageData).forEach(([key, value]) => {
+            sessionStorage.setItem(key, value);
+            localStorage.setItem(key, value);
+        });
+        const targetPath = user.role === 'admin' ? '/admin/dashboard' :
+            user.role === 'organizer' ? '/organizer/dashboard' :
+            user.role === 'mentor' ? '/mentor/dashboard' : '/student/dashboard';
+        navigate(targetPath, { replace: true });
+        setTimeout(() => window.dispatchEvent(new Event('user-update')), 0);
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (loading) return;
         setError('');
         setLoading(true);
 
@@ -34,53 +67,59 @@ const Login = () => {
             }
 
             const response = await login({
-                email: formData.email,
+                email: formData.email.trim().toLowerCase(),
                 password: formData.password
             });
 
-            const { token, user } = response;
-            const role = user.role;
-
-            // Fast-sync storage
-            const storageData = {
-                isLoggedIn: 'true',
-                userRole: role,
-                user: JSON.stringify(user),
-                token: token
-            };
-
-            Object.entries(storageData).forEach(([key, val]) => {
-                sessionStorage.setItem(key, val);
-                localStorage.setItem(key, val);
-            });
-
-            console.log(`[Auth] Login successful. Role: ${role}. Redirecting...`);
-
-            // Immediate Redirect
-            const targetPath = role === 'admin' ? '/admin/dashboard' : 
-                               role === 'organizer' ? '/organizer/dashboard' : 
-                               role === 'mentor' ? '/mentor/dashboard' : '/student/dashboard';
-            
-            navigate(targetPath, { replace: true });
-            
-            setTimeout(() => window.dispatchEvent(new Event('user-update')), 0);
+            completeLogin(response);
         } catch (err) {
-            setError(err.detail || 'Login failed. Please check your credentials.');
+            setError(getLoginErrorMessage(err));
         } finally {
             setLoading(false);
         }
     };
 
+    const handleSocialLogin = (provider) => {
+        if (socialLoading || loading) return;
+        setError('');
+        setSocialLoading(provider);
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
+        const backendOrigin = new URL(apiUrl).origin;
+        const popup = window.open(`${apiUrl}/auth/oauth/${provider}/start`, 'proeduvate-oauth', 'width=520,height=700,noopener=no');
+        if (!popup) {
+            setSocialLoading('');
+            setError('Please allow pop-ups to sign in with a social account.');
+            return;
+        }
+        const receiveOAuthResult = (event) => {
+            if (event.origin !== backendOrigin) return;
+            if (event.data?.type === 'proeduvate-oauth-success') {
+                window.removeEventListener('message', receiveOAuthResult);
+                setSocialLoading('');
+                completeLogin(event.data);
+            } else if (event.data?.type === 'proeduvate-oauth-error') {
+                window.removeEventListener('message', receiveOAuthResult);
+                setSocialLoading('');
+                setError(event.data.message || 'Unable to sign in with this provider.');
+            }
+        };
+        window.addEventListener('message', receiveOAuthResult);
+    };
 
     const [showPassword, setShowPassword] = useState(false);
 
     return (
-        <div className="flex items-center justify-center min-h-screen px-4 py-8 bg-navy-900 bg-radial">
+        <div className="relative flex items-center justify-center min-h-screen px-4 py-8 bg-slate-50 dark:bg-navy-900 bg-radial transition-colors duration-200">
+            {/* Top Right Theme Toggle */}
+            <div className="absolute top-6 right-6">
+                <ThemeToggle />
+            </div>
+
             <div className="w-full max-w-md">
                 {/* Back Button */}
                 <Link
                     to="/"
-                    className="flex items-center gap-2 mb-6 text-gray-300 transition hover:text-white group"
+                    className="flex items-center gap-2 mb-6 text-slate-600 dark:text-gray-300 transition hover:text-purple-600 dark:hover:text-white group"
                 >
                     <svg
                         className="w-4 h-4 transition transform group-hover:-translate-x-1"
@@ -90,27 +129,28 @@ const Login = () => {
                     >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
-                    <span className="text-sm">Back</span>
+                    <span className="text-sm font-semibold">Back to Home</span>
                 </Link>
 
                 {/* Logo & Title */}
                 <div className="mb-8 text-center">
-                    <img src="/proeduvatee-removebg-preview.png" alt="ProEduvate" className="h-20 mx-auto mb-4" />
-                    <h2 className="mb-2 text-3xl font-bold sm:text-4xl gradient-text">Welcome Back</h2>
-                    <p className="text-gray-400">Sign in to continue to ProEduvate</p>
+                    <img src="/proeduvate-dark-text.png" alt="ProEduvate" className="h-20 mx-auto mb-4 dark:hidden" />
+                    <img src="/proeduvatee-removebg-preview.png" alt="" aria-hidden="true" className="hidden h-20 mx-auto mb-4 dark:block" />
+                    <h2 className="mb-2 text-3xl font-extrabold sm:text-4xl gradient-text">Welcome Back</h2>
+                    <p className="text-slate-600 dark:text-gray-400 text-sm">Sign in to continue to ProEduvate</p>
                 </div>
 
-                {/* Login Form - Glass Effect */}
-                <div className="p-6 glass-strong rounded-xl sm:p-8 glow-purple-hover">
+                {/* Login Form Card */}
+                <div className="p-6 sm:p-8 bg-white/90 dark:bg-navy-900/80 glass-strong rounded-2xl border border-slate-200 dark:border-white/10 shadow-xl glow-purple-hover transition-all duration-300">
                     {error && (
-                        <div className="p-3 mb-4 text-sm text-center text-red-400 border border-red-500/30 rounded-lg bg-red-500/10">
+                        <div className="p-3 mb-4 text-sm text-center text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/30 rounded-xl bg-red-50 dark:bg-red-500/10">
                             {error}
                         </div>
                     )}
                     <form onSubmit={handleSubmit} className="space-y-5">
                         {/* Email Field */}
                         <div>
-                            <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-300">
+                            <label htmlFor="email" className="block mb-2 text-sm font-semibold text-slate-700 dark:text-gray-300">
                                 Email Address
                             </label>
                             <input
@@ -120,7 +160,7 @@ const Login = () => {
                                 value={formData.email}
                                 onChange={handleChange}
                                 required
-                                className="w-full px-4 py-3 text-white placeholder-gray-500 transition border border-gray-600 rounded-lg bg-navy-900/50 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                                className="w-full px-4 py-3 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 transition border border-slate-300 dark:border-gray-600 rounded-xl bg-white dark:bg-navy-900/50 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 shadow-sm"
                                 placeholder="you@example.com"
                             />
                         </div>
@@ -128,10 +168,10 @@ const Login = () => {
                         {/* Password Field */}
                         <div>
                             <div className="flex items-center justify-between mb-2">
-                                <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+                                <label htmlFor="password" className="block text-sm font-semibold text-slate-700 dark:text-gray-300">
                                     Password
                                 </label>
-                                <Link to="/forgot-password" className="text-sm text-purple-400 transition hover:text-purple-300">
+                                <Link to="/forgot-password" className="text-sm font-semibold text-purple-600 dark:text-purple-400 transition hover:underline">
                                     Forgot?
                                 </Link>
                             </div>
@@ -143,13 +183,13 @@ const Login = () => {
                                     value={formData.password}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-3 text-white placeholder-gray-500 transition border border-gray-600 rounded-lg bg-navy-900/50 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 pr-12"
+                                    className="w-full px-4 py-3 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 transition border border-slate-300 dark:border-gray-600 rounded-xl bg-white dark:bg-navy-900/50 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 pr-12 shadow-sm"
                                     placeholder="••••••••"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute inset-y-0 right-0 px-4 flex items-center text-gray-400 hover:text-purple-400 transition-colors"
+                                    className="absolute inset-y-0 right-0 px-4 flex items-center text-slate-400 hover:text-purple-600 dark:text-gray-400 dark:hover:text-purple-400 transition-colors"
                                 >
                                     {showPassword ? (
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -172,9 +212,9 @@ const Login = () => {
                                 id="remember"
                                 checked={rememberMe}
                                 onChange={(e) => setRememberMe(e.target.checked)}
-                                className="w-4 h-4 text-purple-600 border-gray-600 rounded bg-navy-900 focus:ring-purple-500"
+                                className="w-4 h-4 text-purple-600 border-slate-300 dark:border-gray-600 rounded bg-white dark:bg-navy-900 focus:ring-purple-500"
                             />
-                            <label htmlFor="remember" className="ml-2 text-sm text-gray-400">
+                            <label htmlFor="remember" className="ml-2 text-sm text-slate-600 dark:text-gray-400">
                                 Remember me
                             </label>
                         </div>
@@ -182,7 +222,7 @@ const Login = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`w-full py-3 font-semibold text-white rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 btn-hover animate-gradient flex items-center justify-center gap-2 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                            className={`w-full py-3 font-bold text-white rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 btn-hover animate-gradient flex items-center justify-center gap-2 shadow-md shadow-purple-500/20 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >
                             {loading ? (
                                 <>
@@ -200,22 +240,22 @@ const Login = () => {
                         {/* Divider */}
                         <div className="relative my-6">
                             <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-gray-700"></div>
+                                <div className="w-full border-t border-slate-200 dark:border-gray-700"></div>
                             </div>
                             <div className="relative flex justify-center text-sm">
-                                <span className="px-4 text-gray-400 bg-transparent">Or continue with</span>
+                                <span className="px-4 text-slate-500 dark:text-gray-400 bg-white dark:bg-navy-900/90 text-xs uppercase tracking-wider font-semibold">Or continue with</span>
                             </div>
                         </div>
 
                         {/* Social Login */}
                         <div className="grid grid-cols-3 gap-3">
-                            <button className="flex items-center justify-center px-4 py-3 transition rounded-lg glass hover:border-purple-500 card-hover">
+                            <button type="button" onClick={() => handleSocialLogin('github')} disabled={!!socialLoading} aria-label="Continue with GitHub" className="flex items-center justify-center px-4 py-3 transition rounded-xl bg-slate-50 dark:bg-navy-900/40 border border-slate-200 dark:border-white/10 hover:border-purple-500 shadow-sm card-hover disabled:opacity-60">
                                 <span className="text-xl">🐙</span>
                             </button>
-                            <button className="flex items-center justify-center px-4 py-3 transition rounded-lg glass hover:border-purple-500 card-hover">
+                            <button type="button" onClick={() => handleSocialLogin('google')} disabled={!!socialLoading} aria-label="Continue with Google" className="flex items-center justify-center px-4 py-3 transition rounded-xl bg-slate-50 dark:bg-navy-900/40 border border-slate-200 dark:border-white/10 hover:border-purple-500 shadow-sm card-hover disabled:opacity-60">
                                 <span className="text-xl">G</span>
                             </button>
-                            <button className="flex items-center justify-center px-4 py-3 transition rounded-lg glass hover:border-purple-500 card-hover">
+                            <button type="button" onClick={() => handleSocialLogin('linkedin')} disabled={!!socialLoading} aria-label="Continue with LinkedIn" className="flex items-center justify-center px-4 py-3 transition rounded-xl bg-slate-50 dark:bg-navy-900/40 border border-slate-200 dark:border-white/10 hover:border-purple-500 shadow-sm card-hover disabled:opacity-60">
                                 <span className="text-xl">in</span>
                             </button>
                         </div>
@@ -223,9 +263,9 @@ const Login = () => {
                 </div>
 
                 {/* Sign Up Link */}
-                <p className="mt-6 text-center text-gray-400">
+                <p className="mt-6 text-center text-slate-600 dark:text-gray-400 text-sm">
                     Don't have an account?{' '}
-                    <Link to="/signup" className="font-semibold text-purple-400 transition hover:text-purple-300">
+                    <Link to="/signup" className="font-bold text-purple-600 dark:text-purple-400 transition hover:underline">
                         Sign up
                     </Link>
                 </p>

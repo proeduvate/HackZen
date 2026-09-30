@@ -2,35 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Global Dropdown Visibility Fix */
-select {
-  color-scheme: dark;
-}
-
-select option {
-  background-color: #0a1628 !important;
-  color: #e2e8f0 !important;
-  padding: 10px;
-}
-
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: #0a1628;
-}
-
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #9333ea 0%, #2563eb 100%);
-  border-radius: 5px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #a855f7 0%, #3b82f6 100%);
-}
-
 /* Smooth Scroll */
 html {
   scroll-behavior: smooth;
@@ -38,18 +9,28 @@ html {
 
 /* Background Radials */
 .bg-radial {
+  transition: background 0.3s ease;
+}
+
+html.light .bg-radial,
+:root:not([data-theme="dark"]) .bg-radial {
+  background: radial-gradient(circle at 15% 15%, rgba(147, 51, 234, 0.04) 0%, transparent 45%),
+    radial-gradient(circle at 85% 85%, rgba(37, 99, 235, 0.04) 0%, transparent 45%),
+    #f8fafc;
+}
+
+html.dark .bg-radial,
+[data-theme="dark"] .bg-radial {
   background: radial-gradient(circle at 20% 20%, rgba(147, 51, 234, 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(37, 99, 235, 0.15) 0%, transparent 50%);
+    radial-gradient(circle at 80% 80%, rgba(37, 99, 235, 0.15) 0%, transparent 50%),
+    #0a1628;
 }
 
 /* Gradient Animation */
 @keyframes gradient-shift {
-
-  0%,
-  100% {
+  0%, 100% {
     background-position: 0% 50%;
   }
-
   50% {
     background-position: 100% 50%;
   }
@@ -60,32 +41,36 @@ html {
   animation: gradient-shift 8s ease infinite;
 }
 
-/* Glow Effect */
+/* Glow Effects */
 .glow-purple {
-  box-shadow: 0 0 20px rgba(147, 51, 234, 0.3);
+  box-shadow: 0 0 20px rgba(147, 51, 234, 0.25);
 }
 
 .glow-blue {
-  box-shadow: 0 0 20px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 0 20px rgba(37, 99, 235, 0.25);
 }
 
 .glow-purple-hover:hover {
-  box-shadow: 0 0 30px rgba(147, 51, 234, 0.5);
+  box-shadow: 0 0 30px rgba(147, 51, 234, 0.35);
 }
 
-/* Glassmorphism */
+/* Glassmorphism System */
 .glass {
-  background: rgba(15, 31, 58, 0.6);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--color-glass-bg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--color-glass-border);
+  box-shadow: var(--color-glass-shadow);
+  transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .glass-strong {
-  background: rgba(15, 31, 58, 0.8);
+  background: var(--color-glass-strong);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--color-glass-border);
+  box-shadow: var(--color-glass-shadow);
+  transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 /* Card Hover Effects */
@@ -93,14 +78,22 @@ html {
   transition: all 0.3s ease;
 }
 
-.card-hover:hover {
-  transform: translateY(-8px) scale(1.02);
+html.light .card-hover:hover,
+:root:not([data-theme="dark"]) .card-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  border-color: rgba(147, 51, 234, 0.4);
+}
+
+html.dark .card-hover:hover,
+[data-theme="dark"] .card-hover:hover {
+  transform: translateY(-8px) scale(1.01);
   border-color: rgba(147, 51, 234, 0.5);
 }
 
 /* Gradient Text */
 .gradient-text {
-  background: linear-gradient(135deg, #9333ea 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -121,7 +114,9 @@ html {
   width: 0;
   height: 0;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.15);
+  z-index: 0;
+  pointer-events: none;
   transform: translate(-50%, -50%);
   transition: width 0.6s, height 0.6s;
 }
@@ -133,15 +128,21 @@ html {
 
 .btn-hover:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(147, 51, 234, 0.4);
+  box-shadow: 0 10px 25px rgba(124, 58, 237, 0.35);
 }
 
 /* Admin Specific */
 .glow-blue-strong {
-  box-shadow: 0 0 30px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 0 30px rgba(37, 99, 235, 0.3);
 }
 
 .bg-admin-gradient {
+  background: radial-gradient(circle at 20% 20%, rgba(30, 64, 175, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(15, 23, 42, 0.05) 0%, transparent 50%);
+}
+
+html.dark .bg-admin-gradient,
+[data-theme="dark"] .bg-admin-gradient {
   background: radial-gradient(circle at 20% 20%, rgba(30, 64, 175, 0.2) 0%, transparent 50%),
     radial-gradient(circle at 80% 80%, rgba(15, 23, 42, 0.5) 0%, transparent 50%);
 }
@@ -161,7 +162,6 @@ html {
     opacity: 0;
     transform: translateY(10px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -172,53 +172,51 @@ html {
   animation: fade-in 0.5s ease-out forwards;
 }
 
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* Light Theme Global Text Readability Enhancements */
+html.light .text-gray-400,
+:root:not([data-theme="dark"]) .text-gray-400 {
+  color: #475569;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
+html.light .text-gray-300,
+:root:not([data-theme="dark"]) .text-gray-300 {
+  color: #334155;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+html.light .text-gray-500,
+:root:not([data-theme="dark"]) .text-gray-500 {
+  color: #64748b;
 }
 
 /* Typography Components for Consistency */
 @layer components {
   .title-primary {
-    @apply text-3xl font-bold text-white mb-2;
+    @apply text-3xl font-bold mb-2 text-slate-900 dark:text-white;
   }
   
   .description-primary {
-    @apply text-gray-400 font-medium;
+    @apply font-medium text-slate-600 dark:text-gray-400;
   }
 
   .section-header-panel {
-    @apply text-xs font-black text-white flex items-center gap-2 uppercase tracking-[0.2em] border-l-2 border-cyan-500 pl-3 mb-6;
+    @apply text-xs font-black flex items-center gap-2 uppercase tracking-[0.2em] border-l-2 border-cyan-500 pl-3 mb-6 text-slate-900 dark:text-white;
   }
 
   .label-protocol {
-    @apply text-[9px] text-gray-500 font-black uppercase tracking-widest leading-tight;
+    @apply text-[9px] font-black uppercase tracking-widest leading-tight text-slate-500 dark:text-gray-500;
   }
 
   .title-card-italic {
-    @apply text-sm font-black text-white uppercase italic tracking-tight transition-colors;
+    @apply text-sm font-black uppercase italic tracking-tight transition-colors text-slate-900 dark:text-white;
   }
 
   .value-stats {
-    @apply text-4xl font-bold text-white tracking-tight;
+    @apply text-4xl font-bold tracking-tight text-slate-900 dark:text-white;
   }
 
   /* Cards & Transitions */
   .glass-card {
-    @apply glass rounded-2xl border border-white/5 overflow-hidden relative shadow-2xl transition-all duration-500;
+    @apply glass rounded-2xl border border-slate-200 dark:border-white/5 overflow-hidden relative shadow-sm dark:shadow-2xl transition-all duration-500;
   }
 
   .glow-blur {
@@ -231,10 +229,145 @@ html {
   }
 
   .glass-table-head {
-    @apply bg-white/5 label-protocol uppercase;
+    @apply bg-slate-100 dark:bg-white/5 label-protocol uppercase text-slate-700 dark:text-gray-400 border-b border-slate-200 dark:border-white/10;
   }
 
   .glass-table-row {
-    @apply hover:bg-white/5 transition-colors;
+    @apply hover:bg-slate-50 dark:hover:bg-white/5 transition-colors border-b border-slate-200 dark:border-white/5 text-slate-800 dark:text-gray-300;
   }
+}
+
+/* Global Light Theme System Polish */
+html.light p.text-white,
+html.light h1.text-white,
+html.light h2.text-white,
+html.light h3.text-white,
+html.light h4.text-white,
+html.light h5.text-white,
+html.light td p.text-white,
+:root:not([data-theme="dark"]) p.text-white,
+:root:not([data-theme="dark"]) h1.text-white,
+:root:not([data-theme="dark"]) h2.text-white,
+:root:not([data-theme="dark"]) h3.text-white,
+:root:not([data-theme="dark"]) h4.text-white,
+:root:not([data-theme="dark"]) h5.text-white,
+:root:not([data-theme="dark"]) td p.text-white {
+  color: #0f172a;
+}
+
+/* Light mode table borders and cell styling */
+html.light table,
+html.light thead,
+html.light tbody,
+html.light tr,
+html.light th,
+html.light td,
+:root:not([data-theme="dark"]) table,
+:root:not([data-theme="dark"]) thead,
+:root:not([data-theme="dark"]) tbody,
+:root:not([data-theme="dark"]) tr,
+:root:not([data-theme="dark"]) th,
+:root:not([data-theme="dark"]) td {
+  border-color: rgba(226, 232, 240, 0.9);
+}
+
+html.light th,
+:root:not([data-theme="dark"]) th {
+  color: #475569;
+}
+
+html.light tbody tr:hover,
+:root:not([data-theme="dark"]) tbody tr:hover {
+  background-color: rgba(241, 245, 249, 0.75) !important;
+}
+
+/* Adaptive Pill Containers and Badges in Light Mode */
+html.light .bg-black\/40,
+html.light .bg-black\/60,
+:root:not([data-theme="dark"]) .bg-black\/40,
+:root:not([data-theme="dark"]) .bg-black\/60 {
+  background-color: #e2e8f0 !important;
+  border-color: #cbd5e1 !important;
+}
+
+html.light .bg-white\/5,
+:root:not([data-theme="dark"]) .bg-white\/5 {
+  background-color: rgba(241, 245, 249, 0.9) !important;
+  border-color: rgba(226, 232, 240, 0.9) !important;
+}
+
+html.light .bg-white\/10,
+:root:not([data-theme="dark"]) .bg-white\/10 {
+  background-color: rgba(226, 232, 240, 0.9) !important;
+  border-color: rgba(203, 213, 225, 0.9) !important;
+}
+
+/*
+ * Several older dashboard views were authored for navy-only surfaces. The
+ * theme tokens intentionally turn those surfaces light, so their legacy white
+ * foreground utility classes must also become dark in light mode. Limit this
+ * to light surfaces; purple/blue primary controls keep their white labels.
+ */
+html.light [class*="bg-navy-"].text-white,
+html.light [class*="bg-navy-"] .text-white,
+html.light [class*="bg-white/"].text-white,
+html.light [class*="bg-white/"] .text-white,
+html.light [class*="bg-black/"].text-white,
+html.light [class*="bg-black/"] .text-white,
+:root:not([data-theme="dark"]) [class*="bg-navy-"].text-white,
+:root:not([data-theme="dark"]) [class*="bg-navy-"] .text-white,
+:root:not([data-theme="dark"]) [class*="bg-white/"].text-white,
+:root:not([data-theme="dark"]) [class*="bg-white/"] .text-white,
+:root:not([data-theme="dark"]) [class*="bg-black/"].text-white,
+:root:not([data-theme="dark"]) [class*="bg-black/"] .text-white {
+  color: var(--color-text-primary) !important;
+}
+
+/* Strong brand controls remain white even when they sit inside a light card. */
+html.light button[class*="bg-purple-"].text-white,
+html.light button[class*="bg-purple-"] .text-white,
+html.light button[class*="bg-blue-"].text-white,
+html.light button[class*="bg-blue-"] .text-white,
+html.light button[class*="bg-indigo-"].text-white,
+html.light button[class*="bg-indigo-"] .text-white,
+html.light button[class*="bg-cyan-"].text-white,
+html.light button[class*="bg-cyan-"] .text-white,
+html.light button[class*="bg-emerald-"].text-white,
+html.light button[class*="bg-emerald-"] .text-white,
+html.light button[class*="from-"].text-white,
+html.light button[class*="from-"] .text-white,
+html.light a[class*="from-"] .text-white,
+:root:not([data-theme="dark"]) button[class*="bg-purple-"].text-white,
+:root:not([data-theme="dark"]) button[class*="bg-purple-"] .text-white,
+:root:not([data-theme="dark"]) button[class*="bg-blue-"].text-white,
+:root:not([data-theme="dark"]) button[class*="bg-blue-"] .text-white,
+:root:not([data-theme="dark"]) button[class*="bg-indigo-"].text-white,
+:root:not([data-theme="dark"]) button[class*="bg-indigo-"] .text-white,
+:root:not([data-theme="dark"]) button[class*="bg-cyan-"].text-white,
+:root:not([data-theme="dark"]) button[class*="bg-cyan-"] .text-white,
+:root:not([data-theme="dark"]) button[class*="bg-emerald-"].text-white,
+:root:not([data-theme="dark"]) button[class*="bg-emerald-"] .text-white,
+:root:not([data-theme="dark"]) button[class*="from-"].text-white,
+:root:not([data-theme="dark"]) button[class*="from-"] .text-white,
+:root:not([data-theme="dark"]) a[class*="from-"] .text-white {
+  color: #ffffff !important;
+}
+
+html.light .text-gray-200,
+:root:not([data-theme="dark"]) .text-gray-200 {
+  color: var(--color-text-secondary);
+}
+
+/* A white hover foreground is invisible on the light-version of a navy card. */
+html.light .hover\:text-white:hover,
+:root:not([data-theme="dark"]) .hover\:text-white:hover {
+  color: #5b21b6;
+}
+
+/* Preserve readable headings that were previously a white-to-color gradient. */
+html.light .text-transparent[class*="from-white"],
+:root:not([data-theme="dark"]) .text-transparent[class*="from-white"] {
+  color: var(--color-text-primary);
+  background-image: none;
+  -webkit-text-fill-color: currentColor;
 }

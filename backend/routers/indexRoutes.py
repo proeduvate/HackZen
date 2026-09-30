@@ -13,6 +13,9 @@ from routers import (
     inbox,
     progress,
     submission,
+    mentor_dashboard,
+    mentor_settings,
+    settings,
 )
 
 router = APIRouter()
@@ -30,3 +33,6 @@ router.include_router(inbox.router, prefix="/inbox", tags=["Notifications"])
 router.include_router(application.router, prefix="/applications", tags=["Applications"])
 router.include_router(submission.router, prefix="/submissions", tags=["Submissions"])
 router.include_router(evaluation.router, prefix="/evaluations", tags=["Evaluations"])
+router.include_router(mentor_dashboard.router, prefix="/mentor", tags=["Mentor Dashboard"])
+router.include_router(mentor_settings.router, prefix="/mentor", tags=["Mentor Settings"])
+router.include_router(settings.router, prefix="/settings", tags=["Settings"])

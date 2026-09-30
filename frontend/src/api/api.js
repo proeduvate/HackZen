@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+// Keep the fallback aligned with FastAPI's development server (main.py, port 8000).
+// VITE_API_URL remains the source of truth for deployments.
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
 
 const apiClient = axios.create({
     baseURL: API_BASE_URL,

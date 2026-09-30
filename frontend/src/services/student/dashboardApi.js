@@ -11,6 +11,16 @@ export const fetchDashboardData = async () => {
         
         const featuredHackathon = data.ongoing_hackathons?.[0] || data.upcoming_hackathons?.[0] || null;
 
+        const trackedWithProgress = await Promise.all(data.my_teams.map(async (team) => {
+            try {
+                const { data: progress } = await apiClient.get(`/progress/team/${team.id || team._id}`);
+                return { team, progress };
+            } catch (error) {
+                console.error(`Could not load progress for team ${team.id || team._id}`, error);
+                return { team, progress: null };
+            }
+        }));
+
         return {
             stats: [
                 { label: 'Engagements', value: String(data.user_stats.total_hackathons).padStart(2, '0'), icon: '⚡', color: 'blue' },
@@ -29,7 +39,7 @@ export const fetchDashboardData = async () => {
                 image: featuredHackathon.posterUrl || 'bg-gradient-to-r from-purple-600 to-indigo-600',
                 tags: featuredHackathon.themes || []
             } : {},
-            tracked: data.my_teams.map(team => {
+            tracked: trackedWithProgress.map(({ team, progress }) => {
                 const hackathon = data.ongoing_hackathons.find(h => h.id === team.hackathonId) || 
                                  data.past_hackathons.find(h => h.id === team.hackathonId);
                 
@@ -38,7 +48,9 @@ export const fetchDashboardData = async () => {
                     name: team.hackathonTitle,
                     status: hackathon ? (hackathon.status.charAt(0).toUpperCase() + hackathon.status.slice(1)) : 'Active',
                     team: team.name,
-                    progress: hackathon ? (hackathon.status === 'completed' ? 100 : 45) : 10,
+                    progress: progress ? Number(progress.percentage) : null,
+                    progressHistory: progress?.progressHistory || [],
+                    lastUpdated: progress?.lastUpdated || null,
                     next: team.role === 'leader' ? 'Manage Team' : 'Complete Tasks',
                     logo: team.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
                 };

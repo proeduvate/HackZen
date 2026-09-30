@@ -1,86 +1,31 @@
-/**
- * Student AI Assistant API
- * Provides mock data and service functions for the AI Assistant feature.
- */
+import apiClient from '../../api/api';
 
-const MOCK_DELAY = 1000;
-
-const MOCK_MESSAGES = [
-    {
-        id: 1,
-        sender: 'ai',
-        text: "Hello Hari! I see you're working on 'Global Connect 2025' with the 'Neural Ninjas' team. How can I assist you with your ideation process today?",
-        timestamp: '10:00 AM'
-    }
+const QUICK_STARTERS = [
+    { id: 1, text: 'Explain this hackathon theme in simple terms and identify the key focus areas.' },
+    { id: 2, text: 'Help me identify real user pain points that fit this problem statement.' },
+    { id: 3, text: 'Review my idea and suggest how to validate it with real users.' },
+    { id: 4, text: 'Recommend a practical project structure, architecture, and development approach.' },
 ];
 
-const MOCK_QUICK_STARTERS = [
-    { id: 1, text: "Analyze the hackathon theme and suggest key focus areas" },
-    { id: 2, text: "Critique my project idea for feasibility and impact" },
-    { id: 3, text: "Suggest a folder structure and tech stack" },
-    { id: 4, text: "What are urgent problems fitting this track?" }
-];
-
-/**
- * Fetches the initial conversation messages
- * @returns {Promise<Array>} List of messages
- */
 export const fetchInitialMessages = async () => {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve(MOCK_MESSAGES);
-        }, MOCK_DELAY);
-    });
+    const { data } = await apiClient.get('/ai/logs');
+    return data
+        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+        .flatMap(log => [
+            { id: `${log._id}-query`, sender: 'user', text: log.query, timestamp: new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
+            { id: `${log._id}-response`, sender: 'ai', text: log.response, timestamp: new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
+        ]);
 };
 
-/**
- * Fetches the quick starter prompts
- * @returns {Promise<Array>} List of quick starters
- */
-export const fetchQuickStarters = async () => {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve(MOCK_QUICK_STARTERS);
-        }, 800);
-    });
-};
+export const fetchQuickStarters = async () => QUICK_STARTERS;
 
-/**
- * Sends a message to the AI and receives a mock response
- * @param {string} text - User's message
- * @param {string} context - Current hackathon context
- * @param {string} objective - Current logic objective
- * @returns {Promise<Object>} AI response object
- */
-export const sendChatMessage = async (text, context, objective) => {
-    console.log(`[AI Assistant API] Sending message with context: ${context}, objective: ${objective}`);
-
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            const aiResponse = {
-                id: Date.now(),
-                sender: 'ai',
-                text: getMockResponse(text, context, objective),
-                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            };
-            resolve(aiResponse);
-        }, 1500);
-    });
-};
-
-/**
- * Helper to generate different mock responses based on input
- */
-const getMockResponse = (text, context, objective) => {
-    const textLower = text.toLowerCase();
-
-    if (textLower.includes('tech stack') || textLower.includes('structure')) {
-        return `That's an interesting direction for ${context}! Since you're in the ${objective} phase, you might want to consider using a modular architecture. Here are a few tech stack suggestions:\n\n• **Frontend:** React with Vite\n• **Backend:** Node.js with Express\n• **Database:** MongoDB or PostgreSQL\n\nWould you like me to elaborate on a specific component?`;
-    }
-
-    if (textLower.includes('analyze') || textLower.includes('theme')) {
-        return `Analyzing ${context} theme... This track emphasizes high impact and technical scalability. Your current focus on ${objective} is perfect for identifying core bottlenecks early. I recommend focusing on user accessibility and robust data management as they are primary evaluation criteria.`;
-    }
-
-    return "That's a valid point. Integrating this into your current workflow for " + objective + " could significantly enhance the feasibility of your project in " + context + ". Do you want me to break down the implementation steps for this?";
+export const sendChatMessage = async (text, hackathonId, objective = 'General guidance') => {
+    const query = `[Focus: ${objective}]\n${text}`;
+    const { data } = await apiClient.post('/ai/chat', { query, hackathon_id: hackathonId });
+    return {
+        id: `${Date.now()}-response`,
+        sender: 'ai',
+        text: data.response,
+        timestamp: new Date(data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
 };

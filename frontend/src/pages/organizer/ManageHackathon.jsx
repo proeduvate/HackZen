@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import apiClient from '../../api/api';
 
 // --- Stat Card Helper Component (Lifted outside for performance and clarity) ---
 const StatCard = ({ stat }) => (
@@ -29,6 +30,9 @@ const ManageHackathon = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isActionLoading, setIsActionLoading] = useState({});
     const [pageError, setPageError] = useState(null);
+    const [feedback, setFeedback] = useState([]);
+    const [isFeedbackLoading, setIsFeedbackLoading] = useState(false);
+    const [feedbackActionId, setFeedbackActionId] = useState(null);
 
     // --- Mock Data ---
     const [teams, setTeams] = useState([
@@ -45,7 +49,7 @@ const ManageHackathon = () => {
         { label: "Avg. Team Size", value: "3.2", icon: "📊", trend: "Stable", color: "green" },
     ], []);
 
-    const tabs = ['Overview', 'Participants', 'Submissions', 'Mentors', 'Broadcast'];
+    const tabs = ['Overview', 'Participants', 'Submissions', 'Mentors', 'Feedback', 'Broadcast'];
 
     // --- Data Fetching ---
     useEffect(() => {
@@ -53,27 +57,22 @@ const ManageHackathon = () => {
             setIsLoading(true);
             setPageError(null);
             try {
-                // Mimic API latency
-                await new Promise(resolve => setTimeout(resolve, 800));
-
-                // If it's a valid ID, set mock data
-                if (hackathonId) {
-                    setHackathon({
-                        id: hackathonId,
-                        title: "Future Tech Challenge 2026",
-                        banner: "https://images.unsplash.com/photo-1504384308090-c54be3852f33?auto=format&fit=crop&q=80&w=1000",
-                        status: "Active",
-                        category: "Emerging Tech",
-                        mode: "Hybrid",
-                        location: "San Francisco, CA / Online",
-                        visibility: true,
-                        registrationOpen: true,
-                        daysLeft: 14,
-                        progress: 65
-                    });
-                } else {
-                    setPageError("Hackathon ID not found.");
-                }
+                if (!hackathonId) throw new Error('Hackathon ID not found.');
+                const { data } = await apiClient.get(`/hackathon/${hackathonId}`);
+                const end = data.hackathonEnd ? new Date(data.hackathonEnd) : null;
+                setHackathon({
+                    id: data._id || hackathonId,
+                    title: data.title,
+                    banner: data.posterUrl || "https://images.unsplash.com/photo-1504384308090-c54be3852f33?auto=format&fit=crop&q=80&w=1000",
+                    status: data.status,
+                    category: data.themes?.[0] || 'General',
+                    mode: data.location === 'Online' ? 'Online' : 'Hybrid',
+                    location: data.location || 'Online',
+                    visibility: data.isPublic,
+                    registrationOpen: data.registrationEnd ? new Date(data.registrationEnd) > new Date() : false,
+                    daysLeft: end ? Math.max(0, Math.ceil((end - new Date()) / 86400000)) : 0,
+                    progress: 65,
+                });
             } catch (error) {
                 console.error("Error fetching hackathon details:", error);
                 setPageError("Failed to load hackathon details. Please refresh the page.");
@@ -84,6 +83,31 @@ const ManageHackathon = () => {
 
         fetchHackathonDetails();
     }, [hackathonId]);
+
+    useEffect(() => {
+        if (activeTab !== 'Feedback' || !hackathonId) return;
+        let isActive = true;
+        const loadFeedback = async (showLoading = false) => {
+            // Only show the loading state for the first request. Subsequent
+            // polls keep the list stable while fresh feedback arrives.
+            if (showLoading) setIsFeedbackLoading(true);
+            try {
+                const { data } = await apiClient.get(`/teams/hackathon/${hackathonId}/feedback`);
+                if (isActive) setFeedback(data.data || []);
+            } catch (error) {
+                console.error('Failed to load hackathon feedback:', error);
+                if (isActive) setFeedback([]);
+            } finally {
+                if (isActive) setIsFeedbackLoading(false);
+            }
+        };
+        loadFeedback(true);
+        const refreshTimer = window.setInterval(() => loadFeedback(), 10000);
+        return () => {
+            isActive = false;
+            window.clearInterval(refreshTimer);
+        };
+    }, [activeTab, hackathonId]);
 
     // --- Filter Logic ---
     const filteredTeams = useMemo(() => {
@@ -111,6 +135,23 @@ const ManageHackathon = () => {
     const toggleStatus = (field) => {
         if (!hackathon) return;
         setHackathon(prev => ({ ...prev, [field]: !prev[field] }));
+    };
+
+    const handleFeedbackAction = async (feedbackId, action) => {
+        if (action === 'delete' && !window.confirm('Delete this feedback permanently? This cannot be undone.')) return;
+        setFeedbackActionId(feedbackId);
+        try {
+            if (action === 'archive') {
+                await apiClient.patch(`/teams/hackathon/${hackathonId}/feedback/${feedbackId}`, { archived: true });
+            } else {
+                await apiClient.delete(`/teams/hackathon/${hackathonId}/feedback/${feedbackId}`);
+            }
+            setFeedback((items) => items.filter((item) => item.id !== feedbackId));
+        } catch (error) {
+            console.error(`Failed to ${action} feedback:`, error);
+        } finally {
+            setFeedbackActionId(null);
+        }
     };
 
     // --- Render States ---
@@ -397,6 +438,45 @@ const ManageHackathon = () => {
                                 <div className="p-4 bg-white/5 text-center border-t border-white/5">
                                     <button className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-white transition-all">Show More Teams</button>
                                 </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'Feedback' && (
+                            <div className="glass rounded-xl border border-white/10 overflow-hidden shadow-2xl">
+                                <div className="p-6 border-b border-white/10 bg-white/5">
+                                    <h3 className="text-lg font-semibold text-white">Team Feedback</h3>
+                                    <p className="text-sm text-gray-400 mt-1">{hackathon.status === 'Completed' ? 'This completed hackathon is read-only. You can still archive or delete entries.' : 'Review mentor feedback across all teams in this hackathon.'}</p>
+                                </div>
+                                {isFeedbackLoading ? (
+                                    <div className="p-12 text-center text-gray-400">Loading feedback...</div>
+                                ) : feedback.length === 0 ? (
+                                    <div className="p-12 text-center text-gray-500">No mentor feedback has been submitted for this hackathon yet.</div>
+                                ) : (
+                                    <div className="divide-y divide-white/5">
+                                        {feedback.map((item) => (
+                                            <article key={item.id} className="p-6 hover:bg-white/[0.03] transition-colors">
+                                                <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
+                                                    <div>
+                                                        <p className="text-white font-semibold">{item.title}</p>
+                                                        <p className="text-xs text-cyan-400 mt-1">{item.teamName} · {item.studentName} · by {item.mentorName}</p>
+                                                    </div>
+                                                    <div className="flex items-center gap-3 text-xs">
+                                                        <span className="px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-300 border border-purple-500/20 capitalize">{String(item.type).replace('_', ' ')}</span>
+                                                        {item.rating && <span className="text-amber-300">Rating {item.rating}/5</span>}
+                                                    </div>
+                                                </div>
+                                                <p className="text-sm text-gray-300 leading-relaxed mt-4">{item.content}</p>
+                                                <div className="flex flex-wrap items-center justify-between gap-3 mt-3">
+                                                    <p className="text-xs text-gray-500">{item.createdAt ? new Date(item.createdAt).toLocaleString() : ''}</p>
+                                                    <div className="flex gap-2">
+                                                        <button onClick={() => handleFeedbackAction(item.id, 'archive')} disabled={feedbackActionId === item.id} className="px-3 py-1.5 text-xs rounded-lg border border-amber-500/30 text-amber-300 hover:bg-amber-500/10 disabled:opacity-50">Archive</button>
+                                                        <button onClick={() => handleFeedbackAction(item.id, 'delete')} disabled={feedbackActionId === item.id} className="px-3 py-1.5 text-xs rounded-lg border border-red-500/30 text-red-300 hover:bg-red-500/10 disabled:opacity-50">Delete</button>
+                                                    </div>
+                                                </div>
+                                            </article>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
 
