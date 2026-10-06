@@ -10,6 +10,11 @@ export const getMyTeams = async () => {
     return data || [];
 };
 
+export const getMyMentorRequests = async () => {
+    const { data } = await apiClient.get('/teams/my-mentor-requests');
+    return data || [];
+};
+
 export const fetchMentorTeams = async () => {
   const { data } = await apiClient.get('/teams/mentor-teams');
   return data;

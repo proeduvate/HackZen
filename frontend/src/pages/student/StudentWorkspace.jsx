@@ -157,35 +157,40 @@ const StudentWorkspace = () => {
         scrollToBottom();
     }, [teamMessages, selectedTeam, activeTab]);
 
-    const handleSendMessage = (e) => {
+    const handleSendMessage = async (e) => {
         e.preventDefault();
-        if (!messageInput.trim()) return;
+        const trimmedMessage = messageInput.trim();
+        if (!trimmedMessage || !selectedTeam) return;
 
-        // Send via WebSocket if connected
-        if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-            const messageData = {
-                content: messageInput,
+        try {
+            const { data } = await apiClient.post(`/chat/${selectedTeam}/send`, {
+                content: trimmedMessage,
                 type: 'text'
+            });
+
+            const newMessage = {
+                id: data?._id || Date.now(),
+                text: data?.content || trimmedMessage,
+                sender: data?.senderId === userId ? 'me' : 'them',
+                user: data?.senderName || userName,
+                time: new Date(data?.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                type: data?.messageType || 'text'
             };
-            socketRef.current.send(JSON.stringify(messageData));
+
+            setTeamMessages(prev => ({
+                ...prev,
+                [selectedTeam]: [...(prev[selectedTeam] || []), newMessage]
+            }));
+
+            setMessageInput('');
+        } catch (error) {
+            console.error('Failed to send workspace message:', error);
+            const backendDetail = error?.response?.data?.detail;
+            const message = typeof backendDetail === 'string'
+                ? backendDetail
+                : backendDetail?.message || 'The message could not be saved. Please try again.';
+            alert(message);
         }
-
-        // Optimistically update UI
-        const newMessage = {
-            id: Date.now(),
-            text: messageInput,
-            sender: 'me',
-            user: userName,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            type: 'text'
-        };
-
-        setTeamMessages(prev => ({
-            ...prev,
-            [selectedTeam]: [...(prev[selectedTeam] || []), newMessage]
-        }));
-        
-        setMessageInput('');
     };
 
     if (isLoading) return (

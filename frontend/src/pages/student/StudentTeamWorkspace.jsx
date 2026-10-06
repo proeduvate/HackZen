@@ -84,8 +84,8 @@ const StudentTeamWorkspace = () => {
           ...teamData,
           id: teamIdValue,
           teamName: teamData?.teamName || selectedTeam.teamName || selectedTeam.name || 'Team Workspace',
-          problemStatement: teamData?.problemStatement || 'Develop a sustainable, AI-driven solution to optimize urban waste management routing. The system must process real-time sensor data from smart bins, adapt to traffic patterns, and minimize carbon footprint of collection vehicles while ensuring no bin exceeds 90% capacity for more than 4 hours.',
-          hackathonName: teamData?.hackathonName || selectedTeam.hackathon || 'Global Innovators 2024'
+          problemStatement: teamData?.problemStatement || '',
+          hackathonName: teamData?.hackathonName || selectedTeam.hackathon || 'Hackathon'
         };
 
         setTeam(normalizedTeam);
@@ -96,7 +96,7 @@ const StudentTeamWorkspace = () => {
           initials: getInitials(member.name || member.userName || 'Team Member')
         })));
 
-        const percentage = Number(progressData?.percentage ?? progressData?.progress ?? selectedTeam.progress ?? 45) || 45;
+        const percentage = Number(progressData?.percentage ?? progressData?.progress ?? selectedTeam.progress ?? 0) || 0;
         const phase = progressData?.status || selectedTeam.status || 'Active';
         setProgress({
           percentage,
@@ -119,23 +119,14 @@ const StudentTeamWorkspace = () => {
           mine: msg.senderId === userId
         }));
 
-        setMessages(messageList.length ? messageList : [
-          { id: 1, sender: 'Ava', text: 'The onboarding doc is ready. I have added the user flow for the accessibility checks.', time: '09:12', mine: false },
-          { id: 2, sender: 'You', text: 'Great — I will update the prototype and share the review deck before lunch.', time: '09:14', mine: true },
-          { id: 3, sender: 'Rohan', text: 'We should validate the demo script with the mentor for the final call.', time: '09:18', mine: false }
-        ]);
-
-        setFiles((selectedTeam.files || []).map((file, index) => ({
+        setMessages(messageList);
+        setFiles(Array.isArray(selectedTeam.files) ? selectedTeam.files.map((file, index) => ({
           id: file.id || `${file.name || 'file'}-${index}`,
           name: file.name || 'workspace_file',
           type: file.type || 'DOC',
-          size: file.size || '1.2 MB'
-        })) || []);
-
-        setActivity((selectedTeam.activity || []).length ? selectedTeam.activity : [
-          { id: 1, user: 'Harini', action: 'uploaded', item: 'wireframes_v2.fig', time: '24m ago' },
-          { id: 2, user: 'Arjun', action: 'updated', item: 'backend-api', time: '1h ago' }
-        ]);
+          size: file.size || 'Unknown size'
+        })) : []);
+        setActivity(Array.isArray(selectedTeam.activity) ? selectedTeam.activity : []);
       } catch (error) {
         console.error('Failed to load team workspace:', error);
       } finally {
@@ -154,28 +145,39 @@ const StudentTeamWorkspace = () => {
 
   const handleSendMessage = async (event) => {
     event.preventDefault();
-    if (!draftMessage.trim() || !team) return;
+    const trimmedMessage = draftMessage.trim();
+    if (!trimmedMessage || !team) return;
 
-    const payload = { content: draftMessage, type: 'text' };
     try {
-      const response = await apiClient.post(`/chat/${team.id}/send`, payload).catch(() => ({ data: { _id: Date.now().toString(), content: draftMessage, senderId: userId, senderName: userName, createdAt: new Date().toISOString() } }));
+      const response = await apiClient.post(`/chat/${team.id}/send`, {
+        content: trimmedMessage,
+        type: 'text'
+      });
+
+      const serverMessage = response?.data;
       const messageEntry = {
-        id: response?.data?._id || Date.now(),
-        sender: userName,
-        text: draftMessage,
-        time: 'Now',
-        mine: true
+        id: serverMessage?._id || Date.now(),
+        sender: serverMessage?.senderName || userName,
+        text: serverMessage?.content || trimmedMessage,
+        time: formatTime(serverMessage?.createdAt),
+        mine: String(serverMessage?.senderId || userId) === String(userId)
       };
+
       setMessages((current) => [...current, messageEntry]);
       setDraftMessage('');
     } catch (error) {
       console.error('Failed to send workspace message:', error);
+      const backendDetail = error?.response?.data?.error?.message || error?.response?.data?.detail || error?.message;
+      const message = typeof backendDetail === 'string'
+        ? backendDetail
+        : 'The message could not be saved. Please try again.';
+      alert(message);
     }
   };
 
-  const currentTeam = team || { teamName: 'Team Workspace', hackathonName: 'Global Innovators 2024', problemStatement: 'No problem statement available yet.' };
+  const currentTeam = team || { teamName: 'Team Workspace', hackathonName: 'Hackathon', problemStatement: 'No problem statement available yet.' };
   const teamName = currentTeam.teamName || currentTeam.name || 'Team Workspace';
-  const hackathonName = currentTeam.hackathonName || currentTeam.hackathon || 'Global Innovators 2024';
+  const hackathonName = currentTeam.hackathonName || currentTeam.hackathon || 'Hackathon';
   const statusText = `${progress.status || 'Active'} - ${progress.label || 'Ideation'}`;
 
   if (loading) {
@@ -192,11 +194,7 @@ const StudentTeamWorkspace = () => {
       case 'Tasks':
         return (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {(tasks.length ? tasks : [
-              { id: 'default-task-1', title: 'Define the MVP flow', status: 'In Progress', assignee: 'Team' },
-              { id: 'default-task-2', title: 'Prepare the project brief', status: 'Upcoming', assignee: 'Team' },
-              { id: 'default-task-3', title: 'Validate the deployment plan', status: 'Done', assignee: 'Team' }
-            ]).map((task) => (
+            {tasks.length ? tasks.map((task) => (
               <div key={task.id} className="rounded-[20px] border border-[#e6dff4] bg-white p-5 shadow-[0_8px_20px_rgba(79,52,181,0.04)]">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${statusBadgeClass(task.status)}`}>
@@ -206,32 +204,33 @@ const StudentTeamWorkspace = () => {
                 </div>
                 <h3 className="text-lg font-bold text-[#1f1a2d]">{task.title}</h3>
               </div>
-            ))}
+            )) : (
+              <div className="col-span-full rounded-[20px] border border-dashed border-[#e6dff4] bg-white p-8 text-center text-slate-500">No milestones have been added for this team yet.</div>
+            )}
           </div>
         );
       case 'Files':
         return (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {(files.length ? files : [
-              { id: 'default-file-1', name: 'research_notes.pdf', type: 'PDF', size: '2.3 MB' },
-              { id: 'default-file-2', name: 'prototype_v2.fig', type: 'FIG', size: '11.8 MB' }
-            ]).map((file) => (
-              <div key={file.id} className="rounded-[20px] border border-[#e6dff4] bg-white p-5 shadow-[0_8px_20px_rgba(79,52,181,0.04)]">
+            {files.length ? files.map((file) => (
+              <div key={file.id || file.name} className="rounded-[20px] border border-[#e6dff4] bg-white p-5 shadow-[0_8px_20px_rgba(79,52,181,0.04)]">
                 <div className="mb-4 text-3xl">📄</div>
                 <h3 className="text-base font-bold text-[#1f1a2d]">{file.name}</h3>
-                <p className="mt-2 text-sm text-slate-500">{file.type} • {file.size}</p>
+                <p className="mt-2 text-sm text-slate-500">{file.type || 'FILE'} • {file.size || 'Unknown size'}</p>
                 <button onClick={() => navigate('/student/files')} className="mt-4 rounded-xl bg-[#f3eefc] px-3 py-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#4d3bb5]">
                   Open
                 </button>
               </div>
-            ))}
+            )) : (
+              <div className="col-span-full rounded-[20px] border border-dashed border-[#e6dff4] bg-white p-8 text-center text-slate-500">No files have been shared in this workspace yet.</div>
+            )}
           </div>
         );
       case 'Chat':
         return (
           <div className="flex h-full min-h-[420px] flex-col">
             <div className="flex-1 space-y-5 overflow-y-auto pr-2">
-              {messages.map((entry) => (
+              {messages.length ? messages.map((entry) => (
                 <div key={entry.id} className={`flex ${entry.mine ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[78%] rounded-[20px] px-4 py-3 ${entry.mine ? 'bg-[#4d3bb5] text-white' : 'bg-white text-[#1f1a2d] shadow-[0_8px_18px_rgba(76,59,183,0.04)]'}`}>
                     <p className="text-sm leading-relaxed">{entry.text}</p>
@@ -240,7 +239,9 @@ const StudentTeamWorkspace = () => {
                     </div>
                   </div>
                 </div>
-              ))}
+              )) : (
+                <div className="rounded-[20px] border border-dashed border-[#e6dff4] bg-white p-8 text-center text-slate-500">No messages yet. Start the conversation with your team.</div>
+              )}
               <div ref={chatEndRef} />
             </div>
 
@@ -269,11 +270,8 @@ const StudentTeamWorkspace = () => {
       case 'Activity':
         return (
           <div className="space-y-4">
-            {(activity.length ? activity : [
-              { id: 'a1', user: 'Ava', action: 'uploaded', item: 'wireframes_v2.fig', time: '24m ago' },
-              { id: 'a2', user: 'You', action: 'updated', item: 'project brief', time: '1h ago' }
-            ]).map((item) => (
-              <div key={item.id} className="flex items-center justify-between rounded-[18px] border border-[#e6dff4] bg-white px-4 py-4 shadow-[0_8px_20px_rgba(79,52,181,0.03)]">
+            {activity.length ? activity.map((item) => (
+              <div key={item.id || `${item.user}-${item.time}`} className="flex items-center justify-between rounded-[18px] border border-[#e6dff4] bg-white px-4 py-4 shadow-[0_8px_20px_rgba(79,52,181,0.03)]">
                 <div className="flex items-center gap-3">
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f2ecff] text-sm font-bold text-[#4d3bb5]">
                     {getInitials(item.user || 'Team')}
@@ -285,7 +283,9 @@ const StudentTeamWorkspace = () => {
                 </div>
                 <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">{item.time}</span>
               </div>
-            ))}
+            )) : (
+              <div className="rounded-[18px] border border-dashed border-[#e6dff4] bg-white p-8 text-center text-slate-500">No activity has been recorded for this workspace yet.</div>
+            )}
           </div>
         );
       case 'Overview':
@@ -312,12 +312,7 @@ const StudentTeamWorkspace = () => {
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
-                  {(members.length ? members : [
-                    { id: 'm1', name: 'Aisha Rahman', role: 'Team Lead' },
-                    { id: 'm2', name: 'Rohan Singh', role: 'Backend Engineer' },
-                    { id: 'm3', name: 'Meera Nair', role: 'Designer' },
-                    { id: 'm4', name: 'Karan Vyas', role: 'Frontend Engineer' }
-                  ]).map((member, index) => (
+                  {members.length ? members.map((member, index) => (
                     <div key={member.id || `${member.name}-${index}`} className="flex items-center gap-4 rounded-[16px] border border-[#e6dff4] bg-[#f9f7fb] p-4">
                       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#e7deff] text-sm font-bold text-[#4d3bb5]">
                         {member.initials || getInitials(member.name || 'Team')}
@@ -327,7 +322,9 @@ const StudentTeamWorkspace = () => {
                         <div className="text-sm text-slate-500">{member.role || 'Member'}</div>
                       </div>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="col-span-full rounded-[16px] border border-dashed border-[#e6dff4] bg-[#f9f7fb] p-6 text-sm text-slate-500">No members have been added to this team yet.</div>
+                  )}
                 </div>
               </div>
 
@@ -338,11 +335,8 @@ const StudentTeamWorkspace = () => {
                 </div>
 
                 <div className="space-y-4">
-                  {(activity.length ? activity : [
-                    { id: 'a1', user: 'Harini', action: 'uploaded', item: 'wireframes_v2.fig', time: '24m ago' },
-                    { id: 'a2', user: 'Arjun', action: 'updated', item: 'backend-api', time: '1h ago' }
-                  ]).map((item) => (
-                    <div key={item.id} className="flex items-center justify-between gap-4 rounded-[16px] border border-[#e6dff4] bg-[#faf7ff] p-4">
+                  {activity.length ? activity.map((item) => (
+                    <div key={item.id || `${item.user}-${item.time}`} className="flex items-center justify-between gap-4 rounded-[16px] border border-[#e6dff4] bg-[#faf7ff] p-4">
                       <div className="flex items-center gap-3">
                         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#eae1ff] text-[#4d3bb5]">
                           {item.user ? getInitials(item.user) : '•'}
@@ -354,7 +348,9 @@ const StudentTeamWorkspace = () => {
                       </div>
                       <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">{item.time}</span>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="rounded-[16px] border border-dashed border-[#e6dff4] bg-[#faf7ff] p-6 text-sm text-slate-500">No activity has been recorded for this workspace yet.</div>
+                  )}
                 </div>
               </div>
             </div>

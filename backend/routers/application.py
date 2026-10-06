@@ -28,21 +28,26 @@ async def create_application(
 ):
     """Apply for a hackathon"""
 
+    current_user_id = str(current_user.get("sub") or current_user.get("id"))
+    if not current_user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authenticated student user is missing from the token.",
+        )
+
     collection = get_application_collection()
 
-    # Check if already applied
-    # Using camelCase as per initialized schema
     existing = await collection.find_one(
-        {"hackathonId": app_data.hackathonId, "userId": current_user["sub"]}
+        {"hackathonId": app_data.hackathonId, "userId": current_user_id}
     )
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="You have already applied for this hackathon",
+            detail="You have already applied for this hackathon.",
         )
 
     app_dict = app_data.model_dump(by_alias=True)
-    app_dict["userId"] = current_user["sub"]
+    app_dict["userId"] = current_user_id
     app_dict["status"] = ApplicationStatus.PENDING.value
     app_dict["appliedAt"] = datetime.utcnow()
 

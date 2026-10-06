@@ -13,7 +13,7 @@ class ApplicationStatus(str, Enum):
 
 class ApplicationBase(BaseModel):
     hackathonId: str = Field(..., alias="hackathonId")
-    userId: str = Field(..., alias="userId")
+    userId: Optional[str] = Field(None, alias="userId")
     teamId: Optional[str] = Field(None, alias="teamId")
     status: ApplicationStatus = ApplicationStatus.PENDING
 
@@ -29,6 +29,7 @@ class ApplicationUpdate(BaseModel):
 
 class ApplicationResponse(ApplicationBase):
     id: str = Field(..., alias="_id")
+    userId: str = Field(..., alias="userId")
     appliedAt: datetime = Field(..., alias="appliedAt")
 
     class Config:

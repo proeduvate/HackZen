@@ -25,14 +25,25 @@ const HackathonRegistrationStepThree = () => {
         setError('');
 
         try {
-            await submitStepThreeRegistration(hackathonId, {
+            const result = await submitStepThreeRegistration(hackathonId, {
                 ...draft,
                 acceptedTerms,
             });
-            navigate(`/student/hackathons/${hackathonId}/register/success`);
+            navigate(`/student/hackathons/${hackathonId}/register/success`, {
+                state: {
+                    registrationId: result?.registrationId || null,
+                    registeredAt: result?.timestamp || null,
+                },
+            });
         } catch (submitError) {
             console.error('Failed to submit registration:', submitError);
-            setError('Registration could not be completed. Please try again.');
+
+            const detail = submitError?.response?.data?.detail;
+            const message = typeof detail === 'string'
+                ? detail
+                : detail?.message || submitError?.message || 'Registration could not be completed. Please try again.';
+
+            setError(message);
         } finally {
             setIsSubmitting(false);
         }

@@ -5,9 +5,9 @@ import apiClient from '../../api/api';
  */
 
 const DEFAULT_PROFILE = {
-    name: 'Dr. Sarah Mitchell',
-    role: 'Senior Mentor',
-    institution: 'Stanford AI Lab',
+    name: 'Mentor',
+    role: 'Mentor',
+    institution: 'Not specified',
     bio: '',
     avatarGradient: 'from-purple-600 to-indigo-600',
     expertise: [],
@@ -21,7 +21,7 @@ const DEFAULT_PROFILE = {
         rating: '0/5',
         sessions: 0
     },
-    initials: 'SM'
+    initials: 'M'
 };
 
 export const fetchMentorProfile = async () => {

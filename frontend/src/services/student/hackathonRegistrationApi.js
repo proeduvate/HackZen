@@ -49,10 +49,23 @@ export const saveRegistrationDraft = async (hackathonId, nextDraft) => {
 
 export const submitHackathonRegistration = async (hackathonId, draft) => {
     try {
+        const storedUser = JSON.parse(
+            sessionStorage.getItem('user') || localStorage.getItem('user') || '{}'
+        );
+        const userId = storedUser?._id || storedUser?.id || storedUser?.userId;
+
+        if (!userId) {
+            throw new Error('Authenticated student user information is missing.');
+        }
+
         const payload = {
             hackathonId,
+            userId,
             teamName: draft?.teamName || '',
             notes: draft?.notes || '',
+            leaderName: draft?.leaderName || storedUser?.name || '',
+            leaderEmail: draft?.leaderEmail || storedUser?.email || '',
+            teamSize: draft?.teamSize || 2,
         };
 
         const { data } = await apiClient.post('/applications/', payload);
