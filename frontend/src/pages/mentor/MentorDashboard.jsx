@@ -19,7 +19,8 @@ import {
   AlertCircle,
   Eye,
   Check,
-  X
+  X,
+  Trophy
 } from 'lucide-react';
 import { useMentor } from '../../context/MentorContext';
 import { fetchMentorDashboard } from '../../services/mentor/dashboardApi';
@@ -650,6 +651,101 @@ export default function MentorDashboard() {
       </div>
 
       {/* ================================================== */}
+      {/* SECTION: UPCOMING HACKATHONS */}
+      {/* ================================================== */}
+      <section className="bg-white dark:bg-[#111625] rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-xs p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-[#5B45D9] dark:text-purple-300" />
+              Upcoming Hackathons
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Explore upcoming hackathon cohorts and events seeking technical mentors
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/mentor/hackathons')}
+            className="px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-bold text-[#5B45D9] dark:text-purple-300 hover:bg-[#F2EEFD] dark:hover:bg-purple-950/30 transition-all flex items-center gap-1.5 self-start sm:self-auto shadow-2xs"
+          >
+            View All Hackathons <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            {
+              id: 'hack-1',
+              title: 'AI Innovation Hackathon 2025',
+              category: 'Artificial Intelligence',
+              dates: 'Oct 22 - Oct 29, 2025',
+              organizer: 'Stanford AI Student Alliance & Google Cloud',
+              prize: '$45,000 USD',
+              phase: 'Sprint Phase',
+              status: 'Ongoing',
+            },
+            {
+              id: 'hack-3',
+              title: 'NextGen FinTech Challenge',
+              category: 'FinTech',
+              dates: 'Nov 10 - Nov 17, 2025',
+              organizer: 'Open Finance Collective',
+              prize: '$35,000 USD',
+              phase: 'Registration Open',
+              status: 'Upcoming',
+            },
+            {
+              id: 'hack-5',
+              title: 'CyberShield Defense Arena',
+              category: 'Cybersecurity',
+              dates: 'Dec 05 - Dec 12, 2025',
+              organizer: 'MIT Cyber Security Club',
+              prize: '$50,000 USD',
+              phase: 'Team Formation',
+              status: 'Upcoming',
+            },
+          ].map((item) => (
+            <div
+              key={item.id}
+              className="p-4 rounded-xl border border-slate-200/70 dark:border-white/5 bg-[#FAFAFD]/60 dark:bg-navy-950/20 hover:border-[#5B45D9]/40 hover:bg-white dark:hover:bg-navy-900/40 transition-all flex flex-col justify-between group"
+            >
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-purple-50 text-[#5B45D9] dark:bg-purple-950/40 dark:text-purple-300 border border-purple-100 dark:border-purple-800/40">
+                    {item.category}
+                  </span>
+                  <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                    {item.prize}
+                  </span>
+                </div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#5B45D9] dark:group-hover:text-purple-300 transition-colors">
+                  {item.title}
+                </h3>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  {item.organizer}
+                </p>
+                <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                  <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                  <span>{item.dates}</span>
+                </div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+                <span className="text-[11px] font-medium text-slate-400">
+                  {item.phase}
+                </span>
+                <button
+                  onClick={() => navigate('/mentor/hackathons')}
+                  className="text-xs font-bold text-[#5B45D9] dark:text-purple-300 hover:underline flex items-center gap-1"
+                >
+                  Explore <ChevronRight className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ================================================== */}
       {/* BOTTOM SECTION: QUICK ACTIONS */}
       {/* ================================================== */}
       <section className="bg-white dark:bg-[#111625] rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-xs p-6">
@@ -662,25 +758,41 @@ export default function MentorDashboard() {
           </p>
         </div>
 
-        {/* 4 Compact Cards/Buttons */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* 1. Schedule a Session */}
+        {/* 5 Compact Cards/Buttons */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          {/* 1. My Hackathons */}
+          <button
+            onClick={() => navigate('/mentor/hackathons')}
+            className="flex items-center gap-3.5 p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-[#FAFAFD]/60 dark:bg-navy-950/30 hover:border-[#5B45D9] hover:bg-white dark:hover:bg-navy-900 transition-all text-left group shadow-xs"
+          >
+            <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-[#5B45D9] dark:text-purple-300 flex items-center justify-center group-hover:scale-105 transition-transform">
+              <Trophy className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#5B45D9] transition-colors">
+                My Hackathons
+              </h4>
+              <p className="text-xs text-slate-400 mt-0.5">Cohorts & events</p>
+            </div>
+          </button>
+
+          {/* 2. Schedule a Session */}
           <button
             onClick={() => openScheduleModal()}
             className="flex items-center gap-3.5 p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-[#FAFAFD]/60 dark:bg-navy-950/30 hover:border-[#5B45D9] hover:bg-white dark:hover:bg-navy-900 transition-all text-left group shadow-xs"
           >
-            <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-[#5B45D9] dark:text-purple-300 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-300 flex items-center justify-center group-hover:scale-105 transition-transform">
               <Calendar className="w-5 h-5" />
             </div>
             <div>
               <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#5B45D9] transition-colors">
-                Schedule a Session
+                Schedule Session
               </h4>
-              <p className="text-xs text-slate-400 mt-0.5">Book 1-on-1 or group call</p>
+              <p className="text-xs text-slate-400 mt-0.5">1-on-1 or group call</p>
             </div>
           </button>
 
-          {/* 2. Review Teams */}
+          {/* 3. Review Teams */}
           <button
             onClick={() => navigate('/mentor/teams')}
             className="flex items-center gap-3.5 p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-[#FAFAFD]/60 dark:bg-navy-950/30 hover:border-[#5B45D9] hover:bg-white dark:hover:bg-navy-900 transition-all text-left group shadow-xs"
@@ -692,23 +804,7 @@ export default function MentorDashboard() {
               <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#5B45D9] transition-colors">
                 Review Teams
               </h4>
-              <p className="text-xs text-slate-400 mt-0.5">Evaluate active cohorts</p>
-            </div>
-          </button>
-
-          {/* 3. Share Resource */}
-          <button
-            onClick={() => navigate('/mentor/resources')}
-            className="flex items-center gap-3.5 p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-[#FAFAFD]/60 dark:bg-navy-950/30 hover:border-[#5B45D9] hover:bg-white dark:hover:bg-navy-900 transition-all text-left group shadow-xs"
-          >
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-300 flex items-center justify-center group-hover:scale-105 transition-transform">
-              <Share2 className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#5B45D9] transition-colors">
-                Share Resource
-              </h4>
-              <p className="text-xs text-slate-400 mt-0.5">Upload guides & decks</p>
+              <p className="text-xs text-slate-400 mt-0.5">Active cohorts</p>
             </div>
           </button>
 
@@ -724,7 +820,23 @@ export default function MentorDashboard() {
               <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#5B45D9] transition-colors">
                 View Requests
               </h4>
-              <p className="text-xs text-slate-400 mt-0.5">Manage new applications</p>
+              <p className="text-xs text-slate-400 mt-0.5">Team applications</p>
+            </div>
+          </button>
+
+          {/* 5. Share Resource */}
+          <button
+            onClick={() => navigate('/mentor/resources')}
+            className="flex items-center gap-3.5 p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-[#FAFAFD]/60 dark:bg-navy-950/30 hover:border-[#5B45D9] hover:bg-white dark:hover:bg-navy-900 transition-all text-left group shadow-xs"
+          >
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-300 flex items-center justify-center group-hover:scale-105 transition-transform">
+              <Share2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#5B45D9] transition-colors">
+                Share Resource
+              </h4>
+              <p className="text-xs text-slate-400 mt-0.5">Guides & templates</p>
             </div>
           </button>
         </div>

@@ -218,6 +218,9 @@ function AppContent() {
             <Route path="join" element={<DiscoverTeams />} />
             <Route path="create" element={<CreateTeam />} />
           </Route>
+          <Route path="assigned-teams" element={<Navigate to="/mentor/teams" replace />} />
+          <Route path="discover-teams" element={<Navigate to="/mentor/teams/join" replace />} />
+          <Route path="create-team" element={<Navigate to="/mentor/teams/create" replace />} />
           <Route path="sessions" element={<MentorSessions />} />
           <Route path="messages" element={<MentorMessages />} />
           <Route path="resources" element={<MentorResources />} />

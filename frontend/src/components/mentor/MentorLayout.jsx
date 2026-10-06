@@ -4,23 +4,19 @@ import {
   LayoutDashboard,
   Trophy,
   Users,
-  UserCheck,
+  Inbox,
   Calendar,
   MessageSquare,
   BookOpen,
   User,
-  HelpCircle,
   Settings,
+  HelpCircle,
   LogOut,
   Search,
   Bell,
   ChevronDown,
   Menu,
   X,
-  ExternalLink,
-  CheckCircle,
-  Clock,
-  Sparkles,
   ArrowRight
 } from 'lucide-react';
 import ThemeToggle from '../ThemeToggle';
@@ -35,21 +31,21 @@ export default function MentorLayout() {
   const navigate = useNavigate();
   const { openHelpModal, globalSearch, setGlobalSearch } = useMentor();
 
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
 
   const profileRef = useRef(null);
   const notifRef = useRef(null);
 
-  // Close mobile drawer on route change
+  // Close drawer and dropdowns on route change
   useEffect(() => {
-    setMobileMenuOpen(false);
+    setDrawerOpen(false);
     setProfileDropdownOpen(false);
     setNotificationDropdownOpen(false);
   }, [location.pathname]);
 
-  // Click outside to close dropdowns
+  // Click outside to close dropdowns and Escape key to close drawer/dropdowns
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (profileRef.current && !profileRef.current.contains(e.target)) {
@@ -59,8 +55,19 @@ export default function MentorLayout() {
         setNotificationDropdownOpen(false);
       }
     };
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setDrawerOpen(false);
+        setProfileDropdownOpen(false);
+        setNotificationDropdownOpen(false);
+      }
+    };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   // Reactive user profile state
@@ -134,17 +141,34 @@ export default function MentorLayout() {
     navigate('/');
   };
 
-  // 8 Specified Navigation Items
-  const navItems = [
+  // Drawer Navigation Items (Top group)
+  const drawerNavItems = [
     { name: 'Dashboard', path: '/mentor/dashboard', icon: LayoutDashboard },
-    { name: 'My Hackathons', path: '/mentor/hackathons', icon: Trophy },
+    { name: 'Hackathons', path: '/mentor/hackathons', icon: Trophy },
     { name: 'Teams', path: '/mentor/teams', icon: Users },
-    { name: 'Mentorship Requests', path: '/mentor/requests', icon: UserCheck, badge: 3 },
+    { name: 'Requests', path: '/mentor/requests', icon: Inbox, badge: 3 },
     { name: 'Sessions', path: '/mentor/sessions', icon: Calendar },
     { name: 'Messages', path: '/mentor/messages', icon: MessageSquare },
     { name: 'Resources', path: '/mentor/resources', icon: BookOpen },
-    { name: 'Profile', path: '/mentor/profile', icon: User },
   ];
+
+  // Drawer Navigation Items (Bottom group)
+  const drawerSecondaryNavItems = [
+    { name: 'Profile', path: '/mentor/profile', icon: User },
+    { name: 'Settings', path: '/mentor/settings', icon: Settings },
+  ];
+
+  // Active status helper
+  const isItemActive = (path) => {
+    if (path === '/mentor/dashboard') {
+      return (
+        location.pathname === '/mentor' ||
+        location.pathname === '/mentor/' ||
+        location.pathname === '/mentor/dashboard'
+      );
+    }
+    return location.pathname === path || (path !== '/mentor/dashboard' && location.pathname.startsWith(`${path}/`));
+  };
 
   // Dynamic header titles based on pathname
   const headerMeta = useMemo(() => {
@@ -216,7 +240,7 @@ export default function MentorLayout() {
   }, [location.pathname]);
 
   return (
-    <div className="flex h-screen bg-[#F8F9FD] dark:bg-[#0B0F19] text-slate-800 dark:text-slate-100 overflow-hidden font-sans transition-colors duration-200">
+    <div className="flex flex-col h-screen w-full bg-[#F8F9FD] dark:bg-[#0B0F19] text-slate-800 dark:text-slate-100 overflow-hidden font-sans transition-colors duration-200">
       {/* Toast Notifications */}
       <ToastContainer />
 
@@ -225,77 +249,279 @@ export default function MentorLayout() {
       <AcceptRequestModal />
       <HelpSupportModal />
 
-      {/* Mobile Backdrop */}
-      {mobileMenuOpen && (
+      {/* ================================================== */}
+      {/* TOP HEADER (Full-Width) */}
+      {/* ================================================== */}
+      <header className="h-18 px-4 sm:px-6 lg:px-8 bg-white dark:bg-[#111625] border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between shrink-0 shadow-xs z-30 transition-colors">
+        {/* Left: Brand Logo & Route Title */}
+        <div className="flex items-center gap-3 sm:gap-6 min-w-0">
+          <Link to="/mentor/dashboard" className="flex items-center gap-2.5 shrink-0 group">
+            <img
+              src="/proeduvate-dark-text.png"
+              alt="ProEduvate"
+              className="h-8 w-auto object-contain dark:hidden transition-transform group-hover:scale-105"
+            />
+            <img
+              src="/proeduvatee-removebg-preview.png"
+              alt="ProEduvate"
+              className="h-8 w-auto object-contain hidden dark:block transition-transform group-hover:scale-105"
+            />
+            <span className="hidden xl:inline-block text-[11px] font-semibold tracking-tight text-slate-400 dark:text-slate-500 pl-3 border-l border-slate-200 dark:border-white/10">
+              Mentor Workspace
+            </span>
+          </Link>
+
+          {/* Current Page Title */}
+          <div className="min-w-0 hidden md:block">
+            <h1 className="text-lg lg:text-xl font-bold tracking-tight text-slate-900 dark:text-white truncate">
+              {headerMeta.title}
+            </h1>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate hidden lg:block">
+              {headerMeta.subtitle}
+            </p>
+          </div>
+        </div>
+
+        {/* Right: Search, Notifications, Theme Toggle, Profile, Hamburger Menu */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Search input (interactive) */}
+          <div className="relative hidden md:block w-48 lg:w-60">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={globalSearch}
+              onChange={(e) => setGlobalSearch(e.target.value)}
+              placeholder="Search teams, sessions..."
+              className="w-full pl-9 pr-8 py-1.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-medium text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#5B45D9] focus:bg-white transition-all shadow-2xs"
+            />
+            {globalSearch && (
+              <button
+                onClick={() => setGlobalSearch('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Notification Bell Dropdown */}
+          <div className="relative" ref={notifRef}>
+            <button
+              onClick={() => setNotificationDropdownOpen((prev) => !prev)}
+              className="relative p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/5 transition-colors"
+              aria-label="Notifications"
+            >
+              <Bell className="w-4 h-4" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#5B45D9] ring-2 ring-white dark:ring-[#111625]" />
+              )}
+            </button>
+
+            {/* Notification Popover */}
+            {notificationDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden z-50 animate-in fade-in-50 duration-150">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-white/10 bg-[#FAFAFD] dark:bg-navy-950/40">
+                  <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                    Notifications ({unreadCount})
+                  </span>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={markAllAsRead}
+                      className="text-[11px] font-semibold text-[#5B45D9] dark:text-purple-300 hover:underline"
+                    >
+                      Mark all as read
+                    </button>
+                  )}
+                </div>
+                <div className="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-white/5">
+                  {notifications.map((notif) => (
+                    <div
+                      key={notif.id}
+                      onClick={() => {
+                        setNotificationDropdownOpen(false);
+                        if (notif.link) navigate(notif.link);
+                      }}
+                      className={`p-3.5 hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-colors ${
+                        !notif.read ? 'bg-purple-50/30 dark:bg-purple-950/15' : ''
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-xs font-bold text-slate-800 dark:text-white">
+                          {notif.title}
+                        </p>
+                        <span className="text-[10px] text-slate-400 shrink-0">{notif.time}</span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+                        {notif.detail}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <div className="p-2.5 text-center border-t border-slate-100 dark:border-white/10 bg-[#FAFAFD] dark:bg-navy-950/40">
+                  <Link
+                    to="/mentor/requests"
+                    onClick={() => setNotificationDropdownOpen(false)}
+                    className="text-xs font-bold text-[#5B45D9] dark:text-purple-300 hover:underline flex items-center justify-center gap-1"
+                  >
+                    View all mentorship requests <ArrowRight className="w-3 h-3" />
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Theme Toggle */}
+          <ThemeToggle />
+
+          {/* User Profile Dropdown */}
+          <div className="relative" ref={profileRef}>
+            <button
+              onClick={() => setProfileDropdownOpen((prev) => !prev)}
+              className="flex items-center gap-2 p-1 rounded-xl hover:bg-slate-100/80 dark:hover:bg-white/5 transition-colors"
+            >
+              <div className="w-8 h-8 rounded-full bg-[#5B45D9] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs shadow-purple-500/20">
+                {initials}
+              </div>
+              <div className="text-left hidden lg:block">
+                <p className="text-xs font-bold text-slate-800 dark:text-white leading-tight">
+                  {user?.name || 'Dr. Sarah Mitchell'}
+                </p>
+                <p className="text-[10px] font-medium text-slate-400 leading-tight">
+                  Mentor
+                </p>
+              </div>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0 hidden sm:block" />
+            </button>
+
+            {/* Profile Dropdown Menu */}
+            {profileDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden z-50 animate-in fade-in-50 duration-150 p-1.5">
+                <div className="px-3 py-2.5 border-b border-slate-100 dark:border-white/5 mb-1">
+                  <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                    {user?.name || 'Mentor User'}
+                  </p>
+                  <p className="text-[11px] text-slate-400 truncate">
+                    {user?.email || 'mentor@proeduvate.com'}
+                  </p>
+                </div>
+
+                <Link
+                  to="/mentor/profile"
+                  onClick={() => setProfileDropdownOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                >
+                  <User className="w-4 h-4 text-slate-400" />
+                  <span>View Profile</span>
+                </Link>
+
+                <Link
+                  to="/mentor/settings"
+                  onClick={() => setProfileDropdownOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                >
+                  <Settings className="w-4 h-4 text-slate-400" />
+                  <span>Account Settings</span>
+                </Link>
+
+                <button
+                  onClick={() => {
+                    setProfileDropdownOpen(false);
+                    openHelpModal();
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                >
+                  <HelpCircle className="w-4 h-4 text-slate-400" />
+                  <span>Help & FAQs</span>
+                </button>
+
+                <div className="my-1 border-t border-slate-100 dark:border-white/5" />
+
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors"
+                >
+                  <LogOut className="w-4 h-4 text-rose-500" />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Divider */}
+          <div className="h-6 w-px bg-slate-200 dark:bg-white/10" />
+
+          {/* ☰ HAMBURGER MENU BUTTON */}
+          <button
+            onClick={() => setDrawerOpen(true)}
+            className="p-2 sm:px-3 sm:py-2 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-navy-950 hover:bg-[#F2EEFD] hover:border-[#5B45D9]/40 hover:text-[#5B45D9] dark:hover:bg-purple-950/30 dark:hover:text-purple-300 text-slate-700 dark:text-slate-200 transition-all shadow-xs flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-[#5B45D9]/20"
+            aria-label="Open Navigation Menu"
+            title="Open Navigation Menu"
+          >
+            <Menu className="w-5 h-5 text-slate-700 dark:text-slate-200" />
+            <span className="hidden sm:inline text-xs font-bold">Menu</span>
+          </button>
+        </div>
+      </header>
+
+      {/* ================================================== */}
+      {/* SLIDE-OUT NAVIGATION DRAWER */}
+      {/* ================================================== */}
+      {/* Backdrop */}
+      {drawerOpen && (
         <div
-          className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm lg:hidden transition-opacity"
-          onClick={() => setMobileMenuOpen(false)}
+          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+          onClick={() => setDrawerOpen(false)}
+          aria-hidden="true"
         />
       )}
 
-      {/* ================================================== */}
-      {/* LEFT SIDEBAR */}
-      {/* ================================================== */}
-      <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white dark:bg-[#111625] border-r border-slate-200/80 dark:border-white/10 flex flex-col transition-transform duration-300 ease-in-out shadow-sm lg:shadow-none ${
-          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      {/* Slide-out Drawer Menu */}
+      <div
+        className={`fixed inset-y-0 right-0 z-50 w-72 sm:w-80 bg-white dark:bg-[#111625] border-l border-slate-200/80 dark:border-white/10 shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${
+          drawerOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Navigation Drawer"
       >
-        {/* Top: Brand Logo & Tagline */}
-        <div className="px-6 pt-6 pb-5 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
-          <Link to="/mentor/dashboard" className="flex flex-col group">
-            <div className="flex items-center gap-2">
-              <img
-                src="/proeduvate-dark-text.png"
-                alt="ProEduvate"
-                className="h-7 w-auto object-contain dark:hidden"
-              />
-              <img
-                src="/proeduvatee-removebg-preview.png"
-                alt="ProEduvate"
-                className="h-7 w-auto object-contain hidden dark:block"
-              />
-            </div>
-            <span className="text-[11px] font-medium tracking-tight text-slate-400 dark:text-slate-500 mt-1">
-              people. projects and potential.
+        {/* Drawer Header */}
+        <div className="px-5 py-4 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-[#FAFAFD] dark:bg-navy-950/40">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+              Navigation
             </span>
-          </Link>
+          </div>
           <button
-            onClick={() => setMobileMenuOpen(false)}
-            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-white/5"
+            onClick={() => setDrawerOpen(false)}
+            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-white dark:hover:bg-white/10 transition-colors"
+            aria-label="Close Navigation"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Navigation Items (1-8) */}
+        {/* Drawer Navigation Links */}
         <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-1">
-          <div className="px-3 pb-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-              Mentor Space
-            </span>
-          </div>
-
-          {navItems.map((item) => {
+          {/* Top Group: Core Mentorship Features */}
+          {drawerNavItems.map((item) => {
             const Icon = item.icon;
-            const isActive =
-              location.pathname === item.path ||
-              (item.path !== '/mentor/dashboard' && location.pathname.startsWith(item.path));
+            const active = isItemActive(item.path);
 
             return (
               <NavLink
                 key={item.name}
                 to={item.path}
+                onClick={() => setDrawerOpen(false)}
                 className={`group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                  isActive
-                    ? 'bg-[#F2EEFD] text-[#5B45D9] font-semibold dark:bg-[#5B45D9]/20 dark:text-purple-300'
+                  active
+                    ? 'bg-[#F2EEFD] text-[#5B45D9] font-bold dark:bg-[#5B45D9]/20 dark:text-purple-300 shadow-2xs'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/5'
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <Icon
                     className={`w-4 h-4 shrink-0 transition-colors ${
-                      isActive
+                      active
                         ? 'text-[#5B45D9] dark:text-purple-300'
                         : 'text-slate-400 group-hover:text-slate-600 dark:text-slate-400 dark:group-hover:text-slate-200'
                     }`}
@@ -310,260 +536,92 @@ export default function MentorLayout() {
               </NavLink>
             );
           })}
+
+          {/* Divider between Resources and Profile/Settings */}
+          <div className="my-2.5 border-t border-slate-100 dark:border-white/10" />
+
+          {/* Bottom Group: Profile & Settings */}
+          {drawerSecondaryNavItems.map((item) => {
+            const Icon = item.icon;
+            const active = isItemActive(item.path);
+
+            return (
+              <NavLink
+                key={item.name}
+                to={item.path}
+                onClick={() => setDrawerOpen(false)}
+                className={`group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                  active
+                    ? 'bg-[#F2EEFD] text-[#5B45D9] font-bold dark:bg-[#5B45D9]/20 dark:text-purple-300 shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/5'
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <Icon
+                    className={`w-4 h-4 shrink-0 transition-colors ${
+                      active
+                        ? 'text-[#5B45D9] dark:text-purple-300'
+                        : 'text-slate-400 group-hover:text-slate-600 dark:text-slate-400 dark:group-hover:text-slate-200'
+                    }`}
+                  />
+                  <span className="truncate">{item.name}</span>
+                </div>
+              </NavLink>
+            );
+          })}
         </div>
 
-        {/* Bottom Sidebar: Help, Settings, Profile mini-card, Logout */}
-        <div className="p-3.5 border-t border-slate-100 dark:border-white/5 space-y-2 bg-[#FAFAFD]/60 dark:bg-navy-950/20">
-          <div className="space-y-0.5">
-            <button
-              onClick={openHelpModal}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/5 transition-colors"
-            >
-              <HelpCircle className="w-4 h-4 text-slate-400" />
-              <span>Help & Support</span>
-            </button>
+        {/* Drawer Footer (User Card & Help) */}
+        <div className="p-3.5 border-t border-slate-100 dark:border-white/10 space-y-2 bg-[#FAFAFD]/60 dark:bg-navy-950/40">
+          <button
+            onClick={() => {
+              setDrawerOpen(false);
+              openHelpModal();
+            }}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/5 transition-colors"
+          >
+            <HelpCircle className="w-4 h-4 text-slate-400" />
+            <span>Help & FAQs</span>
+          </button>
 
+          <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/5 shadow-2xs">
             <Link
-              to="/mentor/settings"
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                location.pathname === '/mentor/settings'
-                  ? 'bg-[#F2EEFD] text-[#5B45D9] dark:bg-[#5B45D9]/20 dark:text-purple-300'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/5'
-              }`}
+              to="/mentor/profile"
+              onClick={() => setDrawerOpen(false)}
+              className="flex items-center gap-2.5 min-w-0 flex-1 hover:opacity-90"
             >
-              <Settings className="w-4 h-4 text-slate-400" />
-              <span>Settings</span>
+              <div className="w-8 h-8 rounded-full bg-[#5B45D9] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs shadow-purple-500/20">
+                {initials}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                  {user?.name || 'Dr. Sarah Mitchell'}
+                </p>
+                <p className="text-[10px] font-semibold text-[#5B45D9] dark:text-purple-300">
+                  Mentor
+                </p>
+              </div>
             </Link>
-          </div>
-
-          {/* User Profile Mini-Card */}
-          <div className="pt-2 border-t border-slate-200/60 dark:border-white/5">
-            <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/5 shadow-xs">
-              <Link to="/mentor/profile" className="flex items-center gap-2.5 min-w-0 flex-1 hover:opacity-90">
-                <div className="w-8 h-8 rounded-full bg-[#5B45D9] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs shadow-purple-500/20">
-                  {initials}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                    {user?.name || 'Dr. Sarah Mitchell'}
-                  </p>
-                  <p className="text-[10px] font-semibold text-[#5B45D9] dark:text-purple-300">
-                    Mentor
-                  </p>
-                </div>
-              </Link>
-              <button
-                onClick={handleLogout}
-                title="Log Out"
-                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors ml-1"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-              </button>
-            </div>
+            <button
+              onClick={() => {
+                setDrawerOpen(false);
+                handleLogout();
+              }}
+              title="Log Out"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors ml-1"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
-      </aside>
-
-      {/* ================================================== */}
-      {/* MAIN CONTAINER (Top Header + Page Content) */}
-      {/* ================================================== */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* TOP HEADER */}
-        <header className="h-18 px-6 bg-white dark:bg-[#111625] border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between shrink-0 shadow-xs z-30 transition-colors">
-          {/* Left: Mobile Toggle + Title & Subtitle */}
-          <div className="flex items-center gap-4 min-w-0">
-            <button
-              onClick={() => setMobileMenuOpen(true)}
-              className="lg:hidden p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/5"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-
-            <div className="min-w-0">
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white truncate">
-                {headerMeta.title}
-              </h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400 truncate hidden sm:block mt-0.5">
-                {headerMeta.subtitle}
-              </p>
-            </div>
-          </div>
-
-          {/* Right: Search, Notifications, Profile Dropdown, Theme Toggle */}
-          <div className="flex items-center gap-3">
-            {/* Search input (interactive) */}
-            <div className="relative hidden md:block w-56 lg:w-64">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={globalSearch}
-                onChange={(e) => setGlobalSearch(e.target.value)}
-                placeholder="Search teams, sessions..."
-                className="w-full pl-9 pr-3.5 py-1.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-medium text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#5B45D9] focus:bg-white transition-all"
-              />
-              {globalSearch && (
-                <button
-                  onClick={() => setGlobalSearch('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-
-            {/* Notification Bell Dropdown */}
-            <div className="relative" ref={notifRef}>
-              <button
-                onClick={() => setNotificationDropdownOpen((prev) => !prev)}
-                className="relative p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/5 transition-colors"
-                aria-label="Notifications"
-              >
-                <Bell className="w-4 h-4" />
-                {unreadCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#5B45D9] ring-2 ring-white dark:ring-[#111625]" />
-                )}
-              </button>
-
-              {/* Notification Popover */}
-              {notificationDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden z-50 animate-in fade-in-50 duration-150">
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-white/10 bg-[#FAFAFD] dark:bg-navy-950/40">
-                    <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
-                      Notifications ({unreadCount})
-                    </span>
-                    {unreadCount > 0 && (
-                      <button
-                        onClick={markAllAsRead}
-                        className="text-[11px] font-semibold text-[#5B45D9] dark:text-purple-300 hover:underline"
-                      >
-                        Mark all as read
-                      </button>
-                    )}
-                  </div>
-                  <div className="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-white/5">
-                    {notifications.map((notif) => (
-                      <div
-                        key={notif.id}
-                        onClick={() => {
-                          setNotificationDropdownOpen(false);
-                          if (notif.link) navigate(notif.link);
-                        }}
-                        className={`p-3.5 hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-colors ${
-                          !notif.read ? 'bg-purple-50/30 dark:bg-purple-950/15' : ''
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="text-xs font-bold text-slate-800 dark:text-white">
-                            {notif.title}
-                          </p>
-                          <span className="text-[10px] text-slate-400 shrink-0">{notif.time}</span>
-                        </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
-                          {notif.detail}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="p-2.5 text-center border-t border-slate-100 dark:border-white/10 bg-[#FAFAFD] dark:bg-navy-950/40">
-                    <Link
-                      to="/mentor/requests"
-                      onClick={() => setNotificationDropdownOpen(false)}
-                      className="text-xs font-bold text-[#5B45D9] dark:text-purple-300 hover:underline flex items-center justify-center gap-1"
-                    >
-                      View all mentorship requests <ArrowRight className="w-3 h-3" />
-                    </Link>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Theme Toggle */}
-            <ThemeToggle />
-
-            {/* Divider */}
-            <div className="h-6 w-px bg-slate-200 dark:bg-white/10" />
-
-            {/* User Avatar + Name + Dropdown Arrow */}
-            <div className="relative" ref={profileRef}>
-              <button
-                onClick={() => setProfileDropdownOpen((prev) => !prev)}
-                className="flex items-center gap-2.5 p-1 rounded-xl hover:bg-slate-100/80 dark:hover:bg-white/5 transition-colors"
-              >
-                <div className="w-8 h-8 rounded-full bg-[#5B45D9] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs shadow-purple-500/20">
-                  {initials}
-                </div>
-                <div className="text-left hidden sm:block">
-                  <p className="text-xs font-bold text-slate-800 dark:text-white leading-tight">
-                    {user?.name || 'Dr. Sarah Mitchell'}
-                  </p>
-                  <p className="text-[10px] font-medium text-slate-400 leading-tight">
-                    Expert Mentor
-                  </p>
-                </div>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              </button>
-
-              {/* Profile Dropdown Menu */}
-              {profileDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden z-50 animate-in fade-in-50 duration-150 p-1.5">
-                  <div className="px-3 py-2.5 border-b border-slate-100 dark:border-white/5 mb-1">
-                    <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                      {user?.name || 'Mentor User'}
-                    </p>
-                    <p className="text-[11px] text-slate-400 truncate">
-                      {user?.email || 'mentor@proeduvate.com'}
-                    </p>
-                  </div>
-
-                  <Link
-                    to="/mentor/profile"
-                    onClick={() => setProfileDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
-                  >
-                    <User className="w-4 h-4 text-slate-400" />
-                    <span>View Profile</span>
-                  </Link>
-
-                  <Link
-                    to="/mentor/settings"
-                    onClick={() => setProfileDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
-                  >
-                    <Settings className="w-4 h-4 text-slate-400" />
-                    <span>Account Settings</span>
-                  </Link>
-
-                  <button
-                    onClick={() => {
-                      setProfileDropdownOpen(false);
-                      openHelpModal();
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
-                  >
-                    <HelpCircle className="w-4 h-4 text-slate-400" />
-                    <span>Help & FAQs</span>
-                  </button>
-
-                  <div className="my-1 border-t border-slate-100 dark:border-white/5" />
-
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors"
-                  >
-                    <LogOut className="w-4 h-4 text-rose-500" />
-                    <span>Sign Out</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </header>
-
-        {/* Content Outlet */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <Outlet />
-        </main>
       </div>
+
+      {/* ================================================== */}
+      {/* MAIN CONTENT OUTLET (Full-Width) */}
+      {/* ================================================== */}
+      <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <Outlet />
+      </main>
     </div>
   );
 }

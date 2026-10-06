@@ -114,17 +114,17 @@ const CreateTeam = () => {
     // of being shown a form that cannot be submitted successfully.
     if (sessionStorage.getItem('userRole') === 'mentor') {
         return (
-            <div className="mx-auto max-w-2xl rounded-3xl border border-white/10 bg-white/5 p-10 text-center shadow-2xl">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-500/15 text-2xl">👥</div>
-                <h1 className="mt-5 text-2xl font-bold text-white">Teams are created by students</h1>
-                <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-gray-400">
+            <div className="mx-auto max-w-2xl rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#111625] p-10 text-center shadow-xl">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-50 dark:bg-purple-500/15 text-2xl text-[#5B45D9] dark:text-purple-400">👥</div>
+                <h1 className="mt-5 text-2xl font-bold text-slate-900 dark:text-white">Teams are created by students</h1>
+                <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-slate-600 dark:text-gray-400">
                     A student first selects an open event and creates or joins a team. Once the team requests mentorship, it will appear in your mentor workspace.
                 </p>
                 <div className="mt-7 flex flex-wrap justify-center gap-3">
-                    <button onClick={() => navigate('/mentor/teams/join')} className="rounded-xl bg-purple-600 px-5 py-3 text-sm font-semibold text-white hover:bg-purple-500">
+                    <button onClick={() => navigate('/mentor/teams/join')} className="rounded-xl bg-[#5B45D9] hover:bg-[#4E3AC2] px-5 py-3 text-sm font-semibold text-white shadow-xs transition-all">
                         Browse teams needing a mentor
                     </button>
-                    <button onClick={() => navigate('/mentor/teams')} className="rounded-xl border border-white/10 px-5 py-3 text-sm font-semibold text-gray-300 hover:bg-white/5">
+                    <button onClick={() => navigate('/mentor/teams')} className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 px-5 py-3 text-sm font-semibold text-slate-700 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
                         Back to assigned teams
                     </button>
                 </div>
