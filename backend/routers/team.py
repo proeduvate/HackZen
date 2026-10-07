@@ -506,8 +506,6 @@ async def get_mentor_teams_list(
 
     return [TeamResponse(**team) for team in teams]
 
-
-<<<<<<< HEAD
 @router.get("/organizer/all")
 async def get_organizer_team_rows(
     current_user: dict = Depends(RequireRole(["organizer", "admin"]))
@@ -987,7 +985,10 @@ async def get_teams_by_hackathon(
 
     for team in teams:
         team["_id"] = str(team["_id"])
-=======
+
+    return [TeamResponse(**team) for team in teams]
+
+
 @router.get("/hackathon/{hackathon_id}/feedback")
 async def get_hackathon_feedback(
     hackathon_id: str, current_user: dict = Depends(RequireRole(["organizer", "admin"]))
@@ -1103,19 +1104,18 @@ async def get_discoverable_teams(
             if hackathon:
                 team["hackathonTitle"] = hackathon.get("title")
                 team["maxSize"] = hackathon.get("maxTeamSize", 4)
->>>>>>> origin/feature/mentor-work
 
     return [TeamResponse(**team) for team in teams]
 
 
-<<<<<<< HEAD
 @router.get("/hackathon/{hackathon_id}")
 async def get_hackathon_teams(
     hackathon_id: str, current_user: dict = Depends(RequireRole(["organizer", "admin"]))
 ):
     """Get teams and lightweight activity stats for one organizer hackathon."""
     return await build_organizer_team_rows(hackathon_id, current_user)
-=======
+
+
 @router.post("/{team_id}/request-mentor")
 async def request_mentor(
     team_id: str, payload: MentorRequestCreate, current_user: dict = Depends(RequireRole(["student"]))
@@ -1237,7 +1237,6 @@ async def decide_mentor_request(
     updated = await db["mentorRequests"].find_one({"_id": request["_id"]})
     updated["_id"] = str(updated["_id"])
     return {"data": updated}
->>>>>>> origin/feature/mentor-work
 
 
 @router.get("/{team_id}", response_model=TeamResponse)
