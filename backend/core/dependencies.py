@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from fastapi import Depends, Security, HTTPException, status, Request
 from typing import List, Dict, Any, Optional
+from datetime import datetime
 from core.security import get_current_user
 from services.userService import UserService
-from datetime import datetime
+from database import get_db
 
 try:
     from ai.init import AIContainer
@@ -36,8 +37,6 @@ async def with_auth(
     # Check if session has been revoked by admin
     session_id = current_user_payload.get("sessionId")
     if session_id:
-        from database import get_db
-
         db = get_db()
         revoked_sess = await db["admin_sessions"].find_one(
             {"sessionId": session_id, "revoked": True}
@@ -56,6 +55,7 @@ async def with_auth(
         return {
             "_id": user_id,
             "sub": user_id,
+            "id": user_id,
             "email": current_user_payload.get("email"),
             "role": current_user_payload.get("role", "student"),
             "name": current_user_payload.get("email", "Mock User"),
@@ -72,6 +72,14 @@ async def with_auth(
     user["id"] = str(user.get("_id") or user.get("id") or user_id)
     user["sub"] = str(user.get("_id") or user.get("id") or user_id)
     user["role"] = str(user.get("role", "student")).lower()
+
+    # Presence tracking for authenticated users
+    try:
+        await get_db().users.update_one({"_id": user["_id"]}, {"$set": {"lastActive": datetime.utcnow()}})
+        user["lastActive"] = datetime.utcnow()
+    except Exception:
+        pass
+
     return user
 
 
@@ -88,8 +96,6 @@ class RequireRole:
 
         session_id = user.get("sessionId")
         if session_id:
-            from database import get_db
-
             db = get_db()
             revoked_sess = await db["admin_sessions"].find_one(
                 {"sessionId": session_id, "revoked": True}

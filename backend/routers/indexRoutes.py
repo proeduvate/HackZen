@@ -22,6 +22,8 @@ from routers import (
     admin_settings,
     settingsRoutes,
     oauth,
+    mentor_dashboard,
+    mentor_settings,
 )
 
 router = APIRouter()
@@ -42,6 +44,10 @@ router.include_router(application.router, prefix="/applications", tags=["Applica
 router.include_router(submission.router, prefix="/submissions", tags=["Submissions"])
 router.include_router(settingsRoutes.router, prefix="/settings", tags=["Settings"])
 router.include_router(evaluation.router, prefix="/evaluations", tags=["Evaluations"])
+
+# Mentor Routers
+router.include_router(mentor_dashboard.router, prefix="/mentor", tags=["Mentor Dashboard"])
+router.include_router(mentor_settings.router, prefix="/mentor", tags=["Mentor Settings"])
 
 # Admin Backend Routers
 router.include_router(admin_users.router)

@@ -12,6 +12,8 @@ from schemas.team import (
     TeamResponse,
     TeamMemberResponse,
     TeamMentorUpdate,
+    MentorRequestCreate,
+    MentorRequestDecision,
 )
 from models.team import TeamInDB, TeamMemberInDB
 from schemas.application import ApplicationStatus
@@ -163,6 +165,76 @@ async def build_organizer_team_rows(
     return results
 
 
+async def _require_leader(db, team_id: str, user_id: str):
+    membership = await db["teamMembers"].find_one(
+        {"teamId": team_id, "userId": user_id, "role": TeamMemberRole.LEADER.value}
+    )
+    if not membership:
+        raise HTTPException(status_code=403, detail="Only the team lead can perform this action")
+
+
+async def _notify(db, user_id: str, notification_type: str, message: str, hackathon_id: str = None):
+    await db["notifications"].insert_one({
+        "userId": user_id, "hackathonId": hackathon_id, "type": notification_type,
+        "message": message, "read": False, "createdAt": datetime.utcnow(),
+    })
+
+
+def _match_terms(values):
+    """Normalize profile/domain values for the deterministic AI-match score."""
+    terms = set()
+    for value in values:
+        if isinstance(value, str):
+            terms.update(part.strip().lower() for part in value.replace("/", " ").replace(",", " ").split() if part.strip())
+    return terms
+
+
+async def _offer_ai_mentor_match(db, team: dict, excluded_ids=None):
+    """Offer a team to the best available mentor; never assign without acceptance."""
+    excluded_ids = set(excluded_ids or team.get("mentorMatchExcludedIds", []))
+    hackathon = None
+    if ObjectId.is_valid(team.get("hackathonId", "")):
+        hackathon = await db["hackathons"].find_one({"_id": ObjectId(team["hackathonId"])})
+    team_terms = _match_terms([
+        team.get("domain", ""), team.get("description", ""),
+        *(team.get("requiredSkills", []) or []), *((hackathon or {}).get("themes", []) or []),
+    ])
+    candidates = []
+    async for mentor in db["mentors"].find({"availability": "Available"}):
+        mentor_id = mentor.get("userId")
+        if not mentor_id or mentor_id in excluded_ids:
+            continue
+        expertise = _match_terms([
+            *(mentor.get("expertiseDomains", []) or []), *(mentor.get("skills", []) or []),
+            *(mentor.get("technologies", []) or []), mentor.get("bio", ""),
+        ])
+        overlap = len(team_terms & expertise)
+        workload = await db["teams"].count_documents({"mentorId": mentor_id})
+        # Domain/skill relevance dominates; workload only breaks otherwise close matches.
+        score = overlap * 30 + min(int(mentor.get("experienceYears", 0) or 0), 20) - workload * 5
+        candidates.append((score, workload, mentor_id, overlap))
+
+    if not candidates:
+        await db["teams"].update_one({"_id": team["_id"]}, {"$set": {"mentorRequestStatus": "no-match"}})
+        return None
+
+    score, _, mentor_id, overlap = sorted(candidates, key=lambda item: (-item[0], item[1], item[2]))[0]
+    now = datetime.utcnow()
+    request = {
+        "teamId": str(team["_id"]), "mentorId": mentor_id,
+        "requestedBy": "ai-matcher", "message": "AI mentor match awaiting your decision.",
+        "status": "pending", "source": "ai-match", "matchScore": score,
+        "matchReason": f"Matched {overlap} domain/skill signal(s)", "createdAt": now,
+    }
+    result = await db["mentorRequests"].insert_one(request)
+    await db["teams"].update_one({"_id": team["_id"]}, {"$set": {
+        "mentorRequestStatus": "ai-matched", "lastMatchedMentorId": mentor_id, "mentorMatchUpdatedAt": now,
+    }})
+    await _notify(db, mentor_id, "mentor_ai_match", f"AI matched you with {team.get('teamName', 'a team')}. Please accept or reject.", team.get("hackathonId"))
+    request["_id"] = str(result.inserted_id)
+    return request
+
+
 @router.post("/", response_model=TeamResponse, status_code=status.HTTP_201_CREATED)
 async def create_team(
     team_data: TeamCreate, current_user: dict = Depends(RequireRole(["student"]))
@@ -239,6 +311,9 @@ async def create_team(
     user_name = user.get("name", "Unknown Student") if user else "Unknown Student"
 
     team_dict = team_data.model_dump(by_alias=True)
+    # The client always submits the canonical event ID.  Persist the title as
+    # display metadata so every team view can show both the name and ID.
+    team_dict["hackathonName"] = hackathon.get("title", "Hackathon")
     team_dict["createdBy"] = user_name
     team_dict["createdAt"] = datetime.utcnow()
 
@@ -285,9 +360,15 @@ async def create_team(
         "teamId": team_dict["_id"],
         "currentStageId": first_stage_id,
         "status": "not-started",
+        "percentage": 0,
+        "progressHistory": [],
         "lastUpdated": datetime.utcnow(),
     }
     await progress_collection.insert_one(progress_data)
+
+    # The team is automatically offered to the best available mentor. The
+    # mentor must still accept before mentorId is assigned.
+    await _offer_ai_mentor_match(db, team_dict)
 
     return TeamResponse(**team_dict)
 
@@ -296,6 +377,7 @@ async def create_team(
 # Otherwise FastAPI treats "my-teams" as a team_id parameter
 
 
+@router.get("/my", response_model=List[TeamResponse])
 @router.get("/my-teams", response_model=List[TeamResponse])
 async def get_my_teams(current_user: dict = Depends(with_auth)):
     """Get all teams where the current user is a member"""
@@ -379,14 +461,25 @@ async def get_mentor_teams(
 ):
     """Get all teams assigned to the current mentor"""
     user_id = current_user.get("id") or current_user.get("sub")
-    teams_collection = get_team_collection()
+    db = get_db()
+    teams_collection = db["teams"]
 
     # In the current schema, team has mentorId field
     cursor = teams_collection.find({"mentorId": user_id})
     teams = await cursor.to_list(100)
 
+    progress_collection = db["progress"]
+    members_collection = db["teamMembers"]
     for team in teams:
         team["_id"] = str(team["_id"])
+        if not team.get("hackathonName") and ObjectId.is_valid(team.get("hackathonId", "")):
+            hackathon = await get_db()["hackathons"].find_one({"_id": ObjectId(team["hackathonId"])})
+            if hackathon:
+                team["hackathonName"] = hackathon.get("title")
+        team["memberCount"] = await members_collection.count_documents({"teamId": team["_id"]})
+        progress = await progress_collection.find_one({"teamId": team["_id"]})
+        team["progress"] = int((progress or {}).get("percentage", 0))
+        team["currentStage"] = (progress or {}).get("currentStage")
 
     return [TeamResponse(**team) for team in teams]
 
@@ -397,16 +490,24 @@ async def get_mentor_teams_list(
 ):
     """Get all teams mentored by the current mentor"""
     user_id = current_user.get("id") or current_user.get("sub")
-    teams_collection = get_team_collection()
+    db = get_db()
+    teams_collection = db["teams"]
     cursor = teams_collection.find({"mentorId": user_id})
     teams = await cursor.to_list(100)
 
+    progress_collection = db["progress"]
+    members_collection = db["teamMembers"]
     for team in teams:
         team["_id"] = str(team["_id"])
+        team["memberCount"] = await members_collection.count_documents({"teamId": team["_id"]})
+        progress = await progress_collection.find_one({"teamId": team["_id"]})
+        team["progress"] = int((progress or {}).get("percentage", 0))
+        team["currentStage"] = (progress or {}).get("currentStage")
 
     return [TeamResponse(**team) for team in teams]
 
 
+<<<<<<< HEAD
 @router.get("/organizer/all")
 async def get_organizer_team_rows(
     current_user: dict = Depends(RequireRole(["organizer", "admin"]))
@@ -886,16 +987,257 @@ async def get_teams_by_hackathon(
 
     for team in teams:
         team["_id"] = str(team["_id"])
+=======
+@router.get("/hackathon/{hackathon_id}/feedback")
+async def get_hackathon_feedback(
+    hackathon_id: str, current_user: dict = Depends(RequireRole(["organizer", "admin"]))
+):
+    """Return mentor feedback for one event to its organizer or an admin."""
+    if not ObjectId.is_valid(hackathon_id):
+        raise HTTPException(status_code=400, detail="Invalid hackathon ID")
+
+    db = get_db()
+    hackathon = await db["hackathons"].find_one({"_id": ObjectId(hackathon_id)})
+    if not hackathon:
+        raise HTTPException(status_code=404, detail="Hackathon not found")
+
+    user_id = current_user.get("id") or current_user.get("sub")
+    if current_user.get("role") != "admin" and hackathon.get("organizerId") != user_id:
+        raise HTTPException(status_code=403, detail="You can only manage feedback for your own hackathons")
+
+    teams = await db["teams"].find({"hackathonId": hackathon_id}).to_list(500)
+    teams_by_id = {str(team["_id"]): team for team in teams}
+    if not teams_by_id:
+        return {"success": True, "data": []}
+
+    feedback_items = await db["feedback"].find({
+        "teamId": {"$in": list(teams_by_id)},
+        "$or": [{"archivedAt": {"$exists": False}}, {"archivedAt": None}],
+    }).sort("createdAt", -1).to_list(500)
+    user_ids = {item.get("studentId") for item in feedback_items} | {item.get("mentorId") for item in feedback_items}
+    user_ids = [item for item in user_ids if item and ObjectId.is_valid(item)]
+    users = await db["users"].find({"_id": {"$in": [ObjectId(item) for item in user_ids]}}).to_list(500)
+    names = {str(user["_id"]): user.get("name") or user.get("fullName") or "Unknown user" for user in users}
+
+    data = []
+    for item in feedback_items:
+        team = teams_by_id.get(item.get("teamId"), {})
+        data.append({
+            "id": str(item["_id"]), "teamId": item.get("teamId"), "teamName": team.get("teamName", "Unknown team"),
+            "studentName": names.get(item.get("studentId"), "Student"),
+            "mentorName": names.get(item.get("mentorId"), "Mentor"),
+            "type": item.get("type", "general"), "title": item.get("title", "Feedback"),
+            "content": item.get("content", ""), "rating": item.get("rating"),
+            "createdAt": item.get("createdAt"),
+        })
+    return {"success": True, "data": data}
+
+
+async def _require_feedback_manager(db, hackathon_id: str, feedback_id: str, current_user: dict):
+    if not ObjectId.is_valid(hackathon_id) or not ObjectId.is_valid(feedback_id):
+        raise HTTPException(status_code=400, detail="Invalid hackathon or feedback ID")
+    hackathon = await db["hackathons"].find_one({"_id": ObjectId(hackathon_id)})
+    if not hackathon:
+        raise HTTPException(status_code=404, detail="Hackathon not found")
+    user_id = current_user.get("id") or current_user.get("sub")
+    if current_user.get("role") != "admin" and hackathon.get("organizerId") != user_id:
+        raise HTTPException(status_code=403, detail="You can only manage feedback for your own hackathons")
+    feedback = await db["feedback"].find_one({"_id": ObjectId(feedback_id)})
+    if not feedback:
+        raise HTTPException(status_code=404, detail="Feedback not found")
+    team = await db["teams"].find_one({"_id": ObjectId(feedback.get("teamId", ""))}) \
+        if ObjectId.is_valid(feedback.get("teamId", "")) else None
+    if not team or team.get("hackathonId") != hackathon_id:
+        raise HTTPException(status_code=404, detail="Feedback does not belong to this hackathon")
+    return feedback
+
+
+@router.patch("/hackathon/{hackathon_id}/feedback/{feedback_id}")
+async def archive_hackathon_feedback(
+    hackathon_id: str, feedback_id: str, archived: bool = Body(True, embed=True),
+    current_user: dict = Depends(RequireRole(["organizer", "admin"]))
+):
+    """Archive or restore a feedback entry. Only event managers can do this."""
+    db = get_db()
+    await _require_feedback_manager(db, hackathon_id, feedback_id, current_user)
+    update = {"archivedAt": datetime.utcnow(), "archivedBy": current_user.get("id") or current_user.get("sub")} if archived else {"archivedAt": None, "archivedBy": None}
+    await db["feedback"].update_one({"_id": ObjectId(feedback_id)}, {"$set": update})
+    return {"success": True, "archived": archived}
+
+
+@router.delete("/hackathon/{hackathon_id}/feedback/{feedback_id}")
+async def delete_hackathon_feedback(
+    hackathon_id: str, feedback_id: str,
+    current_user: dict = Depends(RequireRole(["organizer", "admin"]))
+):
+    """Permanently delete an entry after organizer confirmation."""
+    db = get_db()
+    await _require_feedback_manager(db, hackathon_id, feedback_id, current_user)
+    await db["feedback"].delete_one({"_id": ObjectId(feedback_id)})
+    return {"success": True}
+
+
+@router.get("/discoverable", response_model=List[TeamResponse])
+async def get_discoverable_teams(
+    current_user: dict = Depends(RequireRole(["mentor", "admin"]))
+):
+    """Return real teams which are currently available for mentorship."""
+    db = get_db()
+    teams = await db["teams"].find(
+        {"$or": [{"mentorId": {"$exists": False}}, {"mentorId": None}, {"mentorId": ""}]}
+    ).to_list(100)
+
+    members_collection = db["teamMembers"]
+    progress_collection = db["progress"]
+    for team in teams:
+        team_id = str(team["_id"])
+        team["_id"] = team_id
+        team["memberCount"] = await members_collection.count_documents({"teamId": team_id})
+        progress = await progress_collection.find_one({"teamId": team_id})
+        team["progress"] = int((progress or {}).get("percentage", 0))
+        team["currentStage"] = (progress or {}).get("currentStage")
+
+        hackathon_id = team.get("hackathonId")
+        if hackathon_id and ObjectId.is_valid(hackathon_id):
+            hackathon = await db["hackathons"].find_one({"_id": ObjectId(hackathon_id)})
+            if hackathon:
+                team["hackathonTitle"] = hackathon.get("title")
+                team["maxSize"] = hackathon.get("maxTeamSize", 4)
+>>>>>>> origin/feature/mentor-work
 
     return [TeamResponse(**team) for team in teams]
 
 
+<<<<<<< HEAD
 @router.get("/hackathon/{hackathon_id}")
 async def get_hackathon_teams(
     hackathon_id: str, current_user: dict = Depends(RequireRole(["organizer", "admin"]))
 ):
     """Get teams and lightweight activity stats for one organizer hackathon."""
     return await build_organizer_team_rows(hackathon_id, current_user)
+=======
+@router.post("/{team_id}/request-mentor")
+async def request_mentor(
+    team_id: str, payload: MentorRequestCreate, current_user: dict = Depends(RequireRole(["student"]))
+):
+    """Team lead requests a mentor. Assignment only happens after mentor approval."""
+    if not ObjectId.is_valid(team_id):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid team ID format")
+    db = get_db()
+    user_id = current_user.get("id") or current_user.get("sub")
+    team = await db["teams"].find_one({"_id": ObjectId(team_id)})
+    if not team:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Team not found")
+    if team.get("mentorId"):
+        raise HTTPException(status_code=409, detail="This team already has a mentor")
+    await _require_leader(db, team_id, user_id)
+
+    mentor = await db["mentors"].find_one({"userId": payload.mentorId})
+    if not mentor:
+        raise HTTPException(status_code=404, detail="Mentor not found")
+    duplicate = await db["mentorRequests"].find_one({"teamId": team_id, "mentorId": payload.mentorId, "status": "pending"})
+    if duplicate:
+        raise HTTPException(status_code=409, detail="A request to this mentor is already pending")
+
+    request = {"teamId": team_id, "mentorId": payload.mentorId, "requestedBy": user_id,
+               "message": payload.message or "", "status": "pending", "createdAt": datetime.utcnow()}
+    result = await db["mentorRequests"].insert_one(request)
+    await db["teams"].update_one({"_id": ObjectId(team_id)}, {"$set": {"mentorRequestStatus": "pending"}})
+    await _notify(db, payload.mentorId, "mentor_request", f"{team.get('teamName', 'A team')} requested your mentorship.", team.get("hackathonId"))
+    return {"id": str(result.inserted_id), "status": "pending", "message": "Mentor request sent"}
+
+
+@router.get("/mentor/requests")
+async def get_mentor_requests(
+    status_filter: Optional[str] = Query(None, alias="status", pattern="^(pending|approved|rejected)$"),
+    search: Optional[str] = Query(None, min_length=1, max_length=100),
+    track: Optional[str] = Query(None, min_length=1, max_length=100),
+    page: int = Query(1, ge=1), limit: int = Query(20, ge=1, le=100),
+    current_user: dict = Depends(RequireRole(["mentor"]))
+):
+    """Pending and completed mentorship requests addressed to the signed-in mentor."""
+    db = get_db()
+    user_id = current_user.get("id") or current_user.get("sub")
+    query = {"mentorId": user_id}
+    if status_filter:
+        query["status"] = status_filter
+    if search or track:
+        team_query = {}
+        if search:
+            team_query["$or"] = [
+                {"teamName": {"$regex": search, "$options": "i"}},
+                {"description": {"$regex": search, "$options": "i"}},
+            ]
+        if track:
+            team_query["domain"] = {"$regex": track, "$options": "i"}
+        team_ids = [str(team["_id"]) async for team in db["teams"].find(team_query, {"_id": 1})]
+        query["teamId"] = {"$in": team_ids}
+    total = await db["mentorRequests"].count_documents(query)
+    requests = await db["mentorRequests"].find(query).sort("createdAt", -1).skip((page - 1) * limit).limit(limit).to_list(limit)
+    for item in requests:
+        item["_id"] = str(item["_id"])
+        team = await db["teams"].find_one({"_id": ObjectId(item["teamId"])})
+        item["teamName"] = (team or {}).get("teamName", "Unknown team")
+        item["domain"] = (team or {}).get("domain") or "General"
+        item["description"] = (team or {}).get("description") or ""
+        item["requiredSkills"] = (team or {}).get("requiredSkills", [])
+        item["memberCount"] = await db["teamMembers"].count_documents({"teamId": item["teamId"]})
+    return {"data": requests, "pagination": {"page": page, "limit": limit, "total": total, "totalPages": (total + limit - 1) // limit}}
+
+
+@router.get("/mentor/requests/{request_id}")
+async def get_mentor_request(request_id: str, current_user: dict = Depends(RequireRole(["mentor"]))):
+    if not ObjectId.is_valid(request_id):
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid request ID")
+    db = get_db()
+    item = await db["mentorRequests"].find_one({"_id": ObjectId(request_id), "mentorId": current_user.get("id") or current_user.get("sub")})
+    if not item:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Mentorship request not found")
+    team = await db["teams"].find_one({"_id": ObjectId(item["teamId"])}) if ObjectId.is_valid(item.get("teamId", "")) else None
+    item["_id"] = str(item["_id"])
+    item["teamName"] = (team or {}).get("teamName", "Unknown team")
+    item["domain"] = (team or {}).get("domain") or "General"
+    item["description"] = (team or {}).get("description") or ""
+    item["requiredSkills"] = (team or {}).get("requiredSkills", [])
+    item["memberCount"] = await db["teamMembers"].count_documents({"teamId": item["teamId"]})
+    return {"data": item}
+
+
+@router.patch("/mentor/requests/{request_id}")
+async def decide_mentor_request(
+    request_id: str, payload: MentorRequestDecision, current_user: dict = Depends(RequireRole(["mentor"]))
+):
+    if not ObjectId.is_valid(request_id):
+        raise HTTPException(status_code=400, detail="Invalid request ID")
+    db = get_db()
+    user_id = current_user.get("id") or current_user.get("sub")
+    request = await db["mentorRequests"].find_one({"_id": ObjectId(request_id), "mentorId": user_id, "status": "pending"})
+    if not request:
+        raise HTTPException(status_code=404, detail="Pending mentor request not found")
+    team = await db["teams"].find_one({"_id": ObjectId(request["teamId"])})
+    if not team or team.get("mentorId"):
+        raise HTTPException(status_code=409, detail="This team is no longer available for mentorship")
+    now = datetime.utcnow()
+    await db["mentorRequests"].update_one({"_id": request["_id"]}, {"$set": {"status": payload.decision, "responseMessage": payload.responseMessage or "", "respondedAt": now}})
+    if payload.decision == "approved":
+        await db["teams"].update_one({"_id": team["_id"]}, {"$set": {"mentorId": user_id, "mentorAssignedAt": now, "mentorRequestStatus": "approved"}})
+        await db["mentorRequests"].update_many({"teamId": request["teamId"], "status": "pending", "_id": {"$ne": request["_id"]}}, {"$set": {"status": "closed", "respondedAt": now}})
+    else:
+        await db["teams"].update_one(
+            {"_id": team["_id"]},
+            {"$addToSet": {"mentorMatchExcludedIds": user_id}, "$set": {"mentorRequestStatus": "matching"}},
+        )
+        team = await db["teams"].find_one({"_id": team["_id"]})
+        next_match = await _offer_ai_mentor_match(db, team)
+        updated = await db["mentorRequests"].find_one({"_id": request["_id"]})
+        updated["_id"] = str(updated["_id"])
+        return {"data": updated, "nextMatchCreated": bool(next_match)}
+    if request.get("requestedBy") and request["requestedBy"] != "ai-matcher":
+        await _notify(db, request["requestedBy"], "mentor_request_decision", f"Mentor approved your request for {team.get('teamName', 'the team')}.", team.get("hackathonId"))
+    updated = await db["mentorRequests"].find_one({"_id": request["_id"]})
+    updated["_id"] = str(updated["_id"])
+    return {"data": updated}
+>>>>>>> origin/feature/mentor-work
 
 
 @router.get("/{team_id}", response_model=TeamResponse)
@@ -918,19 +1260,32 @@ async def get_team(team_id: str):
 
 
 @router.get("/{team_id}/members", response_model=List[TeamMemberResponse])
-async def get_team_members(team_id: str):
-    """Get all members of a team"""
+async def get_team_members(team_id: str, current_user: dict = Depends(with_auth)):
+    """Get all members of a team with their registered names and saved roles."""
     if not ObjectId.is_valid(team_id):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid team ID format"
         )
 
+    db = get_db()
+    user_id = current_user.get("id") or current_user.get("sub")
+    team = await db["teams"].find_one({"_id": ObjectId(team_id)})
+    is_member = await db["teamMembers"].find_one({"teamId": team_id, "userId": user_id})
+    if not is_member and current_user.get("role") != "admin" and (not team or team.get("mentorId") != user_id):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have access to this team")
     members_collection = get_team_members_collection()
-    cursor = members_collection.find({"teamId": team_id})
-    members = await cursor.to_list(100)
+    members = await members_collection.find({"teamId": team_id}).to_list(100)
+
+    user_ids = [member.get("userId") for member in members if ObjectId.is_valid(member.get("userId", ""))]
+    users = await db["users"].find(
+        {"_id": {"$in": [ObjectId(user_id) for user_id in user_ids]}},
+        {"name": 1},
+    ).to_list(100)
+    registered_names = {str(user["_id"]): user.get("name") for user in users}
 
     for member in members:
         member["_id"] = str(member["_id"])
+        member["name"] = registered_names.get(member.get("userId"))
 
     return [TeamMemberResponse(**member) for member in members]
 

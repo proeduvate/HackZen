@@ -61,7 +61,18 @@ import ManageHackathon from './pages/organizer/ManageHackathon';
 import MentorDashboard from './pages/mentor/MentorDashboard';
 import MentorshipRequests from './pages/mentor/MentorshipRequests';
 import Feedback from './pages/mentor/Feedback';
+import TeamMaterials from './pages/mentor/TeamMaterials';
 import MentorProfile from './pages/mentor/MentorProfile';
+import MentorLayout from './components/mentor/MentorLayout';
+import { MentorProvider } from './context/MentorContext';
+import TeamDetails from './pages/mentor/TeamDetails';
+import MentorSessions from './pages/mentor/MentorSessions';
+import MentorHackathons from './pages/mentor/MentorHackathons';
+import MentorMessages from './pages/mentor/MentorMessages';
+import MentorResources from './pages/mentor/MentorResources';
+import MentorWorkspace from './pages/mentor/MentorWorkspace';
+import MentorAICoMentor from './pages/mentor/MentorAICoMentor';
+import TeamMentorshipWorkspace from './pages/mentor/TeamMentorshipWorkspace';
 import AdminDashboard from './pages/admin/Dashboard';
 import Unauthorized from './pages/Unauthorized';
 import NotFound from './pages/NotFound';
@@ -84,6 +95,7 @@ import CreateTeam from './pages/mentor/CreateTeam';
 import EditOrganizerProfile from './pages/organizer/EditOrganizerProfile';
 import EditMentorProfile from './pages/mentor/EditMentorProfile';
 import EditAdminProfile from './pages/admin/EditAdminProfile';
+
 import EvaluationCriteria from './pages/organizer/EvaluationCriteria';
 import InitializeEvent from './pages/organizer/InitializeEvent';
 import InviteMentors from './pages/organizer/InviteMentors';
@@ -271,19 +283,39 @@ function AppContent() {
           path="/mentor"
           element={
             <ProtectedRoute requiredRole="mentor">
-              <DashboardLayout />
+              <MentorProvider>
+                <MentorLayout />
+              </MentorProvider>
             </ProtectedRoute>
           }
         >
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<MentorDashboard />} />
+          <Route path="hackathons" element={<MentorHackathons />} />
+          <Route path="mentorship-requests" element={<MentorshipRequests />} />
           <Route path="requests" element={<MentorshipRequests />} />
+          <Route path="teams">
+            <Route index element={<AssignedTeams />} />
+            <Route path=":teamId" element={<TeamDetails />} />
+            <Route path=":teamId/workspace" element={<TeamDetails />} />
+            <Route path="join" element={<DiscoverTeams />} />
+            <Route path="create" element={<CreateTeam />} />
+          </Route>
+          <Route path="assigned-teams" element={<Navigate to="/mentor/teams" replace />} />
+          <Route path="discover-teams" element={<Navigate to="/mentor/teams/join" replace />} />
+          <Route path="create-team" element={<Navigate to="/mentor/teams/create" replace />} />
+          <Route path="sessions" element={<MentorSessions />} />
+          <Route path="messages" element={<MentorMessages />} />
+          <Route path="resources" element={<MentorResources />} />
+          <Route path="materials" element={<MentorResources />} />
           <Route path="feedback" element={<Feedback />} />
-          <Route path="assigned-teams" element={<AssignedTeams />} />
-          <Route path="discover-teams" element={<DiscoverTeams />} />
-          <Route path="create-team" element={<CreateTeam />} />
-          <Route path="profile" element={<MentorProfile />} />
-          <Route path="profile/edit" element={<EditMentorProfile />} />
+          <Route path="reviews" element={<MentorWorkspace initialTab="reviews" />} />
+          <Route path="forum" element={<MentorWorkspace initialTab="forum" />} />
+          <Route path="ai-co-mentor" element={<MentorAICoMentor />} />
+          <Route path="profile">
+            <Route index element={<MentorProfile />} />
+            <Route path="edit" element={<EditMentorProfile />} />
+          </Route>
           <Route path="settings" element={<MentorSettings />} />
         </Route>
 

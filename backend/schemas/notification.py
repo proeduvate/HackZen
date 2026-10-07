@@ -15,6 +15,9 @@ class NotificationType(str, Enum):
     SUBMISSION_REMINDER = "submission_reminder"
     CERTIFICATE_ISSUED = "certificate_issued"
     SYSTEM_ALERT = "system_alert"
+    MENTOR_REQUEST = "mentor_request"
+    MENTOR_REQUEST_DECISION = "mentor_request_decision"
+    MEETING_REMINDER = "meeting_reminder"
 
 
 class NotificationBase(BaseModel):

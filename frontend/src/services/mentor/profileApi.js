@@ -5,9 +5,9 @@ import apiClient from '../../api/api';
  */
 
 const DEFAULT_PROFILE = {
-    name: 'Mentor',
-    role: 'Mentor',
-    institution: 'Not specified',
+    name: 'Dr. Arun Kumar',
+    role: 'Senior Mentor',
+    institution: 'ABC Technologies',
     bio: '',
     avatarGradient: 'from-purple-600 to-indigo-600',
     expertise: [],
@@ -21,7 +21,7 @@ const DEFAULT_PROFILE = {
         rating: '0/5',
         sessions: 0
     },
-    initials: 'M'
+    initials: 'SM'
 };
 
 export const fetchMentorProfile = async () => {
@@ -81,6 +81,18 @@ export const getCachedMentorProfile = () => {
         console.error('Failed to retrieve cached profile:', error);
         return null;
     }
+};
+
+/** Fetch the mentor-only preferences that are separate from profile details. */
+export const fetchMentorSettings = async () => {
+    const { data } = await apiClient.get('/mentor/settings');
+    return data.settings;
+};
+
+/** Persist mentorship availability, notifications, preferences, and privacy choices. */
+export const updateMentorSettings = async (settings) => {
+    const { data } = await apiClient.put('/mentor/settings', settings);
+    return data.settings;
 };
 
 export const updateMentorProfile = async (updatedFields) => {

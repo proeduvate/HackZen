@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { fetchInitialMessages, fetchQuickStarters, sendChatMessage } from '../../services/student/aiAssistantApi';
+import { fetchAllHackathons } from '../../api/hackathonApi';
 
 const StudentAIAssistant = () => {
-    const [selectedContext, setSelectedContext] = useState('Global Connect 2025');
-    const [selectedObjective, setSelectedObjective] = useState('Ideation');
+    const [hackathons, setHackathons] = useState([]);
+    const [selectedContext, setSelectedContext] = useState('');
+    const [selectedObjective, setSelectedObjective] = useState('Theme understanding');
     const [messages, setMessages] = useState([]);
     const [quickStarters, setQuickStarters] = useState([]);
     const [inputValue, setInputValue] = useState('');
@@ -18,12 +20,15 @@ const StudentAIAssistant = () => {
             setIsUnavailable(false);
             setErrorMessage('');
             try {
-                const [initialMsgs, triggers] = await Promise.all([
+                const [initialMsgs, triggers, events] = await Promise.all([
                     fetchInitialMessages(),
-                    fetchQuickStarters()
+                    fetchQuickStarters(),
+                    fetchAllHackathons(),
                 ]);
                 setMessages(initialMsgs);
                 setQuickStarters(triggers);
+                setHackathons(events);
+                setSelectedContext(events[0]?.id || events[0]?._id || '');
             } catch (error) {
                 console.error('Failed to load AI data:', error);
                 setIsUnavailable(true);
@@ -84,7 +89,7 @@ const StudentAIAssistant = () => {
                         AI Assistant <span className="gradient-text">Workspace</span>
                     </h1>
                     <p className="max-w-2xl mt-3 text-gray-400">
-                        Use the assistant to generate hackathon ideas, sharpen your pitch, coordinate your team, and finalize your submission faster.
+                        Understand themes and problem statements, identify real pain points, develop practical ideas, and plan your project approach.
                     </p>
                 </div>
             </div>
@@ -104,9 +109,12 @@ const StudentAIAssistant = () => {
                                     value={selectedContext}
                                     onChange={(e) => setSelectedContext(e.target.value)}
                                 >
-                                    <option value="Global Connect 2025">Global Connect 2025</option>
-                                    <option value="CyberSecurity Sprint">CyberSecurity Sprint</option>
-                                    <option value="Green Tech Challenge">Green Tech Challenge</option>
+                                    <option value="" disabled>Select a hackathon</option>
+                                    {hackathons.map(hackathon => (
+                                        <option key={hackathon.id || hackathon._id} value={hackathon.id || hackathon._id}>
+                                            {hackathon.title}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                             <div className="space-y-3">
@@ -116,10 +124,10 @@ const StudentAIAssistant = () => {
                                     value={selectedObjective}
                                     onChange={(e) => setSelectedObjective(e.target.value)}
                                 >
-                                    <option value="Ideation">Ideation</option>
-                                    <option value="Coding">Coding</option>
-                                    <option value="Pitching">Pitching</option>
-                                    <option value="Debugging">Debugging</option>
+                                    <option value="Theme understanding">Theme understanding</option>
+                                    <option value="Pain-point discovery">Pain-point discovery</option>
+                                    <option value="Idea development">Idea development</option>
+                                    <option value="Project structure and approach">Project structure and approach</option>
                                 </select>
                             </div>
                         </div>
@@ -151,7 +159,7 @@ const StudentAIAssistant = () => {
                     <div className="flex-1 min-h-0 p-8 space-y-8 overflow-y-auto custom-scrollbar bg-navy-900/40">
                         <div className="flex items-center gap-4 px-4 py-3 text-xs text-gray-400 border rounded-2xl border-white/10 bg-white/5">
                             <span className="text-xl">ℹ️</span>
-                            Heuristic analysis active. Suggestions are non-binding.
+                            Guidance only: use this to research, validate ideas, and plan work. It does not generate PPTs or slide decks.
                         </div>
 
                         {messages.length === 0 && !isLoading ? (
@@ -195,14 +203,14 @@ const StudentAIAssistant = () => {
                                             handleSendMessage();
                                         }
                                     }}
-                                    placeholder="Type your message..."
+                                    placeholder="Ask about the theme, a real pain point, your idea, or project structure..."
                                     className="w-full px-6 py-5 text-sm text-white placeholder-gray-500 bg-transparent resize-none focus:outline-none"
                                     rows="1"
                                 />
                             </div>
                             <button
                                 onClick={handleSendMessage}
-                                disabled={!inputValue.trim()}
+                                disabled={!inputValue.trim() || !selectedContext}
                                 className="px-5 py-4 text-white transition-all bg-purple-600 shadow-2xl rounded-2xl shadow-purple-900/40 hover:bg-purple-500 disabled:opacity-30 disabled:cursor-not-allowed active:scale-95"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>

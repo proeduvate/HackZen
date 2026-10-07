@@ -25,20 +25,33 @@ class Settings(BaseSettings):
     APP_NAME: str = os.getenv("APP_NAME", "ProEduvate Hackathon Platform")
     APP_VERSION: str = os.getenv("APP_VERSION", "1.0.0")
     VERSION: str = os.getenv("APP_VERSION", "1.0.0")
-    DEBUG: bool = os.getenv("DEBUG", "false").lower() in {"1", "true", "yes"}
+    DEBUG: bool = os.getenv("DEBUG", "false").lower() in {"1", "true", "yes", "development", "dev"}
     BACKEND_URL: str = os.getenv("BACKEND_URL", "http://localhost:8000")
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:5173")
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO").upper()
+
+    # OAuth callback base
+    OAUTH_REDIRECT_BASE_URL: Optional[str] = os.getenv("OAUTH_REDIRECT_BASE_URL", "http://127.0.0.1:8000")
+    GOOGLE_CLIENT_ID: Optional[str] = os.getenv("GOOGLE_CLIENT_ID")
+    GOOGLE_CLIENT_SECRET: Optional[str] = os.getenv("GOOGLE_CLIENT_SECRET")
+    GITHUB_CLIENT_ID: Optional[str] = os.getenv("GITHUB_CLIENT_ID")
+    GITHUB_CLIENT_SECRET: Optional[str] = os.getenv("GITHUB_CLIENT_SECRET")
+    LINKEDIN_CLIENT_ID: Optional[str] = os.getenv("LINKEDIN_CLIENT_ID")
+    LINKEDIN_CLIENT_SECRET: Optional[str] = os.getenv("LINKEDIN_CLIENT_SECRET")
 
     # MongoDB
     MONGO_URI: str = os.getenv("MONGO_URI", "mongodb://localhost:27017")
     DB_NAME: str = os.getenv("DB_NAME", "hackzen")
 
+    # File Uploads
+    UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "uploads")
+    MAX_UPLOAD_SIZE: int = 10 * 1024 * 1024  # 10MB
+
     # JWT Authentication
     SECRET_KEY: str = os.getenv("SECRET_KEY", "proeduvate-hackzen-secret-key-2026")
     ALLOW_MOCK_AUTH: bool = os.getenv("ALLOW_MOCK_AUTH", "true").lower() == "true"
     ALGORITHM: str = "HS256"
-    JWT_EXPIRES_IN: str = os.getenv("JWT_EXPIRES_IN", "30")
+    JWT_EXPIRES_IN: int = 30
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 10080
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     JWT_ISSUER: str = "proeduvate"
@@ -56,12 +69,6 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: Optional[str] = os.getenv("GEMINI_API_KEY")
     OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
     NVIDIA_API_KEY: Optional[str] = os.getenv("NVIDIA_API_KEY")
-
-    # OAuth Providers
-    GOOGLE_CLIENT_ID: Optional[str] = os.getenv("GOOGLE_CLIENT_ID")
-    GOOGLE_CLIENT_SECRET: Optional[str] = os.getenv("GOOGLE_CLIENT_SECRET")
-    GITHUB_CLIENT_ID: Optional[str] = os.getenv("GITHUB_CLIENT_ID")
-    GITHUB_CLIENT_SECRET: Optional[str] = os.getenv("GITHUB_CLIENT_SECRET")
 
     # OpenRouter & AI Portal Extensions
     openrouter_api_key: str = os.getenv("OPENROUTER_API_KEY", "")
@@ -130,7 +137,10 @@ class Settings(BaseSettings):
             return value
         if value is None:
             return False
-        return str(value).strip().lower() in {"1", "true", "yes", "on", "debug", "dev"}
+        normalized = str(value).strip().lower()
+        if normalized in {"release", "production", "prod"}:
+            return False
+        return normalized in {"1", "true", "yes", "on", "debug", "dev", "development"}
 
     class Config:
         env_file = ".env"

@@ -1,7 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+import html
+import json
+import re
+from uuid import uuid4
+from datetime import datetime, timedelta
 from typing import Dict, Any
+
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
+
 from core.security import create_access_token
 from core.dependencies import with_auth
+from core.config import settings
 from schemas.userSchema import (
     UserCreate,
     UserMyResponse,
@@ -11,8 +20,14 @@ from schemas.userSchema import (
     ForgotPasswordRequest,
 )
 from services.userService import UserService
+from services.oauth_service import authorization_url, get_profile, validate_state
 
 router = APIRouter()
+
+
+def _token_response(user):
+    token = create_access_token({"sub": str(user["_id"]), "email": user["email"], "role": user["role"]})
+    return TokenResponse(token=token, user=UserResponse(**user))
 
 
 @router.post(
@@ -27,8 +42,8 @@ async def register(user_data: UserCreate):
     db = get_db()
 
     # Verify platform public registration policy
-    settings = await db["settings"].find_one({"key": "global_config"})
-    if settings and settings.get("publicRegistrations") is False:
+    settings_doc = await db["settings"].find_one({"key": "global_config"})
+    if settings_doc and settings_doc.get("publicRegistrations") is False:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Public student and organizer registrations are temporarily closed by platform administration.",
@@ -51,24 +66,21 @@ async def register(user_data: UserCreate):
 @router.post("/login", response_model=TokenResponse, response_model_by_alias=True)
 async def login(credentials: LoginRequest, request: Request):
     from database import get_db
-    import re
-    from uuid import uuid4
-    from datetime import datetime, timedelta
 
     db = get_db()
     clean_email = str(credentials.email).strip().lower()
     client_ip = request.client.host if request.client else "127.0.0.1"
 
     # 1. Fetch current global security policies
-    settings = await db["settings"].find_one({"key": "global_config"})
-    if not settings:
-        settings = {}
+    settings_doc = await db["settings"].find_one({"key": "global_config"})
+    if not settings_doc:
+        settings_doc = {}
 
-    max_attempts_str = str(settings.get("maxLoginAttempts", "5 Attempts"))
+    max_attempts_str = str(settings_doc.get("maxLoginAttempts", "5 Attempts"))
     max_attempts_match = re.search(r"\d+", max_attempts_str)
     max_attempts = int(max_attempts_match.group(0)) if max_attempts_match else 5
 
-    lockout_str = str(settings.get("lockoutDuration", "15 Minutes"))
+    lockout_str = str(settings_doc.get("lockoutDuration", "15 Minutes"))
     if "Hour" in lockout_str:
         lockout_hours_match = re.search(r"\d+", lockout_str)
         lockout_minutes = (
@@ -111,12 +123,12 @@ async def login(credentials: LoginRequest, request: Request):
     # Clear failed login attempts on successful password
     await db["login_attempts"].delete_many({"email": clean_email})
 
-    # Normalize role to lowercase so seeded uppercase values (ADMIN, STUDENT, etc.) work
+    # Normalize role to lowercase so seeded uppercase values work
     user_role = str(user.get("role", "")).lower()
     user["role"] = user_role  # persist normalized role for token + response
 
     # 4. Session Timeout Calculation
-    session_timeout_str = str(settings.get("sessionTimeout", "30 Minutes"))
+    session_timeout_str = str(settings_doc.get("sessionTimeout", "30 Minutes"))
     if "Hour" in session_timeout_str:
         timeout_match = re.search(r"\d+", session_timeout_str)
         timeout_minutes = (int(timeout_match.group(0)) if timeout_match else 1) * 60
@@ -190,10 +202,8 @@ async def get_my_user_info(current_user: Dict[str, Any] = Depends(with_auth)):
 async def get_my_notifications(current_user: dict = Depends(with_auth)):
     """Fetch notifications and announcements targeted to this user's role."""
     from database import get_db
-    from datetime import datetime
 
     db = get_db()
-
     user_role = current_user.get("role", "student")
 
     cursor = (
@@ -251,7 +261,6 @@ async def mark_notifications_as_read(current_user: dict = Depends(with_auth)):
 async def forgot_password(request_data: ForgotPasswordRequest):
     """Handle password reset requests gracefully with security tokens and audit logging."""
     from database import get_db
-    from datetime import datetime
     import uuid
 
     db = get_db()
@@ -259,7 +268,6 @@ async def forgot_password(request_data: ForgotPasswordRequest):
 
     user = await db["users"].find_one({"email": email_clean})
     if not user:
-        # Avoid user enumeration - return standard success message
         return {
             "success": True,
             "message": f"If an account is associated with {email_clean}, a password reset link has been dispatched.",
@@ -280,3 +288,32 @@ async def forgot_password(request_data: ForgotPasswordRequest):
         "success": True,
         "message": f"Password reset instructions have been sent to {email_clean}.",
     }
+
+
+@router.get("/oauth/{provider}/start", include_in_schema=False)
+async def oauth_start(provider: str):
+    frontend_origin = (settings.FRONTEND_URL or "http://localhost:5173").rstrip("/")
+    return RedirectResponse(authorization_url(provider, frontend_origin))
+
+
+@router.get("/oauth/{provider}/callback", include_in_schema=False)
+async def oauth_callback(provider: str, code: str = "", state: str = "", error: str = ""):
+    origin = validate_state(state)
+    if error:
+        payload = {"type": "proeduvate-oauth-error", "message": "Sign-in was cancelled or denied by the provider."}
+    else:
+        try:
+            profile = await get_profile(provider, code)
+            user = await UserService.find_or_create_oauth_user(provider=provider, provider_id=profile["id"], email=profile["email"], name=profile["name"])
+            result = _token_response(user)
+            payload = {"type": "proeduvate-oauth-success", "token": result.token, "user": result.user.model_dump(by_alias=True, mode="json")}
+        except HTTPException as exc:
+            payload = {"type": "proeduvate-oauth-error", "message": str(exc.detail)}
+        except Exception:
+            payload = {"type": "proeduvate-oauth-error", "message": "Unable to complete social sign-in. Please try again."}
+    message = json.dumps(payload).replace("<", "\\u003c")
+    safe_origin = html.escape(origin, quote=True)
+    return HTMLResponse(f"""<!doctype html><title>Signing in…</title><script>
+      if (window.opener) window.opener.postMessage({message}, '{safe_origin}');
+      window.close();
+    </script><p>You can close this window.</p>""")

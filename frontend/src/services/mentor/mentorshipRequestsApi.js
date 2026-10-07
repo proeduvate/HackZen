@@ -2,51 +2,51 @@ import apiClient from '../../api/api';
 
 /**
  * Mentorship Requests API
- * Reads organizer mentor assignments from the real notification inbox.
+ * Provides service functions for fetching and managing mentorship requests
+ * using real backend data.
  */
 
-export const fetchMentorshipRequests = async () => {
+/**
+ * Fetches the list of all mentorship requests directed to the mentor.
+ * This fetches teams that don't have a mentor assigned yet.
+ */
+export const fetchMentorshipRequests = async (status, filters = {}) => {
     try {
-        const { data: notifications } = await apiClient.get('/inbox/?type=mentor_assignment');
-
-        return notifications.map(notification => {
-            const teamName = (notification.message || '')
-                .replace('You have been assigned to mentor ', '')
-                .replace('.', '') || 'Assigned Team';
-
+        const { data: response } = await apiClient.get('/teams/mentor/requests', { params: { status, limit: 50, ...filters } });
+        const requests = response.data || response;
+        const mappedRequests = requests.map(request => {
+            const status = request.status || 'pending';
+            
             return {
-                id: notification._id,
-                teamId: notification.teamId,
-                teamName,
-                description: notification.message || 'Organizer assigned you to mentor this team.',
-                requestDate: new Date(notification.createdAt).toLocaleDateString(),
-                appliedDate: new Date(notification.createdAt).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: '2-digit',
-                    year: 'numeric'
-                }),
-                domain: 'Mentorship',
-                stage: notification.read ? 'Acknowledged' : 'New Assignment',
-                teamSize: 'Tracked in team workspace',
-                location: 'Remote',
-                duration: 'Hackathon duration',
-                frequency: 'Organizer scheduled',
-                focusArea: 'Team guidance',
-                message: notification.message || 'Please review this mentorship assignment.',
-                status: notification.read ? 'Assigned' : 'Pending',
-                members: []
+                id: request._id || request.id,
+                teamName: request.teamName,
+                description: request.description || request.message || '',
+                createdAt: request.createdAt,
+                requestDate: new Date(request.createdAt).toLocaleDateString(),
+                appliedDate: new Date(request.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+                domain: request.domain || '',
+                teamSize: request.memberCount || 0,
+                message: request.message || '',
+                status: status,
+                rawStatus: request.status,
+                requiredSkills: request.requiredSkills || [],
             };
         });
+
+        return mappedRequests;
     } catch (error) {
         console.error('Failed to fetch mentorship requests:', error);
         throw error;
     }
 };
 
+/**
+ * Accepts or rejects a mentorship request.
+ */
 export const updateMentorshipRequestStatus = async (requestId, actionType) => {
     try {
-        await apiClient.put(`/inbox/${requestId}/read`);
-        return { success: true, status: actionType === 'accept' ? 'Assigned' : 'Archived' };
+        const { data } = await apiClient.patch(`/teams/mentor/requests/${requestId}`, { decision: actionType === 'accept' ? 'approved' : 'rejected' });
+        return data;
     } catch (error) {
         console.error(`Failed to ${actionType} mentorship request:`, error);
         throw error;
