@@ -252,15 +252,47 @@ html.light h6 {
   color: #172B4D;
 }
 
-html.light p,
-html.light span,
+html.light p {
+  color: #42526E;
+}
+
 html.light label {
   color: #42526E;
 }
 
-/* Allow explicit override classes */
-html.light .text-white {
-  color: #172B4D !important;
+/* Allow explicit Tailwind text color utilities to take precedence */
+html.light p[class*="text-"],
+html.light label[class*="text-"] {
+  color: inherit;
+}
+
+/* Primary solid buttons & active sidebar pill: guaranteed crisp white text */
+button.bg-\[\#7C65F6\],
+button.bg-indigo-600,
+button.bg-purple-600,
+a.bg-\[\#7C65F6\],
+a.bg-indigo-600 {
+  color: #ffffff !important;
+}
+
+button.bg-\[\#7C65F6\] span,
+button.bg-\[\#7C65F6\] svg,
+button.bg-indigo-600 span,
+button.bg-indigo-600 svg,
+a.bg-\[\#7C65F6\] span,
+a.bg-indigo-600 span {
+  color: #ffffff !important;
+}
+
+/* Subtle button utilities */
+.btn-subtle-purple {
+  background-color: #f5f3ff;
+  color: #6d28d9 !important;
+  border: 1px solid #ddd6fe;
+}
+.btn-subtle-purple:hover {
+  background-color: #ede9fe;
+  color: #5b21b6 !important;
 }
 
 html.light .btn-primary,

@@ -49,7 +49,7 @@ const CodeComparisonModal = ({ isOpen, onClose }) => {
                         <line x1="6" y1="6" x2="18" y2="18"/>
                     </svg>
                 </button>
-                <h2 className="text-xl font-extrabold tracking-tight mb-1 text-sky-600 dark:text-sky-400">Plagiarism Code Similarity Inspector (94% Overlap)</h2>
+                <h2 className="text-xl font-extrabold tracking-tight mb-1 text-indigo-600 dark:text-indigo-400">Plagiarism Code Similarity Inspector (94% Overlap)</h2>
                 <p className="text-xs text-slate-500 dark:text-gray-400 mb-5">Comparing reported team repository against open-source reference project.</p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs overflow-x-auto">
@@ -69,12 +69,12 @@ const CodeComparisonModal = ({ isOpen, onClose }) => {
                     </div>
 
                     {/* Reference Code */}
-                    <div className="p-4 bg-slate-950 text-slate-100 rounded-xl border border-sky-500/40">
-                        <div className="flex justify-between border-b border-sky-500/30 pb-2 mb-2 text-[10px] text-sky-400 font-bold uppercase tracking-wider">
+                    <div className="p-4 bg-slate-950 text-slate-100 rounded-xl border border-indigo-500/40">
+                        <div className="flex justify-between border-b border-indigo-500/30 pb-2 mb-2 text-[10px] text-indigo-400 font-bold uppercase tracking-wider">
                             <span>Open-Source Reference Repo</span>
                             <span>github.com/open-ai/reference-health-llm</span>
                         </div>
-                        <pre className="text-[11px] leading-relaxed text-sky-200 bg-sky-950/30 p-3 rounded-lg overflow-x-auto">
+                        <pre className="text-[11px] leading-relaxed text-indigo-200 bg-indigo-950/30 p-3 rounded-lg overflow-x-auto">
 {`def predict_diagnosis(patient_data):
     # Core predictive model
     weights = [0.24, 0.51, 0.18]
@@ -119,8 +119,8 @@ const AIDisputeAssessmentModal = ({ isOpen, onClose, assessment, isLoading, onAp
                 </button>
                 
                 <div className="flex items-center gap-2.5 mb-2">
-                    <span className="p-2 bg-sky-50 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 rounded-xl text-sm font-bold border border-sky-200 dark:border-sky-500/30">
-                        <SparklesIcon className="w-5 h-5 text-sky-600 dark:text-sky-400" />
+                    <span className="p-2 bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-xl text-sm font-bold border border-indigo-200 dark:border-indigo-500/30">
+                        <SparklesIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                     </span>
                     <div>
                         <h2 className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">AI Dispute Investigation & Advisory</h2>
@@ -136,9 +136,9 @@ const AIDisputeAssessmentModal = ({ isOpen, onClose, assessment, isLoading, onAp
                 ) : assessment ? (
                     <div className="space-y-4 text-xs mt-4">
                         {/* Executive Summary */}
-                        <div className="p-4 rounded-xl border bg-sky-50/70 dark:bg-sky-950/20 border-sky-200 dark:border-sky-500/20">
+                        <div className="p-4 rounded-xl border bg-indigo-50/70 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-500/20">
                             <div className="flex justify-between items-center mb-1.5">
-                                <span className="font-extrabold uppercase tracking-wider text-sky-700 dark:text-sky-300 text-[10px]">Executive Summary</span>
+                                <span className="font-extrabold uppercase tracking-wider text-indigo-700 dark:text-indigo-300 text-[10px]">Executive Summary</span>
                                 <span className="px-2.5 py-0.5 rounded-full font-bold text-[10px] bg-rose-50 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30">
                                     {assessment.severity || 'CRITICAL'} (Confidence: {assessment.confidenceScore || 95}%)
                                 </span>
@@ -159,10 +159,10 @@ const AIDisputeAssessmentModal = ({ isOpen, onClose, assessment, isLoading, onAp
                         )}
 
                         {/* Recommendation */}
-                        <div className="p-4 rounded-xl border bg-sky-50/70 dark:bg-sky-950/20 border-sky-200 dark:border-sky-500/20">
-                            <span className="font-extrabold uppercase tracking-wider text-sky-700 dark:text-sky-300 text-[10px] block mb-1">Recommended Decision</span>
+                        <div className="p-4 rounded-xl border bg-indigo-50/70 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-500/20">
+                            <span className="font-extrabold uppercase tracking-wider text-indigo-700 dark:text-indigo-300 text-[10px] block mb-1">Recommended Decision</span>
                             <div className="flex items-center gap-2 mb-2">
-                                <span className="font-extrabold text-xs text-sky-700 dark:text-sky-300 bg-sky-100 dark:bg-sky-500/20 px-3 py-1 rounded-lg border border-sky-300 dark:border-sky-500/40">
+                                <span className="font-extrabold text-xs text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-500/20 px-3 py-1 rounded-lg border border-indigo-300 dark:border-indigo-500/40">
                                     {assessment.recommendedDecision}
                                 </span>
                             </div>
@@ -176,7 +176,7 @@ const AIDisputeAssessmentModal = ({ isOpen, onClose, assessment, isLoading, onAp
                                     <span className="font-extrabold uppercase tracking-wider text-[10px] text-slate-500 dark:text-gray-400">Draft Official Notice to Team</span>
                                     <button 
                                         onClick={handleCopyNotice}
-                                        className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-sky-50 dark:bg-sky-500/20 hover:bg-sky-100 dark:hover:bg-sky-500/30 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-500/40 transition-all flex items-center gap-1 active:scale-95 cursor-pointer"
+                                        className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-indigo-50 dark:bg-indigo-500/20 hover:bg-indigo-100 dark:hover:bg-indigo-500/30 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-500/40 transition-all flex items-center gap-1 active:scale-95 cursor-pointer"
                                     >
                                         {isCopied ? '✓ Copied Notice' : 'Copy Draft Notice'}
                                     </button>
@@ -201,7 +201,7 @@ const AIDisputeAssessmentModal = ({ isOpen, onClose, assessment, isLoading, onAp
                                     }
                                     onClose();
                                 }}
-                                className="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold shadow-md shadow-sky-500/20 transition-all active:scale-95 cursor-pointer"
+                                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-md shadow-[#7C65F6]/20 transition-all active:scale-95 cursor-pointer"
                             >
                                 Auto-Fill Resolution Reason
                             </button>
@@ -411,7 +411,7 @@ const Disputes = () => {
     };
 
     return (
-        <div className="space-y-7 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-16 max-w-7xl mx-auto">
+        <div className="space-y-5 sm:space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-16 max-w-7xl mx-auto">
             
             {/* Header & Main Control */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -435,13 +435,13 @@ const Disputes = () => {
             </div>
 
             {/* 1. TOP KPI ROW */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2.5 sm:gap-3">
                 {[
-                    { label: 'Total Disputes', val: '24', icon: <ScaleIcon className="w-5 h-5 text-sky-500" />, tab: 'All', sev: 'ALL', iconBg: 'bg-sky-50 dark:bg-sky-500/10 border-sky-200 dark:border-sky-500/20' },
-                    { label: 'Open Cases', val: '7', color: 'text-amber-600 dark:text-amber-400', icon: <SirenIcon className="w-5 h-5 text-amber-500" />, tab: 'Under Investigation', sev: 'HIGH', iconBg: 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20' },
-                    { label: 'Investigation', val: '9', color: 'text-sky-600 dark:text-sky-400', icon: <ScaleIcon className="w-5 h-5 text-sky-500" />, tab: 'Under Investigation', sev: 'ALL', iconBg: 'bg-sky-50 dark:bg-sky-500/10 border-sky-200 dark:border-sky-500/20' },
-                    { label: 'Critical Cases', val: '2', color: 'text-rose-600 dark:text-rose-400', icon: <TriangleAlertIcon className="w-5 h-5 text-rose-500" />, tab: 'Under Investigation', sev: 'CRITICAL', iconBg: 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20' },
-                    { label: 'Resolved Cases', val: '8', color: 'text-emerald-600 dark:text-emerald-400', icon: <CheckIcon className="w-5 h-5 text-emerald-500" />, tab: 'Resolved', sev: 'ALL', iconBg: 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20' }
+                    { label: 'Total Disputes', val: '24', icon: <ScaleIcon className="w-3.5 h-3.5 text-indigo-500" />, tab: 'All', sev: 'ALL', iconBg: 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/20' },
+                    { label: 'Open Cases', val: '7', color: 'text-amber-600 dark:text-amber-400', icon: <SirenIcon className="w-3.5 h-3.5 text-amber-500" />, tab: 'Under Investigation', sev: 'HIGH', iconBg: 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20' },
+                    { label: 'Investigation', val: '9', color: 'text-indigo-600 dark:text-indigo-400', icon: <ScaleIcon className="w-3.5 h-3.5 text-indigo-500" />, tab: 'Under Investigation', sev: 'ALL', iconBg: 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/20' },
+                    { label: 'Critical Cases', val: '2', color: 'text-rose-600 dark:text-rose-400', icon: <TriangleAlertIcon className="w-3.5 h-3.5 text-rose-500" />, tab: 'Under Investigation', sev: 'CRITICAL', iconBg: 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20' },
+                    { label: 'Resolved Cases', val: '8', color: 'text-emerald-600 dark:text-emerald-400', icon: <CheckIcon className="w-3.5 h-3.5 text-emerald-500" />, tab: 'Resolved', sev: 'ALL', iconBg: 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20' }
                 ].map((stat, i) => (
                     <div 
                         key={i} 
@@ -449,18 +449,18 @@ const Disputes = () => {
                             setActiveTab(stat.tab);
                             setSeverityFilter(stat.sev);
                         }}
-                        className="rounded-2xl p-4 sm:p-5 bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group cursor-pointer flex flex-col justify-between"
+                        className="rounded-xl p-3 sm:p-3.5 bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group cursor-pointer flex flex-col justify-between"
                     >
-                        <div className="flex items-center justify-between gap-1 mb-2">
-                            <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-gray-400 truncate">{stat.label}</h3>
-                            <div className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 ${stat.iconBg}`}>
+                        <div className="flex items-center justify-between gap-1 mb-1.5">
+                            <h3 className="text-[10.5px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-gray-400 truncate">{stat.label}</h3>
+                            <div className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 ${stat.iconBg}`}>
                                 {stat.icon}
                             </div>
                         </div>
-                        <div className="my-1">
-                            <p className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${stat.color || 'text-slate-900 dark:text-white'}`}>{stat.val}</p>
+                        <div className="my-0.5">
+                            <p className={`text-xl sm:text-2xl font-bold tracking-tight leading-tight ${stat.color || 'text-slate-900 dark:text-white'}`}>{stat.val}</p>
                         </div>
-                        <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[10px] font-bold text-slate-400 dark:text-gray-500">
+                        <div className="pt-1.5 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[10px] font-bold text-slate-400 dark:text-gray-500">
                             <span>Filter cases</span>
                             <span className="group-hover:translate-x-1 transition-transform opacity-70">→</span>
                         </div>
@@ -479,7 +479,7 @@ const Disputes = () => {
                                 onClick={() => setActiveTab(tab)}
                                 className={`px-4 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                                     isActive 
-                                    ? 'bg-white dark:bg-sky-600 text-sky-600 dark:text-white shadow-sm' 
+                                    ? 'bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-sm' 
                                     : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
                                 }`}
                             >
@@ -496,7 +496,7 @@ const Disputes = () => {
                             placeholder="Search case code, team, reporter..." 
                             value={searchQuery} 
                             onChange={(e) => setSearchQuery(e.target.value)} 
-                            className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-sky-500"
+                            className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500"
                         />
                     </div>
 
@@ -504,7 +504,7 @@ const Disputes = () => {
                         <select 
                             value={severityFilter} 
                             onChange={(e) => setSeverityFilter(e.target.value)} 
-                            className="appearance-none pr-8 pl-3.5 py-2 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-bold bg-slate-50 dark:bg-black/20 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 cursor-pointer transition-all"
+                            className="appearance-none pr-8 pl-3.5 py-2 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-bold bg-slate-50 dark:bg-black/20 text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500 cursor-pointer transition-all"
                         >
                             <option value="ALL">All Severities</option>
                             <option value="CRITICAL">🔴 Critical</option>
@@ -531,7 +531,7 @@ const Disputes = () => {
                     </div>
                     <div className="flex-1 overflow-y-auto p-3 space-y-2.5 custom-scrollbar">
                         {isLoading ? (
-                            <div className="p-8 text-center text-xs text-sky-600 font-bold animate-pulse">Loading Live Disputes...</div>
+                            <div className="p-8 text-center text-xs text-indigo-600 font-bold animate-pulse">Loading Live Disputes...</div>
                         ) : filteredDisputes.length === 0 ? (
                             <div className="text-center text-slate-400 dark:text-gray-500 text-xs py-12">No dispute cases match specified criteria.</div>
                         ) : (
@@ -543,12 +543,12 @@ const Disputes = () => {
                                         onClick={() => setSelectedDispute(dispute)}
                                         className={`p-3.5 rounded-xl cursor-pointer transition-all border ${
                                             isSelected 
-                                            ? 'bg-sky-50 dark:bg-sky-500/10 border-sky-300 dark:border-sky-500/40 shadow-sm' 
+                                            ? 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-300 dark:border-indigo-500/40 shadow-sm' 
                                             : 'bg-white dark:bg-navy-800/40 border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20'
                                         }`}
                                     >
                                         <div className="flex justify-between items-start mb-1.5">
-                                            <span className="text-xs font-mono font-extrabold text-sky-600 dark:text-sky-400">{dispute.disputeCode}</span>
+                                            <span className="text-xs font-mono font-extrabold text-indigo-600 dark:text-indigo-400">{dispute.disputeCode}</span>
                                             <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase border ${
                                                 dispute.severity === 'CRITICAL' 
                                                 ? 'bg-rose-50 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-500/30' 
@@ -574,7 +574,7 @@ const Disputes = () => {
                 {/* RIGHT PANE: Dispute Case Investigation Workspace */}
                 <div className="w-full lg:w-2/3 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm flex flex-col justify-between overflow-y-auto custom-scrollbar">
                     {selectedDispute ? (
-                        <div className="p-6 space-y-6">
+                        <div className="p-4 sm:p-5 space-y-4 sm:space-y-5">
                             
                             {/* Header */}
                             <div className="border-b border-slate-200 dark:border-white/10 pb-4">
@@ -589,7 +589,7 @@ const Disputes = () => {
                                             {selectedDispute.severity}
                                         </span>
                                     </div>
-                                    <span className="text-xs font-mono font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-500/10 px-3 py-1 rounded-full border border-sky-200 dark:border-sky-500/20">
+                                    <span className="text-xs font-mono font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-200 dark:border-indigo-500/20">
                                         Status: {selectedDispute.status}
                                     </span>
                                 </div>
@@ -604,7 +604,7 @@ const Disputes = () => {
                             }`}>
                                 <div>
                                     <div className="flex items-center gap-2 mb-1.5">
-                                        <ScaleIcon className="w-4 h-4 text-sky-500 shrink-0" />
+                                        <ScaleIcon className="w-4 h-4 text-indigo-500 shrink-0" />
                                         <h3 className={`text-xs font-extrabold uppercase tracking-wider ${
                                             selectedDispute.severity === 'CRITICAL' ? 'text-rose-700 dark:text-red-400' : 'text-amber-700 dark:text-amber-400'
                                         }`}>
@@ -612,7 +612,7 @@ const Disputes = () => {
                                         </h3>
                                     </div>
                                     <div className="flex flex-wrap items-center gap-4 text-xs font-bold text-slate-800 dark:text-white">
-                                        <span>Evidence Verified: <strong className="text-sky-600 dark:text-sky-400">{selectedDispute.assessment?.evidenceVerified || '3 / 4'}</strong></span>
+                                        <span>Evidence Verified: <strong className="text-indigo-600 dark:text-indigo-400">{selectedDispute.assessment?.evidenceVerified || '3 / 4'}</strong></span>
                                         <span className="text-slate-300 dark:text-gray-600">|</span>
                                         <span>AI Confidence: <strong className="text-emerald-600 dark:text-emerald-400">{selectedDispute.assessment?.aiConfidence || 91}%</strong></span>
                                         <span className="text-slate-300 dark:text-gray-600">|</span>
@@ -628,14 +628,14 @@ const Disputes = () => {
                                     <button 
                                         onClick={handleRunAiAssessment}
                                         disabled={isAiLoading}
-                                        className="flex items-center gap-1.5 px-3.5 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-sky-500/20 active:scale-95 disabled:opacity-50 cursor-pointer"
+                                        className="flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-50 dark:bg-indigo-500/15 hover:bg-indigo-100 dark:hover:bg-indigo-500/25 text-indigo-700 dark:text-indigo-300 border border-indigo-300/80 dark:border-indigo-500/30 rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 disabled:opacity-50 cursor-pointer"
                                     >
-                                        <SparklesIcon className="w-3.5 h-3.5 text-white shrink-0" />
+                                        <SparklesIcon className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
                                         <span>{isAiLoading ? 'Analyzing...' : 'Run AI Analysis'}</span>
                                     </button>
                                     <div className="text-left md:text-right">
                                         <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-gray-400 block">AI Recommendation</span>
-                                        <span className="text-xs font-bold text-sky-700 dark:text-sky-300 uppercase bg-sky-50 dark:bg-sky-500/10 px-2.5 py-1 rounded-full border border-sky-200 dark:border-sky-500/20 inline-block mt-0.5">
+                                        <span className="text-xs font-bold text-indigo-700 dark:text-indigo-300 uppercase bg-indigo-50 dark:bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-200 dark:border-indigo-500/20 inline-block mt-0.5">
                                             {selectedDispute.assessment?.recommendation || 'INVESTIGATE'}
                                         </span>
                                     </div>
@@ -683,12 +683,12 @@ const Disputes = () => {
 
                             {/* 4. CODE SIMILARITY & PLAGIARISM ANALYSIS */}
                             {selectedDispute.similarityAnalysis && (
-                                <div className="p-5 bg-sky-50/60 dark:bg-sky-500/10 rounded-2xl border border-sky-100 dark:border-sky-500/20">
-                                    <div className="flex justify-between items-center mb-3 border-b border-sky-200 dark:border-sky-500/20 pb-2">
-                                        <h4 className="text-xs font-extrabold text-sky-700 dark:text-sky-300 uppercase tracking-wider">✦ Code Similarity & Plagiarism Analysis</h4>
+                                <div className="p-5 bg-indigo-50/60 dark:bg-indigo-500/10 rounded-2xl border border-indigo-100 dark:border-indigo-500/20">
+                                    <div className="flex justify-between items-center mb-3 border-b border-indigo-200 dark:border-indigo-500/20 pb-2">
+                                        <h4 className="text-xs font-extrabold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider">✦ Code Similarity & Plagiarism Analysis</h4>
                                         <button 
                                             onClick={() => setIsCodeModalOpen(true)} 
-                                            className="px-3 py-1.5 bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-500/30 rounded-xl text-[10px] font-bold uppercase transition-all shadow-sm cursor-pointer"
+                                            className="px-3 py-1.5 bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30 rounded-xl text-[10px] font-bold uppercase transition-all shadow-sm cursor-pointer"
                                         >
                                             Side-by-Side Code Compare →
                                         </button>
@@ -711,7 +711,7 @@ const Disputes = () => {
                                             <p className="text-[9px] font-bold text-slate-500 dark:text-gray-400 uppercase mt-0.5">README</p>
                                         </div>
                                     </div>
-                                    <p className="text-xs text-slate-700 dark:text-gray-300 font-mono truncate">Matched Source: <a href={selectedDispute.similarityAnalysis.matchedSourceUrl} target="_blank" rel="noreferrer" className="text-sky-600 dark:text-sky-400 underline">{selectedDispute.similarityAnalysis.matchedSourceUrl}</a></p>
+                                    <p className="text-xs text-slate-700 dark:text-gray-300 font-mono truncate">Matched Source: <a href={selectedDispute.similarityAnalysis.matchedSourceUrl} target="_blank" rel="noreferrer" className="text-indigo-600 dark:text-indigo-400 underline">{selectedDispute.similarityAnalysis.matchedSourceUrl}</a></p>
                                 </div>
                             )}
 
@@ -745,7 +745,7 @@ const Disputes = () => {
                             <div className="p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-black/20 text-slate-700 dark:text-gray-300">
                                 <div className="flex justify-between items-center mb-3 border-b border-slate-200 dark:border-white/10 pb-2">
                                     <h4 className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-gray-400">Investigation Workflow Checklist</h4>
-                                    <span className="text-[10px] font-extrabold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-500/10 px-2.5 py-0.5 rounded-full border border-sky-200 dark:border-sky-500/20">
+                                    <span className="text-[10px] font-extrabold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 px-2.5 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-500/20">
                                         6 / 8 Requirements Completed
                                     </span>
                                 </div>
@@ -767,7 +767,7 @@ const Disputes = () => {
                                 <div className="space-y-2.5 mb-4">
                                     {(selectedDispute.communications || []).map((comm, idx) => (
                                         <div key={idx} className={`p-3 rounded-xl border text-xs ${comm.isInternal ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20' : 'bg-white dark:bg-black/30 border-slate-200 dark:border-white/5'}`}>
-                                            <div className="flex justify-between font-bold text-sky-600 dark:text-sky-400 mb-1">
+                                            <div className="flex justify-between font-bold text-indigo-600 dark:text-indigo-400 mb-1">
                                                 <span>{comm.author} ({comm.role})</span>
                                                 <span className="text-[10px] text-slate-400 font-mono">{comm.date || comm.time}</span>
                                             </div>
@@ -782,17 +782,17 @@ const Disputes = () => {
                                         rows="2" 
                                         value={newNoteText} 
                                         onChange={(e) => setNewNoteText(e.target.value)} 
-                                        className="w-full rounded-xl px-3.5 py-2 text-xs bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 resize-none"
+                                        className="w-full rounded-xl px-3.5 py-2 text-xs bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500 resize-none"
                                     ></textarea>
                                     <div className="flex justify-between items-center">
                                         <label className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-gray-300 cursor-pointer">
-                                            <input type="checkbox" checked={noteIsInternal} onChange={(e) => setNoteIsInternal(e.target.checked)} className="rounded text-sky-600 focus:ring-sky-500" /> 
+                                            <input type="checkbox" checked={noteIsInternal} onChange={(e) => setNoteIsInternal(e.target.checked)} className="rounded text-indigo-600 focus:ring-indigo-500" /> 
                                             <LockIcon className="w-3.5 h-3.5 text-slate-400 inline mr-0.5" /> 
                                             <span>Internal Admin Note Only</span>
                                         </label>
                                         <button 
                                             type="submit" 
-                                            className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer"
+                                            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer"
                                         >
                                             Add Stream Note
                                         </button>
@@ -816,7 +816,7 @@ const Disputes = () => {
                                                     onClick={() => setResolutionDecision(d)}
                                                     className={`py-2 px-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
                                                         isSelected 
-                                                        ? 'bg-sky-100 text-sky-700 border-sky-300 dark:bg-sky-500/20 dark:text-sky-300 dark:border-sky-500/40 shadow-sm font-extrabold' 
+                                                        ? 'bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-500/20 dark:text-indigo-300 dark:border-indigo-500/40 shadow-sm font-extrabold' 
                                                         : 'bg-slate-50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/5'
                                                     }`}
                                                 >
@@ -831,19 +831,19 @@ const Disputes = () => {
                                     <label className="text-[10px] font-extrabold uppercase tracking-wider mb-1.5 block text-slate-500 dark:text-gray-400">Resolution Actions Taken</label>
                                     <div className="grid grid-cols-2 gap-2 text-xs font-bold text-slate-700 dark:text-gray-300">
                                         <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-200/60 dark:border-white/5">
-                                            <input type="checkbox" checked={resolutionActions.invalidateSubmission} onChange={(e) => setResolutionActions({...resolutionActions, invalidateSubmission: e.target.checked})} className="rounded text-sky-600 focus:ring-sky-500" /> 
+                                            <input type="checkbox" checked={resolutionActions.invalidateSubmission} onChange={(e) => setResolutionActions({...resolutionActions, invalidateSubmission: e.target.checked})} className="rounded text-indigo-600 focus:ring-indigo-500" /> 
                                             <span>Invalidate Submission</span>
                                         </label>
                                         <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-200/60 dark:border-white/5">
-                                            <input type="checkbox" checked={resolutionActions.disqualifyTeam} onChange={(e) => setResolutionActions({...resolutionActions, disqualifyTeam: e.target.checked})} className="rounded text-sky-600 focus:ring-sky-500" /> 
+                                            <input type="checkbox" checked={resolutionActions.disqualifyTeam} onChange={(e) => setResolutionActions({...resolutionActions, disqualifyTeam: e.target.checked})} className="rounded text-indigo-600 focus:ring-indigo-500" /> 
                                             <span>Disqualify Team</span>
                                         </label>
                                         <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-200/60 dark:border-white/5">
-                                            <input type="checkbox" checked={resolutionActions.revokeCert} onChange={(e) => setResolutionActions({...resolutionActions, revokeCert: e.target.checked})} className="rounded text-sky-600 focus:ring-sky-500" /> 
+                                            <input type="checkbox" checked={resolutionActions.revokeCert} onChange={(e) => setResolutionActions({...resolutionActions, revokeCert: e.target.checked})} className="rounded text-indigo-600 focus:ring-indigo-500" /> 
                                             <span>Revoke Certificate</span>
                                         </label>
                                         <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-200/60 dark:border-white/5">
-                                            <input type="checkbox" checked={resolutionActions.suspendAccount} onChange={(e) => setResolutionActions({...resolutionActions, suspendAccount: e.target.checked})} className="rounded text-sky-600 focus:ring-sky-500" /> 
+                                            <input type="checkbox" checked={resolutionActions.suspendAccount} onChange={(e) => setResolutionActions({...resolutionActions, suspendAccount: e.target.checked})} className="rounded text-indigo-600 focus:ring-indigo-500" /> 
                                             <span>Suspend Account</span>
                                         </label>
                                     </div>
@@ -857,18 +857,18 @@ const Disputes = () => {
                                         rows="3" 
                                         value={resolutionReason} 
                                         onChange={(e) => setResolutionReason(e.target.value)} 
-                                        className="w-full rounded-xl px-3.5 py-2 text-xs bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 resize-none"
+                                        className="w-full rounded-xl px-3.5 py-2 text-xs bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500 resize-none"
                                     ></textarea>
                                 </div>
 
                                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-3 border-t border-slate-200 dark:border-white/10">
                                     <div className="flex items-center gap-3 text-xs font-bold text-slate-600 dark:text-gray-300">
                                         <label className="flex items-center gap-1.5 cursor-pointer">
-                                            <input type="checkbox" checked={notifyReporter} onChange={(e) => setNotifyReporter(e.target.checked)} className="rounded text-sky-600 focus:ring-sky-500" /> 
+                                            <input type="checkbox" checked={notifyReporter} onChange={(e) => setNotifyReporter(e.target.checked)} className="rounded text-indigo-600 focus:ring-indigo-500" /> 
                                             <span>Notify Reporter</span>
                                         </label>
                                         <label className="flex items-center gap-1.5 cursor-pointer">
-                                            <input type="checkbox" checked={notifyTeam} onChange={(e) => setNotifyTeam(e.target.checked)} className="rounded text-sky-600 focus:ring-sky-500" /> 
+                                            <input type="checkbox" checked={notifyTeam} onChange={(e) => setNotifyTeam(e.target.checked)} className="rounded text-indigo-600 focus:ring-indigo-500" /> 
                                             <span>Notify Team</span>
                                         </label>
                                     </div>
@@ -890,7 +890,7 @@ const Disputes = () => {
                                         </button>
                                         <button 
                                             type="submit" 
-                                            className="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow-md shadow-sky-500/20 transition-all active:scale-95 cursor-pointer"
+                                            className="px-5 py-2.5 bg-[#7C65F6] hover:bg-[#6851ec] !text-white shadow-sm shadow-[#7C65F6]/20 font-bold text-xs rounded-xl shadow-md shadow-[#7C65F6]/20 transition-all active:scale-95 cursor-pointer"
                                         >
                                             Record Decision & Resolve
                                         </button>
@@ -915,7 +915,7 @@ const Disputes = () => {
                         <select 
                             value={infoRequestForm.target} 
                             onChange={(e) => setInfoRequestForm({...infoRequestForm, target: e.target.value})} 
-                            className="w-full rounded-xl px-3.5 py-2 text-xs font-bold bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 cursor-pointer"
+                            className="w-full rounded-xl px-3.5 py-2 text-xs font-bold bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500 cursor-pointer"
                         >
                             <option value="Team">Reported Team</option>
                             <option value="Reporter">Reporter</option>
@@ -931,7 +931,7 @@ const Disputes = () => {
                             rows="3" 
                             value={infoRequestForm.message} 
                             onChange={(e) => setInfoRequestForm({...infoRequestForm, message: e.target.value})} 
-                            className="w-full rounded-xl px-3.5 py-2 text-xs bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 resize-none"
+                            className="w-full rounded-xl px-3.5 py-2 text-xs bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500 resize-none"
                         ></textarea>
                     </div>
 
@@ -963,7 +963,7 @@ const Disputes = () => {
                             required 
                             value={investigatorInput.name} 
                             onChange={(e) => setInvestigatorInput({...investigatorInput, name: e.target.value})} 
-                            className="w-full rounded-xl px-3.5 py-2 text-xs bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500" 
+                            className="w-full rounded-xl px-3.5 py-2 text-xs bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500" 
                         />
                     </div>
 
@@ -974,7 +974,7 @@ const Disputes = () => {
                             required 
                             value={investigatorInput.email} 
                             onChange={(e) => setInvestigatorInput({...investigatorInput, email: e.target.value})} 
-                            className="w-full rounded-xl px-3.5 py-2 text-xs bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-sky-500" 
+                            className="w-full rounded-xl px-3.5 py-2 text-xs bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500" 
                         />
                     </div>
 
@@ -988,7 +988,7 @@ const Disputes = () => {
                         </button>
                         <button 
                             type="submit" 
-                            className="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow-md shadow-sky-500/20 active:scale-95 cursor-pointer"
+                            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-md shadow-[#7C65F6]/20 active:scale-95 cursor-pointer"
                         >
                             Assign Investigator
                         </button>

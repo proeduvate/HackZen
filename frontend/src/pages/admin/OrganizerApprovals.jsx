@@ -252,16 +252,16 @@ const OrganizerApprovals = () => {
     };
 
     return (
-        <div className="space-y-7 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-16 max-w-7xl mx-auto">
+        <div className="space-y-5 sm:space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-16 max-w-7xl mx-auto">
             
             {/* Notification Toast */}
             {toastMessage && (
-                <div className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 border backdrop-blur-md transition-all duration-300 animate-in slide-in-from-bottom-5 ${
+                <div className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl shadow-lg flex items-center gap-3 border backdrop-blur-sm transition-all duration-300 animate-in slide-in-from-bottom-5 ${
                     toastMessage.type === 'error'
-                        ? 'bg-rose-950/90 border-rose-500/30 text-rose-200'
+                        ? 'bg-rose-50 border-rose-300/80 text-rose-700'
                         : toastMessage.type === 'warning'
-                        ? 'bg-amber-950/90 border-amber-500/30 text-amber-200'
-                        : 'bg-emerald-950/90 border-emerald-500/30 text-emerald-200'
+                        ? 'bg-amber-50 border-amber-300/80 text-amber-700'
+                        : 'bg-violet-50 border-violet-300/80 text-violet-700'
                 }`}>
                     <span className="text-base">
                         {toastMessage.type === 'error' ? '⚠️' : toastMessage.type === 'warning' ? '⚡' : '✓'}
@@ -295,72 +295,72 @@ const OrganizerApprovals = () => {
             </div>
 
             {/* Top Metric Stats Summary */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                <div className="p-5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group flex flex-col justify-between">
+                    <div className="flex items-center justify-between gap-1.5">
+                        <span className="text-[11px] font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider truncate">
                             Total Applicants
                         </span>
-                        <div className="w-10 h-10 rounded-full bg-sky-50 dark:bg-sky-500/20 flex items-center justify-center group-hover:scale-105 transition-transform text-sky-600 dark:text-sky-400">
-                            <UsersIcon className="w-5 h-5" />
+                        <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/20 flex items-center justify-center group-hover:scale-105 transition-transform text-indigo-600 dark:text-indigo-400 shrink-0">
+                            <UsersIcon className="w-4 h-4" />
                         </div>
                     </div>
-                    <div className="mt-3">
-                        <div className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                    <div className="mt-1.5">
+                        <div className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight">
                             {stats.total}
                         </div>
-                        <p className="text-xs font-medium text-slate-500 dark:text-gray-400 mt-1">Submitted applications</p>
+                        <p className="text-[11px] font-medium text-slate-500 dark:text-gray-400 mt-0.5">Submitted applications</p>
                     </div>
                 </div>
 
-                <div className="p-5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group flex flex-col justify-between">
+                    <div className="flex items-center justify-between gap-1.5">
+                        <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider truncate">
                             Pending Review
                         </span>
-                        <div className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-500/20 flex items-center justify-center group-hover:scale-105 transition-transform text-amber-600 dark:text-amber-400">
-                            <ClockIcon className="w-5 h-5" />
+                        <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-500/20 flex items-center justify-center group-hover:scale-105 transition-transform text-amber-600 dark:text-amber-400 shrink-0">
+                            <ClockIcon className="w-4 h-4" />
                         </div>
                     </div>
-                    <div className="mt-3">
-                        <div className="text-3xl font-extrabold text-amber-600 dark:text-amber-400 tracking-tight">
+                    <div className="mt-1.5">
+                        <div className="text-2xl font-bold text-amber-600 dark:text-amber-400 tracking-tight leading-tight">
                             {stats.pending}
                         </div>
-                        <p className="text-xs font-medium text-slate-500 dark:text-gray-400 mt-1">Awaiting decision</p>
+                        <p className="text-[11px] font-medium text-slate-500 dark:text-gray-400 mt-0.5">Awaiting decision</p>
                     </div>
                 </div>
 
-                <div className="p-5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group flex flex-col justify-between">
+                    <div className="flex items-center justify-between gap-1.5">
+                        <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider truncate">
                             Approved Active
                         </span>
-                        <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-500/20 flex items-center justify-center group-hover:scale-105 transition-transform text-emerald-600 dark:text-emerald-400">
-                            <CheckIcon className="w-5 h-5" />
+                        <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/20 flex items-center justify-center group-hover:scale-105 transition-transform text-emerald-600 dark:text-emerald-400 shrink-0">
+                            <CheckIcon className="w-4 h-4" />
                         </div>
                     </div>
-                    <div className="mt-3">
-                        <div className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 tracking-tight">
+                    <div className="mt-1.5">
+                        <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 tracking-tight leading-tight">
                             {stats.approved}
                         </div>
-                        <p className="text-xs font-medium text-slate-500 dark:text-gray-400 mt-1">Verified host organizers</p>
+                        <p className="text-[11px] font-medium text-slate-500 dark:text-gray-400 mt-0.5">Verified host organizers</p>
                     </div>
                 </div>
 
-                <div className="p-5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group flex flex-col justify-between">
+                    <div className="flex items-center justify-between gap-1.5">
+                        <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider truncate">
                             Rejected / Suspended
                         </span>
-                        <div className="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-500/20 flex items-center justify-center group-hover:scale-105 transition-transform text-rose-600 dark:text-rose-400">
-                            <TriangleAlertIcon className="w-5 h-5" />
+                        <div className="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-500/20 flex items-center justify-center group-hover:scale-105 transition-transform text-rose-600 dark:text-rose-400 shrink-0">
+                            <TriangleAlertIcon className="w-4 h-4" />
                         </div>
                     </div>
-                    <div className="mt-3">
-                        <div className="text-3xl font-extrabold text-rose-600 dark:text-rose-400 tracking-tight">
+                    <div className="mt-1.5">
+                        <div className="text-2xl font-bold text-rose-600 dark:text-rose-400 tracking-tight leading-tight">
                             {stats.rejected}
                         </div>
-                        <p className="text-xs font-medium text-slate-500 dark:text-gray-400 mt-1">Revoked or non-compliant</p>
+                        <p className="text-[11px] font-medium text-slate-500 dark:text-gray-400 mt-0.5">Revoked or non-compliant</p>
                     </div>
                 </div>
             </div>
@@ -386,12 +386,12 @@ const OrganizerApprovals = () => {
                                     onClick={() => setActiveTab(tab)}
                                     className={`py-1.5 px-3 text-[11px] font-bold rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
                                         isActive 
-                                        ? 'bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-500/30 shadow-xs' 
+                                        ? 'bg-purple-50 dark:bg-purple-500/20 text-[#6D5CE8] dark:text-purple-300 border border-purple-200 dark:border-purple-500/30 shadow-xs' 
                                         : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white border border-transparent'
                                     }`}
                                 >
                                     <span>{tab}</span>
-                                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${isActive ? 'bg-sky-200/70 dark:bg-sky-400/20 text-sky-800 dark:text-sky-200' : 'bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-gray-300'}`}>
+                                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${isActive ? 'bg-indigo-200/70 dark:bg-indigo-400/20 text-indigo-800 dark:text-indigo-200' : 'bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-gray-300'}`}>
                                         {count}
                                     </span>
                                 </button>
@@ -408,7 +408,7 @@ const OrganizerApprovals = () => {
                                 placeholder="Search by name, org, email..." 
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl pl-9 pr-3.5 py-2 text-xs text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-sky-500 transition-colors"
+                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl pl-9 pr-3.5 py-2 text-xs text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition-colors"
                             />
                         </div>
                     </div>
@@ -432,14 +432,14 @@ const OrganizerApprovals = () => {
                                         onClick={() => setSelectedAppId(app.id)}
                                         className={`p-3.5 rounded-xl cursor-pointer transition-all border text-left ${
                                             isSelected 
-                                            ? 'bg-sky-50/80 dark:bg-sky-500/15 border-sky-400 dark:border-sky-500/60 shadow-sm' 
-                                            : 'bg-white dark:bg-navy-800/40 border-slate-200/80 dark:border-white/5 hover:border-sky-300 dark:hover:border-sky-500/30'
+                                            ? 'bg-indigo-50/80 dark:bg-indigo-500/15 border-indigo-400 dark:border-indigo-500/60 shadow-sm' 
+                                            : 'bg-white dark:bg-navy-800/40 border-slate-200/80 dark:border-white/5 hover:border-indigo-300 dark:hover:border-indigo-500/30'
                                         }`}
                                     >
                                         <div className="flex justify-between items-start gap-2 mb-1.5">
                                             <div className="min-w-0 pr-1">
                                                 <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">{app.applicantName}</h4>
-                                                <p className="text-[11px] text-sky-600 dark:text-sky-400 font-medium truncate mt-0.5">{app.organization}</p>
+                                                <p className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium truncate mt-0.5">{app.organization}</p>
                                                 <p className="text-[10px] text-slate-400 dark:text-gray-500 truncate">{app.email}</p>
                                             </div>
                                             <span className={`shrink-0 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${
@@ -468,15 +468,15 @@ const OrganizerApprovals = () => {
                     {selectedApp ? (
                         <>
                             {/* Selected Organizer Profile Top Bar */}
-                            <div className="p-5 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
-                                <div className="flex items-center gap-3.5">
-                                    <div className="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-100 dark:border-sky-500/30 font-bold text-base flex items-center justify-center shrink-0 shadow-sm">
+                            <div className="p-3.5 sm:p-4 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shrink-0">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/30 font-bold text-sm flex items-center justify-center shrink-0 shadow-sm">
                                         {selectedApp.applicantName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'OR'}
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">{selectedApp.applicantName}</h2>
-                                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                                            <h2 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white tracking-tight">{selectedApp.applicantName}</h2>
+                                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${
                                                 selectedApp.status === 'Approved' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' :
                                                 selectedApp.status === 'Needs Changes' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' :
                                                 selectedApp.status === 'Rejected' ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20' :
@@ -487,21 +487,21 @@ const OrganizerApprovals = () => {
                                             </span>
                                         </div>
                                         <p className="text-xs text-slate-500 dark:text-gray-400 font-medium mt-0.5">
-                                            {selectedApp.designation} &bull; <span className="text-sky-600 dark:text-sky-400 font-bold">{selectedApp.organization}</span>
+                                            {selectedApp.designation} &bull; <span className="text-indigo-600 dark:text-indigo-400 font-bold">{selectedApp.organization}</span>
                                         </p>
                                     </div>
                                 </div>
 
                                 <div className="text-left sm:text-right">
-                                    <p className="text-[10px] text-slate-400 dark:text-gray-500 uppercase tracking-wider font-bold">Completeness Score</p>
-                                    <p className={`text-xl sm:text-2xl font-extrabold tracking-tight mt-0.5 ${selectedApp.verificationScore >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                                    <p className="text-[9px] text-slate-400 dark:text-gray-500 uppercase tracking-wider font-bold">Completeness Score</p>
+                                    <p className={`text-lg sm:text-xl font-extrabold tracking-tight mt-0.5 ${selectedApp.verificationScore >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
                                         {selectedApp.verificationScore}%
                                     </p>
                                 </div>
                             </div>
 
                             {/* Sub-tab Navigation */}
-                            <div className="flex border-b border-slate-100 dark:border-white/5 px-5 pt-2 gap-4 shrink-0 bg-white dark:bg-navy-900">
+                            <div className="flex border-b border-slate-100 dark:border-white/5 px-4 pt-1.5 gap-3 shrink-0 bg-white dark:bg-navy-900">
                                 {[
                                     { id: 'registration', label: '1. Registration Details', icon: <UsersIcon className="w-3.5 h-3.5" /> },
                                     { id: 'history', label: '2. Platform History', icon: <RocketIcon className="w-3.5 h-3.5" /> },
@@ -510,9 +510,9 @@ const OrganizerApprovals = () => {
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveDetailTab(tab.id)}
-                                        className={`pb-3 px-1 text-xs font-bold transition-all border-b-2 flex items-center gap-1.5 cursor-pointer ${
+                                        className={`pb-2.5 px-1 text-xs font-bold transition-all border-b-2 flex items-center gap-1.5 cursor-pointer ${
                                             activeDetailTab === tab.id
-                                            ? 'border-sky-500 text-sky-600 dark:text-sky-400'
+                                            ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
                                             : 'border-transparent text-slate-400 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white'
                                         }`}
                                     >
@@ -551,7 +551,7 @@ const OrganizerApprovals = () => {
                                         <div className="p-5 rounded-xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/70 dark:border-white/5">
                                             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300 mb-3.5 flex items-center justify-between">
                                                 <span>Submitted Applicant Information</span>
-                                                <span className="text-sky-600 dark:text-sky-400 font-mono text-[11px]">Role: {selectedApp.role}</span>
+                                                <span className="text-indigo-600 dark:text-indigo-400 font-mono text-[11px]">Role: {selectedApp.role}</span>
                                             </h4>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                                                 <div className="space-y-2.5">
@@ -582,7 +582,7 @@ const OrganizerApprovals = () => {
                                                     </div>
                                                     <div className="flex justify-between border-b pb-2 border-slate-200/60 dark:border-white/5">
                                                         <span className="text-slate-500 dark:text-gray-400">Domain</span>
-                                                        <span className="font-bold text-sky-600 dark:text-sky-400">{selectedApp.domain}</span>
+                                                        <span className="font-bold text-indigo-600 dark:text-indigo-400">{selectedApp.domain}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -611,7 +611,7 @@ const OrganizerApprovals = () => {
                                                             href={selectedApp.website.startsWith('http') ? selectedApp.website : `https://${selectedApp.website}`} 
                                                             target="_blank" 
                                                             rel="noreferrer" 
-                                                            className="font-bold text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-1 truncate max-w-[200px]"
+                                                            className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 truncate max-w-[200px]"
                                                         >
                                                             {selectedApp.website}
                                                         </a>
@@ -658,9 +658,9 @@ const OrganizerApprovals = () => {
                                         </div>
 
                                         {/* 4. AI Recommendation Box */}
-                                        <div className="p-4 rounded-xl border bg-gradient-to-r from-sky-500/10 to-indigo-500/10 border-sky-500/20">
+                                        <div className="p-4 rounded-xl border bg-gradient-to-r from-indigo-500/10 to-indigo-500/10 border-indigo-500/20">
                                             <div className="flex justify-between items-center mb-1.5">
-                                                <h4 className="text-xs font-bold uppercase tracking-wider text-sky-700 dark:text-sky-400 flex items-center gap-1.5">
+                                                <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400 flex items-center gap-1.5">
                                                     <RocketIcon className="w-3.5 h-3.5" /> AI Recommendation Engine
                                                 </h4>
                                                 <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
@@ -712,7 +712,7 @@ const OrganizerApprovals = () => {
                                             <div className="space-y-3">
                                                 {selectedApp.timeline?.map((item, idx) => (
                                                     <div key={idx} className="flex items-start gap-3 text-xs">
-                                                        <span className="w-2.5 h-2.5 rounded-full bg-sky-500 mt-1 shrink-0"></span>
+                                                        <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 mt-1 shrink-0"></span>
                                                         <div>
                                                             <p className="font-bold text-slate-900 dark:text-white">{item.event}</p>
                                                             <p className="text-[10px] text-slate-400 dark:text-gray-500">{item.date}</p>
@@ -745,7 +745,7 @@ const OrganizerApprovals = () => {
                                         
                                         {/* Top Header & Re-run Button */}
                                         <div className="flex justify-between items-center">
-                                            <h4 className="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 flex items-center gap-1.5">
+                                            <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
                                                 <ZapIcon className="w-4 h-4" /> Live AI Risk & Verification Assessment
                                             </h4>
                                             <button 
@@ -813,11 +813,11 @@ const OrganizerApprovals = () => {
                                                         <div className="p-4 rounded-xl border bg-slate-50/70 dark:bg-white/[0.02] border-slate-200/70 dark:border-white/5 flex items-center justify-between">
                                                             <div>
                                                                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Confidence Score</span>
-                                                                <span className="text-xs font-bold text-sky-600 dark:text-sky-400">{currentAiReview.confidenceScore || 94}%</span>
+                                                                <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">{currentAiReview.confidenceScore || 94}%</span>
                                                             </div>
                                                             <div className="flex gap-1.5 flex-wrap justify-end">
                                                                 {(currentAiReview.verifiedBadges || ["Domain Verified", "Institutional Alignment"]).map((b, i) => (
-                                                                    <span key={i} className="px-2 py-0.5 rounded-full bg-sky-50 dark:bg-sky-500/10 text-sky-700 dark:text-sky-300 text-[10px] font-bold border border-sky-200 dark:border-sky-500/20">
+                                                                    <span key={i} className="px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold border border-indigo-200 dark:border-indigo-500/20">
                                                                         ✓ {b}
                                                                     </span>
                                                                 ))}
@@ -853,9 +853,9 @@ const OrganizerApprovals = () => {
 
                                                 {/* Quick Apply AI Recommendation Banner */}
                                                 {currentAiReview && (
-                                                    <div className="p-4 rounded-2xl border border-sky-200 dark:border-sky-500/30 bg-sky-50/60 dark:bg-sky-500/10 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+                                                    <div className="p-4 rounded-2xl border border-indigo-200 dark:border-indigo-500/30 bg-indigo-50/60 dark:bg-indigo-500/10 flex flex-wrap items-center justify-between gap-3 shadow-sm">
                                                         <div>
-                                                            <span className="font-bold text-xs uppercase tracking-wider text-sky-800 dark:text-sky-300 block mb-0.5">
+                                                            <span className="font-bold text-xs uppercase tracking-wider text-indigo-800 dark:text-indigo-300 block mb-0.5">
                                                                 AI Verification Action: {currentAiReview.recommendation || 'APPROVE'}
                                                             </span>
                                                             <p className="text-xs text-slate-600 dark:text-slate-300">
@@ -869,9 +869,9 @@ const OrganizerApprovals = () => {
                                                                 <button
                                                                     onClick={() => handleApprove(selectedApp.id)}
                                                                     disabled={actionLoading}
-                                                                    className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-500/20 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                                                                    className="px-5 py-2 bg-emerald-50 dark:bg-emerald-500/15 hover:bg-emerald-100 dark:hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-400 border border-emerald-300/80 dark:border-emerald-500/30 text-xs font-bold rounded-xl shadow-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
                                                                 >
-                                                                    <CheckIcon className="w-3.5 h-3.5" />
+                                                                    <CheckIcon className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                                                                     Approve Organizer Now
                                                                 </button>
                                                             )}
@@ -882,9 +882,9 @@ const OrganizerApprovals = () => {
                                                                         setIsRequestChangesOpen(true);
                                                                     }}
                                                                     disabled={actionLoading}
-                                                                    className="px-5 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl shadow-md shadow-amber-500/20 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                                                                    className="px-5 py-2 bg-amber-50 dark:bg-amber-500/15 hover:bg-amber-100 dark:hover:bg-amber-500/25 text-amber-800 dark:text-amber-300 border border-amber-300/80 dark:border-amber-500/30 text-xs font-bold rounded-xl shadow-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
                                                                 >
-                                                                    <TriangleAlertIcon className="w-3.5 h-3.5" />
+                                                                    <TriangleAlertIcon className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                                                                     Request Verification with AI Summary
                                                                 </button>
                                                             )}
@@ -896,7 +896,7 @@ const OrganizerApprovals = () => {
                                                                         setIsRejectOpen(true);
                                                                     }}
                                                                     disabled={actionLoading}
-                                                                    className="px-5 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl shadow-md shadow-rose-500/20 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                                                                    className="px-5 py-2 bg-rose-50 dark:bg-rose-500/15 hover:bg-rose-100 dark:hover:bg-rose-500/25 text-rose-700 dark:text-rose-400 border border-rose-300/80 dark:border-rose-500/30 text-xs font-bold rounded-xl shadow-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
                                                                 >
                                                                     Reject with AI Dossier
                                                                 </button>
@@ -938,9 +938,9 @@ const OrganizerApprovals = () => {
                                             <button 
                                                 onClick={() => handleApprove(selectedApp.id)}
                                                 disabled={actionLoading}
-                                                className="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-xl shadow-md shadow-sky-500/30 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                                                className="px-5 py-2.5 bg-[#7C65F6] hover:bg-[#6851ec] !text-white shadow-sm shadow-[#7C65F6]/20 text-xs font-bold rounded-xl shadow-md shadow-[#7C65F6]/20 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
                                             >
-                                                <CheckIcon className="w-3.5 h-3.5" />
+                                                <CheckIcon className="w-3.5 h-3.5 text-white" />
                                                 Approve & Activate
                                             </button>
                                         </>
@@ -970,7 +970,7 @@ const OrganizerApprovals = () => {
                                             <button 
                                                 onClick={() => handleApprove(selectedApp.id)}
                                                 disabled={actionLoading}
-                                                className="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-xl shadow-md shadow-sky-500/30 transition-all cursor-pointer active:scale-95"
+                                                className="px-5 py-2 bg-indigo-50 dark:bg-indigo-500/15 hover:bg-indigo-100 dark:hover:bg-indigo-500/25 text-indigo-700 dark:text-indigo-300 border border-indigo-300/80 dark:border-indigo-500/30 text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer active:scale-95"
                                             >
                                                 Re-Approve Organizer
                                             </button>
@@ -988,7 +988,7 @@ const OrganizerApprovals = () => {
                         </>
                     ) : (
                         <div className="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-gray-500 p-8 text-center">
-                            <UsersIcon className="w-12 h-12 mb-3 opacity-30 text-sky-500" />
+                            <UsersIcon className="w-12 h-12 mb-3 opacity-30 text-indigo-500" />
                             <p className="font-bold text-sm text-slate-700 dark:text-gray-300">Select an organizer application from the left list to review.</p>
                         </div>
                     )}
@@ -1015,7 +1015,7 @@ const OrganizerApprovals = () => {
                             <label key={key} className="flex items-center gap-2 text-xs text-slate-700 dark:text-gray-300 cursor-pointer p-2.5 rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10">
                                 <input 
                                     type="checkbox" 
-                                    className="rounded text-sky-600 focus:ring-sky-500" 
+                                    className="rounded text-indigo-600 focus:ring-indigo-500" 
                                     checked={changeRequests[key]} 
                                     onChange={(e) => setChangeRequests({...changeRequests, [key]: e.target.checked})} 
                                 /> 
@@ -1032,7 +1032,7 @@ const OrganizerApprovals = () => {
                             rows="3" 
                             value={changeMessage} 
                             onChange={(e) => setChangeMessage(e.target.value)} 
-                            className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-sky-500 transition-colors resize-none"
+                            className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-indigo-500 transition-colors resize-none"
                         ></textarea>
                     </div>
                     <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-white/10">
@@ -1045,7 +1045,7 @@ const OrganizerApprovals = () => {
                         <button 
                             onClick={handleSendChangeRequest} 
                             disabled={actionLoading}
-                            className="px-5 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl shadow-md shadow-amber-500/20 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                            className="px-5 py-2 bg-amber-50 dark:bg-amber-500/15 hover:bg-amber-100 dark:hover:bg-amber-500/25 text-amber-800 dark:text-amber-300 border border-amber-300/80 dark:border-amber-500/30 font-bold text-xs rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer disabled:opacity-50"
                         >
                             {actionLoading ? 'Sending...' : 'Send Change Request'}
                         </button>
@@ -1105,7 +1105,7 @@ const OrganizerApprovals = () => {
                         <button 
                             onClick={handleReject} 
                             disabled={actionLoading}
-                            className="px-5 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl shadow-md shadow-rose-500/20 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                            className="px-5 py-2 bg-rose-50 dark:bg-rose-500/15 hover:bg-rose-100 dark:hover:bg-rose-500/25 text-rose-700 dark:text-rose-400 border border-rose-300/80 dark:border-rose-500/30 font-bold text-xs rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer disabled:opacity-50"
                         >
                             {actionLoading ? 'Rejecting...' : 'Confirm Rejection'}
                         </button>
@@ -1151,7 +1151,7 @@ const OrganizerApprovals = () => {
                         <button 
                             onClick={handleSuspend} 
                             disabled={actionLoading}
-                            className="px-5 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl shadow-md shadow-purple-500/20 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                            className="px-5 py-2 bg-purple-50 dark:bg-purple-500/15 hover:bg-purple-100 dark:hover:bg-purple-500/25 text-purple-700 dark:text-purple-300 border border-purple-300/80 dark:border-purple-500/30 font-bold text-xs rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer disabled:opacity-50"
                         >
                             {actionLoading ? 'Suspending...' : 'Confirm Suspension'}
                         </button>

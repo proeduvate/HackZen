@@ -120,17 +120,17 @@ const HackathonChangeRequest = () => {
     if (isLoading || !requestData) {
         return (
             <div className="flex justify-center py-24">
-                <div className="w-10 h-10 border-4 border-sky-500/20 border-t-sky-500 rounded-full animate-spin"></div>
+                <div className="w-10 h-10 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
             </div>
         );
     }
 
     return (
-        <div className="space-y-7 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-16 max-w-7xl mx-auto">
+        <div className="space-y-5 sm:space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-16 max-w-7xl mx-auto">
             {reminderFeedback && (
-                <div className="p-4 rounded-xl bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/30 text-sky-800 dark:text-sky-300 text-xs font-bold flex items-center justify-between shadow-sm animate-in fade-in">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30 text-indigo-800 dark:text-indigo-300 text-xs font-bold flex items-center justify-between shadow-sm animate-in fade-in">
                     <div className="flex items-center gap-2.5">
-                        <svg className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <svg className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         <span>{reminderFeedback}</span>
                     </div>
                     <button onClick={() => setReminderFeedback(null)} className="text-slate-400 hover:text-slate-700 dark:hover:text-white text-xs font-bold cursor-pointer">Dismiss</button>
@@ -138,7 +138,7 @@ const HackathonChangeRequest = () => {
             )}
 
             {/* Main Header Section */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-200 dark:border-white/10">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-white/10">
                 <div className="space-y-1.5">
                     <div className="flex items-center gap-3 flex-wrap">
                         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">{requestData.title}</h1>
@@ -171,7 +171,7 @@ const HackathonChangeRequest = () => {
                     </button>
                     <button 
                         onClick={handleOpenMessageModal} 
-                        className="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold shadow-md shadow-sky-500/20 transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                        className="px-5 py-2.5 bg-[#7C65F6] hover:bg-[#6851ec] !text-white shadow-sm shadow-[#7C65F6]/20 rounded-xl text-xs font-bold shadow-md shadow-[#7C65F6]/20 transition-all flex items-center gap-2 cursor-pointer active:scale-95"
                     >
                         <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
                         <span>Message Organizer</span>
@@ -179,12 +179,12 @@ const HackathonChangeRequest = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                 {/* Left Side: Requested Changes */}
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 overflow-hidden shadow-sm flex flex-col">
-                        <div className="p-6 border-b border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02] flex items-center justify-between">
-                            <h2 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2.5">
+                <div className="lg:col-span-2 space-y-4 sm:space-y-5">
+                    <div className="rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 overflow-hidden shadow-sm flex flex-col">
+                        <div className="p-3.5 sm:p-4 border-b border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02] flex items-center justify-between">
+                            <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2.5">
                                 <span className="p-1.5 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-600 border border-amber-200 dark:border-amber-500/20">
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                 </span>
@@ -197,16 +197,16 @@ const HackathonChangeRequest = () => {
 
                         <div className="divide-y divide-slate-100 dark:divide-white/5">
                             {requestData.changeItems.map((item, index) => (
-                                <div key={item.id} className="p-6 flex items-start gap-4 hover:bg-slate-50/70 dark:hover:bg-white/[0.02] transition-colors group">
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 transition-all ${item.status === 'Resolved' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 border border-emerald-200 dark:border-emerald-500/20' : 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 border border-amber-200 dark:border-amber-500/20'}`}>
+                                <div key={item.id} className="p-3.5 sm:p-4 flex items-start gap-3.5 hover:bg-slate-50/70 dark:hover:bg-white/[0.02] transition-colors group">
+                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0 transition-all ${item.status === 'Resolved' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 border border-emerald-200 dark:border-emerald-500/20' : 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 border border-amber-200 dark:border-amber-500/20'}`}>
                                         {item.icon}
                                     </div>
-                                    <div className="flex-1 space-y-2">
+                                    <div className="flex-1 space-y-1.5">
                                         <div className="flex items-center justify-between">
-                                            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                                            <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                                                 {index + 1}. {item.title}
                                             </h3>
-                                            <div className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider border ${item.status === 'Resolved' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-500/30' : 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-500/30'}`}>
+                                            <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider border ${item.status === 'Resolved' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-500/30' : 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-500/30'}`}>
                                                 {item.status === 'Resolved' && (
                                                     <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
                                                 )}
@@ -216,9 +216,9 @@ const HackathonChangeRequest = () => {
                                         <p className="text-xs text-slate-600 dark:text-gray-400 leading-relaxed font-normal">
                                             {item.description}
                                         </p>
-                                        <div className="flex items-center gap-2 pt-1">
+                                        <div className="flex items-center gap-2 pt-0.5">
                                             <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-gray-500">Action Required:</span>
-                                            <span className="px-2.5 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[10px] text-slate-700 dark:text-gray-300 font-bold">
+                                            <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[10px] text-slate-700 dark:text-gray-300 font-bold">
                                                 {item.actionRequired}
                                             </span>
                                         </div>
@@ -227,11 +227,11 @@ const HackathonChangeRequest = () => {
                             ))}
                         </div>
 
-                        <div className="p-6 bg-slate-50/60 dark:bg-white/[0.02] border-t border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div className="p-3.5 sm:p-4 bg-slate-50/60 dark:bg-white/[0.02] border-t border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                             <button 
                                 onClick={handleReminder}
                                 disabled={actionLoading === 'reminder' || requestData.status !== 'Changes Requested'}
-                                className="disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 px-5 py-2.5 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20 text-amber-800 dark:text-amber-400 text-xs font-bold rounded-xl border border-amber-300 dark:border-amber-500/30 transition-all cursor-pointer shadow-sm active:scale-95"
+                                className="disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20 text-amber-800 dark:text-amber-400 text-xs font-bold rounded-xl border border-amber-300 dark:border-amber-500/30 transition-all cursor-pointer shadow-sm active:scale-95"
                             >
                                 {actionLoading === 'reminder' ? 'Sending...' : (
                                     <>
@@ -249,30 +249,30 @@ const HackathonChangeRequest = () => {
                 </div>
 
                 {/* Right Side: Timeline & Actions */}
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-5">
                     {/* Activity Timeline Card */}
-                    <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 overflow-hidden shadow-sm">
-                        <div className="p-5 border-b border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02]">
-                            <h2 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                                <svg className="w-4 h-4 text-sky-600 dark:text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <div className="rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 overflow-hidden shadow-sm">
+                        <div className="p-3.5 sm:p-4 border-b border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02]">
+                            <h2 className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                                <svg className="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 <span>Activity Timeline</span>
                             </h2>
                         </div>
-                        <div className="p-6 relative">
+                        <div className="p-4 sm:p-5 relative">
                             {/* Vertical Line */}
-                            <div className="absolute left-[38px] top-8 bottom-8 w-px bg-slate-200 dark:bg-white/10"></div>
+                            <div className="absolute left-[34px] top-6 bottom-6 w-px bg-slate-200 dark:bg-white/10"></div>
 
-                            <div className="space-y-6 relative">
+                            <div className="space-y-4 relative">
                                 {requestData.timeline.map((event) => (
-                                    <div key={event.id} className="flex items-start gap-3.5">
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 shrink-0 ${event.isActive ? (event.status === 'Rejected' ? 'bg-rose-50 dark:bg-rose-500/20 border border-rose-300 dark:border-rose-500/50' : 'bg-sky-50 dark:bg-sky-500/20 border border-sky-300 dark:border-sky-500/50') : 'bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10'}`}>
-                                            <div className={`w-2 h-2 rounded-full ${event.isActive ? (event.status === 'Rejected' ? 'bg-rose-500' : 'bg-sky-600') : 'bg-slate-400'}`}></div>
+                                    <div key={event.id} className="flex items-start gap-3">
+                                        <div className={`w-7 h-7 rounded-full flex items-center justify-center z-10 shrink-0 ${event.isActive ? (event.status === 'Rejected' ? 'bg-rose-50 dark:bg-rose-500/20 border border-rose-300 dark:border-rose-500/50' : 'bg-indigo-50 dark:bg-indigo-500/20 border border-indigo-300 dark:border-indigo-500/50') : 'bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10'}`}>
+                                            <div className={`w-2 h-2 rounded-full ${event.isActive ? (event.status === 'Rejected' ? 'bg-rose-500' : 'bg-indigo-600') : 'bg-slate-400'}`}></div>
                                         </div>
                                         <div className="flex-1">
                                             <p className={`text-xs font-bold uppercase tracking-wider ${event.isActive ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-gray-400'}`}>{event.status}</p>
                                             <p className="text-[11px] text-slate-400 dark:text-gray-500 mt-0.5">{event.timestamp}</p>
                                             {event.actor && (
-                                                <p className={`text-[10px] font-bold uppercase mt-1 ${event.isActive ? (event.status === 'Rejected' ? 'text-rose-600' : 'text-sky-600 dark:text-sky-400') : 'text-slate-400'}`}>
+                                                <p className={`text-[10px] font-bold uppercase mt-1 ${event.isActive ? (event.status === 'Rejected' ? 'text-rose-600' : 'text-indigo-600 dark:text-indigo-400') : 'text-slate-400'}`}>
                                                     {event.actor}
                                                 </p>
                                             )}
@@ -284,19 +284,19 @@ const HackathonChangeRequest = () => {
                     </div>
 
                     {/* Admin Actions Card */}
-                    <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 overflow-hidden shadow-sm">
-                        <div className="p-5 border-b border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02]">
-                            <h2 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                    <div className="rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 overflow-hidden shadow-sm">
+                        <div className="p-3.5 sm:p-4 border-b border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02]">
+                            <h2 className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
                                 <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                                 <span>Admin Actions</span>
                             </h2>
                         </div>
-                        <div className="p-6 space-y-4">
-                            <div className="space-y-2">
+                        <div className="p-4 sm:p-5 space-y-3">
+                            <div className="space-y-1.5">
                                 <button 
                                     onClick={() => handleAction(markAsResolved, 'resolve')}
                                     disabled={actionLoading !== null || requestData.status !== 'Changes Requested'}
-                                    className="disabled:opacity-50 disabled:cursor-not-allowed w-full py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold shadow-md shadow-sky-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                                    className="disabled:opacity-50 disabled:cursor-not-allowed w-full py-2.5 bg-[#7C65F6] hover:bg-[#6851ec] !text-white shadow-sm shadow-[#7C65F6]/20 rounded-xl text-xs font-bold shadow-md shadow-[#7C65F6]/20 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
                                 >
                                     {actionLoading === 'resolve' ? 'Processing...' : (
                                         <>
@@ -308,13 +308,13 @@ const HackathonChangeRequest = () => {
                                 <p className="text-[10px] text-slate-500 dark:text-gray-400 text-center px-2">Confirms all requested changes are met and advances to final approval.</p>
                             </div>
 
-                            <div className="h-px bg-slate-100 dark:bg-white/5 my-2"></div>
+                            <div className="h-px bg-slate-100 dark:bg-white/5 my-1.5"></div>
 
-                            <div className="space-y-2">
+                            <div className="space-y-1.5">
                                 <button 
                                     onClick={() => handleAction(withdrawRequestAndReject, 'reject')}
                                     disabled={actionLoading !== null || requestData.status !== 'Changes Requested'}
-                                    className="disabled:opacity-50 disabled:cursor-not-allowed w-full py-2.5 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-700 dark:text-rose-400 rounded-xl text-xs font-bold border border-rose-300 dark:border-rose-500/30 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                                    className="disabled:opacity-50 disabled:cursor-not-allowed w-full py-2 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-700 dark:text-rose-400 rounded-xl text-xs font-bold border border-rose-300 dark:border-rose-500/30 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
                                 >
                                     {actionLoading === 'reject' ? 'Withdrawing...' : (
                                         <>
@@ -418,7 +418,7 @@ const HackathonChangeRequest = () => {
                                     }}
                                     placeholder="Enter your message to the organizer..."
                                     rows="4"
-                                    className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-500 p-3.5 text-xs focus:outline-none focus:border-sky-500 resize-none leading-relaxed"
+                                    className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-500 p-3.5 text-xs focus:outline-none focus:border-indigo-500 resize-none leading-relaxed"
                                 />
                             </div>
                             {messageError && (
@@ -434,7 +434,7 @@ const HackathonChangeRequest = () => {
                                 <button
                                     onClick={handleSendMessage}
                                     disabled={messageSending || !messageContent.trim()}
-                                    className="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold shadow-md shadow-sky-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95"
+                                    className="px-5 py-2.5 bg-[#7C65F6] hover:bg-[#6851ec] !text-white shadow-sm shadow-[#7C65F6]/20 rounded-xl text-xs font-bold shadow-md shadow-[#7C65F6]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95"
                                 >
                                     {messageSending ? 'Sending...' : 'Send Message'}
                                 </button>

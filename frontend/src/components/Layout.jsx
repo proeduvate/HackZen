@@ -563,7 +563,7 @@ const DashboardLayout = () => {
 
             {/* --- SIDEBAR CONTAINER --- */}
             <div 
-                className={`bg-[#f9f9f9] dark:bg-navy-900 border-r border-[#e2e8f0] dark:border-white/10 flex flex-col shrink-0 transition-all duration-300 ease-in-out ${
+                className={`${isAdmin ? 'bg-white' : 'bg-[#f9f9f9]'} dark:bg-navy-900 border-r border-[#e2e8f0] dark:border-white/10 flex flex-col shrink-0 transition-all duration-300 ease-in-out ${
                     isSidebarExpanded ? 'w-64' : 'w-[72px]'
                 } ${sidebarOpen ? 'translate-x-0 fixed inset-y-0 left-0 z-40' : '-translate-x-full lg:translate-x-0 fixed lg:relative h-full z-20'}`}
             >
@@ -609,7 +609,7 @@ const DashboardLayout = () => {
                             >
                                 <div className="w-7 h-7 relative flex items-center justify-center">
                                     {/* Default Rocket Emblem SVG */}
-                                    <svg className="w-7 h-7 text-[#0ea5e9] transform -rotate-12 transition-all duration-200 group-hover/icon:opacity-0 group-hover/icon:scale-75 absolute" fill="currentColor" viewBox="0 0 24 24">
+                                    <svg className={`w-7 h-7 ${isAdmin ? 'text-[#7C65F6]' : 'text-[#0ea5e9]'} transform -rotate-12 transition-all duration-200 group-hover/icon:opacity-0 group-hover/icon:scale-75 absolute`} fill="currentColor" viewBox="0 0 24 24">
                                         <path d="M3.4 20.4l17.4-7.5c.8-.3.8-1.4 0-1.7L3.4 3.7c-.7-.3-1.4.3-1.2 1l2.4 6.8c.1.3.3.5.6.6l8.8 1.4-8.8 1.4c-.3.1-.5.3-.6.6l-2.4 6.9c-.2.7.5 1.3 1.2 1z"/>
                                     </svg>
                                     {/* On Hover: Sidebar Toggle Icon [ ] */}
@@ -639,8 +639,8 @@ const DashboardLayout = () => {
                             ? location.pathname === item.path
                             : location.pathname.startsWith(item.path);
 
-                        const activeClass = isOrganizer
-                            ? (isActive ? 'bg-[#7C65F6] text-white shadow-md shadow-[#7C65F6]/25' : 'text-slate-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5')
+                        const activeClass = (isOrganizer || isAdmin)
+                            ? (isActive ? 'bg-[#7C65F6] !text-white shadow-sm shadow-[#7C65F6]/25 font-bold' : 'text-slate-600 dark:text-gray-400 hover:bg-purple-50/70 hover:text-[#7C65F6] dark:hover:bg-white/5')
                             : (isActive ? 'bg-sky-50 text-[#0ea5e9] dark:bg-sky-500/10 dark:text-sky-400' : 'text-[#64748b] dark:text-gray-400 hover:bg-[#f1f5f9] dark:hover:bg-white/5');
 
                         return (
@@ -654,14 +654,14 @@ const DashboardLayout = () => {
                                 >
                                     <span className={`shrink-0 ${
                                         isActive 
-                                            ? (isOrganizer ? 'opacity-100 text-white' : 'opacity-100 text-[#0ea5e9] dark:text-sky-400') 
+                                            ? ((isOrganizer || isAdmin) ? 'opacity-100 !text-white' : 'opacity-100 text-[#0ea5e9] dark:text-sky-400') 
                                             : 'opacity-70'
                                     } ${isSidebarExpanded ? 'mr-3' : ''}`}>
                                         {item.icon}
                                     </span>
                                     
                                     {/* Text (Visible only when expanded) */}
-                                    {isSidebarExpanded && <span className="truncate uppercase tracking-wider text-[11px]">{item.name}</span>}
+                                    {isSidebarExpanded && <span className={`truncate uppercase tracking-wider text-[11px] ${isActive && (isOrganizer || isAdmin) ? '!text-white font-extrabold' : ''}`}>{item.name}</span>}
                                 </button>
 
                                 {/* Tooltip rendered ONLY when sidebar is collapsed (icon-only mode) */}
@@ -763,7 +763,7 @@ const DashboardLayout = () => {
                             onClick={() => navigate(`/${currentRole.path}/profile`)}
                             className={`flex items-center gap-3 w-full p-2 rounded-full hover:bg-[#f1f5f9] dark:hover:bg-white/5 transition-colors ${isSidebarExpanded ? 'justify-start' : 'justify-center'}`}
                         >
-                            <div className="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-200/80 dark:border-sky-500/30 flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
+                            <div className={`w-8 h-8 rounded-full ${isAdmin ? 'bg-purple-100 dark:bg-purple-500/20 text-[#7C65F6] dark:text-purple-300 border-purple-200/80 dark:border-purple-500/30' : 'bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border-sky-200/80 dark:border-sky-500/30'} flex items-center justify-center font-bold text-xs shrink-0 shadow-sm`}>
                                 {currentRole.name.charAt(0).toUpperCase()}
                             </div>
                             {isSidebarExpanded && (
@@ -804,7 +804,7 @@ const DashboardLayout = () => {
                         <div className="relative hidden md:block w-96" ref={searchRef}>
                             <div className="relative flex items-center">
                                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                    <svg className="w-4 h-4 text-slate-400 dark:text-gray-400 group-focus-within:text-[#0ea5e9] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className={`w-4 h-4 text-slate-400 dark:text-gray-400 ${isAdmin ? 'group-focus-within:text-indigo-600' : 'group-focus-within:text-[#0ea5e9]'} transition-colors`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                                     </svg>
                                 </div>
@@ -820,7 +820,7 @@ const DashboardLayout = () => {
                                     }}
                                     onKeyDown={handleSearchKeyDown}
                                     placeholder={isOrganizer ? "Search..." : (isAdmin ? "SEARCH USERS, HACKATHONS, SUBMISSIONS..." : "SEARCH...")}
-                                    className={`w-full pl-9 pr-9 py-2 bg-slate-100 dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-2xl text-[11px] font-bold text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none transition-all shadow-sm ${isOrganizer ? 'focus:border-[#7C65F6] focus:ring-2 focus:ring-purple-500/20' : 'focus:border-[#0ea5e9] focus:ring-2 focus:ring-sky-500/20'}`}
+                                    className={`w-full pl-9 pr-9 py-2 bg-slate-100 dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-2xl text-[11px] font-bold text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none transition-all shadow-sm ${isOrganizer ? 'focus:border-[#7C65F6] focus:ring-2 focus:ring-purple-500/20' : isAdmin ? 'focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20' : 'focus:border-[#0ea5e9] focus:ring-2 focus:ring-sky-500/20'}`}
                                 />
                                 {globalSearchQuery && (
                                     <button 
@@ -853,7 +853,7 @@ const DashboardLayout = () => {
                                                         navigate(`/admin/users?search=${encodeURIComponent(globalSearchQuery.trim())}`);
                                                         setIsSearchOpen(false);
                                                     }}
-                                                    className="mt-2 text-[11px] font-bold text-sky-500 hover:underline"
+                                                    className="mt-2 text-[11px] font-bold text-indigo-600 hover:underline"
                                                 >
                                                     Search Directory for "{globalSearchQuery}" →
                                                 </button>
@@ -863,14 +863,14 @@ const DashboardLayout = () => {
                                                 <div
                                                     key={item.id}
                                                     onClick={() => handleSearchSelect(item)}
-                                                    className="p-3 hover:bg-sky-50 dark:hover:bg-white/5 transition-colors cursor-pointer flex items-center justify-between group"
+                                                    className={`p-3 ${isAdmin ? 'hover:bg-indigo-50' : 'hover:bg-sky-50'} dark:hover:bg-white/5 transition-colors cursor-pointer flex items-center justify-between group`}
                                                 >
                                                     <div className="flex items-center gap-3">
-                                                        <span className="w-8 h-8 shrink-0 rounded-xl bg-sky-50 dark:bg-white/10 border border-sky-200 dark:border-white/10 flex items-center justify-center text-sky-600 dark:text-sky-400 text-[10px] font-black uppercase">
+                                                        <span className={`w-8 h-8 shrink-0 rounded-xl ${isAdmin ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-sky-50 text-sky-600 border border-sky-200'} dark:bg-white/10 dark:text-indigo-400 dark:border-white/10 flex items-center justify-center text-[10px] font-black uppercase`}>
                                                             {item.category === 'Pages' ? 'PG' : item.category === 'Users' ? 'USR' : item.category === 'Hackathons' ? 'HCK' : item.category === 'Submissions' ? 'SUB' : item.category === 'Certificates' ? 'CRT' : 'DSP'}
                                                         </span>
                                                         <div>
-                                                            <p className="text-xs font-extrabold text-slate-900 dark:text-white group-hover:text-sky-500 transition-colors">
+                                                            <p className={`text-xs font-extrabold text-slate-900 dark:text-white ${isAdmin ? 'group-hover:text-indigo-600' : 'group-hover:text-sky-500'} transition-colors`}>
                                                                 {item.title}
                                                             </p>
                                                             <p className="text-[10px] text-slate-500 dark:text-gray-400 font-medium">
@@ -882,7 +882,7 @@ const DashboardLayout = () => {
                                                         <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-gray-300 border border-slate-200 dark:border-white/10">
                                                             {item.category}
                                                         </span>
-                                                        <span className="text-xs text-sky-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <span className={`text-xs ${isAdmin ? 'text-indigo-600' : 'text-sky-500'} font-bold opacity-0 group-hover:opacity-100 transition-opacity`}>
                                                             →
                                                         </span>
                                                     </div>
@@ -949,7 +949,9 @@ const DashboardLayout = () => {
                                 <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 shadow-sm ${
                                     isOrganizer
                                         ? 'bg-purple-100 dark:bg-purple-500/20 text-[#7C65F6] border border-purple-200 dark:border-purple-500/30'
-                                        : 'bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-200/80 dark:border-sky-500/30'
+                                        : isAdmin
+                                            ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-500/30'
+                                            : 'bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-200/80 dark:border-sky-500/30'
                                 }`}>
                                     {currentRole.name.charAt(0).toUpperCase()}
                                 </div>
@@ -1045,8 +1047,8 @@ const DashboardLayout = () => {
             {/* Global Real-time Toast Popup Banner */}
             {toastPopup && (
                 <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top-4 fade-in duration-300 max-w-md w-full px-4 pointer-events-auto">
-                    <div className="bg-white/95 dark:bg-navy-950/95 backdrop-blur-xl border border-sky-300/80 dark:border-sky-500/40 text-slate-900 dark:text-white p-4 rounded-2xl shadow-2xl shadow-sky-900/10 dark:shadow-sky-900/30 flex items-start gap-3.5 relative group">
-                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-sky-500 flex items-center justify-center text-white shrink-0 shadow-lg shadow-sky-500/20">
+                    <div className="bg-white/95 dark:bg-navy-950/95 backdrop-blur-xl border border-violet-300/80 dark:border-violet-500/40 text-slate-900 dark:text-white p-4 rounded-2xl shadow-2xl shadow-violet-900/10 dark:shadow-violet-900/30 flex items-start gap-3.5 relative group">
+                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white shrink-0 shadow-lg shadow-violet-500/20">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="m3 11 18-5v12L3 14v-3z"/>
                                 <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>
@@ -1055,7 +1057,7 @@ const DashboardLayout = () => {
                         <div className="flex-1 min-w-0 pr-6">
 
                             <div className="flex items-center gap-2 mb-0.5">
-                                <span className="text-[10px] font-black uppercase tracking-wider bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 px-2 py-0.5 rounded-full border border-sky-200 dark:border-sky-500/30">Announcement</span>
+                                <span className="text-[10px] font-black uppercase tracking-wider bg-violet-50 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300 px-2 py-0.5 rounded-full border border-violet-200 dark:border-violet-500/30">Announcement</span>
                                 <span className="text-[9.5px] text-slate-500 dark:text-gray-400 font-mono">{toastPopup.createdAt || toastPopup.time}</span>
                             </div>
                             <h4 className="text-sm font-extrabold text-slate-900 dark:text-white truncate">{toastPopup.title}</h4>

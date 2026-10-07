@@ -69,7 +69,7 @@ const ActionModal = ({ isOpen, onClose, title, children }) => {
 
 // --- Avatar Color safelist map ---
 const avatarColorMap = {
-    blue: 'bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-500/20 dark:text-sky-300 dark:border-sky-500/30',
+    blue: 'bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-500/20 dark:text-indigo-300 dark:border-indigo-500/30',
     purple: 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-500/20 dark:text-purple-300 dark:border-purple-500/30',
     slate: 'bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-500/20 dark:text-slate-300 dark:border-slate-500/30',
     amber: 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/30',
@@ -77,7 +77,7 @@ const avatarColorMap = {
 };
 
 const avatarBadgeMap = {
-    blue: 'bg-sky-500/10 border-sky-500/20 text-sky-600 dark:text-sky-400',
+    blue: 'bg-indigo-500/10 border-indigo-500/20 text-indigo-600 dark:text-indigo-400',
     purple: 'bg-purple-500/10 border-purple-500/20 text-purple-600 dark:text-purple-400',
     slate: 'bg-slate-500/10 border-slate-500/20 text-slate-600 dark:text-slate-400',
     amber: 'bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400',
@@ -86,10 +86,10 @@ const avatarBadgeMap = {
 
 // Role Badge safe styles
 const roleColors = {
-    'ORGANIZER': 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 font-bold',
-    'STUDENT': 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 font-bold',
-    'MENTOR': 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-bold',
-    'ADMIN': 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20 font-bold',
+    'ORGANIZER': 'bg-purple-50 text-[#6D5CE8] dark:bg-purple-500/20 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30 font-bold',
+    'STUDENT': 'bg-indigo-50 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30 font-bold',
+    'MENTOR': 'bg-amber-50 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30 font-bold',
+    'ADMIN': 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300 border border-slate-200 dark:border-slate-500/30 font-bold',
 };
 
 const UsersManagement = () => {
@@ -494,7 +494,7 @@ const UsersManagement = () => {
                             onClick={() => setCurrentPage(i + 1)}
                             className={`w-7 h-7 flex items-center justify-center rounded-xl text-xs font-bold transition-all cursor-pointer ${
                                 currentPage === i + 1 
-                                    ? 'bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-500/30 font-bold shadow-xs' 
+                                    ? 'bg-[#7C65F6] !text-white font-bold shadow-xs' 
                                     : 'text-slate-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'
                             }`}
                         >
@@ -519,16 +519,16 @@ const UsersManagement = () => {
     );
 
     return (
-        <div className="space-y-7 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-16 max-w-7xl mx-auto">
+        <div className="space-y-5 sm:space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-16 max-w-7xl mx-auto">
             
             {/* Notification Toast */}
             {toastMessage && (
-                <div className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 border backdrop-blur-md transition-all duration-300 animate-in slide-in-from-bottom-5 ${
+                <div className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl shadow-lg flex items-center gap-3 border backdrop-blur-sm transition-all duration-300 animate-in slide-in-from-bottom-5 ${
                     toastMessage.type === 'error'
-                        ? 'bg-rose-950/90 border-rose-500/30 text-rose-200'
+                        ? 'bg-rose-50 border-rose-300/80 text-rose-700'
                         : toastMessage.type === 'warning'
-                        ? 'bg-amber-950/90 border-amber-500/30 text-amber-200'
-                        : 'bg-emerald-950/90 border-emerald-500/30 text-emerald-200'
+                        ? 'bg-amber-50 border-amber-300/80 text-amber-700'
+                        : 'bg-violet-50 border-violet-300/80 text-violet-700'
                 }`}>
                     <span className="text-base">
                         {toastMessage.type === 'error' ? '⚠️' : toastMessage.type === 'warning' ? '⚡' : '✓'}
@@ -583,17 +583,17 @@ const UsersManagement = () => {
             </div>
 
             {/* 1. USER POPULATION SUMMARY CARDS */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
                 {[
-                    { label: 'Total Users', val: populationStats.total, icon: <UsersIcon className="w-4 h-4 text-sky-500" />, filterRole: 'All Roles', filterTab: 'All Users' },
-                    { label: 'Students', val: populationStats.students, color: 'text-sky-600 dark:text-sky-400', icon: <UsersIcon className="w-4 h-4 text-sky-500" />, filterRole: 'Student' },
-                    { label: 'Mentors', val: populationStats.mentors, color: 'text-amber-600 dark:text-amber-400', icon: <TeacherIcon className="w-4 h-4 text-amber-500" />, filterRole: 'Mentor' },
-                    { label: 'Overloaded Mentors', val: populationStats.overloadedMentors, color: 'text-rose-600 dark:text-rose-400', icon: <TriangleAlertIcon className="w-4 h-4 text-rose-500" />, specialFilter: 'overloaded' },
-                    { label: 'Organizers', val: populationStats.organizers, color: 'text-purple-600 dark:text-purple-400', icon: <ShieldIcon className="w-4 h-4 text-purple-500" />, filterRole: 'Organizer' },
-                    { label: 'System Admins', val: populationStats.admins, color: 'text-slate-700 dark:text-slate-300', icon: <ShieldIcon className="w-4 h-4 text-slate-500" />, filterRole: 'Admin' },
-                    { label: 'Active Accounts', val: populationStats.active, color: 'text-emerald-600 dark:text-emerald-400', icon: <CheckIcon className="w-4 h-4 text-emerald-500" />, filterTab: 'Active' },
-                    { label: 'Suspended Accounts', val: populationStats.suspended, color: 'text-rose-600 dark:text-rose-400', icon: <TriangleAlertIcon className="w-4 h-4 text-rose-500" />, filterTab: 'Suspended' },
-                    { label: 'Pending Verification', val: populationStats.verificationPending, color: 'text-amber-600 dark:text-amber-400', icon: <ShieldIcon className="w-4 h-4 text-amber-500" />, filterTab: 'Verification Required' }
+                    { label: 'Total Users', val: populationStats.total, icon: <UsersIcon className="w-3.5 h-3.5 text-indigo-500" />, filterRole: 'All Roles', filterTab: 'All Users' },
+                    { label: 'Students', val: populationStats.students, color: 'text-indigo-600 dark:text-indigo-400', icon: <UsersIcon className="w-3.5 h-3.5 text-indigo-500" />, filterRole: 'Student' },
+                    { label: 'Mentors', val: populationStats.mentors, color: 'text-amber-600 dark:text-amber-400', icon: <TeacherIcon className="w-3.5 h-3.5 text-amber-500" />, filterRole: 'Mentor' },
+                    { label: 'Overloaded Mentors', val: populationStats.overloadedMentors, color: 'text-rose-600 dark:text-rose-400', icon: <TriangleAlertIcon className="w-3.5 h-3.5 text-rose-500" />, specialFilter: 'overloaded' },
+                    { label: 'Organizers', val: populationStats.organizers, color: 'text-purple-600 dark:text-purple-400', icon: <ShieldIcon className="w-3.5 h-3.5 text-purple-500" />, filterRole: 'Organizer' },
+                    { label: 'System Admins', val: populationStats.admins, color: 'text-slate-700 dark:text-slate-300', icon: <ShieldIcon className="w-3.5 h-3.5 text-slate-500" />, filterRole: 'Admin' },
+                    { label: 'Active Accounts', val: populationStats.active, color: 'text-emerald-600 dark:text-emerald-400', icon: <CheckIcon className="w-3.5 h-3.5 text-emerald-500" />, filterTab: 'Active' },
+                    { label: 'Suspended Accounts', val: populationStats.suspended, color: 'text-rose-600 dark:text-rose-400', icon: <TriangleAlertIcon className="w-3.5 h-3.5 text-rose-500" />, filterTab: 'Suspended' },
+                    { label: 'Pending Verification', val: populationStats.verificationPending, color: 'text-amber-600 dark:text-amber-400', icon: <ShieldIcon className="w-3.5 h-3.5 text-amber-500" />, filterTab: 'Verification Required' }
                 ].map((stat, i) => (
                     <div 
                         key={i} 
@@ -613,20 +613,20 @@ const UsersManagement = () => {
                             }
                             setCurrentPage(1);
                         }} 
-                        className="p-4 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group cursor-pointer flex flex-col justify-between"
+                        className="p-3 sm:p-3.5 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group cursor-pointer flex flex-col justify-between"
                     >
-                        <div className="flex items-center justify-between gap-1.5 mb-1.5">
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400 truncate">{stat.label}</h3>
-                            <div className="w-8 h-8 rounded-full bg-sky-50 dark:bg-sky-500/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                        <div className="flex items-center justify-between gap-1.5 mb-1">
+                            <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400 truncate">{stat.label}</h3>
+                            <div className="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-500/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                                 {stat.icon}
                             </div>
                         </div>
-                        <div className="my-1">
-                            <p className={`text-2xl font-extrabold tracking-tight ${stat.color || 'text-slate-900 dark:text-white'}`}>{stat.val}</p>
+                        <div className="my-0.5">
+                            <p className={`text-xl sm:text-2xl font-bold tracking-tight leading-tight ${stat.color || 'text-slate-900 dark:text-white'}`}>{stat.val}</p>
                         </div>
-                        <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-400">
+                        <div className="pt-1.5 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-400">
                             <span>Filter Directory</span>
-                            <span className="group-hover:translate-x-0.5 group-hover:text-sky-500 transition-all">→</span>
+                            <span className="group-hover:translate-x-0.5 group-hover:text-indigo-500 transition-all">→</span>
                         </div>
                     </div>
                 ))}
@@ -649,14 +649,14 @@ const UsersManagement = () => {
                                 onClick={() => { setActiveTab(tab.name); setCurrentPage(1); }}
                                 className={`px-4 py-2 text-xs rounded-xl transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer ${
                                     activeTab === tab.name 
-                                        ? 'bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-500/30 font-bold shadow-xs' 
+                                        ? 'bg-purple-50 dark:bg-purple-500/20 text-[#6D5CE8] dark:text-purple-300 border border-purple-200 dark:border-purple-500/30 font-bold shadow-xs' 
                                         : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white border border-transparent'
                                 }`}
                             >
                                 <span>{tab.name}</span>
                                 <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
                                     activeTab === tab.name 
-                                    ? 'bg-sky-200/80 dark:bg-sky-500/30 text-sky-800 dark:text-sky-200' 
+                                    ? 'bg-[#7C65F6]/15 dark:bg-purple-500/30 text-[#6D5CE8] dark:text-purple-200' 
                                     : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-gray-300'
                                 }`}>
                                     {tab.count}
@@ -674,7 +674,7 @@ const UsersManagement = () => {
                                 placeholder="Search by name or email..."
                                 value={searchQuery}
                                 onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl pl-9 pr-3.5 py-2 text-xs text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-sky-500 transition-colors"
+                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl pl-9 pr-3.5 py-2 text-xs text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition-colors"
                             />
                         </div>
 
@@ -682,7 +682,7 @@ const UsersManagement = () => {
                             <select 
                                 value={roleDropdown}
                                 onChange={(e) => { setRoleDropdown(e.target.value); setCurrentPage(1); }}
-                                className="w-full bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-xl pr-8 pl-3.5 py-2 text-xs font-bold text-slate-700 dark:text-white focus:outline-none focus:border-sky-500 transition-colors appearance-none cursor-pointer shadow-sm"
+                                className="w-full bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-xl pr-8 pl-3.5 py-2 text-xs font-bold text-slate-700 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors appearance-none cursor-pointer shadow-sm"
                             >
                                 <option value="All Roles">All Roles</option>
                                 <option value="Student">Student</option>
@@ -701,13 +701,13 @@ const UsersManagement = () => {
                             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
                             className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm ${
                                 showAdvancedFilters 
-                                    ? 'bg-sky-50 dark:bg-sky-500/20 border border-sky-200 dark:border-sky-500/30 text-sky-700 dark:text-sky-300' 
+                                    ? 'bg-indigo-50 dark:bg-indigo-500/20 border border-indigo-200 dark:border-indigo-500/30 text-indigo-700 dark:text-indigo-300' 
                                     : 'bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-navy-700'
                             }`}
                         >
                             <span>Advanced</span>
                             {activeFiltersCount > 0 && (
-                                <span className="bg-sky-200 dark:bg-sky-500/30 text-sky-800 dark:text-sky-200 text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                                <span className="bg-indigo-200 dark:bg-indigo-500/30 text-indigo-800 dark:text-indigo-200 text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
                                     {activeFiltersCount}
                                 </span>
                             )}
@@ -726,7 +726,7 @@ const UsersManagement = () => {
                                 placeholder="Filter by college name..."
                                 value={collegeFilter}
                                 onChange={(e) => setCollegeFilter(e.target.value)}
-                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 transition-colors"
+                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors"
                             />
                         </div>
                         <div>
@@ -736,7 +736,7 @@ const UsersManagement = () => {
                                 placeholder="Filter by department..."
                                 value={departmentFilter}
                                 onChange={(e) => setDepartmentFilter(e.target.value)}
-                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 transition-colors"
+                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors"
                             />
                         </div>
                         <div className="flex items-end">
@@ -769,14 +769,14 @@ const UsersManagement = () => {
 
             {/* Bulk Action Header Bar */}
             {selectedUserIds.length > 0 && (
-                <div className="p-3.5 bg-sky-600 text-white rounded-2xl flex items-center justify-between text-xs font-bold animate-in fade-in shadow-md shadow-sky-500/20">
+                <div className="p-3.5 bg-violet-50 border border-violet-300/80 text-violet-700 rounded-2xl flex items-center justify-between text-xs font-bold animate-in fade-in shadow-sm">
                     <span>{selectedUserIds.length} Users Selected for Bulk Governance</span>
                     <div className="flex items-center gap-2">
-                        <button onClick={() => handleBulkAction('activate')} className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-[10px] uppercase font-bold transition-all cursor-pointer">Activate</button>
-                        <button onClick={() => handleBulkAction('suspend')} className="px-3 py-1.5 bg-rose-500 hover:bg-rose-600 rounded-lg text-[10px] uppercase font-bold transition-all cursor-pointer">Suspend</button>
-                        <button onClick={() => setBulkRoleConfig({ isOpen: true, targetRole: 'STUDENT' })} className="px-3 py-1.5 bg-purple-500 hover:bg-purple-600 rounded-lg text-[10px] uppercase font-bold transition-all cursor-pointer">Change Role</button>
-                        <button onClick={() => setIsBulkNotifyOpen(true)} className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 rounded-lg text-[10px] uppercase font-bold transition-all cursor-pointer">Send Notice</button>
-                        <button onClick={() => setSelectedUserIds([])} className="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-[10px] font-bold cursor-pointer">Clear</button>
+                        <button onClick={() => handleBulkAction('activate')} className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300/80 rounded-lg text-[10px] uppercase font-bold transition-all cursor-pointer">Activate</button>
+                        <button onClick={() => handleBulkAction('suspend')} className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300/80 rounded-lg text-[10px] uppercase font-bold transition-all cursor-pointer">Suspend</button>
+                        <button onClick={() => setBulkRoleConfig({ isOpen: true, targetRole: 'STUDENT' })} className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-300/80 rounded-lg text-[10px] uppercase font-bold transition-all cursor-pointer">Change Role</button>
+                        <button onClick={() => setIsBulkNotifyOpen(true)} className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300/80 rounded-lg text-[10px] uppercase font-bold transition-all cursor-pointer">Send Notice</button>
+                        <button onClick={() => setSelectedUserIds([])} className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-300/80 rounded-lg text-[10px] font-bold cursor-pointer">Clear</button>
                     </div>
                 </div>
             )}
@@ -799,7 +799,7 @@ const UsersManagement = () => {
                                             type="checkbox" 
                                             checked={currentUsers.length > 0 && selectedUserIds.length === currentUsers.length}
                                             onChange={toggleSelectAll}
-                                            className="rounded border-slate-300 dark:border-white/20 text-sky-600"
+                                            className="rounded border-slate-300 dark:border-white/20 text-indigo-600"
                                         />
                                     </th>
                                     <th className="py-3 px-3 text-[11px] font-bold text-slate-400 dark:text-gray-400 uppercase tracking-wider text-left">User</th>
@@ -811,21 +811,21 @@ const UsersManagement = () => {
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                                 {isLoading ? (
-                                    <tr><td colSpan="6" className="px-4 py-8 text-center text-xs text-sky-600 dark:text-sky-400 font-bold animate-pulse">Loading Live User Records...</td></tr>
+                                    <tr><td colSpan="6" className="px-4 py-8 text-center text-xs text-indigo-600 dark:text-indigo-400 font-bold animate-pulse">Loading Live User Records...</td></tr>
                                 ) : currentUsers.length === 0 ? (
                                     <tr><td colSpan="6" className="px-4 py-8 text-center text-xs text-slate-400 dark:text-gray-500">No user records match the specified filters.</td></tr>
                                 ) : (
                                     currentUsers.map((user) => (
                                         <tr 
                                             key={user.id} 
-                                            className={`hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors ${selectedUser?.id === user.id ? 'bg-sky-50/60 dark:bg-sky-500/10' : ''}`}
+                                            className={`hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors ${selectedUser?.id === user.id ? 'bg-indigo-50/60 dark:bg-indigo-500/10' : ''}`}
                                         >
                                             <td className="w-8 px-3 py-2.5 text-center">
                                                 <input 
                                                     type="checkbox" 
                                                     checked={selectedUserIds.includes(user.id)}
                                                     onChange={() => toggleSelectUser(user.id)}
-                                                    className="rounded border-slate-300 dark:border-white/20 text-sky-600"
+                                                    className="rounded border-slate-300 dark:border-white/20 text-indigo-600"
                                                 />
                                             </td>
                                             <td className="px-3 py-2.5 cursor-pointer" onClick={() => handleSelectUser(user)}>
@@ -836,7 +836,7 @@ const UsersManagement = () => {
                                                     <div className="min-w-0 flex-1">
                                                         <div className="text-xs font-bold flex items-center gap-1 truncate text-slate-900 dark:text-white">
                                                             <span className="truncate">{user.name}</span>
-                                                            {user.emailVerified && <span className="text-sky-600 dark:text-sky-400 text-[10px] shrink-0" title="Email Verified"><CheckIcon className="w-3 h-3" /></span>}
+                                                            {user.emailVerified && <span className="text-indigo-600 dark:text-indigo-400 text-[10px] shrink-0" title="Email Verified"><CheckIcon className="w-3 h-3" /></span>}
                                                             {user.orgVerified && <span className="text-purple-600 dark:text-purple-400 text-[10px] shrink-0" title="Organization Verified"><ShieldIcon className="w-3 h-3" /></span>}
                                                         </div>
                                                         <div className="text-[10px] text-slate-400 dark:text-gray-500 truncate">{user.email}</div>
@@ -854,11 +854,15 @@ const UsersManagement = () => {
                                                 </span>
                                             </td>
                                             <td className="w-16 px-3 py-2.5 whitespace-nowrap">
-                                                <span className={`text-[11px] font-bold ${user.status === 'Active' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                                    user.status === 'Active' 
+                                                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20' 
+                                                        : 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400 border-rose-200 dark:border-rose-500/20'
+                                                }`}>
                                                     {user.status}
                                                 </span>
                                             </td>
-                                            <td className="w-24 px-3 py-2.5 text-[10px] font-mono text-slate-400 dark:text-gray-500 whitespace-nowrap">
+                                            <td className="w-24 px-3 py-2.5 text-[10px] font-mono text-slate-500 dark:text-gray-400 whitespace-nowrap">
                                                 {user.lastActive}
                                             </td>
                                             <td className="w-24 px-3 py-2.5 text-right whitespace-nowrap">
@@ -866,7 +870,7 @@ const UsersManagement = () => {
                                                     <button 
                                                         onClick={() => handleSelectUser(user)}
                                                         title="View Profile"
-                                                        className="p-1.5 bg-sky-50 dark:bg-sky-500/10 hover:bg-sky-100 dark:hover:bg-sky-500/20 border border-sky-200 dark:border-sky-500/20 rounded-lg text-sky-600 dark:text-sky-400 transition-all shadow-xs flex items-center justify-center cursor-pointer"
+                                                        className="p-1.5 bg-purple-50 dark:bg-purple-500/10 hover:bg-purple-100 dark:hover:bg-purple-500/20 border border-purple-200 dark:border-purple-500/20 rounded-lg text-[#7C65F6] dark:text-purple-300 transition-all shadow-xs flex items-center justify-center cursor-pointer"
                                                     >
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                             <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
@@ -936,14 +940,14 @@ const UsersManagement = () => {
                                 <div className="flex p-1 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-200/80 dark:border-white/10 text-xs font-bold gap-1 mb-4">
                                     <button 
                                         onClick={() => setProfileTab('overview')}
-                                        className={`flex-1 py-1.5 rounded-lg transition-all text-[11px] font-bold flex items-center justify-center gap-1.5 cursor-pointer ${profileTab === 'overview' ? 'bg-white dark:bg-navy-800 text-sky-600 dark:text-sky-300 shadow-sm border border-slate-200/80 dark:border-white/10' : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
+                                        className={`flex-1 py-1.5 rounded-lg transition-all text-[11px] font-bold flex items-center justify-center gap-1.5 cursor-pointer ${profileTab === 'overview' ? 'bg-white dark:bg-navy-800 text-[#7C65F6] dark:text-purple-300 shadow-sm border border-purple-200/80 dark:border-white/10' : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
                                     >
                                         <NotepadTextIcon className="w-3.5 h-3.5 shrink-0" />
                                         <span>Overview & Teams</span>
                                     </button>
                                     <button 
                                         onClick={() => setProfileTab('activity')}
-                                        className={`flex-1 py-1.5 rounded-lg transition-all text-[11px] font-bold flex items-center justify-center gap-1.5 cursor-pointer ${profileTab === 'activity' ? 'bg-white dark:bg-navy-800 text-sky-600 dark:text-sky-300 shadow-sm border border-slate-200/80 dark:border-white/10' : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
+                                        className={`flex-1 py-1.5 rounded-lg transition-all text-[11px] font-bold flex items-center justify-center gap-1.5 cursor-pointer ${profileTab === 'activity' ? 'bg-white dark:bg-navy-800 text-[#7C65F6] dark:text-purple-300 shadow-sm border border-purple-200/80 dark:border-white/10' : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
                                     >
                                         <ActivityIcon className="w-3.5 h-3.5 shrink-0" />
                                         <span>Activity & Risk</span>
@@ -992,12 +996,12 @@ const UsersManagement = () => {
                                                         </p>
                                                     </div>
 
-                                                    <div className="p-2.5 rounded-xl border bg-sky-50 dark:bg-sky-500/10 border-sky-200 dark:border-sky-500/20 text-sky-800 dark:text-sky-300">
+                                                    <div className="p-2.5 rounded-xl border bg-indigo-50 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/20 text-indigo-800 dark:text-indigo-300">
                                                         <p className="text-lg font-extrabold leading-tight">
                                                             {selectedUser.pastTeamsCount ?? selectedUser.pastSupervisedTeams?.length ?? (selectedUser.isOverloaded ? 5 : 2)}
                                                         </p>
                                                         <p className="text-[9px] font-bold uppercase mt-0.5 flex items-center justify-center gap-0.5">
-                                                            <CheckCircle2Icon className="w-2.5 h-2.5 text-sky-600 dark:text-sky-400 shrink-0" />
+                                                            <CheckCircle2Icon className="w-2.5 h-2.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
                                                             <span>Completed</span>
                                                         </p>
                                                     </div>
@@ -1045,7 +1049,7 @@ const UsersManagement = () => {
                                                             onClick={() => setMentorTeamsTab('active')}
                                                             className={`flex-1 py-1 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                                                                 mentorTeamsTab === 'active' 
-                                                                    ? 'bg-white dark:bg-navy-800 text-sky-600 dark:text-sky-300 shadow-xs border border-slate-200/80 dark:border-white/10' 
+                                                                    ? 'bg-white dark:bg-navy-800 text-indigo-600 dark:text-indigo-300 shadow-xs border border-slate-200/80 dark:border-white/10' 
                                                                     : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
                                                             }`}
                                                         >
@@ -1056,7 +1060,7 @@ const UsersManagement = () => {
                                                             onClick={() => setMentorTeamsTab('past')}
                                                             className={`flex-1 py-1 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                                                                 mentorTeamsTab === 'past' 
-                                                                    ? 'bg-white dark:bg-navy-800 text-sky-600 dark:text-sky-300 shadow-xs border border-slate-200/80 dark:border-white/10' 
+                                                                    ? 'bg-white dark:bg-navy-800 text-indigo-600 dark:text-indigo-300 shadow-xs border border-slate-200/80 dark:border-white/10' 
                                                                     : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
                                                             }`}
                                                         >
@@ -1082,7 +1086,7 @@ const UsersManagement = () => {
                                                                     </div>
                                                                     <button 
                                                                         onClick={() => handleReassignTeam(t.name, selectedUser.name)}
-                                                                        className="text-[9px] px-2.5 py-1 bg-sky-50 dark:bg-sky-500/10 hover:bg-sky-100 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-500/20 rounded-lg font-bold transition-colors shrink-0 cursor-pointer"
+                                                                        className="text-[9px] px-2.5 py-1 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20 rounded-lg font-bold transition-colors shrink-0 cursor-pointer"
                                                                         title="Reassign team to an available mentor"
                                                                     >
                                                                         Reassign
@@ -1105,7 +1109,7 @@ const UsersManagement = () => {
                                                                     <div className="min-w-0 pr-2">
                                                                         <div className="flex items-center gap-1.5">
                                                                             <p className="font-bold text-slate-700 dark:text-slate-200 leading-tight truncate">{t.name}</p>
-                                                                            <span className="text-[8px] font-bold px-1.5 py-0.2 rounded-full bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 uppercase flex items-center gap-0.5">
+                                                                            <span className="text-[8px] font-bold px-1.5 py-0.2 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 uppercase flex items-center gap-0.5">
                                                                                 <CheckCircle2Icon className="w-2 h-2 shrink-0" />
                                                                                 <span>Completed</span>
                                                                             </span>
@@ -1219,9 +1223,9 @@ const UsersManagement = () => {
                                                         </p>
                                                     </div>
                                                     <div className="p-2.5 rounded-xl bg-white dark:bg-navy-800/50 border border-slate-200/70 dark:border-white/10 shadow-xs">
-                                                        <p className="text-sm font-bold text-sky-600 dark:text-sky-400">{selectedUser.pastTeamsCount ?? selectedUser.pastSupervisedTeams?.length ?? 0}</p>
+                                                        <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">{selectedUser.pastTeamsCount ?? selectedUser.pastSupervisedTeams?.length ?? 0}</p>
                                                         <p className="text-[9px] text-slate-400 uppercase flex items-center justify-center gap-0.5 mt-0.5">
-                                                            <CheckCircle2Icon className="w-2.5 h-2.5 text-sky-500" />
+                                                            <CheckCircle2Icon className="w-2.5 h-2.5 text-indigo-500" />
                                                             <span>Completed</span>
                                                         </p>
                                                     </div>
@@ -1268,7 +1272,7 @@ const UsersManagement = () => {
                                 </button>
                                 <button 
                                     onClick={() => openRoleModal(selectedUser)} 
-                                    className="flex-1 py-2.5 rounded-xl bg-sky-50 dark:bg-sky-500/20 hover:bg-sky-100 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-500/30 text-xs font-bold shadow-sm transition-all cursor-pointer active:scale-95"
+                                    className="flex-1 py-2.5 rounded-xl bg-purple-50 dark:bg-purple-500/20 hover:bg-purple-100 text-[#7C65F6] dark:text-purple-300 border border-purple-200 dark:border-purple-500/30 text-xs font-bold shadow-sm transition-all cursor-pointer active:scale-95"
                                 >
                                     Edit Role
                                 </button>
@@ -1287,7 +1291,7 @@ const UsersManagement = () => {
                         </div>
                     ) : (
                         <div className="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-gray-500 p-8 text-center min-h-[300px]">
-                            <svg className="w-16 h-16 mb-4 opacity-20 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                            <svg className="w-16 h-16 mb-4 opacity-20 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                             <p className="font-bold text-sm text-slate-700 dark:text-gray-300">Select a user to view profile and activity timeline</p>
                         </div>
                     )}
@@ -1311,7 +1315,7 @@ const UsersManagement = () => {
                                         onClick={() => setRoleModalConfig(prev => ({ ...prev, selectedRole: role }))}
                                         className={`py-2.5 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
                                             roleModalConfig.selectedRole === role 
-                                                ? 'bg-sky-600 border-sky-500 text-white shadow-md shadow-sky-500/20' 
+                                                ? 'bg-[#7C65F6] border-[#7C65F6] !text-white shadow-sm shadow-[#7C65F6]/25 font-bold' 
                                                 : 'bg-slate-50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-100'
                                         }`}
                                     >
@@ -1332,12 +1336,12 @@ const UsersManagement = () => {
                             rows="3"
                             value={roleModalConfig.reason}
                             onChange={(e) => setRoleModalConfig(prev => ({ ...prev, reason: e.target.value }))}
-                            className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-sky-500 transition-colors resize-none"
+                            className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-indigo-500 transition-colors resize-none"
                         ></textarea>
 
                         <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-white/10">
                             <button onClick={() => setRoleModalConfig({ isOpen: false, user: null, selectedRole: '', reason: '' })} className="px-4 py-2.5 rounded-xl bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-gray-200 border border-slate-200 dark:border-white/10 text-xs font-bold shadow-sm transition-all cursor-pointer">Cancel</button>
-                            <button onClick={handleRoleChangeConfirm} className="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-xl shadow-md shadow-sky-500/30 transition-all active:scale-95 cursor-pointer">Confirm Change</button>
+                            <button onClick={handleRoleChangeConfirm} className="px-5 py-2.5 bg-[#7C65F6] hover:bg-[#6851ec] !text-white text-xs font-bold rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer">Confirm Change</button>
                         </div>
                     </div>
                 )}
@@ -1358,7 +1362,7 @@ const UsersManagement = () => {
                                     <select 
                                         value={suspendModalConfig.reason}
                                         onChange={(e) => setSuspendModalConfig(prev => ({ ...prev, reason: e.target.value }))}
-                                        className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 transition-colors"
+                                        className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors"
                                     >
                                         <option value="Policy violation">Policy violation</option>
                                         <option value="Suspicious activity">Suspicious activity</option>
@@ -1372,7 +1376,7 @@ const UsersManagement = () => {
                                     <select 
                                         value={suspendModalConfig.duration}
                                         onChange={(e) => setSuspendModalConfig(prev => ({ ...prev, duration: e.target.value }))}
-                                        className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 transition-colors"
+                                        className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors"
                                     >
                                         <option value="24 hours">24 hours</option>
                                         <option value="7 days">7 days</option>
@@ -1393,7 +1397,7 @@ const UsersManagement = () => {
 
                         <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-white/10">
                             <button onClick={() => setSuspendModalConfig({ isOpen: false, user: null, action: '', reason: '', duration: '', message: '' })} className="px-4 py-2.5 rounded-xl bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-gray-200 border border-slate-200 dark:border-white/10 text-xs font-bold shadow-sm transition-all cursor-pointer">Cancel</button>
-                            <button onClick={handleSuspendConfirm} className={`px-5 py-2 text-white text-xs font-bold rounded-xl shadow-md transition-all active:scale-95 cursor-pointer ${suspendModalConfig.action === 'Suspend' ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-500/20' : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/20'}`}>
+                            <button onClick={handleSuspendConfirm} className={`px-5 py-2 text-xs font-bold rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer ${suspendModalConfig.action === 'Suspend' ? 'bg-rose-50 dark:bg-rose-500/15 hover:bg-rose-100 dark:hover:bg-rose-500/25 text-rose-700 dark:text-rose-300 border border-rose-300/80 dark:border-rose-500/30' : 'bg-emerald-50 dark:bg-emerald-500/15 hover:bg-emerald-100 dark:hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-300 border border-emerald-300/80 dark:border-emerald-500/30'}`}>
                                 Confirm {suspendModalConfig.action}
                             </button>
                         </div>
@@ -1410,11 +1414,11 @@ const UsersManagement = () => {
                         rows="4"
                         value={bulkNotifyMessage}
                         onChange={(e) => setBulkNotifyMessage(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-sky-500 transition-colors resize-none"
+                        className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-indigo-500 transition-colors resize-none"
                     ></textarea>
                     <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-white/10">
                         <button onClick={() => setIsBulkNotifyOpen(false)} className="px-4 py-2.5 rounded-xl bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-gray-200 border border-slate-200 dark:border-white/10 text-xs font-bold shadow-sm transition-all cursor-pointer">Cancel</button>
-                        <button onClick={() => handleBulkAction('notify', bulkNotifyMessage)} className="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow-md shadow-sky-500/30 transition-all active:scale-95 cursor-pointer">Dispatch Notice</button>
+                        <button onClick={() => handleBulkAction('notify', bulkNotifyMessage)} className="px-5 py-2 bg-indigo-50 dark:bg-indigo-500/15 hover:bg-indigo-100 dark:hover:bg-indigo-500/25 text-indigo-700 dark:text-indigo-300 border border-indigo-300/80 dark:border-indigo-500/30 font-bold text-xs rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer">Dispatch Notice</button>
                     </div>
                 </div>
             </ActionModal>
@@ -1430,7 +1434,7 @@ const UsersManagement = () => {
                                 onClick={() => setBulkRoleConfig(prev => ({ ...prev, targetRole: role }))}
                                 className={`py-2.5 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
                                     bulkRoleConfig.targetRole === role 
-                                        ? 'bg-sky-600 border-sky-500 text-white shadow-md shadow-sky-500/20' 
+                                        ? 'bg-indigo-50 dark:bg-indigo-500/20 border-indigo-300/80 dark:border-indigo-500/40 text-indigo-700 dark:text-indigo-300 shadow-sm' 
                                         : 'bg-slate-50 dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-100'
                                 }`}
                             >
@@ -1440,7 +1444,7 @@ const UsersManagement = () => {
                     </div>
                     <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-white/10">
                         <button onClick={() => setBulkRoleConfig({ isOpen: false, targetRole: 'STUDENT' })} className="px-4 py-2.5 rounded-xl bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-gray-200 border border-slate-200 dark:border-white/10 text-xs font-bold shadow-sm transition-all cursor-pointer">Cancel</button>
-                        <button onClick={() => handleBulkAction('change_role', bulkRoleConfig.targetRole)} className="px-5 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl shadow-md shadow-purple-500/20 transition-all active:scale-95 cursor-pointer">Apply Role Change</button>
+                        <button onClick={() => handleBulkAction('change_role', bulkRoleConfig.targetRole)} className="px-5 py-2 bg-purple-50 dark:bg-purple-500/15 hover:bg-purple-100 dark:hover:bg-purple-500/25 text-purple-700 dark:text-purple-300 border border-purple-300/80 dark:border-purple-500/30 font-bold text-xs rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer">Apply Role Change</button>
                     </div>
                 </div>
             </ActionModal>
@@ -1459,7 +1463,7 @@ const UsersManagement = () => {
                                 value={contactModalConfig.subject}
                                 onChange={(e) => setContactModalConfig(prev => ({ ...prev, subject: e.target.value }))}
                                 placeholder="Subject title..."
-                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-sky-500 transition-colors"
+                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors"
                             />
                         </div>
                         <div>
@@ -1469,12 +1473,12 @@ const UsersManagement = () => {
                                 rows="4"
                                 value={contactModalConfig.body}
                                 onChange={(e) => setContactModalConfig(prev => ({ ...prev, body: e.target.value }))}
-                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-sky-500 transition-colors resize-none"
+                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-indigo-500 transition-colors resize-none"
                             ></textarea>
                         </div>
                         <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-white/10">
                             <button onClick={() => setContactModalConfig({ isOpen: false, user: null, subject: '', body: '' })} className="px-4 py-2.5 rounded-xl bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-gray-200 border border-slate-200 dark:border-white/10 text-xs font-bold shadow-sm transition-all cursor-pointer">Cancel</button>
-                            <button onClick={handleContactUserConfirm} className="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow-md shadow-sky-500/30 transition-all active:scale-95 cursor-pointer">Send Message</button>
+                            <button onClick={handleContactUserConfirm} className="px-5 py-2 bg-indigo-50 dark:bg-indigo-500/15 hover:bg-indigo-100 dark:hover:bg-indigo-500/25 text-indigo-700 dark:text-indigo-300 border border-indigo-300/80 dark:border-indigo-500/30 font-bold text-xs rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer">Send Message</button>
                         </div>
                     </div>
                 )}

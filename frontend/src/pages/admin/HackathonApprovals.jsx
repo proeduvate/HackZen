@@ -313,16 +313,16 @@ const HackathonApprovals = () => {
     };
 
     return (
-        <div className="space-y-7 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-16 max-w-7xl mx-auto">
+        <div className="space-y-5 sm:space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-16 max-w-7xl mx-auto">
             
             {/* Notification Toast */}
             {toastMessage && (
-                <div className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 border backdrop-blur-md transition-all duration-300 animate-in slide-in-from-bottom-5 ${
+                <div className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl shadow-lg flex items-center gap-3 border backdrop-blur-sm transition-all duration-300 animate-in slide-in-from-bottom-5 ${
                     toastMessage.type === 'error'
-                        ? 'bg-rose-950/90 border-rose-500/30 text-rose-200'
+                        ? 'bg-rose-50 border-rose-300/80 text-rose-700'
                         : toastMessage.type === 'warning'
-                        ? 'bg-amber-950/90 border-amber-500/30 text-amber-200'
-                        : 'bg-emerald-950/90 border-emerald-500/30 text-emerald-200'
+                        ? 'bg-amber-50 border-amber-300/80 text-amber-700'
+                        : 'bg-violet-50 border-violet-300/80 text-violet-700'
                 }`}>
                     <span className="text-base">
                         {toastMessage.type === 'error' ? '⚠️' : toastMessage.type === 'warning' ? '⚡' : '✓'}
@@ -356,72 +356,72 @@ const HackathonApprovals = () => {
             </div>
 
             {/* Top Metric Stats Summary */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                <div className="p-5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group flex flex-col justify-between">
+                    <div className="flex items-center justify-between gap-1.5">
+                        <span className="text-[11px] font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider truncate">
                             Total Proposals
                         </span>
-                        <div className="w-10 h-10 rounded-full bg-sky-50 dark:bg-sky-500/20 flex items-center justify-center group-hover:scale-105 transition-transform text-sky-600 dark:text-sky-400">
-                            <RocketIcon className="w-5 h-5" />
+                        <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/20 flex items-center justify-center group-hover:scale-105 transition-transform text-indigo-600 dark:text-indigo-400 shrink-0">
+                            <RocketIcon className="w-4 h-4" />
                         </div>
                     </div>
-                    <div className="mt-3">
-                        <div className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                    <div className="mt-1.5">
+                        <div className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight">
                             {stats.total}
                         </div>
-                        <p className="text-xs font-medium text-slate-500 dark:text-gray-400 mt-1">All historical submissions</p>
+                        <p className="text-[11px] font-medium text-slate-500 dark:text-gray-400 mt-0.5">All historical submissions</p>
                     </div>
                 </div>
 
-                <div className="p-5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group flex flex-col justify-between">
+                    <div className="flex items-center justify-between gap-1.5">
+                        <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider truncate">
                             Pending Review
                         </span>
-                        <div className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-500/20 flex items-center justify-center group-hover:scale-105 transition-transform text-amber-600 dark:text-amber-400">
-                            <ClockIcon className="w-5 h-5" />
+                        <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-500/20 flex items-center justify-center group-hover:scale-105 transition-transform text-amber-600 dark:text-amber-400 shrink-0">
+                            <ClockIcon className="w-4 h-4" />
                         </div>
                     </div>
-                    <div className="mt-3">
-                        <div className="text-3xl font-extrabold text-amber-600 dark:text-amber-400 tracking-tight">
+                    <div className="mt-1.5">
+                        <div className="text-2xl font-bold text-amber-600 dark:text-amber-400 tracking-tight leading-tight">
                             {stats.pending}
                         </div>
-                        <p className="text-xs font-medium text-slate-500 dark:text-gray-400 mt-1">Awaiting admin review</p>
+                        <p className="text-[11px] font-medium text-slate-500 dark:text-gray-400 mt-0.5">Awaiting admin review</p>
                     </div>
                 </div>
 
-                <div className="p-5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group flex flex-col justify-between">
+                    <div className="flex items-center justify-between gap-1.5">
+                        <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider truncate">
                             Approved Active
                         </span>
-                        <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-500/20 flex items-center justify-center group-hover:scale-105 transition-transform text-emerald-600 dark:text-emerald-400">
-                            <CheckIcon className="w-5 h-5" />
+                        <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/20 flex items-center justify-center group-hover:scale-105 transition-transform text-emerald-600 dark:text-emerald-400 shrink-0">
+                            <CheckIcon className="w-4 h-4" />
                         </div>
                     </div>
-                    <div className="mt-3">
-                        <div className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 tracking-tight">
+                    <div className="mt-1.5">
+                        <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 tracking-tight leading-tight">
                             {stats.approved}
                         </div>
-                        <p className="text-xs font-medium text-slate-500 dark:text-gray-400 mt-1">Published & running live</p>
+                        <p className="text-[11px] font-medium text-slate-500 dark:text-gray-400 mt-0.5">Published & running live</p>
                     </div>
                 </div>
 
-                <div className="p-5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group flex flex-col justify-between">
+                    <div className="flex items-center justify-between gap-1.5">
+                        <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider truncate">
                             Needs Revision / Rejected
                         </span>
-                        <div className="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-500/20 flex items-center justify-center group-hover:scale-105 transition-transform text-rose-600 dark:text-rose-400">
-                            <TriangleAlertIcon className="w-5 h-5" />
+                        <div className="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-500/20 flex items-center justify-center group-hover:scale-105 transition-transform text-rose-600 dark:text-rose-400 shrink-0">
+                            <TriangleAlertIcon className="w-4 h-4" />
                         </div>
                     </div>
-                    <div className="mt-3">
-                        <div className="text-3xl font-extrabold text-rose-600 dark:text-rose-400 tracking-tight">
+                    <div className="mt-1.5">
+                        <div className="text-2xl font-bold text-rose-600 dark:text-rose-400 tracking-tight leading-tight">
                             {stats.needsRevision + stats.rejected}
                         </div>
-                        <p className="text-xs font-medium text-slate-500 dark:text-gray-400 mt-1">Requires organizer action</p>
+                        <p className="text-[11px] font-medium text-slate-500 dark:text-gray-400 mt-0.5">Requires organizer action</p>
                     </div>
                 </div>
             </div>
@@ -447,12 +447,12 @@ const HackathonApprovals = () => {
                                     onClick={() => setActiveTab(tab)}
                                     className={`py-1.5 px-3 text-[11px] font-bold rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
                                         isActive 
-                                        ? 'bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-500/30 shadow-xs' 
+                                        ? 'bg-purple-50 dark:bg-purple-500/20 text-[#6D5CE8] dark:text-purple-300 border border-purple-200 dark:border-purple-500/30 shadow-xs' 
                                         : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white border border-transparent'
                                     }`}
                                 >
                                     <span>{tab}</span>
-                                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${isActive ? 'bg-sky-200/70 dark:bg-sky-400/20 text-sky-800 dark:text-sky-200' : 'bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-gray-300'}`}>
+                                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${isActive ? 'bg-indigo-200/70 dark:bg-indigo-400/20 text-indigo-800 dark:text-indigo-200' : 'bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-gray-300'}`}>
                                         {count}
                                     </span>
                                 </button>
@@ -469,7 +469,7 @@ const HackathonApprovals = () => {
                                 placeholder="Search by title, track, organizer..." 
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl pl-9 pr-3.5 py-2 text-xs text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-sky-500 transition-colors"
+                                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl pl-9 pr-3.5 py-2 text-xs text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition-colors"
                             />
                         </div>
                     </div>
@@ -493,14 +493,14 @@ const HackathonApprovals = () => {
                                         onClick={() => setSelectedHackathonId(hackathon.id)}
                                         className={`p-3.5 rounded-xl cursor-pointer transition-all border text-left ${
                                             isSelected 
-                                            ? 'bg-sky-50/80 dark:bg-sky-500/15 border-sky-400 dark:border-sky-500/60 shadow-sm' 
-                                            : 'bg-white dark:bg-navy-800/40 border-slate-200/80 dark:border-white/5 hover:border-sky-300 dark:hover:border-sky-500/30'
+                                            ? 'bg-indigo-50/80 dark:bg-indigo-500/15 border-indigo-400 dark:border-indigo-500/60 shadow-sm' 
+                                            : 'bg-white dark:bg-navy-800/40 border-slate-200/80 dark:border-white/5 hover:border-indigo-300 dark:hover:border-indigo-500/30'
                                         }`}
                                     >
                                         <div className="flex justify-between items-start gap-2 mb-1.5">
                                             <div className="min-w-0 pr-1">
                                                 <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">{hackathon.title}</h4>
-                                                <p className="text-[11px] text-sky-600 dark:text-sky-400 font-medium truncate mt-0.5">{hackathon.organizer?.name || 'Platform Organizer'}</p>
+                                                <p className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium truncate mt-0.5">{hackathon.organizer?.name || 'Platform Organizer'}</p>
                                                 <p className="text-[10px] text-slate-400 dark:text-gray-500 truncate">{hackathon.organizer?.org}</p>
                                             </div>
                                             <span className={`shrink-0 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${
@@ -530,15 +530,15 @@ const HackathonApprovals = () => {
                     {selectedHackathon ? (
                         <>
                             {/* Selected Hackathon Top Bar */}
-                            <div className="p-5 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
-                                <div className="flex items-center gap-3.5">
-                                    <div className="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-100 dark:border-sky-500/30 flex items-center justify-center shrink-0 shadow-sm">
-                                        <RocketIcon className="w-6 h-6" />
+                            <div className="p-3.5 sm:p-4 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shrink-0">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/30 flex items-center justify-center shrink-0 shadow-sm">
+                                        <RocketIcon className="w-5 h-5" />
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">{selectedHackathon.title}</h2>
-                                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                                            <h2 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white tracking-tight">{selectedHackathon.title}</h2>
+                                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${
                                                 selectedHackathon.status === 'Approved' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' :
                                                 selectedHackathon.status === 'Needs Revision' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' :
                                                 selectedHackathon.status === 'Rejected' ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20' :
@@ -548,13 +548,13 @@ const HackathonApprovals = () => {
                                             </span>
                                         </div>
                                         <p className="text-xs text-slate-500 dark:text-gray-400 font-medium mt-0.5">
-                                            Organized by <span className="text-sky-600 dark:text-sky-400 font-bold">{selectedHackathon.organizer?.name}</span> ({selectedHackathon.organizer?.org})
+                                            Organized by <span className="text-indigo-600 dark:text-indigo-400 font-bold">{selectedHackathon.organizer?.name}</span> ({selectedHackathon.organizer?.org})
                                         </p>
                                     </div>
                                 </div>
 
                                 <div className="text-left sm:text-right">
-                                    <p className="text-[10px] text-slate-400 dark:text-gray-500 uppercase tracking-wider font-bold">Event Schedule</p>
+                                    <p className="text-[9px] text-slate-400 dark:text-gray-500 uppercase tracking-wider font-bold">Event Schedule</p>
                                     <p className="text-xs font-bold text-slate-900 dark:text-white font-mono mt-0.5">
                                         {selectedHackathon.dates?.start} &rarr; {selectedHackathon.dates?.end}
                                     </p>
@@ -562,7 +562,7 @@ const HackathonApprovals = () => {
                             </div>
 
                             {/* Sub-tab Navigation */}
-                            <div className="flex border-b border-slate-100 dark:border-white/5 px-5 pt-2 gap-4 shrink-0 bg-white dark:bg-navy-900">
+                            <div className="flex border-b border-slate-100 dark:border-white/5 px-4 pt-1.5 gap-3 shrink-0 bg-white dark:bg-navy-900">
                                 {[
                                     { id: 'proposal', label: '1. Proposal Details', icon: <RocketIcon className="w-3.5 h-3.5" /> },
                                     { id: 'stats', label: '2. Organizer & Event Stats', icon: <UsersIcon className="w-3.5 h-3.5" /> },
@@ -581,7 +581,7 @@ const HackathonApprovals = () => {
                                         }}
                                         className={`pb-3 px-1 text-xs font-bold transition-all border-b-2 flex items-center gap-1.5 cursor-pointer ${
                                             activeDetailTab === tab.id
-                                            ? 'border-sky-500 text-sky-600 dark:text-sky-400'
+                                            ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
                                             : 'border-transparent text-slate-400 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white'
                                         }`}
                                     >
@@ -620,13 +620,13 @@ const HackathonApprovals = () => {
                                         <div className="p-5 rounded-xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/70 dark:border-white/5">
                                             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300 mb-3.5 flex items-center justify-between">
                                                 <span>Step 1: Basic Details & Overview</span>
-                                                <span className="text-sky-600 dark:text-sky-400 font-mono text-[11px]">Status: {selectedHackathon.status}</span>
+                                                <span className="text-indigo-600 dark:text-indigo-400 font-mono text-[11px]">Status: {selectedHackathon.status}</span>
                                             </h4>
                                             
                                             <div className="space-y-3.5 text-xs">
                                                 <div>
                                                     <span className="text-slate-400 dark:text-gray-500 font-bold uppercase tracking-wider text-[10px] block mb-1">Tagline / Motto</span>
-                                                    <p className="text-sky-600 dark:text-sky-400 font-medium italic">"{selectedHackathon.tagline}"</p>
+                                                    <p className="text-indigo-600 dark:text-indigo-400 font-medium italic">"{selectedHackathon.tagline}"</p>
                                                 </div>
                                                 <div>
                                                     <span className="text-slate-400 dark:text-gray-500 font-bold uppercase tracking-wider text-[10px] block mb-1">Event Description</span>
@@ -657,7 +657,7 @@ const HackathonApprovals = () => {
                                                 </div>
                                                 <div className="p-3.5 rounded-xl bg-white dark:bg-black/20 border border-slate-200/60 dark:border-white/5 space-y-1">
                                                     <span className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-wider">Hackathon Execution Window</span>
-                                                    <p className="font-bold text-sky-600 dark:text-sky-400 font-mono">
+                                                    <p className="font-bold text-indigo-600 dark:text-indigo-400 font-mono">
                                                         {selectedHackathon.dates?.start} &rarr; {selectedHackathon.dates?.end}
                                                     </p>
                                                 </div>
@@ -668,14 +668,14 @@ const HackathonApprovals = () => {
                                         <div className="p-5 rounded-xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/70 dark:border-white/5">
                                             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300 mb-3.5 flex items-center justify-between">
                                                 <span>Step 2: Challenge Tracks & Themes</span>
-                                                <span className="font-mono text-sky-600 dark:text-sky-400 text-xs font-bold">{selectedHackathon.tracks?.length || 1} Tracks Configured</span>
+                                                <span className="font-mono text-indigo-600 dark:text-indigo-400 text-xs font-bold">{selectedHackathon.tracks?.length || 1} Tracks Configured</span>
                                             </h4>
                                             
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 {selectedHackathon.tracks?.map((track, i) => (
                                                     <div key={i} className="p-3.5 rounded-xl bg-white dark:bg-black/20 border border-slate-200/60 dark:border-white/5 text-xs">
                                                         <h5 className="font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-1.5">
-                                                            <span className="w-2 h-2 rounded-full bg-sky-500 shrink-0"></span>
+                                                            <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0"></span>
                                                             {track.title}
                                                         </h5>
                                                         <p className="text-slate-500 dark:text-gray-400 leading-relaxed text-[11px]">{track.description}</p>
@@ -702,7 +702,7 @@ const HackathonApprovals = () => {
                                                 </div>
                                                 <div className="p-3 rounded-xl bg-white dark:bg-black/20 border border-slate-200/60 dark:border-white/5 text-center">
                                                     <span className="text-[9px] font-bold uppercase text-slate-400 dark:text-gray-500 block">Visibility</span>
-                                                    <span className="font-bold text-sky-600 dark:text-sky-400">{selectedHackathon.isPublic ? 'Public Event' : 'Private Event'}</span>
+                                                    <span className="font-bold text-indigo-600 dark:text-indigo-400">{selectedHackathon.isPublic ? 'Public Event' : 'Private Event'}</span>
                                                 </div>
                                                 <div className="p-3 rounded-xl bg-white dark:bg-black/20 border border-slate-200/60 dark:border-white/5 text-center">
                                                     <span className="text-[9px] font-bold uppercase text-slate-400 dark:text-gray-500 block">Auto-Approval</span>
@@ -719,7 +719,7 @@ const HackathonApprovals = () => {
                                                 <ul className="space-y-1 text-xs text-slate-700 dark:text-gray-300">
                                                     {Array.isArray(selectedHackathon.rules) ? selectedHackathon.rules.map((rule, idx) => (
                                                         <li key={idx} className="flex items-start gap-2">
-                                                            <span className="font-bold text-sky-500">{idx + 1}.</span>
+                                                            <span className="font-bold text-indigo-500">{idx + 1}.</span>
                                                             <span>{rule}</span>
                                                         </li>
                                                     )) : (
@@ -748,7 +748,7 @@ const HackathonApprovals = () => {
                                                     </div>
                                                     <div className="flex justify-between border-b pb-2 border-slate-200/60 dark:border-white/5">
                                                         <span className="text-slate-500 dark:text-gray-400">Organization</span>
-                                                        <span className="font-bold text-sky-600 dark:text-sky-400">{selectedHackathon.organizer?.org}</span>
+                                                        <span className="font-bold text-indigo-600 dark:text-indigo-400">{selectedHackathon.organizer?.org}</span>
                                                     </div>
                                                 </div>
                                                 <div className="space-y-2.5">
@@ -771,7 +771,7 @@ const HackathonApprovals = () => {
                                                 <p className="text-[10px] font-bold uppercase text-slate-400 dark:text-gray-500 mt-1">Registrations</p>
                                             </div>
                                             <div className="p-4 rounded-xl bg-white dark:bg-navy-800/50 border border-slate-200/70 dark:border-white/10 text-center shadow-xs">
-                                                <p className="text-2xl font-black text-sky-600 dark:text-sky-400">{selectedHackathon.stats?.teams || 0}</p>
+                                                <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{selectedHackathon.stats?.teams || 0}</p>
                                                 <p className="text-[10px] font-bold uppercase text-slate-400 dark:text-gray-500 mt-1">Teams Formed</p>
                                             </div>
                                             <div className="p-4 rounded-xl bg-white dark:bg-navy-800/50 border border-slate-200/70 dark:border-white/10 text-center shadow-xs">
@@ -787,7 +787,7 @@ const HackathonApprovals = () => {
                                             </h4>
                                             <div className="space-y-3 text-xs">
                                                 <div className="flex items-start gap-3">
-                                                    <span className="w-2.5 h-2.5 rounded-full bg-sky-500 mt-1 shrink-0"></span>
+                                                    <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 mt-1 shrink-0"></span>
                                                     <div>
                                                         <p className="font-bold text-slate-900 dark:text-white">Proposal Drafted by Organizer</p>
                                                         <p className="text-[10px] text-slate-400 dark:text-gray-500">{selectedHackathon.createdAt}</p>
@@ -810,7 +810,7 @@ const HackathonApprovals = () => {
                                     <div className="space-y-4 animate-in fade-in duration-200">
                                         
                                         <div className="flex justify-between items-center">
-                                            <h4 className="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 flex items-center gap-1.5">
+                                            <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
                                                 <ZapIcon className="w-4 h-4" /> AI Feasibility & Rubric Analysis
                                             </h4>
                                             <button 
@@ -830,11 +830,11 @@ const HackathonApprovals = () => {
                                         ) : currentAiReview ? (
                                             <div className="space-y-4 text-xs">
                                                 {/* Score Overview */}
-                                                <div className="p-5 rounded-2xl border bg-sky-50/70 dark:bg-sky-500/10 border-sky-200 dark:border-sky-500/30 flex items-center justify-between">
+                                                <div className="p-5 rounded-2xl border bg-indigo-50/70 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/30 flex items-center justify-between">
                                                     <div>
-                                                        <span className="font-bold uppercase tracking-wider text-[10px] text-sky-700 dark:text-sky-300 block mb-1">Proposal Score</span>
+                                                        <span className="font-bold uppercase tracking-wider text-[10px] text-indigo-700 dark:text-indigo-300 block mb-1">Proposal Score</span>
                                                         <div className="flex items-baseline gap-2">
-                                                            <span className="text-3xl font-extrabold text-sky-600 dark:text-sky-400 tracking-tight">
+                                                            <span className="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400 tracking-tight">
                                                                 {currentAiReview.overallScore !== undefined ? currentAiReview.overallScore : 75}
                                                             </span>
                                                             <span className="text-xs text-slate-500 font-bold">/ 100</span>
@@ -871,7 +871,7 @@ const HackathonApprovals = () => {
                                                     {currentAiReview.hasPrizePool !== undefined && (
                                                         <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                                                             currentAiReview.hasPrizePool 
-                                                                ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20' 
+                                                                ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20' 
                                                                 : 'bg-slate-500/10 text-slate-500 border-slate-500/20'
                                                         }`}>
                                                             {currentAiReview.hasPrizePool ? '✓ Prize Incentives' : '○ Prize Pool Missing'}
@@ -902,13 +902,13 @@ const HackathonApprovals = () => {
                                                     <div className="p-3.5 rounded-xl border bg-slate-50/70 dark:bg-white/[0.02] border-slate-200/70 dark:border-white/5">
                                                         <div className="flex justify-between font-bold mb-1.5 text-slate-700 dark:text-slate-300">
                                                             <span>Clarity & Problem Scope</span>
-                                                            <span className="text-sky-600 dark:text-sky-400">
+                                                            <span className="text-indigo-600 dark:text-indigo-400">
                                                                 {currentAiReview.clarityScore !== undefined ? currentAiReview.clarityScore : 70}%
                                                             </span>
                                                         </div>
                                                         <div className="w-full h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
                                                             <div 
-                                                                className="h-full bg-sky-500 rounded-full transition-all duration-500" 
+                                                                className="h-full bg-indigo-500 rounded-full transition-all duration-500" 
                                                                 style={{ width: `${Math.min(100, Math.max(5, currentAiReview.clarityScore !== undefined ? currentAiReview.clarityScore : 70))}%` }}
                                                             ></div>
                                                         </div>
@@ -956,15 +956,15 @@ const HackathonApprovals = () => {
 
                                                 {/* Suggested Feedback Note */}
                                                 {currentAiReview.suggestedFeedback && (
-                                                    <div className="p-4 rounded-xl border bg-sky-50/70 dark:bg-black/30 border-sky-200 dark:border-white/5">
-                                                        <span className="font-bold text-[10px] uppercase text-sky-700 dark:text-sky-400 block mb-1">Recommended Organizer Guidance</span>
+                                                    <div className="p-4 rounded-xl border bg-indigo-50/70 dark:bg-black/30 border-indigo-200 dark:border-white/5">
+                                                        <span className="font-bold text-[10px] uppercase text-indigo-700 dark:text-indigo-400 block mb-1">Recommended Organizer Guidance</span>
                                                         <p className="text-slate-700 dark:text-gray-300 italic mb-2.5 leading-relaxed">{currentAiReview.suggestedFeedback}</p>
                                                         <button 
                                                             onClick={() => {
                                                                 setFeedbackNote(currentAiReview.suggestedFeedback);
                                                                 setIsRequestChangesOpen(true);
                                                             }}
-                                                            className="px-4 py-2 bg-sky-50 dark:bg-sky-500/20 hover:bg-sky-100 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-500/40 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+                                                            className="px-4 py-2 bg-indigo-50 dark:bg-indigo-500/20 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-500/40 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
                                                         >
                                                             Use as Revision Feedback &rarr;
                                                         </button>
@@ -972,9 +972,9 @@ const HackathonApprovals = () => {
                                                 )}
 
                                                 {/* Quick Apply AI Recommendation Banner */}
-                                                <div className="p-4 rounded-2xl border border-sky-200 dark:border-sky-500/30 bg-sky-50/60 dark:bg-sky-500/10 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+                                                <div className="p-4 rounded-2xl border border-indigo-200 dark:border-indigo-500/30 bg-indigo-50/60 dark:bg-indigo-500/10 flex flex-wrap items-center justify-between gap-3 shadow-sm">
                                                     <div>
-                                                        <span className="font-bold text-xs uppercase tracking-wider text-sky-800 dark:text-sky-300 block mb-0.5">
+                                                        <span className="font-bold text-xs uppercase tracking-wider text-indigo-800 dark:text-indigo-300 block mb-0.5">
                                                             Quick Apply AI Recommendation: {currentAiReview.recommendation ? currentAiReview.recommendation.replace(/_/g, ' ') : 'APPROVE'}
                                                         </span>
                                                         <p className="text-xs text-slate-600 dark:text-slate-300">
@@ -988,9 +988,9 @@ const HackathonApprovals = () => {
                                                             <button
                                                                 onClick={() => handleApprove(selectedHackathon.id)}
                                                                 disabled={actionLoading}
-                                                                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-500/20 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                                                                className="px-5 py-2 bg-emerald-50 dark:bg-emerald-500/15 hover:bg-emerald-100 dark:hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-400 border border-emerald-300/80 dark:border-emerald-500/30 text-xs font-bold rounded-xl shadow-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
                                                             >
-                                                                <CheckIcon className="w-3.5 h-3.5" />
+                                                                <CheckIcon className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                                                                 Approve Proposal Now
                                                             </button>
                                                         )}
@@ -1001,9 +1001,9 @@ const HackathonApprovals = () => {
                                                                     setIsRequestChangesOpen(true);
                                                                 }}
                                                                 disabled={actionLoading}
-                                                                className="px-5 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl shadow-md shadow-amber-500/20 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                                                                className="px-5 py-2 bg-amber-50 dark:bg-amber-500/15 hover:bg-amber-100 dark:hover:bg-amber-500/25 text-amber-800 dark:text-amber-300 border border-amber-300/80 dark:border-amber-500/30 text-xs font-bold rounded-xl shadow-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
                                                             >
-                                                                <TriangleAlertIcon className="w-3.5 h-3.5" />
+                                                                <TriangleAlertIcon className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                                                                 Request Changes with AI Note
                                                             </button>
                                                         )}
@@ -1014,7 +1014,7 @@ const HackathonApprovals = () => {
                                                                     setIsRejectOpen(true);
                                                                 }}
                                                                 disabled={actionLoading}
-                                                                className="px-5 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl shadow-md shadow-rose-500/20 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                                                                className="px-5 py-2 bg-rose-50 dark:bg-rose-500/15 hover:bg-rose-100 dark:hover:bg-rose-500/25 text-rose-700 dark:text-rose-400 border border-rose-300/80 dark:border-rose-500/30 text-xs font-bold rounded-xl shadow-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
                                                             >
                                                                 Reject Proposal with AI Note
                                                             </button>
@@ -1024,7 +1024,7 @@ const HackathonApprovals = () => {
                                             </div>
                                         ) : (
                                             <div className="p-8 text-center text-slate-500 text-xs flex flex-col items-center justify-center space-y-3">
-                                                <div className="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-500/20 border border-sky-100 dark:border-sky-500/30 flex items-center justify-center text-sky-600 dark:text-sky-400">
+                                                <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-500/20 border border-indigo-100 dark:border-indigo-500/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
                                                     <ZapIcon className="w-6 h-6" />
                                                 </div>
                                                 <div>
@@ -1034,9 +1034,9 @@ const HackathonApprovals = () => {
                                                 <button 
                                                     onClick={() => handleRunAiReview(true)}
                                                     disabled={isAiReviewLoading}
-                                                    className="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-xs shadow-md shadow-sky-500/30 transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
+                                                    className="px-5 py-2.5 bg-indigo-50 dark:bg-indigo-500/15 hover:bg-indigo-100 dark:hover:bg-indigo-500/25 text-indigo-700 dark:text-indigo-300 border border-indigo-300/80 dark:border-indigo-500/30 font-bold rounded-xl text-xs shadow-xs transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
                                                 >
-                                                    <ZapIcon className="w-3.5 h-3.5" />
+                                                    <ZapIcon className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                                                     {isAiReviewLoading ? 'Analyzing...' : 'Generate AI Proposal Review'}
                                                 </button>
                                             </div>
@@ -1073,9 +1073,9 @@ const HackathonApprovals = () => {
                                             <button 
                                                 onClick={() => handleApprove(selectedHackathon.id)}
                                                 disabled={actionLoading}
-                                                className="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-xl shadow-md shadow-sky-500/30 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                                                className="px-5 py-2.5 bg-[#7C65F6] hover:bg-[#6851ec] !text-white shadow-sm shadow-[#7C65F6]/20 text-xs font-bold rounded-xl shadow-md shadow-[#7C65F6]/20 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
                                             >
-                                                <CheckIcon className="w-3.5 h-3.5" />
+                                                <CheckIcon className="w-3.5 h-3.5 text-white" />
                                                 Approve & Publish
                                             </button>
                                         </>
@@ -1096,8 +1096,9 @@ const HackathonApprovals = () => {
                                             <button 
                                                 onClick={() => handleApprove(selectedHackathon.id)}
                                                 disabled={actionLoading}
-                                                className="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-xl shadow-md shadow-sky-500/30 transition-all cursor-pointer active:scale-95"
+                                                className="px-5 py-2.5 bg-[#7C65F6] hover:bg-[#6851ec] !text-white shadow-sm shadow-[#7C65F6]/20 text-xs font-bold rounded-xl shadow-md shadow-[#7C65F6]/20 transition-all cursor-pointer active:scale-95 flex items-center gap-1.5"
                                             >
+                                                <CheckIcon className="w-3.5 h-3.5 text-white" />
                                                 Re-Approve Proposal
                                             </button>
                                             <button 
@@ -1114,7 +1115,7 @@ const HackathonApprovals = () => {
                         </>
                     ) : (
                         <div className="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-gray-500 p-8 text-center">
-                            <RocketIcon className="w-12 h-12 mb-3 opacity-30 text-sky-500" />
+                            <RocketIcon className="w-12 h-12 mb-3 opacity-30 text-indigo-500" />
                             <p className="font-bold text-sm text-slate-700 dark:text-gray-300">Select a hackathon proposal from the left list to review.</p>
                         </div>
                     )}
@@ -1141,7 +1142,7 @@ const HackathonApprovals = () => {
                             <label key={key} className="flex items-center gap-2 text-xs text-slate-700 dark:text-gray-300 cursor-pointer p-2.5 rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10">
                                 <input 
                                     type="checkbox" 
-                                    className="rounded text-sky-600 focus:ring-sky-500" 
+                                    className="rounded text-indigo-600 focus:ring-indigo-500" 
                                     checked={changeSections[key]} 
                                     onChange={(e) => setChangeSections({...changeSections, [key]: e.target.checked})} 
                                 /> 
@@ -1158,7 +1159,7 @@ const HackathonApprovals = () => {
                             rows="3" 
                             value={feedbackNote} 
                             onChange={(e) => setFeedbackNote(e.target.value)} 
-                            className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-sky-500 transition-colors resize-none"
+                            className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-indigo-500 transition-colors resize-none"
                         ></textarea>
                     </div>
                     <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-white/10">
@@ -1171,7 +1172,7 @@ const HackathonApprovals = () => {
                         <button 
                             onClick={handleSendChangeRequest} 
                             disabled={actionLoading}
-                            className="px-5 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl shadow-md shadow-amber-500/20 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                            className="px-5 py-2 bg-amber-50 dark:bg-amber-500/15 hover:bg-amber-100 dark:hover:bg-amber-500/25 text-amber-800 dark:text-amber-300 border border-amber-300/80 dark:border-amber-500/30 font-bold text-xs rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer disabled:opacity-50"
                         >
                             {actionLoading ? 'Submitting...' : 'Send Revision Request'}
                         </button>
@@ -1231,7 +1232,7 @@ const HackathonApprovals = () => {
                         <button 
                             onClick={handleReject} 
                             disabled={actionLoading}
-                            className="px-5 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl shadow-md shadow-rose-500/20 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                            className="px-5 py-2 bg-rose-50 dark:bg-rose-500/15 hover:bg-rose-100 dark:hover:bg-rose-500/25 text-rose-700 dark:text-rose-400 border border-rose-300/80 dark:border-rose-500/30 font-bold text-xs rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer disabled:opacity-50"
                         >
                             {actionLoading ? 'Rejecting...' : 'Confirm Rejection'}
                         </button>

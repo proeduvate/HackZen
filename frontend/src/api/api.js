@@ -34,12 +34,15 @@ apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response && error.response.status === 401) {
-            // Clear auth data on unauthorized
-            localStorage.removeItem('token');
-            localStorage.removeItem('isLoggedIn');
-            sessionStorage.removeItem('token');
-            sessionStorage.removeItem('isLoggedIn');
-            // window.location.href = '/login';
+            const path = window.location.pathname;
+            const isAuthRoute = path.startsWith('/login') || path.startsWith('/signup') || path === '/' || path.startsWith('/get-started') || path.startsWith('/role-selection');
+            if (!isAuthRoute) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('isLoggedIn');
+                sessionStorage.removeItem('token');
+                sessionStorage.removeItem('isLoggedIn');
+                window.location.href = '/login?expired=true';
+            }
         }
         return Promise.reject(error);
     }

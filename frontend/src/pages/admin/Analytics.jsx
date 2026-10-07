@@ -24,7 +24,7 @@ import { useTheme } from '../../context/ThemeContext';
 // --- EMPTY STATE COMPONENT ---
 const EmptyAnalyticsState = ({ title = "No Analytics Data Recorded", message = "Data will populate automatically as users register, participate, and submit projects.", height = "h-52" }) => (
     <div className={`w-full ${height} flex flex-col items-center justify-center text-center p-6 rounded-2xl border border-dashed border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.01]`}>
-        <div className="w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/20 flex items-center justify-center mb-2.5 text-sky-500 shadow-sm">
+        <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 flex items-center justify-center mb-2.5 text-indigo-500 shadow-sm">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
         </div>
         <h4 className="text-xs font-bold text-slate-800 dark:text-white mb-0.5">{title}</h4>
@@ -37,11 +37,11 @@ const CustomChartTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
         return (
             <div className="p-3.5 rounded-xl border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-navy-900/95 backdrop-blur-md shadow-xl text-slate-900 dark:text-white">
-                {label && <p className="text-xs font-extrabold text-sky-600 dark:text-sky-400 mb-1.5 uppercase tracking-wider">{label}</p>}
+                {label && <p className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400 mb-1.5 uppercase tracking-wider">{label}</p>}
                 {payload.map((entry, index) => (
                     <div key={`item-${index}`} className="text-xs font-semibold flex items-center justify-between gap-4 my-1">
                         <span className="flex items-center gap-1.5 text-slate-600 dark:text-gray-300">
-                            <span className="w-2.5 h-2.5 rounded-full inline-block shrink-0 shadow-sm" style={{ backgroundColor: entry.color || '#0ea5e9' }}></span>
+                            <span className="w-2.5 h-2.5 rounded-full inline-block shrink-0 shadow-sm" style={{ backgroundColor: entry.color || '#4338CA' }}></span>
                             {entry.name || entry.dataKey}:
                         </span>
                         <span className="font-extrabold font-mono text-slate-900 dark:text-white">
@@ -59,21 +59,21 @@ const CustomChartTooltip = ({ active, payload, label }) => {
 const KpiCard = ({ title, value, change, isPositive, icon, onClick, iconBg }) => (
     <div 
         onClick={onClick} 
-        className="rounded-2xl p-4 sm:p-5 bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group cursor-pointer flex flex-col justify-between w-full h-full"
+        className="rounded-xl p-3 sm:p-3.5 bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all group cursor-pointer flex flex-col justify-between w-full h-full"
     >
-        <div className="flex items-center justify-between gap-1 mb-2">
-            <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-gray-400 truncate">{title}</h3>
-            <div className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 ${iconBg || 'bg-sky-50 dark:bg-sky-500/10 border-sky-200 dark:border-sky-500/20'}`}>
+        <div className="flex items-center justify-between gap-1 mb-1.5">
+            <h3 className="text-[10.5px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-gray-400 truncate">{title}</h3>
+            <div className={`w-7.5 h-7.5 rounded-lg border flex items-center justify-center shrink-0 ${iconBg || 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/20'}`}>
                 {icon}
             </div>
         </div>
-        <div className="my-1 flex items-baseline gap-2">
-            <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">{value}</p>
-            <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ${isPositive ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400'}`}>
+        <div className="my-0.5 flex items-baseline gap-2">
+            <p className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white leading-tight">{value}</p>
+            <span className={`text-[9.5px] font-extrabold px-1.5 py-0.5 rounded-full ${isPositive ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400'}`}>
                 {isPositive ? '↑' : '↓'} {change}
             </span>
         </div>
-        <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[10px] font-bold text-slate-400 dark:text-gray-500">
+        <div className="pt-1.5 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[10px] font-bold text-slate-400 dark:text-gray-500">
             <span className="uppercase tracking-wider">vs last mo</span>
             <span className="group-hover:translate-x-1 transition-transform opacity-70">→</span>
         </div>
@@ -82,9 +82,9 @@ const KpiCard = ({ title, value, change, isPositive, icon, onClick, iconBg }) =>
 
 // Reusable Compact Division Metric Card Component (High Density, Sleek & Fully Visible)
 const MetricItemCard = ({ label, value, valueColor }) => (
-    <div className="p-3 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-black/20 text-slate-800 dark:text-white shadow-sm hover:-translate-y-0.5 transition-all flex flex-col justify-between min-h-[58px]">
+    <div className="p-2.5 sm:p-3 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-black/20 text-slate-800 dark:text-white shadow-sm hover:-translate-y-0.5 transition-all flex flex-col justify-between min-h-[54px]">
         <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-gray-400 truncate">{label}</p>
-        <p className={`text-base sm:text-lg font-extrabold tracking-tight leading-tight mt-1 ${valueColor || 'text-slate-900 dark:text-white'}`}>
+        <p className={`text-sm sm:text-base font-extrabold tracking-tight leading-tight mt-0.5 ${valueColor || 'text-slate-900 dark:text-white'}`}>
             {value}
         </p>
     </div>
@@ -92,25 +92,25 @@ const MetricItemCard = ({ label, value, valueColor }) => (
 
 // Reusable Collapsible Analytics Section Frame
 const AnalyticsSection = ({ id, title, icon, isExpanded, onToggle, children }) => (
-    <div id={`section-${id}`} className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 shadow-sm overflow-hidden transition-all p-0 scroll-mt-6">
+    <div id={`section-${id}`} className="rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 shadow-sm overflow-hidden transition-all p-0 scroll-mt-6">
         <button 
             onClick={onToggle}
-            className="w-full p-5 flex items-center justify-between border-b border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02] text-left focus:outline-none cursor-pointer hover:bg-slate-100/60 dark:hover:bg-white/[0.04] transition-colors"
+            className="w-full p-3.5 sm:p-4 flex items-center justify-between border-b border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02] text-left focus:outline-none cursor-pointer hover:bg-slate-100/60 dark:hover:bg-white/[0.04] transition-colors"
         >
-            <div className="flex items-center gap-3.5">
-                <span className="text-xl p-2.5 rounded-xl bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-500/20">{icon}</span>
+            <div className="flex items-center gap-3">
+                <span className="text-base p-2 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20">{icon}</span>
                 <div>
-                    <h2 className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight">{title}</h2>
-                    <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">Detailed metric breakdown and trend indicators</p>
+                    <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white tracking-tight">{title}</h2>
+                    <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Detailed metric breakdown and trend indicators</p>
                 </div>
             </div>
-            <div className="flex items-center gap-2 text-xs font-bold text-sky-600 dark:text-sky-400">
+            <div className="flex items-center gap-2 text-xs font-bold text-indigo-600 dark:text-indigo-400">
                 <span>{isExpanded ? 'Collapse' : 'Expand'}</span>
                 <span className={`transform transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>▾</span>
             </div>
         </button>
         {isExpanded && (
-            <div className="p-6 space-y-6 animate-in fade-in duration-300">
+            <div className="p-4 sm:p-5 space-y-4 sm:space-y-5 animate-in fade-in duration-300">
                 {children}
             </div>
         )}
@@ -272,10 +272,10 @@ const AdminAnalytics = () => {
                 const el = document.getElementById('college-breakdown') || document.getElementById('section-users');
                 if (el) {
                     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    el.classList.add('ring-4', 'ring-sky-500', 'ring-offset-4', 'dark:ring-offset-slate-900');
+                    el.classList.add('ring-4', 'ring-indigo-500', 'ring-offset-4', 'dark:ring-offset-slate-900');
                     showToast("Scrolled to Top Participating Colleges & Institutions", "info");
                     setTimeout(() => {
-                        el.classList.remove('ring-4', 'ring-sky-500', 'ring-offset-4', 'dark:ring-offset-slate-900');
+                        el.classList.remove('ring-4', 'ring-indigo-500', 'ring-offset-4', 'dark:ring-offset-slate-900');
                     }, 3500);
                 }
             }, 400);
@@ -427,14 +427,14 @@ const AdminAnalytics = () => {
     };
 
     return (
-        <div className="space-y-7 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-16 max-w-7xl mx-auto">
+        <div className="space-y-5 sm:space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-16 max-w-7xl mx-auto">
 
             {/* In-App Toast Alert */}
             {toastMessage && (
-                <div className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 text-sm font-bold animate-in slide-in-from-bottom-5 duration-300 ${
-                    toastMessage.type === 'success' ? 'bg-sky-600 text-white border border-sky-400/30 shadow-sky-900/20' :
-                    toastMessage.type === 'error' ? 'bg-red-700 text-white' :
-                    'bg-slate-900 dark:bg-slate-800 text-white border border-white/10'
+                <div className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 text-sm font-bold animate-in slide-in-from-bottom-5 duration-300 border ${
+                    toastMessage.type === 'success' ? 'bg-violet-50 text-violet-700 border-violet-300/80' :
+                    toastMessage.type === 'error' ? 'bg-rose-50 text-rose-700 border-rose-300/80' :
+                    'bg-violet-50 text-violet-700 border-violet-300/80'
                 }`}>
                     <span>{toastMessage.text}</span>
                 </div>
@@ -452,7 +452,7 @@ const AdminAnalytics = () => {
                     <button 
                         disabled={isExporting !== null}
                         onClick={() => handleExport('PDF')} 
-                        className={`px-4 py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-sky-500/20 flex items-center gap-1.5 active:scale-95 cursor-pointer ${isExporting === 'PDF' ? 'opacity-70 cursor-wait' : ''}`}
+                        className={`px-4 py-2 bg-[#7C65F6] hover:bg-[#6851ec] !text-white shadow-sm shadow-[#7C65F6]/20 rounded-xl text-xs font-bold transition-all shadow-md shadow-[#7C65F6]/20 flex items-center gap-1.5 active:scale-95 cursor-pointer ${isExporting === 'PDF' ? 'opacity-70 cursor-wait' : ''}`}
                     >
                         {isExporting === 'PDF' ? (
                             <>
@@ -471,11 +471,11 @@ const AdminAnalytics = () => {
                     <button 
                         disabled={isExporting !== null}
                         onClick={() => handleExport('Excel')} 
-                        className={`px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-emerald-500/20 flex items-center gap-1.5 active:scale-95 cursor-pointer ${isExporting === 'Excel' ? 'opacity-70 cursor-wait' : ''}`}
+                        className={`px-4 py-2 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-300/80 dark:border-emerald-500/30 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer ${isExporting === 'Excel' ? 'opacity-70 cursor-wait' : ''}`}
                     >
                         {isExporting === 'Excel' ? (
                             <>
-                                <svg className="animate-spin -ml-0.5 mr-1 h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <svg className="animate-spin -ml-0.5 mr-1 h-3.5 w-3.5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
@@ -483,21 +483,21 @@ const AdminAnalytics = () => {
                             </>
                         ) : (
                             <>
-                                <ExcelSheetIcon className="w-3.5 h-3.5 text-white" /> <span>Export Excel</span>
+                                <ExcelSheetIcon className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> <span>Export Excel</span>
                             </>
                         )}
                     </button>
                     <button 
                         disabled={isExporting !== null}
                         onClick={() => handleExport('CSV')} 
-                        className="px-4 py-2.5 bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                        className="px-4 py-2 bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
                     >
                         <FileTextIcon className="w-3.5 h-3.5 text-slate-500 dark:text-gray-400" /> <span>Export CSV</span>
                     </button>
                     <button 
                         disabled={isExporting !== null}
                         onClick={() => window.print()} 
-                        className="px-4 py-2.5 bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                        className="px-4 py-2 bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
                     >
                         <PrinterIcon className="w-3.5 h-3.5 text-slate-500 dark:text-gray-400" /> <span>Print Report</span>
                     </button>
@@ -510,7 +510,7 @@ const AdminAnalytics = () => {
                     <div className="flex items-center gap-1.5">
                         <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-gray-400">Date Range:</span>
                         <div className="relative inline-flex items-center">
-                            <select value={dateRange} onChange={(e) => setDateRange(e.target.value)} className="appearance-none pr-8 pl-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer outline-none transition-all border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 text-slate-800 dark:text-white focus:border-sky-500">
+                            <select value={dateRange} onChange={(e) => setDateRange(e.target.value)} className="appearance-none pr-8 pl-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer outline-none transition-all border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 text-slate-800 dark:text-white focus:border-indigo-500">
                                 <option>Last 30 Days</option>
                                 <option>Last 7 Days</option>
                                 <option>This Month</option>
@@ -527,7 +527,7 @@ const AdminAnalytics = () => {
                     <div className="flex items-center gap-1.5">
                         <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-gray-400">Hackathon:</span>
                         <div className="relative inline-flex items-center">
-                            <select value={selectedHackathon} onChange={(e) => setSelectedHackathon(e.target.value)} className="appearance-none pr-8 pl-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer outline-none transition-all border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 text-slate-800 dark:text-white focus:border-sky-500">
+                            <select value={selectedHackathon} onChange={(e) => setSelectedHackathon(e.target.value)} className="appearance-none pr-8 pl-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer outline-none transition-all border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 text-slate-800 dark:text-white focus:border-indigo-500">
                                 <option>All Events</option>
                                 <option>Global AI Summit 2026</option>
                                 <option>CyberKnights Shield</option>
@@ -544,7 +544,7 @@ const AdminAnalytics = () => {
                     <div className="flex items-center gap-1.5">
                         <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-gray-400">College:</span>
                         <div className="relative inline-flex items-center">
-                            <select value={selectedCollege} onChange={(e) => setSelectedCollege(e.target.value)} className="appearance-none pr-8 pl-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer outline-none transition-all border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 text-slate-800 dark:text-white focus:border-sky-500">
+                            <select value={selectedCollege} onChange={(e) => setSelectedCollege(e.target.value)} className="appearance-none pr-8 pl-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer outline-none transition-all border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 text-slate-800 dark:text-white focus:border-indigo-500">
                                 <option>All Colleges</option>
                                 <option>ABC Engineering College</option>
                                 <option>VIT Chennai</option>
@@ -562,7 +562,7 @@ const AdminAnalytics = () => {
                     <div className="flex items-center gap-1.5">
                         <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-gray-400">Role:</span>
                         <div className="relative inline-flex items-center">
-                            <select value={selectedRole} onChange={(e) => setSelectedRole(e.target.value)} className="appearance-none pr-8 pl-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer outline-none transition-all border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 text-slate-800 dark:text-white focus:border-sky-500">
+                            <select value={selectedRole} onChange={(e) => setSelectedRole(e.target.value)} className="appearance-none pr-8 pl-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer outline-none transition-all border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 text-slate-800 dark:text-white focus:border-indigo-500">
                                 <option>All Roles</option>
                                 <option>Students</option>
                                 <option>Mentors</option>
@@ -579,7 +579,7 @@ const AdminAnalytics = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <button onClick={expandAll} className="px-3 py-1.5 bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/30 rounded-xl text-xs font-bold text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-500/20 transition-all active:scale-95 cursor-pointer">
+                    <button onClick={expandAll} className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30 rounded-xl text-xs font-bold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-all active:scale-95 cursor-pointer">
                         Expand All
                     </button>
                     <button onClick={collapseAll} className="px-3 py-1.5 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-bold text-slate-700 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-all active:scale-95 cursor-pointer">
@@ -591,17 +591,17 @@ const AdminAnalytics = () => {
             {/* 3. MASTER SEARCH OMNIBAR */}
             <div className="relative z-30" ref={searchRef}>
                 <div className="relative">
-                    <svg className="w-5 h-5 absolute left-4 top-3.5 text-sky-600 dark:text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    <svg className="w-5 h-5 absolute left-4 top-3.5 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                     <input
                         type="text"
-                        className="block w-full pl-12 pr-4 py-3 bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-sky-500 transition-all shadow-sm text-xs sm:text-sm font-medium"
+                        className="block w-full pl-12 pr-4 py-3 bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition-all shadow-sm text-xs sm:text-sm font-medium"
                         placeholder="Master Search: Track User, College, Team Code, or Hackathon ID..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                     {isSearching && (
                         <div className="absolute right-4 top-3.5">
-                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-sky-600 border-t-transparent"></div>
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-indigo-600 border-t-transparent"></div>
                         </div>
                     )}
                 </div>
@@ -617,10 +617,10 @@ const AdminAnalytics = () => {
                                         className="bg-slate-50 dark:bg-black/20 p-3 rounded-xl border border-slate-200/60 dark:border-white/5 flex justify-between items-center hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer transition-colors"
                                     >
                                         <div>
-                                            <p className="text-sm font-bold text-slate-900 dark:text-white">{u.name || u.email} <span className="text-[10px] bg-sky-100 dark:bg-sky-500/20 text-sky-800 dark:text-sky-300 font-bold px-2 py-0.5 rounded-full ml-2 uppercase">{u.role || 'USER'}</span></p>
+                                            <p className="text-sm font-bold text-slate-900 dark:text-white">{u.name || u.email} <span className="text-[10px] bg-indigo-100 dark:bg-indigo-500/20 text-indigo-800 dark:text-indigo-300 font-bold px-2 py-0.5 rounded-full ml-2 uppercase">{u.role || 'USER'}</span></p>
                                             <p className="text-xs text-slate-500 dark:text-gray-400">{u.email}</p>
                                         </div>
-                                        <span className="text-xs text-sky-600 dark:text-sky-400 font-bold">View User →</span>
+                                        <span className="text-xs text-indigo-600 dark:text-indigo-400 font-bold">View User →</span>
                                     </div>
                                 ))}
                             </div>
@@ -631,15 +631,15 @@ const AdminAnalytics = () => {
 
             {/* 4. TOP 8 PLATFORM KPI CARDS GRID */}
             <div>
-                <h2 className="text-xs font-extrabold uppercase tracking-wider mb-3 text-slate-500 dark:text-gray-400">Live Platform Overview</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+                <h2 className="text-xs font-extrabold uppercase tracking-wider mb-2.5 text-slate-500 dark:text-gray-400">Live Platform Overview</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 w-full">
                     <KpiCard 
                         title="Total Users" 
                         value={kpis?.totalUsers?.val || "1,248"} 
                         change={kpis?.totalUsers?.change || "12.4%"} 
                         isPositive={kpis?.totalUsers?.isPositive ?? true} 
-                        icon={<UsersIcon className="w-5 h-5 text-sky-500" />} 
-                        iconBg="bg-sky-50 dark:bg-sky-500/10 border-sky-200 dark:border-sky-500/20"
+                        icon={<UsersIcon className="w-5 h-5 text-indigo-500" />} 
+                        iconBg="bg-indigo-50 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/20"
                         onClick={() => scrollToSection('users')}
                     />
                     <KpiCard 
@@ -647,8 +647,8 @@ const AdminAnalytics = () => {
                         value={kpis?.runningHacks?.val || "4"} 
                         change={kpis?.runningHacks?.change || "+2"} 
                         isPositive={kpis?.runningHacks?.isPositive ?? true} 
-                        icon={<RocketIcon className="w-5 h-5 text-sky-500" />} 
-                        iconBg="bg-sky-50 dark:bg-sky-500/10 border-sky-200 dark:border-sky-500/20"
+                        icon={<RocketIcon className="w-5 h-5 text-indigo-500" />} 
+                        iconBg="bg-indigo-50 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/20"
                         onClick={() => scrollToSection('hackathons')}
                     />
                     <KpiCard 
@@ -712,7 +712,7 @@ const AdminAnalytics = () => {
             <AnalyticsSection 
                 id="users" 
                 title="1. User Analytics & Demographic Growth" 
-                icon={<UsersIcon className="w-5 h-5 text-sky-500" />} 
+                icon={<UsersIcon className="w-5 h-5 text-indigo-500" />} 
                 isExpanded={expandedSections.users} 
                 onToggle={() => toggleSection('users')}
             >
@@ -733,8 +733,8 @@ const AdminAnalytics = () => {
                     <div className="lg:col-span-2 p-5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 shadow-sm transition-all duration-300 hover:shadow-md">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight">User Registration Trend by Role</h3>
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-500/20">
-                                <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse"></span>
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20">
+                                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
                                 Live Feed
                             </span>
                         </div>
@@ -750,10 +750,10 @@ const AdminAnalytics = () => {
                                             type="monotone" 
                                             dataKey="students" 
                                             name="Students" 
-                                            stroke="#0ea5e9" 
+                                            stroke="#7C65F6" 
                                             strokeWidth={3} 
-                                            dot={{r: 4, fill: '#0ea5e9', strokeWidth: 2, stroke: isLightTheme ? '#ffffff' : '#0f172a'}} 
-                                            activeDot={{r: 6, stroke: '#0ea5e9', strokeWidth: 2}}
+                                            dot={{r: 4, fill: '#4338CA', strokeWidth: 2, stroke: isLightTheme ? '#ffffff' : '#0f172a'}} 
+                                            activeDot={{r: 6, stroke: '#4338CA', strokeWidth: 2}}
                                             isAnimationActive={true}
                                             animationDuration={1600}
                                             animationEasing="ease-out"
@@ -795,7 +795,7 @@ const AdminAnalytics = () => {
                     <div className="p-5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 shadow-sm flex flex-col items-center justify-center transition-all duration-300 hover:shadow-md">
                         <div className="w-full flex justify-between items-center mb-2">
                             <h3 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight self-start">Role Distribution</h3>
-                            <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400">Breakdown</span>
+                            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">Breakdown</span>
                         </div>
                         {roleDistData && roleDistData.length > 0 && roleDistData.some(r => (r.value > 0 || r.count > 0)) ? (
                             <>
@@ -840,7 +840,7 @@ const AdminAnalytics = () => {
                 <div id="college-breakdown" className="p-5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 shadow-sm transition-all duration-300 hover:shadow-md">
                     <div className="flex justify-between items-center mb-3">
                         <h3 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight">Top Registered Colleges & Institutions</h3>
-                        <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400">Institution Breakdown</span>
+                        <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">Institution Breakdown</span>
                     </div>
                     {collegeDistData && collegeDistData.length > 0 ? (
                         <div className="h-[160px]">
@@ -852,7 +852,7 @@ const AdminAnalytics = () => {
                                     <Tooltip content={<CustomChartTooltip />} />
                                     <Bar 
                                         dataKey="students" 
-                                        fill="#0ea5e9" 
+                                        fill="#7C65F6" 
                                         radius={[0, 6, 6, 0]} 
                                         barSize={16}
                                         isAnimationActive={true}
@@ -873,7 +873,7 @@ const AdminAnalytics = () => {
             <AnalyticsSection 
                 id="hackathons" 
                 title="2. Hackathon & Event Analytics" 
-                icon={<RocketIcon className="w-5 h-5 text-sky-500" />} 
+                icon={<RocketIcon className="w-5 h-5 text-indigo-500" />} 
                 isExpanded={expandedSections.hackathons} 
                 onToggle={() => toggleSection('hackathons')}
             >
@@ -906,7 +906,7 @@ const AdminAnalytics = () => {
                                     {topHackathonsData.map((h, i) => (
                                         <tr key={i} className="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors">
                                             <td className="px-4 py-3 text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                                <span className="font-mono text-sky-600 dark:text-sky-400 font-extrabold">{h.rank}</span> {h.name}
+                                                <span className="font-mono text-indigo-600 dark:text-indigo-400 font-extrabold">{h.rank}</span> {h.name}
                                             </td>
                                             <td className="px-4 py-3 text-xs font-mono text-slate-600 dark:text-gray-300">{h.participants}</td>
                                             <td className="px-4 py-3 text-xs font-mono text-slate-600 dark:text-gray-300">{h.submissions}</td>
@@ -938,7 +938,7 @@ const AdminAnalytics = () => {
                     <MetricItemCard label="Solo Teams" value={teamsMetrics?.soloTeams || 42} />
                     <MetricItemCard label="Full Teams" value={teamsMetrics?.fullTeams || 282} />
                     <MetricItemCard label="Submissions" value={teamsMetrics?.submissions || 3842} />
-                    <MetricItemCard label="Reviewed" value={teamsMetrics?.reviewed || 3100} valueColor="text-sky-600 dark:text-sky-400" />
+                    <MetricItemCard label="Reviewed" value={teamsMetrics?.reviewed || 3100} valueColor="text-indigo-600 dark:text-indigo-400" />
                     <MetricItemCard label="Approved" value={teamsMetrics?.approved || 2680} valueColor="text-emerald-600 dark:text-emerald-400" />
                     <MetricItemCard label="GitHub %" value={teamsMetrics?.githubPct || "92%"} valueColor="text-purple-600 dark:text-purple-400" />
                 </div>
@@ -1004,7 +1004,7 @@ const AdminAnalytics = () => {
                     <div className="p-5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 shadow-sm transition-all duration-300 hover:shadow-md">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight">Most Popular Tech Stacks Used</h3>
-                            <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400">Frameworks</span>
+                            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">Frameworks</span>
                         </div>
                         {techStackData && techStackData.length > 0 ? (
                             <div className="h-[200px]">
@@ -1016,7 +1016,7 @@ const AdminAnalytics = () => {
                                         <Tooltip content={<CustomChartTooltip />} />
                                         <Bar 
                                             dataKey="count" 
-                                            fill="#0ea5e9" 
+                                            fill="#7C65F6" 
                                             radius={[0, 6, 6, 0]} 
                                             barSize={16}
                                             isAnimationActive={true}
@@ -1070,7 +1070,7 @@ const AdminAnalytics = () => {
                                     {topMentorsData.map((m, i) => (
                                         <tr key={i} className="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors">
                                             <td className="px-4 py-3 text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                                <span className="font-mono text-sky-600 dark:text-sky-400 font-extrabold">{m.rank}</span> {m.name}
+                                                <span className="font-mono text-indigo-600 dark:text-indigo-400 font-extrabold">{m.rank}</span> {m.name}
                                             </td>
                                             <td className="px-4 py-3 text-xs font-medium text-slate-600 dark:text-gray-300">{m.company}</td>
                                             <td className="px-4 py-3 text-xs font-mono text-slate-600 dark:text-gray-300">{m.sessions} sessions</td>
@@ -1102,7 +1102,7 @@ const AdminAnalytics = () => {
                     <MetricItemCard label="Avg Latency" value={aiCertMetrics?.avgLatency || "1.1s"} valueColor="text-emerald-600 dark:text-emerald-400" />
                     <MetricItemCard label="Helpful Rate" value={aiCertMetrics?.helpfulRate || "94.2%"} valueColor="text-emerald-600 dark:text-emerald-400" />
                     <MetricItemCard label="Cert Minted" value={aiCertMetrics?.certsMinted || 1126} />
-                    <MetricItemCard label="Downloaded" value={aiCertMetrics?.downloaded || 892} valueColor="text-sky-600 dark:text-sky-400" />
+                    <MetricItemCard label="Downloaded" value={aiCertMetrics?.downloaded || 892} valueColor="text-indigo-600 dark:text-indigo-400" />
                     <MetricItemCard label="Verified" value={aiCertMetrics?.verified || 640} valueColor="text-emerald-600 dark:text-emerald-400" />
                     <MetricItemCard label="Revoked" value={aiCertMetrics?.revoked || 2} valueColor="text-rose-600 dark:text-rose-400" />
                 </div>
@@ -1151,7 +1151,7 @@ const AdminAnalytics = () => {
             <AnalyticsSection 
                 id="securityPerformance" 
                 title="6. Security & Infrastructure Performance Analytics" 
-                icon={<LockIcon className="w-5 h-5 text-sky-500" />} 
+                icon={<LockIcon className="w-5 h-5 text-indigo-500" />} 
                 isExpanded={expandedSections.securityPerformance} 
                 onToggle={() => toggleSection('securityPerformance')}
             >
@@ -1167,7 +1167,7 @@ const AdminAnalytics = () => {
                 <div className="p-5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 shadow-sm transition-all duration-300 hover:shadow-md">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight">API Response Time & System Load (24 Hours)</h3>
-                        <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400">Latency & CPU</span>
+                        <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">Latency & CPU</span>
                     </div>
                     {systemPerfData && systemPerfData.length > 0 ? (
                         <div className="h-[200px]">
@@ -1181,9 +1181,9 @@ const AdminAnalytics = () => {
                                         type="monotone" 
                                         dataKey="latency" 
                                         name="Latency (ms)" 
-                                        stroke="#0ea5e9" 
+                                        stroke="#7C65F6" 
                                         strokeWidth={2.5} 
-                                        dot={{r: 3, fill: '#0ea5e9'}}
+                                        dot={{r: 3, fill: '#4338CA'}}
                                         isAnimationActive={true}
                                         animationDuration={1600}
                                         animationEasing="ease-out"
@@ -1211,15 +1211,15 @@ const AdminAnalytics = () => {
             </AnalyticsSection>
 
             {/* SECTION 7: SMART AI ADMIN INSIGHTS (BOTTOM) */}
-            <div className="p-6 rounded-2xl border border-sky-200 dark:border-sky-500/20 bg-sky-50/60 dark:bg-navy-900 shadow-sm relative overflow-hidden">
+            <div className="p-6 rounded-2xl border border-indigo-200 dark:border-indigo-500/20 bg-indigo-50/60 dark:bg-navy-900 shadow-sm relative overflow-hidden">
                 <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-sky-100 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-500/30 flex items-center justify-center text-2xl shrink-0 shadow-sm">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30 flex items-center justify-center text-2xl shrink-0 shadow-sm">
                         ✦
                     </div>
                     <div className="flex-1">
                         <div className="flex items-center justify-between mb-3">
-                            <h2 className="text-sm font-extrabold uppercase tracking-widest text-sky-700 dark:text-sky-300">Smart Admin Intelligence (AI Summary)</h2>
-                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-500/30">Updated Just Now</span>
+                            <h2 className="text-sm font-extrabold uppercase tracking-widest text-indigo-700 dark:text-indigo-300">Smart Admin Intelligence (AI Summary)</h2>
+                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-500/30">Updated Just Now</span>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs font-medium leading-relaxed">
                             {aiInsights.length > 0 ? (
@@ -1236,7 +1236,7 @@ const AdminAnalytics = () => {
                                         <p className="text-slate-600 dark:text-gray-400 text-xs">User registrations increased by <strong className="text-slate-800 dark:text-white">18%</strong> compared to last month. Peak registration occurred during AI Summit announcement.</p>
                                     </div>
                                     <div className="p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-800/80 shadow-sm">
-                                        <p className="font-bold text-sky-600 dark:text-sky-400 mb-1.5 flex items-center gap-1.5"><RocketIcon className="w-4 h-4 text-sky-500" /> Top Event Participation</p>
+                                        <p className="font-bold text-indigo-600 dark:text-indigo-400 mb-1.5 flex items-center gap-1.5"><RocketIcon className="w-4 h-4 text-indigo-500" /> Top Event Participation</p>
                                         <p className="text-slate-600 dark:text-gray-400 text-xs"><strong className="text-slate-800 dark:text-white">Global AI Summit</strong> has the highest participation with <strong className="text-slate-800 dark:text-white">642 registered students</strong> and an 88% completion rate.</p>
                                     </div>
                                     <div className="p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-800/80 shadow-sm">

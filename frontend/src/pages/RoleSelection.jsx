@@ -196,7 +196,7 @@ const RoleSelection = () => {
                     <button
                         type="button"
                         onClick={handleContinue}
-                        className="px-12 py-3 rounded-xl bg-[#4338ca] hover:bg-[#3730a3] text-white font-semibold text-sm shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer"
+                        className="px-12 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-md shadow-indigo-600/20 hover:shadow-lg transition-all duration-200 cursor-pointer active:scale-95"
                     >
                         Continue
                     </button>
