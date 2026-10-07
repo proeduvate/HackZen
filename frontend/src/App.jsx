@@ -15,6 +15,7 @@ import StudentDashboard from './pages/student/StudentDashboard';
 import StudentCertificates from './pages/student/StudentCertificates';
 import StudentHackathons from './pages/student/StudentHackathons';
 import StudentHackathonRegistration from './pages/student/StudentHackathonRegistration';
+import StudentRegistrationSuccess from './pages/student/StudentRegistrationSuccess';
 import HackathonRegistrationStepOne from './pages/student/HackathonRegistrationStepOne';
 import HackathonRegistrationStepTwo from './pages/student/HackathonRegistrationStepTwo';
 import HackathonRegistrationStepThree from './pages/student/HackathonRegistrationStepThree';
@@ -24,6 +25,23 @@ import StudentProfile from './pages/student/StudentProfile';
 import EditStudentProfile from './pages/student/EditStudentProfile';
 import StudentSubmissions from './pages/student/StudentSubmissions';
 import StudentWorkspace from './pages/student/StudentWorkspace';
+import StudentTeamOverview from './pages/student/StudentTeamOverview';
+import StudentCreateTeam from './pages/student/StudentCreateTeam';
+import StudentJoinTeam from './pages/student/StudentJoinTeam';
+import StudentTeamWorkspace from './pages/student/StudentTeamWorkspace';
+import StudentTeamMembers from './pages/student/StudentTeamMembers';
+import StudentMentorProfile from './pages/student/StudentMentorProfile';
+import StudentMentorRequest from './pages/student/StudentMentorRequest';
+import StudentMentorRequestStatus from './pages/student/StudentMentorRequestStatus';
+import StudentChat from './pages/student/StudentChat';
+import StudentFeedback from './pages/student/StudentFeedback';
+import StudentMaterials from './pages/student/StudentMaterials';
+import StudentProjectInfo from './pages/student/StudentProjectInfo';
+import StudentSubmission from './pages/student/StudentSubmission';
+import StudentFileSharing from './pages/student/StudentFileSharing';
+import StudentSubmissionStatus from './pages/student/StudentSubmissionStatus';
+import StudentCertificate from './pages/student/StudentCertificate';
+import StudentCertificateVerification from './pages/student/StudentCertificateVerification';
 import DashboardLayout from './components/Layout';
 import MyHackathons from './pages/organizer/MyHackathons';
 import OrganizerDashboard from './pages/organizer/Dashboard';
@@ -160,7 +178,7 @@ function AppContent() {
         >
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<StudentDashboard />} />
-          <Route path="certificates" element={<StudentCertificates />} />
+          <Route path="certificates" element={<StudentCertificate />} />
           <Route path="submissions" element={<StudentSubmissions />} />
           <Route path="hackathons" element={<StudentHackathons />} />
           <Route path="hackathons/:hackathonId/register" element={<StudentHackathonRegistration />}>
@@ -168,12 +186,38 @@ function AppContent() {
             <Route path="step-1" element={<HackathonRegistrationStepOne />} />
             <Route path="step-2" element={<HackathonRegistrationStepTwo />} />
             <Route path="step-3" element={<HackathonRegistrationStepThree />} />
+            <Route path="success" element={<StudentRegistrationSuccess />} />
           </Route>
-          <Route path="ai-assistant" element={<StudentAIAssistant />} />
-          <Route path="teams" element={<TeamsPage />} />
+          <Route path="teams">
+            <Route index element={<StudentTeamOverview />} />
+            <Route path="create" element={<StudentCreateTeam />} />
+            <Route path="join" element={<StudentJoinTeam />} />
+            <Route path=":teamId/workspace" element={<StudentTeamWorkspace />} />
+            <Route path=":teamId/members" element={<StudentTeamMembers />} />
+          </Route>
           <Route path="workspace" element={<StudentWorkspace />} />
-          <Route path="profile" element={<StudentProfile />} />
-          <Route path="profile/edit" element={<EditStudentProfile />} />
+          <Route path="chat" element={<StudentChat />} />
+          <Route path="mentor-profile" element={<StudentMentorProfile />} />
+          <Route path="mentor" element={<StudentMentorProfile />} />
+          <Route path="mentor-request" element={<StudentMentorRequest />} />
+          <Route path="mentor-request-status" element={<StudentMentorRequestStatus />} />
+          <Route path="feedback" element={<StudentFeedback />} />
+          <Route path="materials" element={<StudentMaterials />} />
+          <Route path="project-info" element={<StudentProjectInfo />} />
+          <Route path="project" element={<StudentProjectInfo />} />
+          <Route path="submission" element={<StudentSubmission />} />
+          <Route path="submission-status" element={<StudentSubmissionStatus />} />
+          <Route path="file-sharing" element={<StudentFileSharing />} />
+          <Route path="files" element={<StudentFileSharing />} />
+          <Route path="ai-assistant" element={<StudentAIAssistant />} />
+          <Route path="certificates">
+            <Route index element={<StudentCertificate />} />
+            <Route path="verify" element={<StudentCertificateVerification />} />
+          </Route>
+          <Route path="profile">
+            <Route index element={<StudentProfile />} />
+            <Route path="edit" element={<EditStudentProfile />} />
+          </Route>
           <Route path="settings" element={<StudentSettings />} />
         </Route>
 

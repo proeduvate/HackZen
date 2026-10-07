@@ -1,158 +1,64 @@
+/**
+ * Student AI Assistant API
+ * Uses the backend AI Co-Mentor when available, and fails gracefully when the
+ * service is not configured or the route is unavailable.
+ */
+
 import apiClient from '../../api/api';
 
 const QUICK_STARTERS = [
-    { id: 1, text: 'What is the most important problem this hackathon wants us to solve?' },
-    { id: 2, text: 'How can I break this idea into the smallest viable next step?' },
-    { id: 3, text: 'What tradeoffs should I think through before building this feature?' },
-    { id: 4, text: 'Can you help me structure a Socratic plan for my project?' },
+    { id: 1, text: 'Analyze the hackathon theme and suggest key focus areas' },
+    { id: 2, text: 'Critique my project idea for feasibility and impact' },
+    { id: 3, text: 'Suggest a folder structure and tech stack' },
+    { id: 4, text: 'What are urgent problems fitting this track?' }
 ];
 
-const FALLBACK_DATASETS = [
-    {
-        hackathon_id: 'hackathon_1',
-        file_name: 'hackathon_1.txt',
-        label: 'Sustainable City Challenge',
-    },
-    {
-        hackathon_id: 'hackathon_2',
-        file_name: 'hackathon_2.txt',
-        label: 'Digital Learning Companion',
-    },
-    {
-        hackathon_id: 'hackathon_3',
-        file_name: 'hackathon_3.txt',
-        label: 'Smart Volunteer Coordination',
-    },
-];
-
-const normalizeText = (value) => String(value ?? '').trim();
-
-const formatTimestamp = (timestamp) => {
-    if (!timestamp) {
-        return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-    const date = new Date(timestamp);
-    if (Number.isNaN(date.getTime())) {
-        return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+const resolveAiError = (error) => {
+    const detail = error?.response?.data?.detail || error?.message || 'AI Co-Mentor is currently unavailable.';
+    return new Error(detail);
 };
 
-const mapApiMessage = (message, index) => ({
-    id: `${message.timestamp || 'history'}-${index}`,
-    sender: message.role === 'assistant' ? 'ai' : 'user',
-    text: normalizeText(message.content),
-    timestamp: formatTimestamp(message.timestamp),
-    sources: [],
+const toUiMessage = (entry) => ({
+    id: entry._id || entry.id || Date.now(),
+    sender: entry.sender === 'user' ? 'user' : 'ai',
+    text: entry.response || entry.text || '',
+    timestamp: entry.timestamp
+        ? new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 });
 
-const toAssistantMessage = (payload) => ({
-    id: `${payload.session_id || 'ai'}-${payload.timestamp || Date.now()}`,
-    sender: 'ai',
-    text: normalizeText(payload.response),
-    timestamp: formatTimestamp(payload.timestamp),
-    sources: Array.isArray(payload.sources) ? payload.sources : [],
-});
-
-const getErrorMessage = (error) => {
-    if (error?.response?.data?.detail) {
-        return Array.isArray(error.response.data.detail)
-            ? 'The assistant request failed validation.'
-            : String(error.response.data.detail);
-    }
-    if (error?.response?.data?.error) {
-        return String(error.response.data.error);
-    }
-    if (error?.message) {
-        return String(error.message);
-    }
-    return 'The assistant is temporarily unavailable.';
-};
-
-export const createSessionId = () => {
-    if (globalThis.crypto?.randomUUID) {
-        return globalThis.crypto.randomUUID();
-    }
-    return `session-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-};
-
-export const getSessionStorageKey = (hackathonId) => `hackathon-ai-session:${hackathonId}`;
-
-export const loadOrCreateSessionId = (hackathonId) => {
-    const key = getSessionStorageKey(hackathonId);
-    const stored = localStorage.getItem(key);
-    if (stored) {
-        return stored;
-    }
-    const sessionId = createSessionId();
-    localStorage.setItem(key, sessionId);
-    return sessionId;
-};
-
-export const saveSessionId = (hackathonId, sessionId) => {
-    localStorage.setItem(getSessionStorageKey(hackathonId), sessionId);
-};
-
-export const fetchAvailableDatasets = async () => {
+export const fetchInitialMessages = async () => {
     try {
-        const response = await apiClient.get('/ai/datasets');
-        const datasets = Array.isArray(response.data?.datasets) ? response.data.datasets : [];
-        if (!datasets.length) {
-            return FALLBACK_DATASETS;
-        }
-        return datasets.map((dataset) => ({
-            ...dataset,
-            label:
-                dataset.label ||
-                dataset.display_name ||
-                dataset.title ||
-                dataset.hackathon_id
-                    .replace(/[_-]+/g, ' ')
-                    .replace(/\b\w/g, (char) => char.toUpperCase()),
-        }));
+        const { data } = await apiClient.get('/ai/logs');
+        return Array.isArray(data) ? data.map(toUiMessage) : [];
     } catch (error) {
-        console.warn('Failed to load datasets from backend, using fallback datasets.', error);
-        return FALLBACK_DATASETS;
+        throw resolveAiError(error);
     }
 };
 
-export const fetchQuickStarters = async () => QUICK_STARTERS;
-
-export const fetchConversationHistory = async (sessionId) => {
-    const response = await apiClient.get(`/ai/history/${encodeURIComponent(sessionId)}`);
-    const messages = Array.isArray(response.data?.messages) ? response.data.messages : [];
-    return messages.map(mapApiMessage);
+export const fetchQuickStarters = async () => {
+    return QUICK_STARTERS;
 };
 
-export const clearConversationMemory = async (sessionId) => {
-    const response = await apiClient.post('/ai/clear-memory', {
-        session_id: sessionId,
-    });
-    return Boolean(response.data?.cleared);
+export const sendChatMessage = async (text, context, objective) => {
+    try {
+        const cachedUser = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
+        const currentHackathon = cachedUser.currentHackathonId || cachedUser.hackathonId || cachedUser.team?.hackathonId;
+
+        const payload = {
+            query: text,
+            hackathon_id: currentHackathon || 'general'
+        };
+
+        const { data } = await apiClient.post('/ai/chat', payload);
+
+        return {
+            id: Date.now(),
+            sender: 'ai',
+            text: data.response || 'AI Co-Mentor is currently unavailable.',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+    } catch (error) {
+        throw resolveAiError(error);
+    }
 };
-
-export const sendChatMessage = async ({ sessionId, hackathonId, message, objective, userId }) => {
-    const composedMessage = objective
-        ? `Objective: ${normalizeText(objective)}\n\n${normalizeText(message)}`
-        : normalizeText(message);
-
-    const response = await apiClient.post('/ai/chat', {
-        session_id: sessionId,
-        hackathon_id: hackathonId,
-        message: composedMessage,
-        user_id: userId || null,
-    });
-
-    return toAssistantMessage(response.data);
-};
-
-export const buildUserMessage = (text) => ({
-    id: `user-${Date.now()}`,
-    sender: 'user',
-    text: normalizeText(text),
-    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    sources: [],
-});
-
-export const extractErrorMessage = getErrorMessage;
-

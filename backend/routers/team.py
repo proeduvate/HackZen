@@ -319,6 +319,60 @@ async def get_my_teams(current_user: dict = Depends(with_auth)):
     return [TeamResponse(**team) for team in teams]
 
 
+@router.get("/my-mentor-requests", response_model=List[Dict[str, Any]])
+async def get_my_mentor_requests(current_user: dict = Depends(with_auth)):
+    """Get all mentor requests for the authenticated student from the backend context."""
+    db = get_db()
+    user_id = current_user.get("id") or current_user.get("sub")
+    members_collection = get_team_members_collection()
+    memberships = await members_collection.find(
+        {"$or": [{"userId": user_id}, {"userId": str(user_id)}]}
+    ).to_list(100)
+
+    team_ids = []
+    for membership in memberships:
+        team_id = membership.get("teamId")
+        if not team_id:
+            continue
+        if isinstance(team_id, ObjectId):
+            team_ids.append(team_id)
+            continue
+        if isinstance(team_id, str) and ObjectId.is_valid(team_id):
+            team_ids.append(ObjectId(team_id))
+
+    if not team_ids:
+        return []
+
+    teams_collection = get_team_collection()
+    teams = await teams_collection.find(
+        {"_id": {"$in": team_ids}, "mentorId": {"$exists": True, "$ne": None}}
+    ).to_list(100)
+
+    response = []
+    for team in teams:
+        team_id = str(team.get("_id"))
+        mentor_id = team.get("mentorId")
+        mentor_name = None
+
+        if mentor_id and ObjectId.is_valid(str(mentor_id)):
+            mentor_user = await db.users.find_one({"_id": ObjectId(str(mentor_id))})
+            if mentor_user:
+                mentor_name = mentor_user.get("name")
+
+        response.append(
+            {
+                "teamId": team_id,
+                "teamName": team.get("teamName"),
+                "mentorId": mentor_id,
+                "mentorName": mentor_name,
+                "status": "Pending",
+                "requestedAt": team.get("createdAt"),
+            }
+        )
+
+    return response
+
+
 @router.get("/mentor-teams", response_model=List[TeamResponse])
 async def get_mentor_teams(
     current_user: dict = Depends(RequireRole(["mentor", "admin"]))

@@ -25,7 +25,6 @@ class MongoDB:
                 client_kwargs["tlsCAFile"] = certifi.where()
 
             cls.client = AsyncIOMotorClient(settings.MONGO_URI, **client_kwargs)
-
             await cls.client.admin.command("ping")
             cls.db = cls.client[settings.DB_NAME]
             print("[DB] Connected to MongoDB")

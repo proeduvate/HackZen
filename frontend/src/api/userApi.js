@@ -21,10 +21,13 @@ export const register = async (userData) => {
 export const login = async (credentials) => {
     try {
         const { data } = await apiClient.post('/auth/login', credentials);
-        const { token, user } = data;
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
-        setAuthToken(token);
+        if (data.token) {
+            localStorage.setItem('token', data.token);
+            sessionStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            sessionStorage.setItem('user', JSON.stringify(data.user));
+            setAuthToken(data.token);
+        }
         return data;
     } catch (error) {
         const detail = error.response?.data?.detail

@@ -11,23 +11,55 @@ import apiClient from '../../api/api';
 export const fetchMyTeams = async () => {
     try {
         const { data } = await apiClient.get('/teams/my-teams');
-        return data.map((team, idx) => ({
-            id: team._id,
-            name: team.teamName,
-            teamCode: team.teamCode || null,
-            hackathon: team.hackathonId || 'Active Hackathon',
-            status: 'Active',
-            lastMessage: 'Check workspace for updates',
-            time: 'Active',
-            unread: 0,
-            gradient: idx % 2 === 0 ? 'from-blue-600 to-indigo-600' : 'from-emerald-500 to-teal-600',
-            isOnline: true,
-            progress: 0,
-            members: team.members?.length || 1,
-            domain: 'Technology',
-            roleInTeam: team.leaderId === JSON.parse(localStorage.getItem('user') || '{}')._id ? 'Team Lead' : 'Member',
-            activity: []
+
+        const mappedTeams = await Promise.all(data.map(async (team, idx) => {
+            let hackathonName = 'Hackathon';
+            let memberCount = 1;
+            let progress = 0;
+
+            if (team.hackathonId) {
+                try {
+                    const hackathonRes = await apiClient.get(`/hackathon/${team.hackathonId}`);
+                    hackathonName = hackathonRes?.data?.title || hackathonName;
+                } catch (error) {
+                    // Ignore missing hackathon metadata; keep the fallback label.
+                }
+            }
+
+            try {
+                const membersRes = await apiClient.get(`/teams/${team._id}/members`);
+                memberCount = Array.isArray(membersRes.data) ? membersRes.data.length : memberCount;
+            } catch (error) {
+                // Ignore missing teammate metadata; keep a safe fallback.
+            }
+
+            try {
+                const progressRes = await apiClient.get(`/progress/team/${team._id}`);
+                const percentage = progressRes?.data?.percentage ?? progressRes?.data?.progress ?? 0;
+                progress = Number(percentage) || 0;
+            } catch (error) {
+                // No progress data is valid for a newly created team.
+            }
+
+            return {
+                id: team._id,
+                name: team.teamName,
+                hackathon: hackathonName,
+                status: 'Active',
+                lastMessage: 'Workspace ready',
+                time: 'Active',
+                unread: 0,
+                gradient: idx % 2 === 0 ? 'from-blue-600 to-indigo-600' : 'from-emerald-500 to-teal-600',
+                isOnline: true,
+                progress,
+                members: memberCount,
+                domain: 'Technology',
+                roleInTeam: 'Member',
+                activity: []
+            };
         }));
+
+        return mappedTeams;
     } catch (error) {
         console.error('Failed to fetch teams:', error);
         return [];
@@ -82,33 +114,20 @@ export const fetchTeamWorkspace = async (teamId) => {
  */
 export const createTeam = async (teamData) => {
     try {
-        const payload = {
+        const normalizedPayload = {
             hackathonId: teamData.hackathonId || teamData.hackathon,
-            teamName: teamData.name || teamData.teamName
+            teamName: teamData.teamName || teamData.name,
         };
-        const { data } = await apiClient.post('/teams/', payload);
-        return {
-            success: true,
-            team: {
-                id: data._id,
-                name: data.teamName,
-                hackathon: data.hackathonId,
-                status: 'Active',
-                lastMessage: 'Team workspace created',
-                time: 'Just now',
-                unread: 0,
-                gradient: 'from-purple-600 to-indigo-600',
-                isOnline: true,
-                progress: 0,
-                members: 1,
-                domain: teamData.domain || 'Technology',
-                roleInTeam: 'Team Lead',
-                activity: []
-            }
-        };
+
+        if (!normalizedPayload.hackathonId || !normalizedPayload.teamName) {
+            throw new Error('A valid hackathon and team name are required.');
+        }
+
+        const { data } = await apiClient.post('/teams/', normalizedPayload);
+        return { success: true, team: data, message: 'Team created successfully.' };
     } catch (error) {
         console.error('Failed to create team:', error);
-        throw new Error(error.response?.data?.detail || error.response?.data?.error?.message || 'Failed to create team');
+        throw error;
     }
 };
 
@@ -160,36 +179,34 @@ export const updateTaskStatus = async (teamId, taskId, newStatus) => {
 export const fetchTeamsMeta = async () => {
     try {
         const [inboxRes, appsRes] = await Promise.all([
-            apiClient.get('/inbox/'),
-            apiClient.get('/applications/my')
+            apiClient.get('/inbox/').catch(() => ({ data: [] })),
+            apiClient.get('/applications/my').catch(() => ({ data: [] }))
         ]);
 
-        const uniqueHackathonIds = [...new Set(appsRes.data.map(app => app.hackathonId).filter(Boolean))];
-        const hackathonResults = await Promise.allSettled(
-            uniqueHackathonIds.map(id => apiClient.get(`/hackathon/${id}`))
-        );
-        const hackathonMap = hackathonResults.reduce((map, result, index) => {
-            if (result.status === 'fulfilled') {
-                const hackathon = result.value.data;
-                map[uniqueHackathonIds[index]] = hackathon;
+        const registrations = await Promise.all((appsRes.data || []).map(async (app) => {
+            let name = 'Hackathon';
+
+            if (app.hackathonId) {
+                try {
+                    const hackathonRes = await apiClient.get(`/hackathon/${app.hackathonId}`);
+                    name = hackathonRes?.data?.title || name;
+                } catch (error) {
+                    // Keep the fallback label when metadata is unavailable.
+                }
             }
-            return map;
-        }, {});
+
+            return {
+                id: app._id,
+                name,
+                date: app.appliedAt ? new Date(app.appliedAt).toLocaleDateString() : 'N/A',
+                status: app.status,
+                color: 'text-blue-400'
+            };
+        }));
 
         return {
-            alerts: inboxRes.data.filter(n => !n.read).map(n => ({ id: n._id, type: 'warning', message: n.message })),
-            registrations: appsRes.data.map(app => {
-                const hackathon = hackathonMap[app.hackathonId] || {};
-                return {
-                id: app.hackathonId,
-                applicationId: app._id,
-                name: hackathon.title || app.hackathonId,
-                date: new Date(app.appliedAt).toLocaleDateString(),
-                status: app.status,
-                color: 'text-blue-400',
-                domain: hackathon.themes?.[0] || 'Technology'
-                };
-            })
+            alerts: (inboxRes.data || []).filter((n) => !n.isRead).map((n) => ({ id: n._id, type: 'warning', message: n.title })),
+            registrations,
         };
     } catch (error) {
         console.error('Failed to fetch teams meta:', error);

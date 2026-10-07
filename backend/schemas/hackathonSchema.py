@@ -70,7 +70,6 @@ class HackathonResponse(HackathonBase):
     organizerId: Optional[str] = Field(None, alias="organizerId")
     createdAt: Optional[Union[datetime, str]] = Field(None, alias="createdAt")
     updatedAt: Optional[Union[datetime, str]] = Field(None, alias="updatedAt")
-
     participants_count: int = Field(default=0, alias="participants_count")
 
     model_config = {"populate_by_name": True, "from_attributes": True, "extra": "allow"}

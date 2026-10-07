@@ -22,6 +22,7 @@ from datetime import datetime
 router = APIRouter()
 
 
+
 @router.post(
     "/",
     response_model=HackathonResponse,

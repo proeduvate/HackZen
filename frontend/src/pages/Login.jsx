@@ -74,7 +74,12 @@ const Login = () => {
             
             navigate(targetPath, { replace: true });
         } catch (err) {
-            setError(err.detail || err.message || 'Login failed. Please check your credentials.');
+            const errorMessage = err?.detail ||
+                err?.response?.data?.detail ||
+                err?.response?.data?.message ||
+                err?.message ||
+                'Login failed. Please check your credentials.';
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }

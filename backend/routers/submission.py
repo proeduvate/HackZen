@@ -361,6 +361,32 @@ async def create_submission(
     return SubmissionResponse(**sub_dict)
 
 
+@router.get("/team/{team_id}", response_model=List[SubmissionResponse])
+async def get_team_submissions(
+    team_id: str, current_user: dict = Depends(with_auth)
+):
+    """Get all submissions for a specific team, limited to team members/admins."""
+    members_collection = get_db()["teamMembers"]
+    is_member = await members_collection.find_one(
+        {"teamId": team_id, "userId": current_user["sub"]}
+    )
+
+    if not is_member and current_user.get("role") not in ["admin", "organizer"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not a member of this team",
+        )
+
+    collection = get_submission_collection()
+    cursor = collection.find({"teamId": team_id}).sort("submittedAt", -1)
+    subs = await cursor.to_list(200)
+
+    for sub in subs:
+        sub["_id"] = str(sub["_id"])
+
+    return [SubmissionResponse(**sub) for sub in subs]
+
+
 @router.get("/", response_model=List[SubmissionResponse])
 async def get_all_submissions(current_user: dict = Depends(with_auth)):
     """Get all submissions (Organizer/Admin only)"""

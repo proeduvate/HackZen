@@ -8,7 +8,7 @@ import calendar
 import csv
 import io
 
-from core.dependencies import with_auth, RequireRole
+from core.dependencies import RequireRole, with_auth
 from database import get_db
 
 router = APIRouter()
@@ -66,6 +66,169 @@ async def log_audit_action(
             "timestamp": datetime.utcnow(),
         }
     )
+
+
+# --- STUDENT DASHBOARD HELPERS & ENDPOINTS ---
+def _object_ids(values: List[Optional[str]]) -> List[ObjectId]:
+    """Return only valid Mongo ids, without failing a student's dashboard."""
+    return [ObjectId(value) for value in values if value and ObjectId.is_valid(value)]
+
+
+def _serialize_date(value: Any) -> Optional[str]:
+    return value.isoformat() if isinstance(value, datetime) else value
+
+
+def _serialize_hackathon(hackathon: Dict[str, Any]) -> Dict[str, Any]:
+    """Expose the existing canonical hackathon fields used by the student UI."""
+    return {
+        "id": str(hackathon["_id"]),
+        "title": hackathon.get("title", "Untitled hackathon"),
+        "description": hackathon.get("description", ""),
+        "status": hackathon.get("status", ""),
+        "hackathonStart": _serialize_date(hackathon.get("hackathonStart")),
+        "hackathonEnd": _serialize_date(hackathon.get("hackathonEnd")),
+        "registrationStart": _serialize_date(hackathon.get("registrationStart")),
+        "registrationEnd": _serialize_date(hackathon.get("registrationEnd")),
+        "posterUrl": hackathon.get("posterUrl"),
+        "location": hackathon.get("location"),
+        "themes": hackathon.get("themes", []),
+        "prizes": hackathon.get("prizes", []),
+    }
+
+
+async def _team_progress(db, team_id: str) -> Dict[str, Any]:
+    """Return a percentage only when stored progress records support one."""
+    progress = await db["progress"].find_one({"teamId": team_id})
+    if not progress:
+        return {"status": "not-started", "percentage": None, "currentStageId": None}
+
+    progress_status = progress.get("status", "not-started")
+    if progress_status == "completed":
+        percentage = 100
+    else:
+        milestones = await db["milestoneProgress"].find(
+            {"progressId": str(progress["_id"])}
+        ).to_list(1000)
+        percentage = (
+            round(
+                (sum(1 for milestone in milestones if milestone.get("completed")) / len(milestones))
+                * 100
+            )
+            if milestones
+            else None
+        )
+
+    return {
+        "status": progress_status,
+        "percentage": percentage,
+        "currentStageId": progress.get("currentStageId"),
+    }
+
+
+@router.get("/my-hackathons")
+async def get_my_hackathons_dashboard(current_user: dict = Depends(with_auth)):
+    """Get the authenticated student's dashboard using only persisted platform data."""
+    db = get_db()
+    user_id = current_user["sub"]
+    now = datetime.utcnow()
+
+    applications = await db["applications"].find({"userId": user_id}).sort(
+        "appliedAt", -1
+    ).to_list(100)
+    memberships = await db["teamMembers"].find({"userId": user_id}).to_list(100)
+    team_ids = _object_ids([membership.get("teamId") for membership in memberships])
+    teams = (
+        await db["teams"].find({"_id": {"$in": team_ids}}).to_list(100)
+        if team_ids
+        else []
+    )
+
+    registered_ids = {application.get("hackathonId") for application in applications}
+    team_hackathon_ids = {team.get("hackathonId") for team in teams}
+    referenced_hackathon_ids = _object_ids(list(registered_ids | team_hackathon_ids))
+    referenced_hackathons = (
+        await db["hackathons"].find({"_id": {"$in": referenced_hackathon_ids}}).to_list(200)
+        if referenced_hackathon_ids
+        else []
+    )
+    hackathons_by_id = {
+        str(hackathon["_id"]): hackathon for hackathon in referenced_hackathons
+    }
+    memberships_by_team = {
+        membership.get("teamId"): membership for membership in memberships
+    }
+    progress_by_team = {
+        str(team["_id"]): await _team_progress(db, str(team["_id"])) for team in teams
+    }
+
+    registered_hackathons = []
+    for application in applications:
+        hackathon_id = application.get("hackathonId")
+        hackathon = hackathons_by_id.get(hackathon_id)
+        if not hackathon:
+            continue
+
+        team = next(
+            (item for item in teams if item.get("hackathonId") == hackathon_id), None
+        )
+        team_id = str(team["_id"]) if team else None
+        registered_hackathons.append(
+            {
+                **_serialize_hackathon(hackathon),
+                "applicationStatus": application.get("status", "pending"),
+                "appliedAt": _serialize_date(application.get("appliedAt")),
+                "team": (
+                    {
+                        "id": team_id,
+                        "name": team.get("teamName"),
+                        "role": memberships_by_team.get(team_id, {}).get("role", "member"),
+                        "progress": progress_by_team.get(team_id),
+                    }
+                    if team
+                    else None
+                ),
+            }
+        )
+
+    active_teams = [
+        team
+        for team in teams
+        if (hackathons_by_id.get(team.get("hackathonId"), {}).get("hackathonEnd") or now) >= now
+        and str(hackathons_by_id.get(team.get("hackathonId"), {}).get("status", "")).lower()
+        not in {"completed", "results announced"}
+    ]
+
+    team_id_strings = [str(team["_id"]) for team in teams]
+    submissions_count = (
+        await db["submissions"].count_documents({"teamId": {"$in": team_id_strings}})
+        if team_id_strings
+        else 0
+    )
+    certificates_count = await db["certificates"].count_documents({"userId": user_id})
+
+    # Upcoming means not started and not already registered by this student.
+    upcoming_docs = await db["hackathons"].find(
+        {"hackathonStart": {"$gte": now}, "isPublic": {"$ne": False}}
+    ).sort("hackathonStart", 1).to_list(100)
+    upcoming_hackathons = [
+        _serialize_hackathon(hackathon)
+        for hackathon in upcoming_docs
+        if str(hackathon["_id"]) not in registered_ids
+        and str(hackathon.get("status", "")).lower()
+        not in {"draft", "completed", "results announced"}
+    ]
+
+    return {
+        "student": {"name": current_user.get("name", "Student")},
+        "metrics": {
+            "registeredHackathons": len(applications),
+            "activeTeams": len(active_teams),
+            "submissions": submissions_count,
+            "certificates": certificates_count,
+        },
+        "registeredHackathons": registered_hackathons,
+        "upcomingHackathons": upcoming_hackathons,
+    }
 
 
 def safe_get_month(doc: dict, field: str = "createdAt") -> int:

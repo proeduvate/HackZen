@@ -17,7 +17,7 @@ const writeDrafts = (drafts) => {
 export const createInitialRegistrationDraft = (hackathon, user) => ({
     hackathonId: hackathon.id || hackathon._id,
     teamName: '',
-    teamSize: Math.min(2, hackathon.teamSizeLimit || 2),
+    teamSize: Math.max(2, Number(hackathon.minTeamSize || hackathon.teamSizeLimit || 2)),
     leaderName: user?.name || 'Student',
     leaderEmail: user?.email || '',
     memberEmails: [''],
@@ -49,66 +49,39 @@ export const saveRegistrationDraft = async (hackathonId, nextDraft) => {
 
 export const submitHackathonRegistration = async (hackathonId, draft) => {
     try {
-        const teamPayload = {
-            hackathonId: hackathonId,
-            teamName: draft.teamName
-        };
+        const storedUser = JSON.parse(
+            sessionStorage.getItem('user') || localStorage.getItem('user') || '{}'
+        );
+        const userId = storedUser?._id || storedUser?.id || storedUser?.userId;
 
-        let team;
-        try {
-            const { data } = await apiClient.post('/teams/', teamPayload);
-            team = data;
-        } catch (teamError) {
-            const detail = teamError.response?.data?.detail || teamError.response?.data?.error?.message || '';
-            const canReuseExistingTeam = detail.includes('already a member') || detail.includes('Team name already exists');
-
-            if (!canReuseExistingTeam) {
-                throw teamError;
-            }
-
-            const { data: myTeams } = await apiClient.get('/teams/my-teams');
-            team = myTeams.find(item => item.hackathonId === hackathonId);
-
-            if (!team) {
-                throw teamError;
-            }
+        if (!userId) {
+            throw new Error('Authenticated student user information is missing.');
         }
 
-        const teamId = team._id || team.id;
-
-        const applicationPayload = {
+        const payload = {
             hackathonId,
-            teamId
+            userId,
+            teamName: draft?.teamName || '',
+            notes: draft?.notes || '',
+            leaderName: draft?.leaderName || storedUser?.name || '',
+            leaderEmail: draft?.leaderEmail || storedUser?.email || '',
+            teamSize: draft?.teamSize || 2,
         };
 
-        let application;
-        try {
-            const { data } = await apiClient.post('/applications/', applicationPayload);
-            application = data;
-        } catch (applicationError) {
-            const detail = applicationError.response?.data?.detail || applicationError.response?.data?.error?.message || '';
-            if (!detail.includes('already applied')) {
-                throw applicationError;
-            }
+        const { data } = await apiClient.post('/applications/', payload);
 
-            const { data: applications } = await apiClient.get('/applications/my');
-            application = applications.find(item => item.hackathonId === hackathonId) || {};
-        }
-        
         const drafts = readDrafts();
         delete drafts[hackathonId];
         writeDrafts(drafts);
 
         return {
             success: true,
-            registrationId: application._id || application.id,
-            teamId,
-            timestamp: application.appliedAt,
+            registrationId: data.id || data._id,
+            timestamp: data.appliedAt,
             draft,
         };
     } catch (error) {
         console.error('Registration submission failed:', error);
-        const detail = error.response?.data?.detail || error.response?.data?.error?.message;
-        throw new Error(detail || 'Registration could not be completed. Please try again.');
+        throw error;
     }
 };

@@ -68,8 +68,9 @@ async def with_auth(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
         )
 
-    # Ensure backward compatibility with code expecting 'sub'
-    user["sub"] = str(user["_id"])
+    # Ensure backward compatibility with code expecting 'id' and 'sub'
+    user["id"] = str(user.get("_id") or user.get("id") or user_id)
+    user["sub"] = str(user.get("_id") or user.get("id") or user_id)
     user["role"] = str(user.get("role", "student")).lower()
     return user
 
@@ -99,6 +100,8 @@ class RequireRole:
                     detail="This administrator session has been revoked. Please sign in again.",
                 )
 
+        user["id"] = str(user.get("id") or user.get("sub"))
+        user["sub"] = str(user.get("sub") or user.get("id"))
         return user
 
 

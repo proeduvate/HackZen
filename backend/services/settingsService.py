@@ -101,7 +101,9 @@ class SettingsService:
             if "theme" in update_dict:
                 valid_themes = ["Purple Dark", "Light", "Auto"]
                 if update_dict["theme"] not in valid_themes:
-                    raise ValueError(f"Invalid theme. Must be one of: {valid_themes}")
+                    raise ValueError(
+                        f"Invalid theme. Must be one of: {valid_themes}"
+                    )
 
             if "contentLanguage" in update_dict:
                 valid_languages = [

@@ -40,8 +40,8 @@ router.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard"])
 router.include_router(inbox.router, prefix="/inbox", tags=["Notifications"])
 router.include_router(application.router, prefix="/applications", tags=["Applications"])
 router.include_router(submission.router, prefix="/submissions", tags=["Submissions"])
-router.include_router(evaluation.router, prefix="/evaluations", tags=["Evaluations"])
 router.include_router(settingsRoutes.router, prefix="/settings", tags=["Settings"])
+router.include_router(evaluation.router, prefix="/evaluations", tags=["Evaluations"])
 
 # Admin Backend Routers
 router.include_router(admin_users.router)
