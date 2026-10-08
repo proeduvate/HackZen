@@ -66,6 +66,7 @@ export const submitHackathonRegistration = async (hackathonId, draft) => {
             leaderName: draft?.leaderName || storedUser?.name || '',
             leaderEmail: draft?.leaderEmail || storedUser?.email || '',
             teamSize: draft?.teamSize || 2,
+            memberEmails: (draft?.memberEmails || []).filter(e => e && e.trim()),
         };
 
         const { data } = await apiClient.post('/applications/', payload);

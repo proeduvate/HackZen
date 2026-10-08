@@ -93,7 +93,7 @@ const RoleSelection = () => {
         }
 
         if (selectedRole === 'admin') {
-            navigate('/login');
+            navigate('/login?role=admin');
         } else {
             navigate(`/signup?role=${selectedRole}`, { state: { role: selectedRole } });
         }

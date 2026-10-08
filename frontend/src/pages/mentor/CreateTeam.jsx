@@ -112,7 +112,20 @@ const CreateTeam = () => {
     // Team creation is deliberately a student workflow. The API enforces the
     // same rule, so mentors are guided to teams that need mentorship instead
     // of being shown a form that cannot be submitted successfully.
-    if (sessionStorage.getItem('userRole') === 'mentor') {
+    const effectiveRole = (
+        sessionStorage.getItem('userRole') ||
+        localStorage.getItem('userRole') ||
+        (() => {
+            try {
+                return JSON.parse(sessionStorage.getItem('user') || localStorage.getItem('user') || '{}')?.role;
+            } catch {
+                return null;
+            }
+        })() ||
+        'mentor'
+    ).toLowerCase();
+
+    if (effectiveRole === 'mentor' || window.location.pathname.startsWith('/mentor')) {
         return (
             <div className="mx-auto max-w-2xl rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#111625] p-10 text-center shadow-xl">
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-50 dark:bg-purple-500/15 text-2xl text-[#5B45D9] dark:text-purple-400">👥</div>

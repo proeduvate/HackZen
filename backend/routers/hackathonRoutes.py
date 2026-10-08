@@ -178,6 +178,16 @@ async def update_hackathon(
 
 
 @router.get(
+    "",
+    response_model=List[HackathonResponse],
+    response_model_by_alias=False,
+)
+@router.get(
+    "/",
+    response_model=List[HackathonResponse],
+    response_model_by_alias=False,
+)
+@router.get(
     "/allHackathons",
     response_model=List[HackathonResponse],
     response_model_by_alias=False,
@@ -212,6 +222,16 @@ async def get_all_hackathons(
     response_model=List[HackathonResponse],
     response_model_by_alias=False,
 )
+@router.get(
+    "/organizer/my",
+    response_model=List[HackathonResponse],
+    response_model_by_alias=False,
+)
+@router.get(
+    "/my",
+    response_model=List[HackathonResponse],
+    response_model_by_alias=False,
+)
 async def get_my_hackathons(current_user: Dict[str, Any] = Depends(with_auth)):
     """Get hackathons created by the current organizer"""
     if current_user["role"] not in ["organizer"]:
@@ -225,7 +245,9 @@ async def get_my_hackathons(current_user: Dict[str, Any] = Depends(with_auth)):
 
 
 @router.get("/{id}", response_model=HackathonResponse, response_model_by_alias=False)
-async def get_hackathon(id: str, current_user: Dict[str, Any] = Depends(with_auth)):
+async def get_hackathon(
+    id: str, current_user: Optional[Dict[str, Any]] = Depends(get_current_user_optional)
+):
     """Get a specific hackathon by ID or hackathonId"""
     id = id.strip("{}'\"")
     db = get_db()

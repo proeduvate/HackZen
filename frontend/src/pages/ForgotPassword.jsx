@@ -1,12 +1,19 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Logo from '../components/Logo';
-import { forgotPassword } from '../api/userApi';
+import { forgotPassword, resetPassword } from '../api/userApi';
 import { usePlatformSettings } from '../context/PlatformSettingsContext';
 
 const ForgotPassword = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const searchParams = new URLSearchParams(location.search);
+    const token = searchParams.get('token');
+
     const { platformName, supportEmail } = usePlatformSettings();
     const [email, setEmail] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -18,7 +25,17 @@ const ForgotPassword = () => {
         setOpenFaq(openFaq === index ? null : index);
     };
 
-    const handleSubmit = async (e) => {
+    const passwordChecks = {
+        hasLength: newPassword.length >= 8,
+        hasUpper: /[A-Z]/.test(newPassword),
+        hasLower: /[a-z]/.test(newPassword),
+        hasNumber: /\d/.test(newPassword),
+        hasSpecial: /[@$!%*?&#^()_\-+=\[\]{}|:;<>,.~]/.test(newPassword),
+    };
+
+    const isPasswordStrong = Object.values(passwordChecks).every(Boolean);
+
+    const handleRequestReset = async (e) => {
         e.preventDefault();
         setError('');
         setLoading(true);
@@ -29,6 +46,32 @@ const ForgotPassword = () => {
             setIsSubmitted(true);
         } catch (err) {
             setError(err.detail || err.message || 'Unable to request password reset. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSetNewPassword = async (e) => {
+        e.preventDefault();
+        setError('');
+
+        if (newPassword !== confirmPassword) {
+            setError("Passwords don't match!");
+            return;
+        }
+
+        if (!isPasswordStrong) {
+            setError("Password must meet all strength requirements: 8+ characters, uppercase, lowercase, number, and special character.");
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            await resetPassword({ token, newPassword });
+            navigate('/login?reset=success');
+        } catch (err) {
+            setError(err.detail || err.message || 'Failed to reset password. The link may have expired.');
         } finally {
             setLoading(false);
         }
@@ -97,15 +140,107 @@ const ForgotPassword = () => {
                     {/* Header */}
                     <div className="mb-7">
                         <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-                            Reset Your Password
+                            {token ? 'Set New Password' : 'Reset Your Password'}
                         </h1>
                         <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
-                            Enter your registered email address and we'll send you a password reset link.
+                            {token
+                                ? 'Create a new, strong password to regain access to your account.'
+                                : "Enter your registered email address and we'll send you a password reset link."}
                         </p>
                     </div>
 
-                    {/* Success Message */}
-                    {isSubmitted ? (
+                    {/* Form area */}
+                    {token ? (
+                        /* Set New Password Form */
+                        <form onSubmit={handleSetNewPassword} className="space-y-4">
+                            {error && (
+                                <div className="p-3.5 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40 rounded-xl flex items-start gap-2">
+                                    <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <circle cx="12" cy="12" r="10" strokeWidth="2" />
+                                        <path strokeLinecap="round" strokeWidth="2" d="M12 8v4m0 4h.01" />
+                                    </svg>
+                                    <span>{error}</span>
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                                    New Password
+                                </label>
+                                <input
+                                    type="password"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    placeholder="••••••••"
+                                    required
+                                    className="w-full px-4 py-2.5 text-sm text-slate-900 dark:text-white bg-white dark:bg-navy-950 border border-slate-200 dark:border-slate-700 rounded-xl placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition"
+                                />
+                            </div>
+
+                            {/* Password Requirements Guidance */}
+                            {newPassword.length > 0 && (
+                                <div className="p-3 bg-slate-50 dark:bg-navy-950/60 rounded-xl border border-slate-200 dark:border-slate-800 text-[11px] space-y-1.5">
+                                    <span className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">Password Requirements:</span>
+                                    <div className="grid grid-cols-2 gap-1.5">
+                                        <div className={`flex items-center gap-1.5 ${passwordChecks.hasLength ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-slate-400 dark:text-slate-500'}`}>
+                                            <span>{passwordChecks.hasLength ? '✓' : '○'}</span>
+                                            <span>8+ characters</span>
+                                        </div>
+                                        <div className={`flex items-center gap-1.5 ${passwordChecks.hasUpper ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-slate-400 dark:text-slate-500'}`}>
+                                            <span>{passwordChecks.hasUpper ? '✓' : '○'}</span>
+                                            <span>Uppercase letter</span>
+                                        </div>
+                                        <div className={`flex items-center gap-1.5 ${passwordChecks.hasLower ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-slate-400 dark:text-slate-500'}`}>
+                                            <span>{passwordChecks.hasLower ? '✓' : '○'}</span>
+                                            <span>Lowercase letter</span>
+                                        </div>
+                                        <div className={`flex items-center gap-1.5 ${passwordChecks.hasNumber ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-slate-400 dark:text-slate-500'}`}>
+                                            <span>{passwordChecks.hasNumber ? '✓' : '○'}</span>
+                                            <span>At least 1 number</span>
+                                        </div>
+                                        <div className={`flex items-center gap-1.5 col-span-2 ${passwordChecks.hasSpecial ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-slate-400 dark:text-slate-500'}`}>
+                                            <span>{passwordChecks.hasSpecial ? '✓' : '○'}</span>
+                                            <span>Special symbol (@$!%*?&#)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                                    Confirm New Password
+                                </label>
+                                <input
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    placeholder="••••••••"
+                                    required
+                                    className="w-full px-4 py-2.5 text-sm text-slate-900 dark:text-white bg-white dark:bg-navy-950 border border-slate-200 dark:border-slate-700 rounded-xl placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition"
+                                />
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className={`w-full py-3 px-4 font-semibold text-sm text-white rounded-xl bg-[#4338ca] hover:bg-[#3730a3] shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 ${
+                                    loading ? 'opacity-70 cursor-not-allowed' : ''
+                                }`}
+                            >
+                                {loading ? 'Updating Password...' : 'Save New Password & Log In'}
+                            </button>
+
+                            <div className="text-center pt-1">
+                                <Link
+                                    to="/login"
+                                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition"
+                                >
+                                    <span>&larr;</span>
+                                    <span>Back to Sign In</span>
+                                </Link>
+                            </div>
+                        </form>
+                    ) : isSubmitted ? (
                         <div className="p-6 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40 text-center space-y-4">
                             <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -124,8 +259,8 @@ const ForgotPassword = () => {
                             </Link>
                         </div>
                     ) : (
-                        /* Form */
-                        <form onSubmit={handleSubmit} className="space-y-5">
+                        /* Request Reset Form */
+                        <form onSubmit={handleRequestReset} className="space-y-5">
                             {error && (
                                 <div className="p-3.5 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40 rounded-xl flex items-start gap-2">
                                     <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

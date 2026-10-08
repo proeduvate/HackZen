@@ -235,6 +235,7 @@ async def _offer_ai_mentor_match(db, team: dict, excluded_ids=None):
     return request
 
 
+@router.post("", response_model=TeamResponse, status_code=status.HTTP_201_CREATED)
 @router.post("/", response_model=TeamResponse, status_code=status.HTTP_201_CREATED)
 async def create_team(
     team_data: TeamCreate, current_user: dict = Depends(RequireRole(["student"]))
@@ -1117,10 +1118,13 @@ async def get_hackathon_teams(
 
 
 @router.post("/{team_id}/request-mentor")
+@router.post("/{team_id}/offer-mentor")
 async def request_mentor(
-    team_id: str, payload: MentorRequestCreate, current_user: dict = Depends(RequireRole(["student"]))
+    team_id: str,
+    payload: Optional[Dict[str, Any]] = Body(default=None),
+    current_user: dict = Depends(RequireRole(["student", "mentor"]))
 ):
-    """Team lead requests a mentor. Assignment only happens after mentor approval."""
+    """Student team lead requests a mentor, or mentor offers/claims mentorship for a team."""
     if not ObjectId.is_valid(team_id):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid team ID format")
     db = get_db()
@@ -1130,20 +1134,54 @@ async def request_mentor(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Team not found")
     if team.get("mentorId"):
         raise HTTPException(status_code=409, detail="This team already has a mentor")
+
+    user_role = current_user.get("role")
+    if user_role == "mentor":
+        now = datetime.utcnow()
+        await db["teams"].update_one(
+            {"_id": ObjectId(team_id)},
+            {"$set": {"mentorId": user_id, "mentorAssignedAt": now, "mentorRequestStatus": "approved"}}
+        )
+        leader_id = team.get("leaderId")
+        if leader_id:
+            mentor_name = current_user.get("name") or current_user.get("fullName") or "A mentor"
+            await _notify(
+                db,
+                leader_id,
+                "mentor_assigned",
+                f"Mentor {mentor_name} has joined your team as mentor.",
+                team.get("hackathonId")
+            )
+        return {"status": "approved", "message": "Mentorship confirmed. Team assigned to your cohort."}
+
+    # Student path
+    payload_dict = payload or {}
+    mentor_id_target = payload_dict.get("mentorId")
+    if not mentor_id_target:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="mentorId is required for student mentorship request"
+        )
     await _require_leader(db, team_id, user_id)
 
-    mentor = await db["mentors"].find_one({"userId": payload.mentorId})
+    mentor = await db["mentors"].find_one({"userId": mentor_id_target})
     if not mentor:
         raise HTTPException(status_code=404, detail="Mentor not found")
-    duplicate = await db["mentorRequests"].find_one({"teamId": team_id, "mentorId": payload.mentorId, "status": "pending"})
+    duplicate = await db["mentorRequests"].find_one({"teamId": team_id, "mentorId": mentor_id_target, "status": "pending"})
     if duplicate:
         raise HTTPException(status_code=409, detail="A request to this mentor is already pending")
 
-    request = {"teamId": team_id, "mentorId": payload.mentorId, "requestedBy": user_id,
-               "message": payload.message or "", "status": "pending", "createdAt": datetime.utcnow()}
+    request = {
+        "teamId": team_id,
+        "mentorId": mentor_id_target,
+        "requestedBy": user_id,
+        "message": payload_dict.get("message") or "",
+        "status": "pending",
+        "createdAt": datetime.utcnow()
+    }
     result = await db["mentorRequests"].insert_one(request)
     await db["teams"].update_one({"_id": ObjectId(team_id)}, {"$set": {"mentorRequestStatus": "pending"}})
-    await _notify(db, payload.mentorId, "mentor_request", f"{team.get('teamName', 'A team')} requested your mentorship.", team.get("hackathonId"))
+    await _notify(db, mentor_id_target, "mentor_request", f"{team.get('teamName', 'A team')} requested your mentorship.", team.get("hackathonId"))
     return {"id": str(result.inserted_id), "status": "pending", "message": "Mentor request sent"}
 
 
@@ -1282,11 +1320,19 @@ async def get_team_members(team_id: str, current_user: dict = Depends(with_auth)
     ).to_list(100)
     registered_names = {str(user["_id"]): user.get("name") for user in users}
 
+    seen_user_ids = set()
+    deduped_members = []
     for member in members:
+        u_id = str(member.get("userId", ""))
+        if u_id and u_id in seen_user_ids:
+            continue
+        if u_id:
+            seen_user_ids.add(u_id)
         member["_id"] = str(member["_id"])
         member["name"] = registered_names.get(member.get("userId"))
+        deduped_members.append(member)
 
-    return [TeamMemberResponse(**member) for member in members]
+    return [TeamMemberResponse(**m) for m in deduped_members]
 
 
 @router.post("/join/{team_id_or_code}", response_model=TeamMemberResponse)
@@ -1507,11 +1553,63 @@ async def remove_mentor_assignment(
     return TeamResponse(**updated_team)
 
 
+@router.delete("/{team_id}/members/me")
+@router.post("/{team_id}/leave")
+async def leave_team(team_id: str, current_user: dict = Depends(with_auth)):
+    """Allow a student member to leave a team. If the leader leaves, the next member is promoted, or team is cleaned up if empty."""
+    db = get_db()
+    current_user_id = str(current_user.get("id") or current_user.get("sub"))
+    if not ObjectId.is_valid(team_id):
+        raise HTTPException(status_code=400, detail="Invalid team ID format")
+
+    team = await db["teams"].find_one({"_id": ObjectId(team_id)})
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    members_coll = db["teamMembers"]
+    membership = await members_coll.find_one({"teamId": team_id, "userId": current_user_id})
+    if not membership:
+        raise HTTPException(status_code=400, detail="You are not a member of this team")
+
+    # If user is the leader
+    if membership.get("role") == TeamMemberRole.LEADER.value:
+        remaining_members = await members_coll.find({"teamId": team_id, "userId": {"$ne": current_user_id}}).sort("joinedAt", 1).to_list(100)
+        if remaining_members:
+            next_leader = remaining_members[0]
+            await members_coll.update_one({"_id": next_leader["_id"]}, {"$set": {"role": TeamMemberRole.LEADER.value}})
+            await db["teams"].update_one({"_id": ObjectId(team_id)}, {"$set": {"leaderId": next_leader["userId"]}})
+        else:
+            await db["teams"].delete_one({"_id": ObjectId(team_id)})
+            await db["progress"].delete_one({"teamId": team_id})
+
+    # Delete this membership
+    await members_coll.delete_one({"teamId": team_id, "userId": current_user_id})
+
+    # Log audit entry
+    try:
+        await db["audit_logs"].insert_one({
+            "userId": current_user_id,
+            "email": current_user.get("email"),
+            "category": "Team",
+            "action": "Left team",
+            "action_title": f"Left team {team.get('teamName', '')}",
+            "details": f"Student left team {team.get('teamName')}",
+            "timestamp": datetime.utcnow()
+        })
+    except Exception:
+        pass
+
+    return {"success": True, "message": "Successfully left the team", "teamId": team_id}
+
+
 @router.delete("/{team_id}/members/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def remove_team_member(
     team_id: str, user_id: str, current_user: dict = Depends(with_auth)
 ):
-    """Remove a member from the team (Team Leader only)"""
+    """Remove a member from the team (Team Leader only, or self if user_id == 'me')"""
+    if user_id.lower() in ("me", "self"):
+        return await leave_team(team_id, current_user)
+
     db = get_db()
     current_user_id = current_user.get("id") or current_user.get("sub")
 

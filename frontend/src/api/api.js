@@ -35,13 +35,18 @@ apiClient.interceptors.response.use(
     (error) => {
         if (error.response && error.response.status === 401) {
             const path = window.location.pathname;
-            const isAuthRoute = path.startsWith('/login') || path.startsWith('/signup') || path === '/' || path.startsWith('/get-started') || path.startsWith('/role-selection');
+            const isAuthRoute = path.startsWith('/login') || path.startsWith('/signup') || path === '/' || path.startsWith('/get-started') || path.startsWith('/role-selection') || path.startsWith('/forgot-password') || path.startsWith('/verify');
             if (!isAuthRoute) {
                 localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                localStorage.removeItem('userRole');
                 localStorage.removeItem('isLoggedIn');
                 sessionStorage.removeItem('token');
+                sessionStorage.removeItem('user');
+                sessionStorage.removeItem('userRole');
                 sessionStorage.removeItem('isLoggedIn');
-                window.location.href = '/login?expired=true';
+                window.dispatchEvent(new Event('user-update'));
+                window.location.href = '/login?reason=session_expired';
             }
         }
         return Promise.reject(error);

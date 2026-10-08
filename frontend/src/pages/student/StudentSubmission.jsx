@@ -75,7 +75,7 @@ const StudentSubmission = () => {
         project: projectTitle,
         desc: summary,
         category: 'General',
-        status: 'Pending',
+        status: 'Pending Review',
       });
 
       const submissions = await fetchSubmissions(team.id || team._id);

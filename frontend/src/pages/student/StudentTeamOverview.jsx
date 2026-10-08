@@ -1,12 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchMyTeams } from '../../services/student/teamsApi';
+import { fetchMyTeams, leaveTeam } from '../../services/student/teamsApi';
 
 const StudentTeamOverview = () => {
   const navigate = useNavigate();
   const [teams, setTeams] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [teamToLeave, setTeamToLeave] = useState(null);
+  const [isLeaving, setIsLeaving] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
     let isMounted = true;
@@ -41,8 +44,31 @@ const StudentTeamOverview = () => {
     ? Math.round(teams.reduce((sum, team) => sum + Number(team.progress || 0), 0) / teams.length)
     : 0;
 
+  const handleConfirmLeave = async () => {
+    if (!teamToLeave) return;
+    setIsLeaving(true);
+    try {
+      await leaveTeam(teamToLeave.id);
+      setTeams((prev) => prev.filter((t) => t.id !== teamToLeave.id));
+      setToastMessage(`You have left ${teamToLeave.name}.`);
+      setTeamToLeave(null);
+      setTimeout(() => setToastMessage(''), 4000);
+    } catch (err) {
+      alert(err.response?.data?.detail || err.message || 'Failed to leave team.');
+    } finally {
+      setIsLeaving(false);
+    }
+  };
+
   return (
     <div className="space-y-8 pb-10 animate-in fade-in duration-500">
+      {toastMessage && (
+        <div className="flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-400">
+          <span>{toastMessage}</span>
+          <button onClick={() => setToastMessage('')} className="text-emerald-400 hover:text-white">✕</button>
+        </div>
+      )}
+
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.3em] text-purple-300">Portfolio</p>
@@ -122,17 +148,52 @@ const StudentTeamOverview = () => {
                 </div>
 
                 <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/10 px-4 py-3">
-                  <span className="text-sm text-gray-300">Last activity</span>
-                  <span className="text-sm font-semibold text-white">{team.lastMessage || 'Workspace ready'}</span>
+                  <span className="text-sm text-gray-300">Role in team</span>
+                  <span className="text-sm font-semibold text-violet-300">{team.roleInTeam || 'Member'}</span>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-2">
                   <button onClick={() => navigate(`/student/teams/${team.id}/workspace`)} className="flex-1 rounded-xl bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10">Workspace</button>
                   <button onClick={() => navigate(`/student/teams/${team.id}/members`)} className="flex-1 rounded-xl border border-white/10 bg-transparent px-4 py-3 text-sm font-semibold text-gray-200 transition hover:border-white/20 hover:bg-white/5">Members</button>
+                  <button
+                    onClick={() => setTeamToLeave(team)}
+                    className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-3 text-sm font-semibold text-rose-300 transition hover:bg-rose-500/20"
+                    title="Leave Team"
+                  >
+                    Leave
+                  </button>
                 </div>
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {teamToLeave && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#16122b] p-6 shadow-2xl">
+            <h3 className="text-xl font-bold text-white">Leave Team?</h3>
+            <p className="mt-3 text-sm text-gray-300">
+              Are you sure you want to leave <strong className="text-white">{teamToLeave.name}</strong>? You will lose access to the team workspace and file repository.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                disabled={isLeaving}
+                onClick={() => setTeamToLeave(null)}
+                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/10"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={isLeaving}
+                onClick={handleConfirmLeave}
+                className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-500"
+              >
+                {isLeaving ? 'Leaving...' : 'Confirm & Leave'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

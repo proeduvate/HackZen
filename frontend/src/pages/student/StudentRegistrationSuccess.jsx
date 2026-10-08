@@ -116,28 +116,40 @@ const StudentRegistrationSuccess = () => {
 
                     <div className="mt-10">
                         <h2 className="mb-5 text-2xl font-black tracking-[-0.04em] text-[#1d2431]">What’s Next?</h2>
-                        <div className="grid gap-4 md:grid-cols-2">
+                        <div className="grid gap-4 md:grid-cols-3">
                             <button
                                 type="button"
-                                onClick={() => navigate('/student/teams')}
-                                className="rounded-2xl border border-[#dfe3ee] bg-[#f6f4fb] p-5 text-left transition hover:border-[#5d4ad8]/40 hover:bg-[#f1edff]"
+                                onClick={() => navigate('/student/workspace')}
+                                className="rounded-2xl border border-[#dfe3ee] bg-[#f0edff] p-5 text-left transition hover:border-[#5d4ad8]/40 hover:bg-[#eae5ff]"
                             >
-                                <p className="text-2xl font-black tracking-[-0.04em] text-[#1d2431]">Create Your Team</p>
-                                <p className="mt-3 text-base text-[#646d7d]">Create a team and invite members to collaborate.</p>
-                                <div className="mt-6 flex items-center justify-center rounded-xl bg-gradient-to-r from-[#5b45d7] to-[#4a3cc0] px-6 py-4 text-lg font-bold text-white shadow-[0_10px_25px_rgba(93,74,216,0.35)]">
-                                    Create Your Team →
+                                <p className="text-xl font-black tracking-[-0.04em] text-[#1d2431]">Team Workspace</p>
+                                <p className="mt-3 text-sm text-[#646d7d]">Access project milestones, team chat, and files.</p>
+                                <div className="mt-6 flex items-center justify-center rounded-xl bg-gradient-to-r from-[#5b45d7] to-[#4a3cc0] px-4 py-3 text-sm font-bold text-white shadow-md">
+                                    Open Workspace →
                                 </div>
                             </button>
 
                             <button
                                 type="button"
                                 onClick={() => navigate('/student/teams')}
+                                className="rounded-2xl border border-[#dfe3ee] bg-[#f6f4fb] p-5 text-left transition hover:border-[#5d4ad8]/40 hover:bg-[#f1edff]"
+                            >
+                                <p className="text-xl font-black tracking-[-0.04em] text-[#1d2431]">Manage Teams</p>
+                                <p className="mt-3 text-sm text-[#646d7d]">Manage members and invite collaborators.</p>
+                                <div className="mt-6 flex items-center justify-center rounded-xl border border-[#5d4ad8] bg-white px-4 py-3 text-sm font-bold text-[#4f41d1]">
+                                    View Teams →
+                                </div>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => navigate('/student/hackathons')}
                                 className="rounded-2xl border border-[#dfe3ee] bg-[#f9f9fb] p-5 text-left transition hover:border-[#5d4ad8]/40 hover:bg-[#f1edff]"
                             >
-                                <p className="text-2xl font-black tracking-[-0.04em] text-[#1d2431]">Join a Team</p>
-                                <p className="mt-3 text-base text-[#646d7d]">Join an existing team using a code or invite.</p>
-                                <div className="mt-6 flex items-center justify-center rounded-xl border border-[#5d4ad8] bg-white px-6 py-4 text-lg font-bold text-[#4f41d1] shadow-[0_0_0_1px_rgba(93,74,216,0.08)]">
-                                    Join a Team →
+                                <p className="text-xl font-black tracking-[-0.04em] text-[#1d2431]">Explore More</p>
+                                <p className="mt-3 text-sm text-[#646d7d]">Browse more hackathons and challenges.</p>
+                                <div className="mt-6 flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700">
+                                    All Hackathons →
                                 </div>
                             </button>
                         </div>

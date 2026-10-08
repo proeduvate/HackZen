@@ -31,7 +31,7 @@ const PublicVerifyCertificate = () => {
         setResult(null);
 
         try {
-            const { data } = await apiClient.get(`/admin/certificates/verify/${encodeURIComponent(queryId)}`);
+            const { data } = await apiClient.get(`/certificates/verify/${encodeURIComponent(queryId)}`);
             setResult(data);
         } catch (err) {
             console.error('Verification error:', err);

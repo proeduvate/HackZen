@@ -126,10 +126,11 @@ async def _team_progress(db, team_id: str) -> Dict[str, Any]:
 
 
 @router.get("/my-hackathons")
+@router.get("/student")
 async def get_my_hackathons_dashboard(current_user: dict = Depends(with_auth)):
     """Get the authenticated student's dashboard using only persisted platform data."""
     db = get_db()
-    user_id = current_user["sub"]
+    user_id = str(current_user.get("sub") or current_user.get("id") or current_user.get("_id"))
     now = datetime.utcnow()
 
     applications = await db["applications"].find({"userId": user_id}).sort(
@@ -143,8 +144,8 @@ async def get_my_hackathons_dashboard(current_user: dict = Depends(with_auth)):
         else []
     )
 
-    registered_ids = {application.get("hackathonId") for application in applications}
-    team_hackathon_ids = {team.get("hackathonId") for team in teams}
+    registered_ids = {str(application.get("hackathonId")) for application in applications}
+    team_hackathon_ids = {str(team.get("hackathonId")) for team in teams if team.get("hackathonId")}
     referenced_hackathon_ids = _object_ids(list(registered_ids | team_hackathon_ids))
     referenced_hackathons = (
         await db["hackathons"].find({"_id": {"$in": referenced_hackathon_ids}}).to_list(200)
@@ -163,13 +164,13 @@ async def get_my_hackathons_dashboard(current_user: dict = Depends(with_auth)):
 
     registered_hackathons = []
     for application in applications:
-        hackathon_id = application.get("hackathonId")
+        hackathon_id = str(application.get("hackathonId"))
         hackathon = hackathons_by_id.get(hackathon_id)
         if not hackathon:
             continue
 
         team = next(
-            (item for item in teams if item.get("hackathonId") == hackathon_id), None
+            (item for item in teams if str(item.get("hackathonId")) == hackathon_id), None
         )
         team_id = str(team["_id"]) if team else None
         registered_hackathons.append(
@@ -193,8 +194,8 @@ async def get_my_hackathons_dashboard(current_user: dict = Depends(with_auth)):
     active_teams = [
         team
         for team in teams
-        if (hackathons_by_id.get(team.get("hackathonId"), {}).get("hackathonEnd") or now) >= now
-        and str(hackathons_by_id.get(team.get("hackathonId"), {}).get("status", "")).lower()
+        if (hackathons_by_id.get(str(team.get("hackathonId")), {}).get("hackathonEnd") or now) >= now
+        and str(hackathons_by_id.get(str(team.get("hackathonId")), {}).get("status", "")).lower()
         not in {"completed", "results announced"}
     ]
 
@@ -218,6 +219,55 @@ async def get_my_hackathons_dashboard(current_user: dict = Depends(with_auth)):
         not in {"draft", "completed", "results announced"}
     ]
 
+    # Aggregate recent activity scoped to this student
+    recent_activity = []
+    try:
+        user_email = current_user.get("email")
+        query_conditions = [{"userId": user_id}]
+        if user_email:
+            query_conditions.append({"email": user_email})
+        audit_cursor = db["audit_logs"].find({"$or": query_conditions}).sort("timestamp", -1).limit(10)
+        user_audit_logs = await audit_cursor.to_list(10)
+        for log in user_audit_logs:
+            recent_activity.append({
+                "id": str(log.get("_id")),
+                "type": str(log.get("category", "activity")).lower(),
+                "title": log.get("action_title") or log.get("action") or "Account Activity",
+                "description": log.get("details", ""),
+                "timestamp": _serialize_date(log.get("timestamp") or log.get("createdAt")),
+            })
+    except Exception:
+        pass
+
+    for app in applications[:5]:
+        h_id = str(app.get("hackathonId"))
+        h = hackathons_by_id.get(h_id)
+        recent_activity.append({
+            "id": f"app-{str(app.get('_id'))}",
+            "type": "registration",
+            "title": f"Registered for {h.get('title') if h else 'Hackathon'}",
+            "description": f"Registration status: {app.get('status', 'Confirmed')}",
+            "timestamp": _serialize_date(app.get("appliedAt")),
+        })
+
+    if team_id_strings:
+        try:
+            recent_subs = await db["submissions"].find({"teamId": {"$in": team_id_strings}}).sort("createdAt", -1).limit(5).to_list(5)
+            for sub in recent_subs:
+                recent_activity.append({
+                    "id": f"sub-{str(sub.get('_id'))}",
+                    "type": "submission",
+                    "title": f"Project Submitted: {sub.get('projectName', sub.get('title', 'Hackathon Project'))}",
+                    "description": f"Status: {sub.get('status', 'Pending Review')}",
+                    "timestamp": _serialize_date(sub.get("createdAt") or sub.get("submittedAt")),
+                })
+        except Exception:
+            pass
+
+    # Sort descending by timestamp and take top 10
+    recent_activity.sort(key=lambda x: str(x.get("timestamp") or ""), reverse=True)
+    recent_activity = recent_activity[:10]
+
     return {
         "student": {"name": current_user.get("name", "Student")},
         "metrics": {
@@ -228,6 +278,7 @@ async def get_my_hackathons_dashboard(current_user: dict = Depends(with_auth)):
         },
         "registeredHackathons": registered_hackathons,
         "upcomingHackathons": upcoming_hackathons,
+        "recentActivity": recent_activity,
     }
 
 
@@ -1567,9 +1618,9 @@ async def get_organizer_report(current_user: dict = Depends(with_auth)):
     )
 
 
-# --- STUDENT DASHBOARD MY HACKATHONS ---
-@router.get("/my-hackathons")
-async def get_my_hackathons(current_user: dict = Depends(with_auth)):
+# --- STUDENT DASHBOARD MY HACKATHONS (SUMMARY) ---
+@router.get("/my-hackathons-summary")
+async def get_my_hackathons_summary(current_user: dict = Depends(with_auth)):
     """Fetch registered, ongoing, upcoming, and past hackathons for Student Dashboard."""
     db = get_db()
     user_id = str(

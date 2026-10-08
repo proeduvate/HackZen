@@ -190,9 +190,9 @@ function AppContent() {
         >
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<StudentDashboard />} />
-          <Route path="certificates" element={<StudentCertificate />} />
           <Route path="submissions" element={<StudentSubmissions />} />
           <Route path="hackathons" element={<StudentHackathons />} />
+          <Route path="hackathons/:hackathonId" element={<StudentHackathons />} />
           <Route path="hackathons/:hackathonId/register" element={<StudentHackathonRegistration />}>
             <Route index element={<Navigate to="step-1" replace />} />
             <Route path="step-1" element={<HackathonRegistrationStepOne />} />
@@ -223,7 +223,7 @@ function AppContent() {
           <Route path="files" element={<StudentFileSharing />} />
           <Route path="ai-assistant" element={<StudentAIAssistant />} />
           <Route path="certificates">
-            <Route index element={<StudentCertificate />} />
+            <Route index element={<StudentCertificates />} />
             <Route path="verify" element={<StudentCertificateVerification />} />
           </Route>
           <Route path="profile">

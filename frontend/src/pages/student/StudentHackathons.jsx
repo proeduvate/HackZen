@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { fetchAllHackathons } from '../../api/hackathonApi';
+import { useNavigate, useParams } from 'react-router-dom';
+import { fetchAllHackathons, fetchHackathonById } from '../../api/hackathonApi';
 import { fetchMyApplications } from '../../api/applicationApi';
 
 const formatDate = (value) => {
@@ -14,7 +14,7 @@ const formatDate = (value) => {
 const dateRange = (start, end) => `${formatDate(start)} – ${formatDate(end)}`;
 
 const modeFor = (location) => {
-    if (!location) return 'Mode not specified';
+    if (!location) return 'Online';
     const normalized = location.toLowerCase();
     if (normalized.includes('online') && normalized.length > 'online'.length) return `Hybrid (${location})`;
     if (normalized.includes('online') || normalized.includes('virtual')) return 'Online';
@@ -70,16 +70,26 @@ const Select = ({ label, value, onChange, children }) => (
 
 const StudentHackathons = () => {
     const navigate = useNavigate();
+    const { hackathonId } = useParams();
     const [hackathons, setHackathons] = useState([]);
     const [registeredIds, setRegisteredIds] = useState(new Set());
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
     const [category, setCategory] = useState('all');
     const [dateFilter, setDateFilter] = useState('anytime');
     const [mode, setMode] = useState('all');
     const [sort, setSort] = useState('newest');
     const [selectedHackathon, setSelectedHackathon] = useState(null);
+
+    // Debounce search input by 300ms
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 300);
+        return () => clearTimeout(handler);
+    }, [search]);
 
     const loadHackathons = async () => {
         setIsLoading(true);
@@ -91,6 +101,21 @@ const StudentHackathons = () => {
             ]);
             setHackathons(events);
             setRegisteredIds(new Set(applications.map((application) => application.hackathonId)));
+
+            if (hackathonId) {
+                const found = events.find((h) => String(h.id || h._id) === String(hackathonId));
+                if (found) {
+                    setSelectedHackathon(found);
+                } else {
+                    // Try direct fetch if not in the list
+                    try {
+                        const direct = await fetchHackathonById(hackathonId);
+                        if (direct) setSelectedHackathon(direct);
+                    } catch {
+                        // Ignore not found
+                    }
+                }
+            }
         } catch (requestError) {
             console.error('Failed to load student hackathons:', requestError);
             setError('We could not load hackathons right now. Please try again.');
@@ -99,11 +124,11 @@ const StudentHackathons = () => {
         }
     };
 
-    useEffect(() => { loadHackathons(); }, []);
+    useEffect(() => { loadHackathons(); }, [hackathonId]);
 
     const categories = useMemo(() => [...new Set(hackathons.flatMap((hackathon) => hackathon.themes || []))].sort(), [hackathons]);
     const visibleHackathons = useMemo(() => {
-        const query = search.trim().toLowerCase();
+        const query = debouncedSearch.trim().toLowerCase();
         const result = hackathons.filter((hackathon) => {
             const titleAndDescription = `${hackathon.title || ''} ${hackathon.description || ''}`.toLowerCase();
             const hackathonMode = modeFor(hackathon.location);
@@ -117,28 +142,109 @@ const StudentHackathons = () => {
             if (sort === 'soonest') return new Date(first.hackathonStart) - new Date(second.hackathonStart);
             return new Date(second.createdAt) - new Date(first.createdAt);
         });
-    }, [hackathons, search, category, dateFilter, mode, sort]);
+    }, [hackathons, debouncedSearch, category, dateFilter, mode, sort]);
 
     if (selectedHackathon) {
         const id = selectedHackathon.id || selectedHackathon._id;
         const registered = registeredIds.has(id);
+        const prizes = selectedHackathon.prizes || [];
+        const themes = selectedHackathon.themes || [];
+
         return (
             <div className="-m-6 min-h-full bg-[#fbf9ff] p-6 text-[#242334] lg:-m-10 lg:p-10">
-                <button onClick={() => setSelectedHackathon(null)} className="mb-8 flex items-center gap-2 font-medium text-[#5740d6] transition hover:text-[#4530bd]"><span aria-hidden="true">←</span> Back to Hackathons</button>
+                <button
+                    onClick={() => {
+                        setSelectedHackathon(null);
+                        if (hackathonId) navigate('/student/hackathons');
+                    }}
+                    className="mb-8 flex items-center gap-2 font-semibold text-[#5740d6] transition hover:text-[#4530bd]"
+                >
+                    <span aria-hidden="true">←</span> Back to Hackathons
+                </button>
                 <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-[#e5e1ed] bg-white shadow-[0_1px_2px_rgba(31,22,60,0.03)]">
                     <div className="relative h-64 bg-[#eeebf6] sm:h-80">
-                        {selectedHackathon.posterUrl ? <img src={selectedHackathon.posterUrl} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center px-8 text-center text-3xl font-bold text-[#777488]">{selectedHackathon.title}</div>}
+                        {selectedHackathon.posterUrl ? (
+                            <img src={selectedHackathon.posterUrl} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                            <div className="flex h-full items-center justify-center px-8 text-center text-3xl font-bold text-[#777488]">
+                                {selectedHackathon.title}
+                            </div>
+                        )}
+                        <span className="absolute right-6 top-6 rounded-full bg-white/95 px-3.5 py-1.5 text-sm font-semibold text-[#5a42d8] shadow-sm">
+                            {statusLabel(selectedHackathon, registered)}
+                        </span>
                     </div>
-                    <div className="grid gap-8 p-7 lg:grid-cols-[minmax(0,1fr)_280px] lg:p-10">
-                        <div>
-                            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{selectedHackathon.title}</h1>
-                            {selectedHackathon.organizerName || selectedHackathon.organizer_name ? <p className="mt-2 text-[#777488]">by {selectedHackathon.organizerName || selectedHackathon.organizer_name}</p> : null}
-                            <h2 className="mt-8 text-xl font-bold">About this hackathon</h2>
-                            <p className="mt-3 whitespace-pre-wrap leading-7 text-[#626071]">{selectedHackathon.description || 'No description has been provided yet.'}</p>
+                    <div className="grid gap-8 p-7 lg:grid-cols-[minmax(0,1fr)_320px] lg:p-10">
+                        <div className="space-y-6">
+                            <div>
+                                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl text-[#1d1a2a]">
+                                    {selectedHackathon.title}
+                                </h1>
+                                {(selectedHackathon.organizerName || selectedHackathon.organizer_name) && (
+                                    <p className="mt-2 text-[#777488]">
+                                        Organized by <span className="font-medium text-[#4f3ec7]">{selectedHackathon.organizerName || selectedHackathon.organizer_name}</span>
+                                    </p>
+                                )}
+                            </div>
+
+                            {themes.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                    {themes.map((theme, idx) => (
+                                        <span key={idx} className="rounded-full bg-[#f1edfc] px-3 py-1 text-xs font-semibold text-[#5740d6]">
+                                            {theme}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+
+                            <div>
+                                <h2 className="text-xl font-bold text-[#1d1a2a]">About this hackathon</h2>
+                                <p className="mt-3 whitespace-pre-wrap leading-7 text-[#626071]">
+                                    {selectedHackathon.description || 'No description has been provided yet.'}
+                                </p>
+                            </div>
+
+                            {prizes.length > 0 && (
+                                <div>
+                                    <h2 className="text-xl font-bold text-[#1d1a2a]">Prizes</h2>
+                                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                                        {prizes.map((p, idx) => (
+                                            <div key={idx} className="rounded-xl border border-[#ece7f6] bg-[#fdfcff] p-4">
+                                                <div className="text-xs font-bold uppercase tracking-wider text-[#7a7098]">
+                                                    {typeof p === 'object' ? (p.title || `Prize #${idx + 1}`) : `Prize #${idx + 1}`}
+                                                </div>
+                                                <div className="mt-1 text-lg font-bold text-[#4f3ec7]">
+                                                    {typeof p === 'object' ? (p.amount || p.value || p.prize || 'Reward') : p}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                        <aside className="rounded-xl bg-[#f8f6fc] p-6">
-                            <dl className="space-y-5 text-sm"><div><dt className="text-[#777488]">Schedule</dt><dd className="mt-1 font-semibold text-[#292738]">{dateRange(selectedHackathon.hackathonStart, selectedHackathon.hackathonEnd)}</dd></div><div><dt className="text-[#777488]">Mode</dt><dd className="mt-1 font-semibold text-[#292738]">{modeFor(selectedHackathon.location)}</dd></div><div><dt className="text-[#777488]">Team size</dt><dd className="mt-1 font-semibold text-[#292738]">{selectedHackathon.minTeamSize || 1} – {selectedHackathon.maxTeamSize || 1} members</dd></div></dl>
-                            <button onClick={() => registered ? navigate('/student/dashboard') : navigate(`/student/hackathons/${id}/register`)} className="mt-8 w-full rounded-lg bg-[#5740d6] py-3 font-medium text-white transition hover:bg-[#4530bd]">{registered ? 'Go to Dashboard' : 'Register Now'}</button>
+
+                        <aside className="rounded-2xl border border-[#ece7f6] bg-[#f8f6fc] p-6 h-fit space-y-6">
+                            <dl className="space-y-5 text-sm">
+                                <div>
+                                    <dt className="text-xs font-bold uppercase tracking-wider text-[#777488]">Schedule</dt>
+                                    <dd className="mt-1 font-semibold text-[#292738]">{dateRange(selectedHackathon.hackathonStart, selectedHackathon.hackathonEnd)}</dd>
+                                </div>
+                                <div>
+                                    <dt className="text-xs font-bold uppercase tracking-wider text-[#777488]">Format / Mode</dt>
+                                    <dd className="mt-1 font-semibold text-[#292738]">{modeFor(selectedHackathon.location)}</dd>
+                                </div>
+                                <div>
+                                    <dt className="text-xs font-bold uppercase tracking-wider text-[#777488]">Team size</dt>
+                                    <dd className="mt-1 font-semibold text-[#292738]">{selectedHackathon.minTeamSize || 1} – {selectedHackathon.maxTeamSize || 1} members</dd>
+                                </div>
+                            </dl>
+
+                            <button
+                                onClick={() => registered ? navigate('/student/dashboard') : navigate(`/student/hackathons/${id}/register`)}
+                                className="w-full rounded-xl bg-[#5740d6] py-3.5 font-semibold text-white shadow-sm transition hover:bg-[#4530bd]"
+                            >
+                                {registered ? 'View Dashboard / Workspace' : 'Register for Hackathon'}
+                            </button>
                         </aside>
                     </div>
                 </div>

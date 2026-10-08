@@ -18,6 +18,7 @@ from schemas.userSchema import (
     TokenResponse,
     LoginRequest,
     ForgotPasswordRequest,
+    ResetPasswordRequest,
 )
 from services.userService import UserService
 from services.oauth_service import authorization_url, get_profile, validate_state
@@ -53,7 +54,13 @@ async def register(user_data: UserCreate):
         user_dict = await UserService.create_user(user_data)
         return UserResponse(**user_dict)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        err_msg = str(e)
+        if "already registered" in err_msg.lower():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Email already registered",
+            )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=err_msg)
     except HTTPException:
         raise
     except Exception as e:
@@ -287,6 +294,42 @@ async def forgot_password(request_data: ForgotPasswordRequest):
     return {
         "success": True,
         "message": f"Password reset instructions have been sent to {email_clean}.",
+    }
+
+
+@router.post("/reset-password")
+async def reset_password(request_data: ResetPasswordRequest):
+    """Verify reset token and update user password securely."""
+    from database import get_db
+    from core.security import get_password_hash
+    from bson import ObjectId
+
+    db = get_db()
+    token_doc = await db["password_resets"].find_one({"token": request_data.token, "used": False})
+    if not token_doc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired password reset link.",
+        )
+
+    # Check expiration (valid for 2 hours)
+    created_at = token_doc.get("createdAt")
+    if created_at and (datetime.utcnow() - created_at) > timedelta(hours=2):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password reset link has expired. Please request a new one.",
+        )
+
+    user_id = token_doc.get("userId")
+    user_query = {"_id": ObjectId(user_id)} if ObjectId.is_valid(user_id) else {"email": token_doc.get("email")}
+    hashed_pwd = get_password_hash(request_data.newPassword)
+
+    await db["users"].update_one(user_query, {"$set": {"password": hashed_pwd, "updatedAt": datetime.utcnow()}})
+    await db["password_resets"].update_one({"_id": token_doc["_id"]}, {"$set": {"used": True, "usedAt": datetime.utcnow()}})
+
+    return {
+        "success": True,
+        "message": "Password has been successfully reset. You can now log in with your new password.",
     }
 
 

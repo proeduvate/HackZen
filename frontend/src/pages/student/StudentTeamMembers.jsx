@@ -31,7 +31,19 @@ const StudentTeamMembers = () => {
       try {
         const data = await getTeamMembers(teamId);
         if (isMounted) {
-          setMembers(Array.isArray(data) ? data : []);
+          const raw = Array.isArray(data) ? data : [];
+          const seen = new Set();
+          const deduped = [];
+          for (const m of raw) {
+            const key = m.userId || m._id || m.id;
+            if (key && !seen.has(key)) {
+              seen.add(key);
+              deduped.push(m);
+            } else if (!key) {
+              deduped.push(m);
+            }
+          }
+          setMembers(deduped);
         }
       } catch (error) {
         console.error('Failed to load team members:', error);

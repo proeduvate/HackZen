@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
     fetchCertificates,
     verifyCertificate,
@@ -52,6 +53,19 @@ const StudentCertificates = () => {
     const [isUploading, setIsUploading] = useState(false);
     const [uploadError, setUploadError] = useState('');
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+    const [toastMsg, setToastMsg] = useState('');
+
+    const showToast = (message) => {
+        setToastMsg(message);
+        setTimeout(() => setToastMsg(''), 3500);
+    };
+
+    const handleShareLink = (cert) => {
+        const shareId = cert.validationId || cert.id;
+        const shareUrl = `${window.location.origin}/verify/${encodeURIComponent(shareId)}`;
+        navigator.clipboard.writeText(shareUrl);
+        showToast('✓ Shareable verification link copied to clipboard!');
+    };
 
     useEffect(() => {
         const loadInitialData = async () => {
@@ -263,6 +277,12 @@ const StudentCertificates = () => {
                 </button>
             </div>
 
+            {toastMsg && (
+                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-sm font-semibold flex items-center gap-2 animate-in fade-in">
+                    <span>{toastMsg}</span>
+                </div>
+            )}
+
             {isUploadModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm">
                     <form onSubmit={handleSubmitUpload} className="w-full max-w-2xl rounded-2xl border border-white/10 bg-navy-950 p-6 shadow-2xl md:p-8">
@@ -394,6 +414,31 @@ const StudentCertificates = () => {
                                 <div key={item} className="glass rounded-2xl border border-white/5 h-[360px] animate-pulse bg-navy-900/40" />
                             ))}
                         </div>
+                    ) : certificates.length === 0 ? (
+                        <div className="glass rounded-2xl border border-dashed border-white/10 p-12 text-center">
+                            <div className="w-16 h-16 rounded-full bg-purple-600/10 border border-purple-500/20 text-purple-400 mx-auto flex items-center justify-center text-3xl mb-4">
+                                🏅
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-2">You haven't earned any certificates yet</h3>
+                            <p className="text-gray-400 max-w-md mx-auto mb-6 text-sm">
+                                Complete a hackathon to receive your first verified credential, or upload an external certificate to keep your portfolio organized!
+                            </p>
+                            <div className="flex flex-wrap gap-4 justify-center">
+                                <Link
+                                    to="/student/hackathons"
+                                    className="rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-3 font-semibold text-white shadow-lg transition hover:from-purple-500 hover:to-blue-500 text-sm"
+                                >
+                                    Explore Hackathons
+                                </Link>
+                                <button
+                                    type="button"
+                                    onClick={openUploadModal}
+                                    className="rounded-xl bg-white/10 px-5 py-3 font-semibold text-white transition hover:bg-white/15 text-sm"
+                                >
+                                    + Upload Certificate
+                                </button>
+                            </div>
+                        </div>
                     ) : filteredCertificates.length === 0 ? (
                         <div className="glass rounded-2xl border border-white/5 p-10 text-center">
                             <h3 className="text-xl font-bold text-white mb-2">No certificates found</h3>
@@ -436,7 +481,7 @@ const StudentCertificates = () => {
                                         </div>
 
                                         <p className="text-gray-400 text-sm mb-6">
-                                            Credential ID: <span className="font-mono text-gray-300">{cert.id}</span>
+                                            Credential ID: <span className="font-mono text-gray-300">{cert.validationId || cert.id}</span>
                                         </p>
 
                                         <div className="mt-auto pt-4 border-t border-white/5 space-y-4">
@@ -445,29 +490,36 @@ const StudentCertificates = () => {
                                                 <span className="text-white font-semibold">{cert.date}</span>
                                             </div>
 
-                                            <div className="flex gap-3">
+                                            <div className="flex flex-wrap gap-2">
                                                 <button
-                                                    onClick={() => setCertId(cert.id)}
-                                                    className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-white font-semibold rounded-xl border border-white/5 transition-colors"
+                                                    onClick={() => setCertId(cert.validationId || cert.id)}
+                                                    className="flex-1 min-w-[80px] py-2.5 bg-white/5 hover:bg-white/10 text-white text-xs font-semibold rounded-xl border border-white/5 transition-colors"
                                                 >
-                                                    Use for Verify
+                                                    Verify
                                                 </button>
                                                 <button
-                                                    onClick={() => handleEditCertificate(cert)}
-                                                    className="px-4 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold transition-colors"
+                                                    onClick={() => handleShareLink(cert)}
+                                                    className="px-3.5 py-2.5 bg-sky-600/20 hover:bg-sky-600/30 text-sky-300 rounded-xl text-xs font-semibold border border-sky-500/30 transition-colors"
+                                                    title="Copy verification link"
                                                 >
-                                                    Edit
+                                                    🔗 Share
                                                 </button>
                                                 <button
                                                     onClick={() => handleDownloadIndividual(cert)}
                                                     disabled={cert.isDownloading}
-                                                    className="px-4 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-semibold transition-colors disabled:opacity-50"
+                                                    className="px-3.5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-semibold transition-colors disabled:opacity-50"
                                                 >
                                                     {cert.isDownloading ? '...' : 'Download'}
                                                 </button>
                                                 <button
+                                                    onClick={() => handleEditCertificate(cert)}
+                                                    className="px-3 py-2.5 bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-semibold transition-colors"
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
                                                     onClick={() => handleDeleteCertificate(cert.id)}
-                                                    className="px-4 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-semibold transition-colors"
+                                                    className="px-3 py-2.5 bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 rounded-xl text-xs font-semibold transition-colors"
                                                 >
                                                     Delete
                                                 </button>

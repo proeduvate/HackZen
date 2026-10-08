@@ -8,13 +8,35 @@ export const setAuthToken = (token) => {
   }
 };
 
+const extractErrorMessage = (error, defaultMsg = 'An error occurred') => {
+    const raw = error.response?.data?.detail 
+        || error.response?.data?.message 
+        || error.response?.data?.error?.message 
+        || error.message;
+
+    if (error.response?.status === 409) {
+        return 'Email already registered. Please sign in or use a different email address.';
+    }
+
+    if (typeof raw === 'string') {
+        return raw;
+    }
+    if (Array.isArray(raw)) {
+        return raw.map(item => item?.msg || item?.message || JSON.stringify(item)).join(', ');
+    }
+    if (typeof raw === 'object' && raw !== null) {
+        return raw.msg || raw.message || JSON.stringify(raw);
+    }
+    return defaultMsg;
+};
+
 export const register = async (userData) => {
     try {
         const { data } = await apiClient.post('/auth/register', userData);
         return data;
     } catch (error) {
-        const detail = error.response?.data?.detail || error.response?.data || error.message || 'Registration failed';
-        throw { detail };
+        const detail = extractErrorMessage(error, 'Registration failed. Please check your details.');
+        throw { detail, status: error.response?.status };
     }
 };
 
@@ -30,17 +52,29 @@ export const login = async (credentials) => {
         }
         return data;
     } catch (error) {
-        const detail = error.response?.data?.detail
-            || error.response?.data?.error?.message
-            || error.message
-            || 'Login failed. Please check your credentials.';
-        throw { detail };
+        const detail = extractErrorMessage(error, 'Login failed. Please check your credentials.');
+        throw { detail, status: error.response?.status };
     }
 };
 
 export const forgotPassword = async (payload) => {
-    const { data } = await apiClient.post('/auth/forgot-password', payload);
-    return data;
+    try {
+        const { data } = await apiClient.post('/auth/forgot-password', payload);
+        return data;
+    } catch (error) {
+        const detail = extractErrorMessage(error, 'Unable to request password reset.');
+        throw { detail };
+    }
+};
+
+export const resetPassword = async (payload) => {
+    try {
+        const { data } = await apiClient.post('/auth/reset-password', payload);
+        return data;
+    } catch (error) {
+        const detail = extractErrorMessage(error, 'Unable to reset password. Link may be invalid or expired.');
+        throw { detail };
+    }
 };
 
 export const getMe = async () => {

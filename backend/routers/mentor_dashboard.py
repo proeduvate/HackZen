@@ -1270,12 +1270,13 @@ async def generate_student_report(
 @router.get("/overview")
 async def get_dashboard_overview(current_user: dict = Depends(with_auth)):
     """Get dashboard overview with all key metrics"""
+    if current_user.get("role") != "mentor":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only mentors can view dashboard",
+        )
+
     try:
-        if current_user["role"] != "mentor":
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only mentors can view dashboard",
-            )
         
         students = await MentorDashboardService.get_all_assigned_students(current_user["sub"])
         meetings = await MentorDashboardService.get_mentor_meetings(current_user["sub"], upcoming_only=True)

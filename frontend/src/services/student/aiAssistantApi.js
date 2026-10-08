@@ -27,12 +27,38 @@ const toUiMessage = (entry) => ({
         : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 });
 
-export const fetchInitialMessages = async () => {
+export const fetchInitialMessages = async (hackathonId) => {
     try {
-        const { data } = await apiClient.get('/ai/logs');
-        return Array.isArray(data) ? data.map(toUiMessage) : [];
+        const { data } = await apiClient.get('/ai/logs', {
+            params: hackathonId ? { hackathon_id: hackathonId } : {}
+        });
+        if (Array.isArray(data) && data.length > 0) {
+            const list = [];
+            const chronological = [...data].reverse();
+            for (const log of chronological) {
+                if (log.query) {
+                    list.push({
+                        id: `q_${log._id || log.id || Math.random()}`,
+                        sender: 'user',
+                        text: log.query,
+                        timestamp: log.timestamp ? new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
+                    });
+                }
+                if (log.response) {
+                    list.push({
+                        id: `r_${log._id || log.id || Math.random()}`,
+                        sender: 'ai',
+                        text: log.response,
+                        timestamp: log.timestamp ? new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
+                    });
+                }
+            }
+            return list;
+        }
+        return [];
     } catch (error) {
-        throw resolveAiError(error);
+        console.warn('AI logs could not be loaded:', error);
+        return [];
     }
 };
 
@@ -47,7 +73,8 @@ export const sendChatMessage = async (text, context, objective) => {
 
         const payload = {
             query: text,
-            hackathon_id: currentHackathon || 'general'
+            hackathon_id: context || currentHackathon || 'general',
+            objective: objective || 'Theme understanding'
         };
 
         const { data } = await apiClient.post('/ai/chat', payload);
@@ -55,7 +82,7 @@ export const sendChatMessage = async (text, context, objective) => {
         return {
             id: Date.now(),
             sender: 'ai',
-            text: data.response || 'AI Co-Mentor is currently unavailable.',
+            text: data.response || 'I am ready to help you brainstorm and plan your project.',
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         };
     } catch (error) {

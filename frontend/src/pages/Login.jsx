@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { login } from '../api/userApi';
 import Logo from '../components/Logo';
 import { usePlatformSettings } from '../context/PlatformSettingsContext';
 
 const Login = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { isMaintenanceMode } = usePlatformSettings();
+
+    const searchParams = new URLSearchParams(location.search);
+    const isSessionExpired = searchParams.get('reason') === 'session_expired' || searchParams.get('expired') === 'true';
+    const isResetSuccess = searchParams.get('reset') === 'success';
+
     const [formData, setFormData] = useState({
         email: localStorage.getItem('rememberedEmail') || '',
         password: ''
@@ -140,6 +146,26 @@ const Login = () => {
                             Please enter your details to sign in.
                         </p>
                     </div>
+
+                    {/* Session Expired Notice */}
+                    {isSessionExpired && (
+                        <div className="mb-6 p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs flex items-center gap-2.5">
+                            <svg className="w-4 h-4 shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <span className="font-medium">Your session has expired. Please sign in again to continue.</span>
+                        </div>
+                    )}
+
+                    {/* Reset Success Notice */}
+                    {isResetSuccess && (
+                        <div className="mb-6 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs flex items-center gap-2.5">
+                            <svg className="w-4 h-4 shrink-0 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span className="font-medium">Your password has been successfully reset. Please sign in with your new password.</span>
+                        </div>
+                    )}
 
                     {/* Maintenance Notice */}
                     {isMaintenanceMode && (

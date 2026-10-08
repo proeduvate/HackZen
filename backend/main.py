@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 from datetime import datetime
 import asyncio
+import os
 from pathlib import Path
 from core.config import settings
 from database import MongoDB
@@ -72,18 +73,17 @@ app = FastAPI(
 )
 
 # CORS middleware
+_cors_env = os.environ.get(
+    "CORS_ORIGINS",
+    "http://localhost:5174,http://localhost:5173,http://localhost:5176,"
+    "http://127.0.0.1:5174,http://127.0.0.1:5173,http://127.0.0.1:5176,"
+    "http://localhost:3000,http://localhost:8080",
+)
+_cors_origins = [o.strip() for o in _cors_env.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5174",
-        "http://localhost:5173",
-        "http://localhost:5176",
-        "http://127.0.0.1:5174",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:5176",
-        "http://localhost:3000",
-        "http://localhost:8080",
-    ],
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

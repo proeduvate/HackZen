@@ -110,10 +110,15 @@ async def issue_certificate(
 
 
 @router.get("/me", response_model=List[CertificateResponse])
+@router.get("/my", response_model=List[CertificateResponse])
 async def get_my_certificates(current_user: dict = Depends(with_auth)):
     """Get all certificates for the current user"""
     collection = get_certificates_collection()
-    cursor = collection.find({"userId": str(current_user["_id"])}).sort("issuedAt", -1)
+    user_id = str(current_user.get("_id") or current_user.get("id") or current_user.get("sub"))
+    query = {"$or": [{"userId": user_id}]}
+    if ObjectId.is_valid(user_id):
+        query["$or"].append({"userId": ObjectId(user_id)})
+    cursor = collection.find(query).sort("issuedAt", -1)
 
     certs = await cursor.to_list(100)
 
@@ -123,22 +128,92 @@ async def get_my_certificates(current_user: dict = Depends(with_auth)):
     return [CertificateResponse(**c) for c in certs]
 
 
+@router.get("/verify/{validation_id}")
+async def verify_certificate_public(validation_id: str):
+    """Public verification endpoint for QR code scanners and third-party checks."""
+    db = get_db()
+    cert = await db["certificates"].find_one({
+        "$or": [
+            {"validationId": validation_id},
+            {"_id": ObjectId(validation_id)} if ObjectId.is_valid(validation_id) else {"validationId": validation_id}
+        ]
+    })
+    if not cert:
+        return {
+            "verified": False,
+            "valid": False,
+            "status": "Invalid",
+            "message": f"Certificate with ID '{validation_id}' not found.",
+        }
+
+    is_active = str(cert.get("status", "Active")).lower() not in ["revoked", "suspended"]
+    return {
+        "verified": is_active,
+        "valid": is_active,
+        "status": cert.get("status", "Active"),
+        "validationId": cert.get("validationId", validation_id),
+        "recipientName": cert.get("recipientName") or cert.get("studentName") or "Student Participant",
+        "eventTitle": cert.get("eventTitle") or cert.get("hackathonTitle") or "ProEduvate Hackathon",
+        "type": cert.get("certType") or cert.get("type") or "Certificate of Participation",
+        "dateIssued": str(cert.get("issuedAt") or cert.get("completionDate") or "Recently"),
+        "issuedBy": "ProEduvate Hackathon Platform",
+        "message": "Official Certificate verified successfully.",
+    }
+
+
+@router.get("/{certificate_id}/download")
+async def download_certificate_file(certificate_id: str):
+    """Download certificate file."""
+    db = get_db()
+    cert = None
+    if ObjectId.is_valid(certificate_id):
+        cert = await db["certificates"].find_one({"_id": ObjectId(certificate_id)})
+    if not cert:
+        cert = await db["certificates"].find_one({"validationId": certificate_id})
+    if not cert:
+        raise HTTPException(status_code=404, detail="Certificate not found")
+
+    file_path = cert.get("filePath")
+    if file_path:
+        full_path = (file_upload_service.base_dir / file_path).resolve()
+        if full_path.is_file():
+            return Response(
+                content=full_path.read_bytes(),
+                media_type="application/pdf" if file_path.endswith(".pdf") else "image/png",
+                headers={"Content-Disposition": f'attachment; filename="certificate_{certificate_id}.pdf"'},
+            )
+
+    recipient = cert.get("recipientName") or "Student"
+    event = cert.get("eventTitle") or cert.get("hackathonTitle") or "ProEduvate Hackathon"
+    val_id = cert.get("validationId") or f"CERT-{certificate_id[-6:].upper()}"
+    svg_content = f"""<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+        <rect width="800" height="600" fill="#16122b" rx="20"/>
+        <rect x="20" y="20" width="760" height="560" fill="none" stroke="#6366f1" stroke-width="3" rx="15"/>
+        <text x="400" y="120" font-family="Arial" font-size="32" font-weight="bold" fill="#ffffff" text-anchor="middle">CERTIFICATE OF PARTICIPATION</text>
+        <text x="400" y="180" font-family="Arial" font-size="16" fill="#a5b4fc" text-anchor="middle">PROEDUVATE HACKATHON PLATFORM</text>
+        <text x="400" y="270" font-family="Arial" font-size="20" fill="#9ca3af" text-anchor="middle">PROUDLY PRESENTED TO</text>
+        <text x="400" y="330" font-family="Arial" font-size="36" font-weight="bold" fill="#67e8f9" text-anchor="middle">{recipient}</text>
+        <text x="400" y="400" font-family="Arial" font-size="18" fill="#e2e8f0" text-anchor="middle">For outstanding participation and achievement in</text>
+        <text x="400" y="440" font-family="Arial" font-size="22" font-weight="bold" fill="#ffffff" text-anchor="middle">{event}</text>
+        <text x="400" y="520" font-family="Arial" font-size="14" fill="#64748b" text-anchor="middle">Validation ID: {val_id}</text>
+    </svg>"""
+    return Response(
+        content=svg_content.encode("utf-8"),
+        media_type="image/svg+xml",
+        headers={"Content-Disposition": f'attachment; filename="certificate_{certificate_id}.svg"'},
+    )
+
+
 @router.get("/{certificate_id}", response_model=CertificateResponse)
 async def get_certificate(certificate_id: str):
     """Get certificate details"""
     db = get_db()
-    settings = await db["settings"].find_one({"key": "global_config"}) or {}
-    is_public_enabled = settings.get(
-        "publicVerification", settings.get("publicQrVerification", True)
-    )
-    if is_public_enabled is False:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Public certificate verification is disabled by platform policy.",
-        )
-
     collection = get_certificates_collection()
-    cert = await collection.find_one({"_id": ObjectId(certificate_id)})
+    cert = None
+    if ObjectId.is_valid(certificate_id):
+        cert = await collection.find_one({"_id": ObjectId(certificate_id)})
+    if not cert:
+        cert = await collection.find_one({"validationId": certificate_id})
     if not cert:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Certificate not found"

@@ -187,6 +187,40 @@ async def can_manage_submission(
     return bool(hackathon and hackathon.get("organizerId") == user_id)
 
 
+@router.get("/my")
+async def get_my_submissions(current_user: dict = Depends(with_auth)):
+    """Get all submissions made by the authenticated student or their teams."""
+    db = get_db()
+    user_id = str(current_user.get("id") or current_user.get("sub") or current_user.get("_id"))
+
+    # 1. Find all team IDs user is member of
+    user_memberships = await db["teamMembers"].find({"userId": user_id}).to_list(100)
+    team_ids = [str(m["teamId"]) for m in user_memberships if m.get("teamId")]
+
+    # Also check teams where user is leader
+    async for team in db["teams"].find({"leaderId": user_id}):
+        t_id = str(team["_id"])
+        if t_id not in team_ids:
+            team_ids.append(t_id)
+
+    # 2. Find submissions by teamId or submittedBy/userId
+    conditions = []
+    if team_ids:
+        conditions.append({"teamId": {"$in": team_ids}})
+    conditions.append({"submittedBy": user_id})
+    conditions.append({"userId": user_id})
+
+    cursor = db["submissions"].find({"$or": conditions}).sort("submittedAt", -1)
+    subs = await cursor.to_list(200)
+
+    rows = []
+    for s in subs:
+        row = await build_submission_row(s, db)
+        rows.append(row)
+
+    return rows
+
+
 @router.post(
     "/", response_model=SubmissionResponse, status_code=status.HTTP_201_CREATED
 )
@@ -359,6 +393,70 @@ async def create_submission(
     sub_dict["_id"] = str(result.inserted_id)
 
     return SubmissionResponse(**sub_dict)
+
+
+@router.get("/my")
+async def get_my_submissions(current_user: dict = Depends(with_auth)):
+    """Fetch submissions for teams the current student belongs to, strictly scoped to the user."""
+    db = get_db()
+    user_id = current_user.get("id") or current_user.get("sub")
+
+    # 1. Find all teams current user belongs to or leads
+    members_cursor = db["teamMembers"].find({"userId": user_id})
+    member_records = await members_cursor.to_list(100)
+    team_ids = [str(m.get("teamId")) for m in member_records if m.get("teamId")]
+
+    led_teams_cursor = db["teams"].find({"leaderId": user_id})
+    led_teams = await led_teams_cursor.to_list(100)
+    for lt in led_teams:
+        team_ids.append(str(lt["_id"]))
+    team_ids = list(set(team_ids))
+
+    if not team_ids:
+        return []
+
+    collection = get_submission_collection()
+    cursor = collection.find({"teamId": {"$in": team_ids}}).sort("submittedAt", -1)
+    subs = await cursor.to_list(100)
+
+    result = []
+    for sub in subs:
+        sub_id = str(sub["_id"])
+        sub_team_id = str(sub.get("teamId", ""))
+        team = None
+        if ObjectId.is_valid(sub_team_id):
+            team = await db["teams"].find_one({"_id": ObjectId(sub_team_id)})
+
+        hackathon_id = (team.get("hackathonId") if team else None) or sub.get("hackathonId")
+        hackathon = None
+        if hackathon_id and ObjectId.is_valid(str(hackathon_id)):
+            hackathon = await db["hackathons"].find_one({"_id": ObjectId(str(hackathon_id))})
+
+        sub_dt = sub.get("submittedAt")
+        submitted_at_str = sub_dt.isoformat() if isinstance(sub_dt, datetime) else str(sub_dt or "Recently")
+
+        result.append({
+            "id": sub_id,
+            "_id": sub_id,
+            "project": sub.get("project") or sub.get("projectTitle") or sub.get("title") or "Project Submission",
+            "title": sub.get("project") or sub.get("projectTitle") or sub.get("title") or "Project Submission",
+            "hackathon": (hackathon or {}).get("title") or sub.get("hackathonTitle") or "Hackathon",
+            "hackathonTitle": (hackathon or {}).get("title") or sub.get("hackathonTitle") or "Hackathon",
+            "team": (team or {}).get("teamName") or (team or {}).get("name") or "My Team",
+            "teamId": sub_team_id,
+            "status": sub.get("status", "Pending Review"),
+            "score": sub.get("score") or sub.get("overallScore") or sub.get("totalScore"),
+            "feedback": sub.get("adminFeedback") or sub.get("feedback"),
+            "desc": sub.get("desc") or sub.get("description") or "",
+            "description": sub.get("desc") or sub.get("description") or "",
+            "githubUrl": sub.get("githubUrl") or sub.get("repoUrl") or "",
+            "liveDemoUrl": sub.get("liveDemoUrl") or sub.get("demoUrl") or "",
+            "fileUrl": sub.get("fileUrl") or "",
+            "submittedAt": submitted_at_str,
+            "version": sub.get("version", 1),
+        })
+
+    return result
 
 
 @router.get("/team/{team_id}", response_model=List[SubmissionResponse])

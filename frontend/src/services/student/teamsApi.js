@@ -167,6 +167,19 @@ export const joinTeamByCode = async (inviteCode) => {
 };
 
 /**
+ * Leaves a team
+ */
+export const leaveTeam = async (teamId) => {
+    try {
+        const { data } = await apiClient.delete(`/teams/${teamId}/members/me`);
+        return data;
+    } catch (error) {
+        console.error('Failed to leave team:', error);
+        throw error;
+    }
+};
+
+/**
  * Sends a message in a team workspace
  */
 export const sendMessage = async (teamId, messageData) => {

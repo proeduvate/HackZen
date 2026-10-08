@@ -11,13 +11,14 @@ export const normalizeCertificate = (certificate) => {
 
     return {
         id: certificate._id || certificate.id,
-        title: certificate.title || 'Hackathon Award',
-        issuer: 'ProEduvate Platform',
-        date: certificate.completionDate || new Date(certificate.issuedAt).toISOString().slice(0, 10),
+        validationId: certificate.validationId || (certificate._id ? `CERT-${String(certificate._id).slice(-6).toUpperCase()}` : ''),
+        title: certificate.title || certificate.certificateType || 'Hackathon Award',
+        issuer: certificate.eventTitle || certificate.hackathonTitle || 'ProEduvate Platform',
+        date: certificate.completionDate || (certificate.issuedAt ? new Date(certificate.issuedAt).toISOString().slice(0, 10) : 'Recently'),
         description: certificate.description || '',
-        category: 'Participant',
+        category: certificate.certificateType || 'Participant',
         image: getCertificatePreview(certificateUrl),
-        status: 'Verified',
+        status: certificate.status || 'Verified',
         isDownloading: false,
         url: certificateUrl,
     };
@@ -62,18 +63,27 @@ export const deleteCertificate = async (certificateId) => {
 };
 
 /**
- * Verifies a certificate by its unique ID.
+ * Verifies a certificate by its unique validation ID or document ID.
  * @param {string} certId 
  */
 export const verifyCertificate = async (certId) => {
     try {
-        const { data } = await apiClient.get(`/certificates/${certId}`);
+        const { data } = await apiClient.get(`/certificates/verify/${encodeURIComponent(certId.trim())}`);
+        if (data.verified || data.valid) {
+            return {
+                status: 'success',
+                message: data.message || `Certificate ${certId} is Authentic`,
+                recipient: data.recipientName || 'Authenticated User',
+                event: data.eventTitle || 'ProEduvate Hackathon',
+                date: data.dateIssued || 'Recently'
+            };
+        }
         return {
-            status: 'success',
-            message: `Certificate ${certId} is Authentic`,
-            recipient: 'Authenticated User',
-            event: 'ProEduvate Hackathon',
-            date: new Date(data.issuedAt).toLocaleDateString()
+            status: 'error',
+            message: data.message || 'No record found with this ID',
+            recipient: '-',
+            event: '-',
+            date: '-'
         };
     } catch (error) {
         console.error('Verification failed:', error);
@@ -88,23 +98,45 @@ export const verifyCertificate = async (certId) => {
 };
 
 export const downloadCertificate = async (certificate) => {
-    if (!certificate?.url) {
-        throw new Error('No uploaded certificate file found');
+    try {
+        const certId = certificate.id || certificate._id || certificate.validationId;
+        if (certId) {
+            const response = await apiClient.get(`/certificates/${certId}/download`, {
+                responseType: 'blob'
+            });
+            const contentType = response.headers['content-type'] || 'application/pdf';
+            const blob = new Blob([response.data], { type: contentType });
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const safeTitle = (certificate.title || 'certificate').replace(/[^a-z0-9_-]+/gi, '-');
+            const ext = contentType.includes('svg') ? 'svg' : contentType.includes('png') ? 'png' : 'pdf';
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = `${safeTitle}.${ext}`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(downloadUrl);
+            return { success: true };
+        }
+    } catch (apiErr) {
+        console.warn('Backend certificate download fallback to direct URL:', apiErr);
     }
 
-    const extension = certificate.url.split('.').pop()?.split('?')[0] || 'file';
-    const safeTitle = (certificate.title || 'certificate').replace(/[^a-z0-9_-]+/gi, '-');
-    const link = document.createElement('a');
+    if (certificate?.url) {
+        const extension = certificate.url.split('.').pop()?.split('?')[0] || 'file';
+        const safeTitle = (certificate.title || 'certificate').replace(/[^a-z0-9_-]+/gi, '-');
+        const link = document.createElement('a');
+        link.href = certificate.url;
+        link.download = `${safeTitle}.${extension}`;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        return { success: true };
+    }
 
-    link.href = certificate.url;
-    link.download = `${safeTitle}.${extension}`;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    return { success: true };
+    throw new Error('Certificate download file could not be generated');
 };
 
 /**

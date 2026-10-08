@@ -41,6 +41,16 @@ const SignUp = () => {
         window.location.href = `${backendUrl}/api/auth/oauth/github`;
     };
 
+    const passwordChecks = {
+        hasLength: formData.password.length >= 8,
+        hasUpper: /[A-Z]/.test(formData.password),
+        hasLower: /[a-z]/.test(formData.password),
+        hasNumber: /\d/.test(formData.password),
+        hasSpecial: /[@$!%*?&#^()_\-+=\[\]{}|:;<>,.~]/.test(formData.password),
+    };
+
+    const isPasswordStrong = Object.values(passwordChecks).every(Boolean);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -55,8 +65,8 @@ const SignUp = () => {
             return;
         }
 
-        if (formData.password.length < 8) {
-            setError("Password must be at least 8 characters long.");
+        if (!isPasswordStrong) {
+            setError("Password must meet all strength requirements: 8+ characters, uppercase, lowercase, number, and special character.");
             return;
         }
 
@@ -99,7 +109,17 @@ const SignUp = () => {
 
             navigate(targetPath, { replace: true });
         } catch (err) {
-            setError(err.detail || err.message || 'Failed to create account. Please check your details.');
+            const errText = typeof err?.detail === 'string'
+                ? err.detail
+                : typeof err?.message === 'string'
+                ? err.message
+                : 'Failed to create account. Please check your details.';
+
+            if (err?.status === 409 || errText.toLowerCase().includes('already registered')) {
+                setError('This email is already registered. Please sign in or use a different email address.');
+            } else {
+                setError(errText);
+            }
         } finally {
             setLoading(false);
         }
@@ -330,6 +350,35 @@ const SignUp = () => {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Real-time Password Strength Guidance */}
+                        {formData.password.length > 0 && (
+                            <div className="p-3 bg-slate-50 dark:bg-navy-950/60 rounded-xl border border-slate-200 dark:border-slate-800 text-[11px] space-y-1.5">
+                                <span className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">Password Requirements:</span>
+                                <div className="grid grid-cols-2 gap-1.5">
+                                    <div className={`flex items-center gap-1.5 ${passwordChecks.hasLength ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-slate-400 dark:text-slate-500'}`}>
+                                        <span>{passwordChecks.hasLength ? '✓' : '○'}</span>
+                                        <span>8+ characters</span>
+                                    </div>
+                                    <div className={`flex items-center gap-1.5 ${passwordChecks.hasUpper ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-slate-400 dark:text-slate-500'}`}>
+                                        <span>{passwordChecks.hasUpper ? '✓' : '○'}</span>
+                                        <span>Uppercase letter</span>
+                                    </div>
+                                    <div className={`flex items-center gap-1.5 ${passwordChecks.hasLower ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-slate-400 dark:text-slate-500'}`}>
+                                        <span>{passwordChecks.hasLower ? '✓' : '○'}</span>
+                                        <span>Lowercase letter</span>
+                                    </div>
+                                    <div className={`flex items-center gap-1.5 ${passwordChecks.hasNumber ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-slate-400 dark:text-slate-500'}`}>
+                                        <span>{passwordChecks.hasNumber ? '✓' : '○'}</span>
+                                        <span>At least 1 number</span>
+                                    </div>
+                                    <div className={`flex items-center gap-1.5 col-span-2 ${passwordChecks.hasSpecial ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-slate-400 dark:text-slate-500'}`}>
+                                        <span>{passwordChecks.hasSpecial ? '✓' : '○'}</span>
+                                        <span>Special symbol (@$!%*?&#)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Agreement Checkbox */}
                         <div className="flex items-start pt-1">
