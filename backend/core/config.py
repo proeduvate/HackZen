@@ -142,11 +142,18 @@ class Settings(BaseSettings):
             return False
         return normalized in {"1", "true", "yes", "on", "debug", "dev", "development"}
 
+    @field_validator("FRONTEND_URL", mode="before")
+    @classmethod
+    def parse_frontend_url(cls, value):
+        if isinstance(value, str):
+            return value.strip().rstrip("/")
+        return value
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors_origins(cls, value):
         if isinstance(value, list):
-            return value
+            return [str(item).strip().rstrip("/") for item in value if str(item).strip()]
         if not value:
             return [
                 "http://localhost:3000",
@@ -165,10 +172,10 @@ class Settings(BaseSettings):
                     import json
                     parsed = json.loads(value)
                     if isinstance(parsed, list):
-                        return [str(item).strip() for item in parsed if str(item).strip()]
+                        return [str(item).strip().rstrip("/") for item in parsed if str(item).strip()]
                 except Exception:
                     pass
-            origins = [origin.strip() for origin in value.split(",") if origin.strip()]
+            origins = [origin.strip().rstrip("/") for origin in value.split(",") if origin.strip()]
             return origins if origins else ["*"]
         return value
 
