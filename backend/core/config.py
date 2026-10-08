@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
 from pydantic_settings import BaseSettings
 from pydantic import field_validator
 
@@ -102,7 +102,7 @@ class Settings(BaseSettings):
     )
 
     # CORS Origins
-    cors_origins: List[str] = [
+    cors_origins: Union[List[str], str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://localhost:5173",
@@ -141,6 +141,36 @@ class Settings(BaseSettings):
         if normalized in {"release", "production", "prod"}:
             return False
         return normalized in {"1", "true", "yes", "on", "debug", "dev", "development"}
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, value):
+        if isinstance(value, list):
+            return value
+        if not value:
+            return [
+                "http://localhost:3000",
+                "http://127.0.0.1:3000",
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
+                "http://localhost:5174",
+                "http://127.0.0.1:5174",
+                "http://localhost:8080",
+                "http://127.0.0.1:8080",
+            ]
+        if isinstance(value, str):
+            value = value.strip()
+            if value.startswith("[") and value.endswith("]"):
+                try:
+                    import json
+                    parsed = json.loads(value)
+                    if isinstance(parsed, list):
+                        return [str(item).strip() for item in parsed if str(item).strip()]
+                except Exception:
+                    pass
+            origins = [origin.strip() for origin in value.split(",") if origin.strip()]
+            return origins if origins else ["*"]
+        return value
 
     class Config:
         env_file = ".env"
