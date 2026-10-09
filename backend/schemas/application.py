@@ -13,13 +13,22 @@ class ApplicationStatus(str, Enum):
 
 class ApplicationBase(BaseModel):
     hackathonId: str = Field(..., alias="hackathonId")
-    userId: str = Field(..., alias="userId")
+    userId: Optional[str] = Field(None, alias="userId")
     teamId: Optional[str] = Field(None, alias="teamId")
     status: ApplicationStatus = ApplicationStatus.PENDING
 
 
-class ApplicationCreate(ApplicationBase):
-    pass
+class ApplicationCreate(BaseModel):
+    hackathonId: str = Field(..., alias="hackathonId")
+    teamId: Optional[str] = Field(None, alias="teamId")
+    teamName: Optional[str] = Field(None, alias="teamName")
+    leaderName: Optional[str] = Field(None, alias="leaderName")
+    leaderEmail: Optional[str] = Field(None, alias="leaderEmail")
+    teamSize: Optional[int] = Field(2, alias="teamSize")
+    notes: Optional[str] = Field(None, alias="notes")
+    memberEmails: Optional[list] = Field(default_factory=list, alias="memberEmails")
+
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
 
 class ApplicationUpdate(BaseModel):
@@ -29,6 +38,7 @@ class ApplicationUpdate(BaseModel):
 
 class ApplicationResponse(ApplicationBase):
     id: str = Field(..., alias="_id")
+    userId: str = Field(..., alias="userId")
     appliedAt: datetime = Field(..., alias="appliedAt")
 
     class Config:

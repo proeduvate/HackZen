@@ -155,19 +155,19 @@ const Analytics = () => {
                         </div>
                     </div>
 
-                    <div className="p-8 flex-1 flex items-end justify-between gap-3 h-64">
+                    <div className="p-8 flex-1 flex items-end justify-between gap-3 h-64" key={`${timeRange}-${growthPeriod}`}>
                         {growthData.map((v, i) => (
-                            <div key={i} className="flex-1 flex flex-col items-center gap-3 group h-full justify-end">
+                            <div key={i} className="flex-1 flex flex-col items-center gap-3 group h-full justify-end animate-in fade-in slide-in-from-bottom-2 duration-500" style={{ animationDelay: `${i * 80}ms` }}>
                                 <div className="relative w-full flex justify-center items-end h-full">
-                                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-white text-gray-900 text-xs font-semibold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-all duration-200 z-10 shadow-lg">
+                                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-white text-gray-900 text-xs font-semibold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-all duration-200 z-10 shadow-lg pointer-events-none">
                                         {v}
                                     </div>
                                     <div
-                                        className="w-full max-w-6 rounded-t-lg transition-all duration-500 cursor-pointer bg-cyan-600/40 hover:bg-cyan-600/60"
+                                        className="w-full max-w-6 rounded-t-lg transition-all duration-700 ease-out cursor-pointer bg-gradient-to-t from-cyan-600/40 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 hover:shadow-lg hover:shadow-cyan-500/30"
                                         style={{ height: `${(v / Math.max(...growthData)) * 100}%` }}
                                     ></div>
                                 </div>
-                                <span className="text-xs text-gray-500 font-medium">
+                                <span className="text-xs text-gray-400 font-medium">
                                     {growthPeriod === 'daily' ? ['M', 'T', 'W', 'T', 'F', 'S', 'S'][i % 7] : `W${i + 1}`}
                                 </span>
                             </div>

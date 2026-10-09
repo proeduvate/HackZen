@@ -1,15 +1,18 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { fetchHomeHackathons } from '../services/homeApi';
+import Logo from '../components/Logo';
+import ThemeToggle from '../components/ThemeToggle';
+import { usePlatformSettings } from '../context/PlatformSettingsContext';
 
 // --- Shared Internal Components ---
 
 const Button = ({ children, variant = 'primary', onClick, className = '', to, ...props }) => {
     const baseStyles = 'px-6 py-3 rounded-lg font-semibold transition-all duration-300 btn-hover relative z-10';
     const variants = {
-        primary: 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700',
-        secondary: 'glass text-white border-2 border-purple-600 hover:bg-purple-600/20',
-        outline: 'border-2 border-white/20 text-white hover:border-purple-600 hover:bg-purple-600/10',
+        primary: 'bg-gradient-to-r from-purple-600 to-blue-600 !text-white hover:from-purple-700 hover:to-blue-700 shadow-md shadow-purple-500/20',
+        secondary: 'glass text-purple-700 dark:text-white border-2 border-purple-600/40 hover:bg-purple-600/10 dark:hover:bg-purple-600/20',
+        outline: 'border-2 border-purple-600/40 dark:border-white/20 text-purple-700 dark:text-white hover:border-purple-600 hover:bg-purple-600/10',
     };
     const buttonClasses = `${baseStyles} ${variants[variant]} ${className}`;
 
@@ -40,8 +43,8 @@ const Card = ({ children, className = '', hover = true }) => {
 const FeatureCard = ({ icon, title, description }) => (
     <Card>
         <div className="text-4xl mb-4">{icon}</div>
-        <h3 className="text-xl font-bold text-white mb-3">{title}</h3>
-        <p className="text-gray-400">{description}</p>
+        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">{title}</h3>
+        <p className="text-slate-600 dark:text-gray-400">{description}</p>
     </Card>
 );
 
@@ -60,21 +63,21 @@ const HackathonCard = ({ id, domain, title, date, participants, venue }) => {
     return (
         <Card>
             <div className="mb-4">
-                <span className="inline-block px-3 py-1 bg-purple-600/20 text-purple-400 rounded-full text-sm font-semibold border border-purple-600/30">
+                <span className="inline-block px-3 py-1 bg-purple-600/10 dark:bg-purple-600/20 text-purple-700 dark:text-purple-400 rounded-full text-sm font-semibold border border-purple-600/30">
                     {domain}
                 </span>
             </div>
-            <h3 className="text-2xl font-bold text-white mb-4">{title}</h3>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">{title}</h3>
             <div className="space-y-3 mb-6">
-                <div className="flex items-center text-gray-300">
+                <div className="flex items-center text-slate-700 dark:text-gray-300">
                     <span className="mr-2">📅</span>
                     <span>{date}</span>
                 </div>
-                <div className="flex items-center text-gray-300">
+                <div className="flex items-center text-slate-700 dark:text-gray-300">
                     <span className="mr-2">👥</span>
                     <span>{participants} Participants</span>
                 </div>
-                <div className="flex items-center text-gray-300">
+                <div className="flex items-center text-slate-700 dark:text-gray-300">
                     <span className="mr-2">📍</span>
                     <span>{venue}</span>
                 </div>
@@ -90,6 +93,7 @@ const HackathonCard = ({ id, domain, title, date, participants, venue }) => {
 
 const Navbar = () => {
     const navigate = useNavigate();
+    const { isMaintenanceMode, isPublicRegistrationAllowed } = usePlatformSettings();
 
     const handleScroll = (e, targetId) => {
         e.preventDefault();
@@ -100,24 +104,31 @@ const Navbar = () => {
     };
 
     return (
-        <nav className="fixed top-0 z-50 w-full border-b border-gray-800 bg-navy-900/80 backdrop-blur-md">
+        <nav className={`fixed ${isMaintenanceMode ? 'top-8 sm:top-9' : 'top-0'} z-50 w-full border-b border-slate-200 dark:border-gray-800 bg-white/90 dark:bg-navy-900/80 backdrop-blur-md transition-all duration-300 shadow-sm`}>
             <div className="container flex items-center justify-between px-6 py-4 mx-auto">
-                <Link to="/" className="flex items-center gap-2">
-                    <img src="/proeduvatee-removebg-preview.png" alt="ProEduvate" className="h-12" />
+                <Link to="/" className="flex items-center gap-2 group">
+                    <Logo size="md" />
                 </Link>
                 <div className="items-center hidden gap-8 md:flex">
-                    <a href="#hackathons" onClick={(e) => handleScroll(e, 'hackathons')} className="text-gray-300 transition hover:text-white">Hackathons</a>
-                    <a href="#how-it-works" onClick={(e) => handleScroll(e, 'how-it-works')} className="text-gray-300 transition hover:text-white">How It Works</a>
-                    <a href="#features" onClick={(e) => handleScroll(e, 'features')} className="text-gray-300 transition hover:text-white">Features</a>
-                    <a href="#roles" onClick={(e) => handleScroll(e, 'roles')} className="text-gray-300 transition hover:text-white">Roles</a>
+                    <a href="#hackathons" onClick={(e) => handleScroll(e, 'hackathons')} className="text-slate-700 hover:text-purple-600 dark:text-gray-300 dark:hover:text-white transition font-medium">Hackathons</a>
+                    <a href="#how-it-works" onClick={(e) => handleScroll(e, 'how-it-works')} className="text-slate-700 hover:text-purple-600 dark:text-gray-300 dark:hover:text-white transition font-medium">How It Works</a>
+                    <a href="#features" onClick={(e) => handleScroll(e, 'features')} className="text-slate-700 hover:text-purple-600 dark:text-gray-300 dark:hover:text-white transition font-medium">Features</a>
+                    <a href="#roles" onClick={(e) => handleScroll(e, 'roles')} className="text-slate-700 hover:text-purple-600 dark:text-gray-300 dark:hover:text-white transition font-medium">Roles</a>
                 </div>
                 <div className="flex items-center gap-4">
-                    <button onClick={() => navigate('/login')} className="text-gray-300 transition hover:text-white">
+                    <ThemeToggle />
+                    <button onClick={() => navigate('/login')} className="text-slate-700 hover:text-purple-600 dark:text-gray-300 dark:hover:text-white transition font-medium text-sm">
                         Sign In
                     </button>
-                    <Button variant="primary" onClick={() => navigate('/get-started')}>
-                        Get Started
-                    </Button>
+                    {isPublicRegistrationAllowed ? (
+                        <Button variant="primary" onClick={() => navigate('/get-started')}>
+                            Get Started
+                        </Button>
+                    ) : (
+                        <Button variant="outline" onClick={() => navigate('/login')}>
+                            Account Login
+                        </Button>
+                    )}
                 </div>
             </div>
         </nav>
@@ -126,23 +137,30 @@ const Navbar = () => {
 
 const Hero = () => {
     const navigate = useNavigate();
+    const { platformName, isPublicRegistrationAllowed, isMaintenanceMode } = usePlatformSettings();
     return (
-        <section className="px-6 pt-32 pb-20">
+        <section className={`px-6 ${isMaintenanceMode ? 'pt-40' : 'pt-32'} pb-20`}>
             <div className="container mx-auto text-center">
-                <p className="mb-4 text-purple-400">The Ultimate Hackathon Platform</p>
-                <h1 className="mb-6 text-5xl font-bold text-transparent md:text-6xl bg-gradient-to-r from-white to-gray-400 bg-clip-text">
+                <p className="mb-4 text-purple-600 dark:text-purple-400 font-semibold tracking-wide uppercase text-sm">The Ultimate Hackathon Platform</p>
+                <h1 className="mb-6 text-5xl font-extrabold md:text-6xl text-slate-900 dark:text-transparent dark:bg-gradient-to-r dark:from-white dark:to-gray-400 dark:bg-clip-text">
                     Build. Compete. Innovate.
                 </h1>
-                <p className="max-w-3xl mx-auto mb-12 text-xl text-gray-400">
+                <p className="max-w-3xl mx-auto mb-6 text-xl font-medium text-slate-700 dark:text-gray-300">
                     The Platform To Launch and Join Hackathons
                 </p>
-                <p className="max-w-2xl mx-auto mb-8 text-gray-500">
-                    A unified platform where students, mentors, and organizers collaborate to turn innovative projects into reality.
+                <p className="max-w-2xl mx-auto mb-8 text-slate-600 dark:text-gray-400">
+                    A unified platform powered by <span className="font-semibold text-purple-500">{platformName || 'ProEduvate'}</span> where students, mentors, and organizers collaborate to turn innovative projects into reality.
                 </p>
                 <div className="flex flex-wrap justify-center gap-4">
-                    <Button variant="primary" onClick={() => navigate('/get-started')}>
-                        Get Started <span>→</span>
-                    </Button>
+                    {isPublicRegistrationAllowed ? (
+                        <Button variant="primary" onClick={() => navigate('/get-started')}>
+                            Get Started <span>→</span>
+                        </Button>
+                    ) : (
+                        <Button variant="primary" onClick={() => navigate('/login')}>
+                            Sign In to Platform <span>→</span>
+                        </Button>
+                    )}
                     <Button variant="secondary" onClick={() => navigate('/get-started')}>
                         Explore Hackathons
                     </Button>
@@ -176,10 +194,10 @@ const HackathonsSection = () => {
         <section id="hackathons" className="py-20 px-6 relative">
             <div className="max-w-7xl mx-auto">
                 <div className="text-center mb-16">
-                    <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+                    <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">
                         Upcoming <span className="gradient-text">Hackathons</span>
                     </h2>
-                    <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+                    <p className="text-xl text-slate-600 dark:text-gray-400 max-w-2xl mx-auto">
                         Join exciting hackathons and showcase your skills to the world
                     </p>
                 </div>
@@ -195,7 +213,7 @@ const HackathonsSection = () => {
                     </div>
                 )}
                 {error && !loading && (
-                    <p className="text-center text-gray-500 mt-4">{error}</p>
+                    <p className="text-center text-slate-500 dark:text-gray-500 mt-4">{error}</p>
                 )}
             </div>
         </section>
@@ -213,10 +231,10 @@ const HowItWorksSection = () => {
         <section id="how-it-works" className="py-20 px-6 relative">
             <div className="max-w-7xl mx-auto">
                 <div className="text-center mb-16">
-                    <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+                    <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">
                         How It <span className="gradient-text">Works</span>
                     </h2>
-                    <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+                    <p className="text-xl text-slate-600 dark:text-gray-400 max-w-2xl mx-auto">
                         Four simple steps to transform your ideas into reality
                     </p>
                 </div>
@@ -225,11 +243,11 @@ const HowItWorksSection = () => {
                         <div key={index} className="relative">
                             <Card hover={false} className="text-center h-full">
                                 <div className="text-6xl mb-4">{step.icon}</div>
-                                <div className="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center font-bold text-white text-xl glow-purple">
+                                <div className="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center font-bold text-white text-xl glow-purple shadow-lg shadow-purple-500/30">
                                     {index + 1}
                                 </div>
-                                <h3 className="text-xl font-bold text-white mb-3">{step.title}</h3>
-                                <p className="text-gray-400">{step.description}</p>
+                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">{step.title}</h3>
+                                <p className="text-slate-600 dark:text-gray-400">{step.description}</p>
                             </Card>
                         </div>
                     ))}
@@ -254,10 +272,10 @@ const FeaturesSection = () => {
         <section id="features" className="py-20 px-6 relative">
             <div className="max-w-7xl mx-auto">
                 <div className="text-center mb-16">
-                    <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+                    <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">
                         Premium <span className="gradient-text">Features</span>
                     </h2>
-                    <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+                    <p className="text-xl text-slate-600 dark:text-gray-400 max-w-2xl mx-auto">
                         Everything you need to run successful hackathons, all in one place
                     </p>
                 </div>
@@ -293,10 +311,10 @@ const RolesSection = () => {
         <section id="roles" className="py-20 px-6 relative">
             <div className="max-w-7xl mx-auto">
                 <div className="text-center mb-16">
-                    <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+                    <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">
                         Built for <span className="gradient-text">Everyone</span>
                     </h2>
-                    <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+                    <p className="text-xl text-slate-600 dark:text-gray-400 max-w-2xl mx-auto">
                         Tailored experiences for organizers, mentors, and students
                     </p>
                 </div>
@@ -304,12 +322,12 @@ const RolesSection = () => {
                     {roles.map((role, index) => (
                         <Card key={index}>
                             <div className="text-6xl mb-4 text-center">{role.icon}</div>
-                            <h3 className="text-2xl font-bold text-white mb-3 text-center">{role.title}</h3>
-                            <p className="text-gray-400 mb-6 text-center">{role.description}</p>
+                            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3 text-center">{role.title}</h3>
+                            <p className="text-slate-600 dark:text-gray-400 mb-6 text-center">{role.description}</p>
                             <div className="space-y-2 mb-6">
                                 {role.features.map((feature, idx) => (
-                                    <div key={idx} className="flex items-center text-gray-300">
-                                        <span className="mr-2 text-purple-400">✓</span>
+                                    <div key={idx} className="flex items-center text-slate-700 dark:text-gray-300">
+                                        <span className="mr-2 text-purple-600 dark:text-purple-400 font-bold">✓</span>
                                         <span>{feature}</span>
                                     </div>
                                 ))}
@@ -328,19 +346,19 @@ const RolesSection = () => {
 const CTASection = () => {
     const navigate = useNavigate();
     return (
-        <section className="px-6 py-20 bg-navy-900/50">
+        <section className="px-6 py-20 bg-purple-50/60 dark:bg-navy-900/50 border border-purple-100 dark:border-white/5 rounded-3xl max-w-7xl mx-auto mb-16 shadow-sm">
             <div className="container mx-auto text-center">
-                <h2 className="mb-4 text-4xl font-bold text-white md:text-5xl">
+                <h2 className="mb-4 text-4xl font-bold text-slate-900 dark:text-white md:text-5xl">
                     Ready to Transform<br />Your Hackathon Experience?
                 </h2>
-                <p className="max-w-2xl mx-auto mb-8 text-gray-400">
+                <p className="max-w-2xl mx-auto mb-8 text-slate-600 dark:text-gray-400">
                     Join thousands of students, mentors, and organizers in the world's leading hackathon platform.
                 </p>
                 <div className="flex flex-wrap justify-center gap-4">
                     <Button variant="primary" onClick={() => navigate('/get-started')}>
                         Get Started Now <span>→</span>
                     </Button>
-                    <Button variant="secondary">Schedule Demo</Button>
+                    <Button variant="secondary" onClick={() => navigate('/get-started')}>Schedule Demo</Button>
                 </div>
             </div>
         </section>

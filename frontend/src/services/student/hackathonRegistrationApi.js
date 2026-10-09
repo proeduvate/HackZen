@@ -17,7 +17,7 @@ const writeDrafts = (drafts) => {
 export const createInitialRegistrationDraft = (hackathon, user) => ({
     hackathonId: hackathon.id || hackathon._id,
     teamName: '',
-    teamSize: Math.min(2, hackathon.teamSizeLimit || 2),
+    teamSize: Math.max(2, Number(hackathon.minTeamSize || hackathon.teamSizeLimit || 2)),
     leaderName: user?.name || 'Student',
     leaderEmail: user?.email || '',
     memberEmails: [''],
@@ -49,38 +49,36 @@ export const saveRegistrationDraft = async (hackathonId, nextDraft) => {
 
 export const submitHackathonRegistration = async (hackathonId, draft) => {
     try {
-        console.log('Mocking Registration submission for:', hackathonId, draft);
-        
-        // Simulating network delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        const storedUser = JSON.parse(
+            sessionStorage.getItem('user') || localStorage.getItem('user') || '{}'
+        );
+        const userId = storedUser?._id || storedUser?.id || storedUser?.userId;
 
-        /* REAL API CALL - Commented out for mock flow
+        if (!userId) {
+            throw new Error('Authenticated student user information is missing.');
+        }
+
         const payload = {
-            hackathonId: hackathonId,
-            teamName: draft.teamName,
-            teamSize: parseInt(draft.teamSize),
-            members: draft.memberEmails.filter(email => email.trim() !== ''),
-            notes: draft.notes
+            hackathonId,
+            userId,
+            teamName: draft?.teamName || '',
+            notes: draft?.notes || '',
+            leaderName: draft?.leaderName || storedUser?.name || '',
+            leaderEmail: draft?.leaderEmail || storedUser?.email || '',
+            teamSize: draft?.teamSize || 2,
+            memberEmails: (draft?.memberEmails || []).filter(e => e && e.trim()),
         };
 
         const { data } = await apiClient.post('/applications/', payload);
-        */
 
-        // Mock response data
-        const mockData = {
-            _id: 'mock_reg_' + Math.random().toString(36).substr(2, 9),
-            appliedAt: new Date().toISOString(),
-        };
-        
-        // Clean up local draft on success
         const drafts = readDrafts();
         delete drafts[hackathonId];
         writeDrafts(drafts);
 
         return {
             success: true,
-            registrationId: mockData._id,
-            timestamp: mockData.appliedAt,
+            registrationId: data.id || data._id,
+            timestamp: data.appliedAt,
             draft,
         };
     } catch (error) {

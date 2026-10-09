@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
+import apiClient from '../../api/api';
 import { fetchHackathonById } from '../../services/student/upcomingHackathonsApi';
 import { getRegistrationDraft } from '../../services/student/hackathonRegistrationApi';
 
@@ -31,15 +32,29 @@ const StudentHackathonRegistration = () => {
     const [hackathon, setHackathon] = useState(null);
     const [draft, setDraft] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isAlreadyRegistered, setIsAlreadyRegistered] = useState(false);
+    const [isExpired, setIsExpired] = useState(false);
 
     useEffect(() => {
         const loadRegistrationFlow = async () => {
             setIsLoading(true);
 
             try {
+                // Check registration eligibility / duplicate / expired state
+                try {
+                    const checkRes = await apiClient.get(`/applications/check/${hackathonId}`);
+                    if (checkRes.data?.registered) {
+                        setIsAlreadyRegistered(true);
+                    } else if (checkRes.data?.expired) {
+                        setIsExpired(true);
+                    }
+                } catch (checkErr) {
+                    console.log('Eligibility check bypassed:', checkErr);
+                }
+
                 const nextHackathon = await fetchHackathonById(hackathonId);
                 const storedUser = JSON.parse(
-                    sessionStorage.getItem('user') || '{"name":"Hari","email":"hari@proeduvate.com"}'
+                    sessionStorage.getItem('user') || localStorage.getItem('user') || '{"name":"Student","email":""}'
                 );
                 const nextDraft = await getRegistrationDraft(nextHackathon, storedUser);
                 setHackathon(nextHackathon);
@@ -69,6 +84,58 @@ const StudentHackathonRegistration = () => {
         );
     }
 
+    if (isAlreadyRegistered) {
+        return (
+            <div className="min-h-screen bg-[#f2eef5] dark:bg-navy-950 px-4 py-16 flex items-center justify-center">
+                <div className="rounded-2xl border border-slate-200 dark:border-slate-800 p-8 sm:p-12 text-center max-w-lg w-full bg-white dark:bg-navy-900 shadow-xl">
+                    <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                        ✓
+                    </div>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Already Registered</h1>
+                    <p className="text-slate-600 dark:text-slate-400 mb-6 text-sm leading-relaxed">
+                        You have already submitted an application for <strong>{hackathon?.title || 'this hackathon'}</strong>. Your team workspace is active.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                        <button
+                            onClick={() => navigate('/student/workspace')}
+                            className="px-6 py-3 bg-[#5e4be0] hover:bg-[#4d3ac9] text-white font-semibold rounded-xl transition shadow"
+                        >
+                            Open Workspace
+                        </button>
+                        <button
+                            onClick={() => navigate('/student/hackathons')}
+                            className="px-6 py-3 bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300 font-semibold rounded-xl transition"
+                        >
+                            Browse Hackathons
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (isExpired) {
+        return (
+            <div className="min-h-screen bg-[#f2eef5] dark:bg-navy-950 px-4 py-16 flex items-center justify-center">
+                <div className="rounded-2xl border border-slate-200 dark:border-slate-800 p-8 sm:p-12 text-center max-w-lg w-full bg-white dark:bg-navy-900 shadow-xl">
+                    <div className="w-16 h-16 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                        !
+                    </div>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Registration Closed</h1>
+                    <p className="text-slate-600 dark:text-slate-400 mb-6 text-sm leading-relaxed">
+                        The registration period for <strong>{hackathon?.title || 'this hackathon'}</strong> has officially closed.
+                    </p>
+                    <button
+                        onClick={() => navigate('/student/hackathons')}
+                        className="px-6 py-3 bg-[#5e4be0] hover:bg-[#4d3ac9] text-white font-semibold rounded-xl transition shadow"
+                    >
+                        Browse Other Hackathons
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     if (!hackathon || !draft) {
         return (
             <div className="glass rounded-2xl border border-white/5 p-10 text-center">
@@ -85,72 +152,64 @@ const StudentHackathonRegistration = () => {
     }
 
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-5 duration-500">
-            <div className="space-y-6 max-w-7xl mx-auto">
-                <button
-                    onClick={() => navigate('/student/hackathons', { state: { hackathonId } })}
-                    className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors w-fit group"
-                >
-                    <svg className="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                    <span className="font-medium">Back to Hackathons</span>
-                </button>
-
-                {/* NEW HORIZONTAL STEPPER UI */}
-                <div className="glass p-8 md:p-10 rounded-3xl border border-white/5 relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500/20 to-transparent"></div>
-                    
-                    <div className="relative flex justify-between items-start max-w-5xl mx-auto">
-                        {steps.map((step, index) => {
-                            const isActive = location.pathname.endsWith(step.key) || (index === 0 && location.pathname.endsWith('register'));
-                            const isCompleted = currentStepIndex > index;
-                            
-                            return (
-                                <React.Fragment key={step.key}>
-                                    <div className="flex flex-col items-center relative z-10 group cursor-pointer"
-                                         onClick={() => navigate(`/student/hackathons/${hackathonId}/register/${step.key}`)}>
-                                        <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold transition-all duration-500 ${
-                                            isActive 
-                                                ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-[0_0_20px_rgba(147,51,234,0.5)] scale-110' 
-                                                : isCompleted
-                                                    ? 'bg-purple-600/20 text-purple-400 border-2 border-purple-500/50'
-                                                    : 'bg-navy-800 text-gray-500 border border-white/10'
-                                        }`}>
-                                            {isCompleted ? (
-                                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-                                                </svg>
-                                            ) : index + 1}
-                                        </div>
-                                        
-                                        <div className="mt-4 text-center">
-                                            <p className={`text-sm font-bold transition-colors ${isActive ? 'text-white' : 'text-gray-500'}`}>
-                                                {step.title}
-                                            </p>
-                                            <p className="text-[10px] text-gray-500 mt-1 max-w-[120px] leading-tight">
-                                                {step.description}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    
-                                    {index < steps.length - 1 && (
-                                        <div className="flex-1 h-[2px] mt-6 mx-4 relative overflow-hidden bg-white/5">
-                                            <div 
-                                                className="absolute top-0 left-0 h-full bg-gradient-to-r from-purple-600 to-blue-600 transition-all duration-700 ease-in-out shadow-[0_0_10px_rgba(147,51,234,0.3)]"
-                                                style={{ width: isCompleted ? '100%' : '0%' }}
-                                            ></div>
-                                        </div>
-                                    )}
-                                </React.Fragment>
-                            );
-                        })}
-                    </div>
+        <div className="min-h-screen bg-[#f2eef5] px-4 pb-10 pt-6 text-[#1f2430] sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-[1200px]">
+                <div className="mb-8 text-center">
+                    <h1 className="text-[clamp(2rem,3vw,3rem)] font-black tracking-[-0.06em] text-[#1e2433]">Register for Hackathon</h1>
+                    <p className="mt-3 text-lg font-medium text-[#5a5d6d]">{hackathon?.title || 'AI Innovation Challenge 2025'}</p>
                 </div>
 
-                <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_280px] gap-6 items-start">
-                    <div className="glass p-8 md:p-10 rounded-2xl border border-blue-500/20 shadow-xl relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-40 h-40 bg-blue-600/10 rounded-full blur-3xl -z-10"></div>
+                <div className="mx-auto mb-8 flex max-w-[720px] items-center justify-center gap-3 sm:gap-4">
+                    {steps.map((step, index) => {
+                        const isActive = location.pathname.endsWith(step.key) || (index === 0 && location.pathname.endsWith('register'));
+                        const isCompleted = currentStepIndex > index;
+
+                        return (
+                            <React.Fragment key={step.key}>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => navigate(`/student/hackathons/${hackathonId}/register/${step.key}`)}
+                                        className={`flex h-9 w-9 items-center justify-center rounded-full border text-sm font-bold transition-colors ${
+                                            isActive
+                                                ? 'border-[#5e4be0] bg-[#5e4be0] text-white shadow-[0_0_0_5px_rgba(94,75,224,0.12)]'
+                                                : isCompleted
+                                                    ? 'border-[#5e4be0] bg-[#f0edff] text-[#5e4be0]'
+                                                    : 'border-[#d9d9df] bg-[#f7f4fa] text-[#7a7f90]'
+                                        }`}
+                                    >
+                                        {isCompleted ? (
+                                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        ) : (
+                                            index + 1
+                                        )}
+                                    </button>
+                                    <span className={`hidden text-sm font-semibold sm:inline ${isActive ? 'text-[#202531]' : 'text-[#7b7e8a]'}`}>
+                                        {step.title}
+                                    </span>
+                                </div>
+
+                                {index < steps.length - 1 && (
+                                    <div key={`${step.key}-line`} className="h-px flex-1 max-w-[120px] bg-[#dfe3ec]">
+                                        <div className={`h-full transition-all ${isCompleted ? 'w-full bg-[#5e4be0]' : 'w-0 bg-transparent'}`} />
+                                    </div>
+                                )}
+                            </React.Fragment>
+                        );
+                    })}
+                </div>
+
+                <div className="overflow-hidden rounded-[22px] border border-[#dfe3ee] bg-[#f8f8fb] shadow-[0_1px_0_rgba(16,24,40,0.02)]">
+                    <div className="border-b border-[#dfe3ee] bg-[#f4f2f7] px-5 py-5 sm:px-8">
+                        <div className="flex items-center gap-3">
+                            <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[#5d4ad8] shadow-[0_0_0_4px_rgba(93,74,216,0.12)]" />
+                            <h2 className="text-[clamp(1.25rem,2vw,1.8rem)] font-black tracking-[-0.04em] text-[#1d2431]">Registration Details</h2>
+                        </div>
+                    </div>
+
+                    <div className="px-5 py-6 sm:px-8 sm:py-8">
                         <Outlet
                             context={{
                                 hackathon,
@@ -159,38 +218,6 @@ const StudentHackathonRegistration = () => {
                             }}
                         />
                     </div>
-
-                    <aside className="glass p-5 rounded-2xl border border-white/5 space-y-4 xl:sticky xl:top-24">
-                        <div>
-                            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-[0.2em] mb-2">Hackathon</p>
-                            <h3 className="text-lg font-bold text-white leading-tight">{hackathon.title}</h3>
-                            <p className="text-sm text-gray-400 mt-1">{hackathon.organizer}</p>
-                        </div>
-
-                        <div className="space-y-3 text-sm">
-                            <div className="flex justify-between gap-4">
-                                <span className="text-gray-400">Mode</span>
-                                <span className="text-white font-semibold text-right">{hackathon.mode}</span>
-                            </div>
-                            <div className="flex justify-between gap-4">
-                                <span className="text-gray-400">Schedule</span>
-                                <span className="text-white font-semibold text-right">{hackathon.date}</span>
-                            </div>
-                            <div className="flex justify-between gap-4">
-                                <span className="text-gray-400">Team Limit</span>
-                                <span className="text-white font-semibold text-right">{hackathon.teamSizeLimit} Members</span>
-                            </div>
-                            <div className="flex justify-between gap-4">
-                                <span className="text-gray-400">Reward</span>
-                                <span className="text-white font-semibold text-right">{hackathon.reward}</span>
-                            </div>
-                        </div>
-
-                        <div className="rounded-xl bg-white/5 border border-white/5 p-4">
-                            <p className="text-xs text-gray-500 uppercase tracking-[0.2em] mb-2">About</p>
-                            <p className="text-sm text-gray-300 leading-6">{hackathon.description}</p>
-                        </div>
-                    </aside>
                 </div>
             </div>
         </div>

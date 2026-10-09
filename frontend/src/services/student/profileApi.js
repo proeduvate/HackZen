@@ -9,10 +9,10 @@ import apiClient from '../../api/api';
 
 // Default profile structure matching our components' expectations
 const DEFAULT_PROFILE = {
-    name: 'Hari Raajan',
-    role: 'Student Developer',
-    year: '3rd Year',
-    college: 'PSG College of Technology',
+    name: 'Student',
+    role: 'Student',
+    year: 'N/A',
+    college: 'Not specified',
     registerNumber: '',
     bio: '',
     avatarGradient: 'from-purple-600 to-blue-600',
@@ -31,7 +31,7 @@ const DEFAULT_PROFILE = {
         projects: 0,
         certificates: 0
     },
-    initials: 'HR'
+    initials: 'S'
 };
 
 /**
@@ -55,7 +55,7 @@ export const fetchStudentProfile = async () => {
                 github: roleProfile.githubUrl || '',
                 portfolio: roleProfile.linkedinUrl || ''
             },
-            initials: (data.name || '').split(' ').map(n => n[0]).join('').toUpperCase() || 'HR'
+            initials: (data.name || 'Student').split(' ').map(n => n[0]).join('').toUpperCase() || 'S'
         };
         
         // Cache in localStorage for persistence across sessions

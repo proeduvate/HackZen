@@ -18,30 +18,37 @@ def get_ai_logs_collection():
 @router.post("/chat")
 async def chat_with_ai_co_mentor(
     query: str = Body(..., embed=True),
-    hackathon_id: str = Body(..., embed=True),
+    hackathon_id: Optional[str] = Body("general", embed=True),
+    objective: Optional[str] = Body(None, embed=True),
     current_user: dict = Depends(with_auth),
 ):
-    # Check if hackathon exists
-    hackathons_collection = get_db()["hackathons"]
-    hackathon = await hackathons_collection.find_one({"_id": ObjectId(hackathon_id)})
-    if not hackathon:
-        hackathon = await hackathons_collection.find_one({"hackathonId": hackathon_id})
+    # Check if hackathon exists when provided and not 'general'
+    hackathon = None
+    resolved_hackathon_id = "general"
+    if hackathon_id and str(hackathon_id).strip().lower() != "general":
+        hackathons_collection = get_db()["hackathons"]
+        if ObjectId.is_valid(hackathon_id):
+            hackathon = await hackathons_collection.find_one({"_id": ObjectId(hackathon_id)})
+        if not hackathon:
+            hackathon = await hackathons_collection.find_one({"hackathonId": hackathon_id})
+        if not hackathon:
+            hackathon = await hackathons_collection.find_one({"_id": hackathon_id})
+        if hackathon:
+            resolved_hackathon_id = str(hackathon["_id"])
 
-    if not hackathon:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Hackathon not found"
-        )
-
-    # Generate AI response
-    response_data = await ai_service.generate_response(query, [], hackathon_id)
+    # Generate AI response with context & objective
+    response_data = await ai_service.generate_response(
+        query, [], resolved_hackathon_id, objective=objective
+    )
     response_text = response_data.get(
         "response", "I'm sorry, I couldn't generate a response."
     )
 
-    # Store log as per finalized schema
+    # Store log
+    user_id = str(current_user.get("_id") or current_user.get("id") or current_user.get("sub"))
     log_data = {
-        "userId": str(current_user["_id"]),
-        "hackathonId": hackathon_id,
+        "userId": user_id,
+        "hackathonId": resolved_hackathon_id,
         "query": query,
         "response": response_text,
         "timestamp": datetime.utcnow(),
@@ -58,8 +65,9 @@ async def get_my_ai_logs(
     hackathon_id: Optional[str] = None, current_user: dict = Depends(with_auth)
 ):
     logs_collection = get_ai_logs_collection()
-    query = {"userId": str(current_user["_id"])}
-    if hackathon_id:
+    user_id = str(current_user.get("_id") or current_user.get("id") or current_user.get("sub"))
+    query = {"userId": user_id}
+    if hackathon_id and hackathon_id != "general":
         query["hackathonId"] = hackathon_id
 
     cursor = logs_collection.find(query).sort("timestamp", -1)
