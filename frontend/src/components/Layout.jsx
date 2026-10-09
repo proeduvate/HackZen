@@ -4,6 +4,59 @@ import ThemeToggle from './ThemeToggle';
 import Logo from './Logo';
 import { fetchNotifications, markAllNotificationsRead, markNotificationRead } from '../services/admin/dashboardApi';
 
+// --- Time Formatter for Real-Time & Timezone-Aware Display ---
+export const formatNotificationTime = (timeVal) => {
+    if (!timeVal) return 'Just now';
+    try {
+        let date;
+        if (typeof timeVal === 'string') {
+            const hasT = timeVal.includes('T');
+            const hasZ = timeVal.endsWith('Z') || timeVal.includes('+');
+            const normalized = hasT && !hasZ ? `${timeVal}Z` : timeVal;
+            const parsed = new Date(normalized);
+            if (!isNaN(parsed.getTime())) {
+                date = parsed;
+            } else {
+                const direct = new Date(timeVal);
+                if (!isNaN(direct.getTime())) {
+                    date = direct;
+                } else {
+                    return timeVal;
+                }
+            }
+        } else if (timeVal instanceof Date) {
+            date = timeVal;
+        } else {
+            return 'Just now';
+        }
+
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffSec = Math.floor(diffMs / 1000);
+
+        if (diffSec < 60 && diffSec >= -15) return 'Just now';
+        if (diffSec < 3600 && diffSec >= 60) return `${Math.floor(diffSec / 60)}m ago`;
+
+        // If sent today: e.g. "07:45 PM"
+        const isToday = now.toDateString() === date.toDateString();
+        const timePart = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+        if (isToday) return timePart;
+
+        // If sent yesterday: "Yesterday, 07:45 PM"
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        if (yesterday.toDateString() === date.toDateString()) {
+            return `Yesterday, ${timePart}`;
+        }
+
+        // Otherwise: "Oct 09, 07:45 PM"
+        const datePart = date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        return `${datePart}, ${timePart}`;
+    } catch {
+        return timeVal || 'Just now';
+    }
+};
+
 // --- Single Message Popup Modal ---
 const MessageModal = ({ message, onClose }) => {
     if (!message) return null;
@@ -30,7 +83,7 @@ const MessageModal = ({ message, onClose }) => {
                     </div>
                     <div>
                         <h2 className="text-lg font-extrabold text-slate-900 dark:text-white leading-tight">{message.title}</h2>
-                        <span className="text-[10px] text-slate-500 dark:text-gray-400 font-mono">{message.createdAt || message.time}</span>
+                        <span className="text-[10px] text-slate-500 dark:text-gray-400 font-mono">{formatNotificationTime(message.createdAt || message.time)}</span>
                     </div>
                 </div>
                 <div className="bg-slate-50 dark:bg-black/20 p-4 rounded-xl border border-slate-200 dark:border-white/5">
@@ -161,8 +214,15 @@ const DashboardLayout = () => {
                     const isRead = n.read || n.isRead || localReadIds.includes(n.id);
                     return { ...n, read: isRead, isRead: isRead };
                 });
-                // Ensure strictly sorted newest on top
-                const sortedList = [...list].sort((a, b) => {
+                // Deduplicate by title + message to prevent duplicate broadcast rows
+                const uniqueMap = new Map();
+                list.forEach(n => {
+                    const key = `${(n.title || '').trim().toLowerCase()}|${(n.message || '').trim().toLowerCase()}`;
+                    if (!uniqueMap.has(key)) {
+                        uniqueMap.set(key, n);
+                    }
+                });
+                const sortedList = Array.from(uniqueMap.values()).sort((a, b) => {
                     if (a.id && b.id) return b.id.localeCompare(a.id);
                     return 0;
                 });
@@ -195,7 +255,14 @@ const DashboardLayout = () => {
                     const isRead = n.isRead || n.read || localReadIds.includes(n.id);
                     return { ...n, isRead, read: isRead };
                 });
-                const sortedList = [...list].sort((a, b) => {
+                const uniqueMap = new Map();
+                list.forEach(n => {
+                    const key = `${(n.title || '').trim().toLowerCase()}|${(n.message || '').trim().toLowerCase()}`;
+                    if (!uniqueMap.has(key)) {
+                        uniqueMap.set(key, n);
+                    }
+                });
+                const sortedList = Array.from(uniqueMap.values()).sort((a, b) => {
                     if (a.id && b.id) return b.id.localeCompare(a.id);
                     return 0;
                 });
@@ -1012,7 +1079,7 @@ const DashboardLayout = () => {
                                                     <div className="flex justify-between items-start mb-0.5">
                                                         <h4 className={`text-xs font-bold ${(notif.read || notif.isRead) ? 'text-slate-600 dark:text-gray-300' : 'text-slate-900 dark:text-white'}`}>{notif.title || 'Announcement'}</h4>
                                                         <span className="text-[9px] text-slate-400 whitespace-nowrap ml-2">
-                                                            {notif.createdAt || notif.time || 'Just now'}
+                                                            {formatNotificationTime(notif.createdAt || notif.time)}
                                                         </span>
                                                     </div>
                                                     <p className="text-[11px] text-slate-500 dark:text-gray-400 line-clamp-2 leading-relaxed">{notif.message}</p>
@@ -1058,7 +1125,7 @@ const DashboardLayout = () => {
 
                             <div className="flex items-center gap-2 mb-0.5">
                                 <span className="text-[10px] font-black uppercase tracking-wider bg-violet-50 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300 px-2 py-0.5 rounded-full border border-violet-200 dark:border-violet-500/30">Announcement</span>
-                                <span className="text-[9.5px] text-slate-500 dark:text-gray-400 font-mono">{toastPopup.createdAt || toastPopup.time}</span>
+                                <span className="text-[9.5px] text-slate-500 dark:text-gray-400 font-mono">{formatNotificationTime(toastPopup.createdAt || toastPopup.time)}</span>
                             </div>
                             <h4 className="text-sm font-extrabold text-slate-900 dark:text-white truncate">{toastPopup.title}</h4>
                             <p className="text-xs text-slate-600 dark:text-gray-300 line-clamp-2 mt-0.5 leading-relaxed">{toastPopup.message}</p>

@@ -223,19 +223,30 @@ async def get_my_notifications(current_user: dict = Depends(with_auth)):
     notifications = await cursor.to_list(10)
 
     formatted_notifications = []
+    seen_keys = set()
     for n in notifications:
+        title = str(n.get("title", "New Announcement")).strip()
+        msg = str(n.get("message", "")).strip()
+        key = (title.lower(), msg.lower())
+        if key in seen_keys:
+            continue
+        seen_keys.add(key)
+
         c_at = n.get("createdAt") or n.get("created_at")
-        time_display = (
-            c_at.strftime("%b %d, %I:%M %p")
-            if isinstance(c_at, datetime)
-            else (str(c_at)[:16] if c_at else "Just now")
-        )
+        if isinstance(c_at, datetime):
+            iso_str = c_at.strftime("%Y-%m-%dT%H:%M:%SZ")
+        elif isinstance(c_at, str) and "T" in c_at:
+            iso_str = c_at if (c_at.endswith("Z") or "+" in c_at) else f"{c_at}Z"
+        else:
+            iso_str = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+
         formatted_notifications.append(
             {
                 "id": str(n["_id"]),
-                "title": n.get("title", "New Announcement"),
-                "message": n.get("message", ""),
-                "time": time_display,
+                "title": title,
+                "message": msg,
+                "time": iso_str,
+                "createdAt": iso_str,
                 "isRead": (
                     current_user.get("sub") in n.get("readBy", [])
                     if current_user.get("sub")

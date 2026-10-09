@@ -1049,29 +1049,18 @@ async def send_platform_announcement(
     users = await db["users"].find(query, {"_id": 1}).to_list(length=None)
 
     now = datetime.utcnow()
-    notification_docs = [
-        {
-            "userId": str(u["_id"]),
-            "type": "ANNOUNCEMENT",
-            "title": data.title,
-            "message": data.message,
-            "read": False,
-            "createdAt": now,
-        }
-        for u in (users or [])
-    ]
+    now_iso = now.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    if notification_docs:
-        await db["notifications"].insert_many(notification_docs)
-
-    # Store master global notification entry
+    # Store master global notification entry (single document, visible to target audience)
     await db["notifications"].insert_one(
         {
-            "title": data.title,
-            "message": data.message,
+            "title": data.title.strip(),
+            "message": data.message.strip(),
             "target_audience": aud,
+            "audience": aud,
             "createdBy": current_user.get("sub", "admin"),
             "createdAt": now,
+            "created_at": now_iso,
             "type": "global_announcement",
             "readBy": [],
         }
@@ -1759,44 +1748,57 @@ async def get_my_notifications(current_user: dict = Depends(with_auth)):
     )
     user_role = str(current_user.get("role", "")).lower()
 
-    query_conditions = [
-        {"userId": user_id},
-        {"type": "global_announcement"},
-        {"type": "ANNOUNCEMENT"},
-        {"target_audience": "all"},
-        {"audience": "all"},
-    ]
+    audience_targets = ["all"]
     if user_role:
-        query_conditions.extend(
-            [
-                {"target_audience": user_role},
-                {"target_audience": f"{user_role}s"},
-                {"audience": user_role},
-                {"audience": f"{user_role}s"},
-            ]
-        )
+        audience_targets.extend([user_role, f"{user_role}s"])
 
-    notifs = (
+    # Strictly scoped query:
+    # 1. Personal notifications explicitly sent to this user
+    # 2. OR platform broadcasts without a specific userId that target this user's audience
+    query = {
+        "$or": [
+            {"userId": user_id},
+            {
+                "$and": [
+                    {"$or": [{"userId": {"$exists": False}}, {"userId": None}, {"userId": ""}]},
+                    {
+                        "$or": [
+                            {"target_audience": {"$in": audience_targets}},
+                            {"audience": {"$in": audience_targets}},
+                            {"type": {"$in": ["global_announcement", "platform_announcement"]}},
+                        ]
+                    },
+                ]
+            },
+        ]
+    }
+
+    raw_notifs = (
         await db["notifications"]
-        .find({"$or": query_conditions})
-        .sort("_id", -1)
-        .limit(50)
+        .find(query)
+        .sort([("createdAt", -1), ("_id", -1)])
+        .limit(100)
         .to_list(None)
     )
 
+    # In-memory deduplication: Never show identical broadcast messages more than once
+    seen_keys = set()
     formatted = []
-    for n in notifs:
+    for n in raw_notifs:
+        title = str(n.get("title", "")).strip()
+        message = str(n.get("message", "")).strip()
+        key = (title.lower(), message.lower())
+        if key in seen_keys:
+            continue
+        seen_keys.add(key)
+
         created = n.get("createdAt") or n.get("created_at")
         if isinstance(created, datetime):
-            time_str = created.strftime("%b %d, %I:%M %p")
-        elif isinstance(created, str):
-            try:
-                dt = datetime.fromisoformat(created.replace("Z", "+00:00"))
-                time_str = dt.strftime("%b %d, %I:%M %p")
-            except Exception:
-                time_str = created[:16]
+            iso_str = created.strftime("%Y-%m-%dT%H:%M:%SZ")
+        elif isinstance(created, str) and "T" in created:
+            iso_str = created if (created.endswith("Z") or "+" in created) else f"{created}Z"
         else:
-            time_str = "Recently"
+            iso_str = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
 
         read_status = bool(n.get("read", False) or n.get("isRead", False))
         read_by = [str(x) for x in (n.get("readBy") or [])]
@@ -1810,10 +1812,12 @@ async def get_my_notifications(current_user: dict = Depends(with_auth)):
         formatted.append(
             {
                 "id": str(n["_id"]),
-                "title": n.get("title", "Platform Announcement"),
-                "message": n.get("message", ""),
+                "title": title or "Platform Announcement",
+                "message": message,
                 "read": read_status,
-                "createdAt": time_str,
+                "createdAt": iso_str,
+                "time": iso_str,
+                "timestamp": iso_str,
             }
         )
     return {"success": True, "notifications": formatted}
