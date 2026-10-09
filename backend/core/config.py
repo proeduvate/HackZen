@@ -149,6 +149,13 @@ class Settings(BaseSettings):
             return value.strip().rstrip("/")
         return value
 
+    @field_validator("BACKEND_URL", mode="before")
+    @classmethod
+    def parse_backend_url(cls, value):
+        if isinstance(value, str):
+            return value.strip().rstrip("/")
+        return value
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors_origins(cls, value):
