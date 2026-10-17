@@ -1,10 +1,86 @@
+import apiClient from '../../api/api';
+import { getUIDataset, saveUIDataset } from '../uiDataApi';
+
 /**
- * Admin Disputes API (Mock)
- * Simulates backend functionality for managing platform disputes and investigations.
+ * Admin Disputes & Moderation Governance API Service
  */
 
-const STORAGE_KEY = 'admin_disputes_data';
-const MOCK_DELAY = 600;
+export const fetchDisputes = async () => {
+    try {
+        const { data } = await apiClient.get('/admin/disputes/all');
+        return data.disputes || data;
+    } catch (error) {
+        console.error("Error fetching admin disputes:", error);
+        throw error;
+    }
+};
+
+export const assignInvestigator = async (disputeId, investigatorName, investigatorEmail) => {
+    try {
+        const { data } = await apiClient.post(`/admin/disputes/${disputeId}/assign`, {
+            investigatorName,
+            investigatorEmail
+        });
+        return data;
+    } catch (error) {
+        console.error("Error assigning investigator:", error);
+        throw error;
+    }
+};
+
+export const requestInfoFromParty = async (disputeId, target, requestedItems, message, deadlineHours = 48) => {
+    try {
+        const { data } = await apiClient.post(`/admin/disputes/${disputeId}/request-info`, {
+            target,
+            requestedItems,
+            message,
+            deadlineHours
+        });
+        return data;
+    } catch (error) {
+        console.error("Error requesting info:", error);
+        throw error;
+    }
+};
+
+export const resolveDispute = async (disputeId, decision, reason, actions = [], notifyReporter = true, notifyTeam = true) => {
+    try {
+        const { data } = await apiClient.put(`/admin/disputes/${disputeId}/resolve`, {
+            decision,
+            reason,
+            actions,
+            notifyReporter,
+            notifyTeam
+        });
+        return data;
+    } catch (error) {
+        console.error("Error resolving dispute:", error);
+        throw error;
+    }
+};
+
+export const addDisputeNote = async (disputeId, text, isInternal = true) => {
+    try {
+        const { data } = await apiClient.post(`/admin/disputes/${disputeId}/notes`, { text, isInternal });
+        return data;
+    } catch (error) {
+        console.error("Error adding dispute note:", error);
+        throw error;
+    }
+};
+
+export const fetchDisputeAiAssessment = async (disputeId) => {
+    try {
+        const { data } = await apiClient.post(`/admin/disputes/${disputeId}/ai-assessment`);
+        return data?.assessment || null;
+    } catch (error) {
+        console.error("Error fetching AI dispute assessment:", error);
+        return null;
+    }
+};
+
+// --- Dataset / Fallback Helpers ---
+const DATASET = 'admin-disputes';
 
 const INITIAL_DISPUTES = [
     {
@@ -20,37 +96,40 @@ const INITIAL_DISPUTES = [
         description:
             'The team "CyberKnights" has been reported for using pre-written code in their project "AI Health Assistant". The reporter claims the core algorithm was taken from a GitHub repository without proper attribution, violating Rule 4.2 of the competition.',
         evidence: [
-            { label: 'Evidence Link 1', url: '#' },
-            { label: 'GitHub Reference', url: '#' },
+            { type: 'link', label: 'GitHub Repository', url: 'https://github.com/example/ai-health' },
+            { type: 'text', label: 'Match Confidence', value: '87% code similarity detected' },
         ],
         workflow: [
-            { label: 'Report Received', detail: 'Oct 24, 2024 • 10:12 AM', active: true },
-            { label: 'Under Investigation', detail: 'Platform admin assigned to verify codebase.', sub: 'Oct 24, 2024 • 02:45 PM', active: true },
-            { label: 'Final Decision', detail: 'Pending final review', active: false },
+            { label: 'Report Received', detail: 'Oct 24, 2024 • 10:30 AM', active: true },
+            { label: 'Under Investigation', detail: 'Assigned to Lead Judge', sub: 'Oct 24, 2024 • 11:15 AM', active: true },
+            { label: 'Final Decision', detail: 'Pending final review', sub: 'Estimated: 4 hours', active: false },
         ],
     },
     {
         id: 2,
-        type: 'Harassment Report',
-        team: 'Alpha Coders',
+        type: 'Harassment & Conduct',
+        team: 'QuantumCoders',
         time: '5 hours ago',
         status: 'open',
         priority: 'Critical',
         hackathonId: 'h2',
-        reporter: { name: 'Sara Lin', initials: 'SL', role: 'Student', org: 'MIT' },
-        reportedTeam: { name: 'Alpha Coders', initials: 'AC', type: 'Student Team', members: 3 },
+        reporter: { name: 'Sarah Connor', initials: 'SC', role: 'Participant', org: 'MIT' },
+        reportedTeam: { name: 'QuantumCoders', initials: 'QC', type: 'Student Team', members: 3 },
         description:
-            'A member of Alpha Coders sent threatening messages through the platform chat to members of competing teams. Screenshots have been shared as evidence.',
-        evidence: [{ label: 'Screenshot 1', url: '#' }],
+            'A member of QuantumCoders repeatedly used inappropriate language in the public Discord channel during mentoring hours. Multiple participants witnessed the incident.',
+        evidence: [
+            { type: 'screenshot', label: 'Discord Screenshot', url: '#' },
+            { type: 'text', label: 'Channel', value: '#general-chat' },
+        ],
         workflow: [
-            { label: 'Report Received', detail: 'Oct 22, 2024 • 08:00 AM', active: true },
-            { label: 'Under Investigation', detail: 'Awaiting admin assignment.', sub: '', active: false },
-            { label: 'Final Decision', detail: '', active: false },
+            { label: 'Report Received', detail: 'Oct 24, 2024 • 07:45 AM', active: true },
+            { label: 'Under Investigation', detail: 'Pending team interview', active: false },
+            { label: 'Final Decision', detail: 'Pending', active: false },
         ],
     },
     {
         id: 3,
-        type: 'Rule Violation',
+        type: 'Eligibility Breach',
         team: 'Tech Wizards',
         time: '1 day ago',
         status: 'resolved',
@@ -69,26 +148,8 @@ const INITIAL_DISPUTES = [
     },
 ];
 
-const initializeData = () => {
-    if (!sessionStorage.getItem(STORAGE_KEY)) {
-        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_DISPUTES));
-    }
-};
-
-const getData = () => {
-    initializeData();
-    return JSON.parse(sessionStorage.getItem(STORAGE_KEY));
-};
-
-const saveData = (data) => {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-};
-
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
 export const getDisputes = async (statusFilter) => {
-    await delay(MOCK_DELAY);
-    const data = getData();
+    const data = await getUIDataset(DATASET, INITIAL_DISPUTES);
     if (statusFilter) {
         if (statusFilter.toLowerCase() === 'open') {
             return data.filter(d => d.status !== 'resolved');
@@ -100,18 +161,15 @@ export const getDisputes = async (statusFilter) => {
 };
 
 export const getDisputeById = async (id) => {
-    await delay(MOCK_DELAY);
-    const data = getData();
+    const data = await getUIDataset(DATASET, INITIAL_DISPUTES);
     return data.find(d => d.id === id);
 };
 
 export const suspendUser = async (id) => {
-    await delay(1000);
-    const data = getData();
+    const data = await getUIDataset(DATASET, INITIAL_DISPUTES);
     const index = data.findIndex(d => d.id === id);
     if (index === -1) throw new Error("Dispute not found");
 
-    // Add suspension step
     data[index] = {
         ...data[index],
         workflow: [
@@ -119,17 +177,15 @@ export const suspendUser = async (id) => {
             { label: 'User Suspended', detail: 'System Action', active: true }
         ]
     };
-    saveData(data);
+    await saveUIDataset(DATASET, data);
     return { success: true };
 };
 
 export const requestMoreInfo = async (id, message) => {
-    await delay(1000);
-    const data = getData();
+    const data = await getUIDataset(DATASET, INITIAL_DISPUTES);
     const index = data.findIndex(d => d.id === id);
     if (index === -1) throw new Error("Dispute not found");
 
-    // Push info request workflow step
     data[index] = {
         ...data[index],
         workflow: [
@@ -137,13 +193,12 @@ export const requestMoreInfo = async (id, message) => {
             { label: 'Additional Info Requested', detail: message, active: true }
         ]
     };
-    saveData(data);
+    await saveUIDataset(DATASET, data);
     return { success: true };
 };
 
 export const submitResolution = async (id, resolution) => {
-    await delay(1200);
-    const data = getData();
+    const data = await getUIDataset(DATASET, INITIAL_DISPUTES);
     const index = data.findIndex(d => d.id === id);
     if (index === -1) throw new Error("Dispute not found");
 
@@ -159,7 +214,7 @@ export const submitResolution = async (id, resolution) => {
         status: 'resolved',
         workflow: activeWorkflow
     };
-    
-    saveData(data);
+
+    await saveUIDataset(DATASET, data);
     return data[index];
 };

@@ -1,11 +1,12 @@
+import apiClient from '../../api/api';
+import { getUIDataset } from '../uiDataApi';
+
 /**
- * Admin Organizer (User) Approvals API (Mock)
- * Simulates backend functionality for fetching and managing organizer approval requests
- * without backend integration.
+ * Admin Organizer Approvals API Service
+ * Directly synchronized with live MongoDB and backend endpoints
  */
 
-const STORAGE_KEY = 'admin_organizer_approvals_data';
-const MOCK_DELAY = 800; // Simulated network delay
+const DATASET = 'organizer-approvals';
 
 const INITIAL_ORGANIZERS = [
     { id: 1, name: 'Sarah Chen', role: 'Community Lead', organization: 'TechHub Global', website: 'techhub.io', orgType: 'Incubator', appliedAt: 'Oct 24, 2024', status: 'Pending', image: 'https://ui-avatars.com/api/?name=Sarah+Chen&background=3b82f6&color=fff' },
@@ -16,52 +17,77 @@ const INITIAL_ORGANIZERS = [
     { id: 6, name: 'Alice Johnson', role: 'Lead Organizer', organization: 'Tech Fest 2025', website: 'techfest.com', orgType: 'Event', appliedAt: 'Oct 19, 2024', status: 'Rejected', image: 'https://ui-avatars.com/api/?name=Alice+Johnson&background=ef4444&color=fff' }
 ];
 
-const initializeData = () => {
-    if (!sessionStorage.getItem(STORAGE_KEY)) {
-        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_ORGANIZERS));
+export const fetchOrganizerApprovals = async () => {
+    try {
+        const { data } = await apiClient.get('/admin/organizers');
+        if (data && data.success && Array.isArray(data.applications)) {
+            return data.applications;
+        }
+        if (Array.isArray(data)) return data;
+        return await getUIDataset(DATASET, INITIAL_ORGANIZERS);
+    } catch (error) {
+        console.warn("Backend /admin/organizers failed, using fallback dataset:", error);
+        return await getUIDataset(DATASET, INITIAL_ORGANIZERS);
     }
 };
 
-const getData = () => {
-    initializeData();
-    return JSON.parse(sessionStorage.getItem(STORAGE_KEY));
+export const updateOrganizerStatus = async (id, status, reason = "", message = "", sections = []) => {
+    try {
+        const { data } = await apiClient.put(`/admin/organizers/${id}/status`, {
+            status,
+            reason: reason || `Administrative action: ${status}`,
+            message: message || `Application marked as ${status}`,
+            sections
+        });
+        return data;
+    } catch (error) {
+        // Fallback to legacy approvals endpoint if needed
+        try {
+            const { data } = await apiClient.put(`/admin/approvals/organizers/${id}`, {
+                status,
+                reason,
+                message,
+                sections
+            });
+            return data;
+        } catch (fallbackError) {
+            console.error("Failed to update organizer status:", fallbackError);
+            throw fallbackError;
+        }
+    }
 };
 
-const saveData = (data) => {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+export const sendChangeRequest = async (id, sections = [], message = "") => {
+    try {
+        const { data } = await apiClient.post(`/admin/organizers/${id}/change-request`, {
+            sections,
+            message: message || "Please review and furnish the requested application details."
+        });
+        return data;
+    } catch (error) {
+        console.error("Failed to send change request:", error);
+        return updateOrganizerStatus(id, "Needs Changes", "Change Requested", message, sections);
+    }
 };
 
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-/**
- * Fetch all organizer approval requests
- * @returns {Promise<Array>}
- */
-export const fetchOrganizerApprovals = async () => {
-    await delay(MOCK_DELAY);
-    return getData();
+export const rejectOrganizer = async (id, reason, message = "") => {
+    return updateOrganizerStatus(id, "Rejected", reason, message);
 };
 
-/**
- * Update the status of an organizer approval request
- * @param {number} id - Organizer ID
- * @param {string} action - 'approving' or 'rejecting'
- * @returns {Promise<{success: boolean, updatedData: Array}>}
- */
-export const updateOrganizerStatus = async (id, action) => {
-    await delay(1200); // Simulate processing time
-    const data = getData();
-    
-    const updatedData = data.map(org => 
-        org.id === id 
-            ? { ...org, status: action === 'approving' ? 'Approved' : 'Rejected' } 
-            : org
-    );
+export const suspendOrganizer = async (id, reason = "") => {
+    return updateOrganizerStatus(id, "Suspended", reason || "Administrative suspension");
+};
 
-    saveData(updatedData);
+export const revertToPending = async (id) => {
+    return updateOrganizerStatus(id, "Pending", "Reverted to pending review");
+};
 
-    return { 
-        success: true, 
-        updatedData 
-    };
+export const fetchOrganizerAiReview = async (id) => {
+    try {
+        const { data } = await apiClient.get(`/admin/organizers/${id}/ai-review`);
+        return data?.review || null;
+    } catch (error) {
+        console.error("Failed to fetch organizer AI review:", error);
+        throw error;
+    }
 };

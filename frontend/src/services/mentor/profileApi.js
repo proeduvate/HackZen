@@ -5,9 +5,9 @@ import apiClient from '../../api/api';
  */
 
 const DEFAULT_PROFILE = {
-    name: 'Dr. Sarah Mitchell',
-    role: 'Senior Mentor',
-    institution: 'Stanford AI Lab',
+    name: '',
+    role: 'Mentor',
+    institution: '',
     bio: '',
     avatarGradient: 'from-purple-600 to-indigo-600',
     expertise: [],
@@ -21,27 +21,25 @@ const DEFAULT_PROFILE = {
         rating: '0/5',
         sessions: 0
     },
-    initials: 'SM'
+    initials: ''
 };
 
 export const fetchMentorProfile = async () => {
-    try {
-        const { data } = await apiClient.get('/profile/me');
-        const roleProfile = data.mentor_profile || data.organizer_profile || data.profile || {};
+    const { data } = await apiClient.get('/profile/me');
+    const roleProfile = data.mentor_profile || data.profile || {};
         
         const profileData = {
-            ...DEFAULT_PROFILE,
             ...data,
             ...roleProfile,
-            institution: roleProfile.companyName || DEFAULT_PROFILE.institution,
-            expertise: roleProfile.expertiseDomains || [],
+            institution: roleProfile.companyName || roleProfile.institution || '',
+            expertise: Array.isArray(roleProfile.expertiseDomains) ? roleProfile.expertiseDomains : (roleProfile.expertise || []),
             availability: roleProfile.availability || 'Available',
             links: {
                 scholar: roleProfile.scholarUrl || '',
                 linkedin: roleProfile.linkedinUrl || '',
                 github: roleProfile.githubUrl || ''
             },
-            initials: (data.name || '').split(' ').map(n => n[0]).join('').toUpperCase() || 'SM'
+            initials: (data.name || '').split(' ').map(n => n[0]).join('').toUpperCase()
         };
         
         // Cache in localStorage for persistence
@@ -50,23 +48,7 @@ export const fetchMentorProfile = async () => {
         localStorage.setItem('user', JSON.stringify(cachedUser));
         sessionStorage.setItem('user', JSON.stringify(cachedUser));
         
-        return profileData;
-    } catch (error) {
-        console.error('Failed to fetch mentor profile from server:', error);
-        
-        // Fallback to cached data if server request fails
-        try {
-            const cachedUser = JSON.parse(localStorage.getItem('user') || '{}');
-            if (cachedUser && cachedUser.mentor_profile) {
-                console.log('Using cached profile data from localStorage');
-                return cachedUser.mentor_profile;
-            }
-        } catch (cacheError) {
-            console.error('Failed to retrieve cached profile:', cacheError);
-        }
-        
-        throw error;
-    }
+    return profileData;
 };
 
 /**
@@ -81,6 +63,18 @@ export const getCachedMentorProfile = () => {
         console.error('Failed to retrieve cached profile:', error);
         return null;
     }
+};
+
+/** Fetch the mentor-only preferences that are separate from profile details. */
+export const fetchMentorSettings = async () => {
+    const { data } = await apiClient.get('/mentor/settings');
+    return data.settings;
+};
+
+/** Persist mentorship availability, notifications, preferences, and privacy choices. */
+export const updateMentorSettings = async (settings) => {
+    const { data } = await apiClient.put('/mentor/settings', settings);
+    return data.settings;
 };
 
 export const updateMentorProfile = async (updatedFields) => {
@@ -105,11 +99,7 @@ export const updateMentorProfile = async (updatedFields) => {
             delete backendPayload.expertise;
         }
 
-        console.log('[API] Sending payload to backend:', backendPayload);
-        
         const { data } = await apiClient.put('/profile/me', backendPayload);
-        
-        console.log('[API] Backend response:', data);
         
         // Sync updated profile to localStorage for persistence across sessions
         if (data) {

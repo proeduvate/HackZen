@@ -1,259 +1,109 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { fetchAssignedTeams, fetchMentorshipRequests } from '../../services/mentor/assignedTeamsApi';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { CalendarDays, CheckCircle2, ClipboardCheck, Inbox, Leaf, Users } from 'lucide-react';
+import { fetchMentorDashboard } from '../../services/mentor/dashboardApi';
+import { updateMentorshipRequestStatus } from '../../services/mentor/mentorshipRequestsApi';
+import { useMentor } from '../../context/MentorContext';
 
-const MentorDashboard = () => {
-    const navigate = useNavigate();
+const dateTime = (value) => value ? new Date(value).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+const dateOnly = (value) => value ? new Date(value).toLocaleDateString([], { month: 'short', day: 'numeric' }) : '';
 
-    const [searchTerm, setSearchTerm] = useState(() => sessionStorage.getItem('mentor_search') || '');
-    const [sortBy, setSortBy] = useState(() => sessionStorage.getItem('mentor_sort') || 'Date');
-    const [pendingRequests, setPendingRequests] = useState([]);
-    const [activeTeams, setActiveTeams] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [loadingActions, setLoadingActions] = useState({});
+export default function MentorDashboard() {
+  const navigate = useNavigate();
+  const { globalSearch, refreshKey, triggerRefresh, addToast } = useMentor();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-    // Initial Data Fetch
-    useEffect(() => {
-        const fetchData = async () => {
-            setIsLoading(true);
-            try {
-                const [teamsResult, requestsResult] = await Promise.all([
-                    fetchAssignedTeams(),
-                    fetchMentorshipRequests()
-                ]);
-                
-                // Map teams data to UI format
-                const mappedTeams = teamsResult.activeTeams.map(team => ({
-                    id: team.id,
-                    team: team.name,
-                    category: team.domain,
-                    progress: team.progress || 0,
-                    nextSync: team.nextActionTime || 'Pending',
-                    members: team.members || 0,
-                    status: team.status,
-                    statusColor: team.status === 'Active' ? 'emerald' : 'purple',
-                    icon: team.icon || '🚀'
-                }));
-                
-                setActiveTeams(mappedTeams);
-                setPendingRequests(requestsResult);
+  const loadDashboard = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      setData(await fetchMentorDashboard());
+    } catch (requestError) {
+      setError(requestError.response?.data?.detail || 'Could not load mentor dashboard. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-            } catch (error) {
-                console.error("Failed to fetch mentor dashboard data", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchData();
-    }, []);
+  useEffect(() => { loadDashboard(); }, [loadDashboard, refreshKey]);
 
-    // Filtered Requests
-    const filteredRequests = useMemo(() => {
-        return pendingRequests.filter(req =>
-            req.team.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            req.desc.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-    }, [pendingRequests, searchTerm]);
+  const teams = data?.teams || [];
+  const requests = (data?.requests || []).filter((request) => request.status === 'pending');
+  const meetings = data?.upcomingMeetings || [];
+  const query = globalSearch.trim().toLowerCase();
+  const visibleTeams = useMemo(() => query
+    ? teams.filter((team) => `${team.team || ''} ${team.project || ''} ${team.stage || ''}`.toLowerCase().includes(query))
+    : teams, [teams, query]);
+  const visibleRequests = useMemo(() => query
+    ? requests.filter((request) => `${request.teamName || ''} ${request.track || ''} ${request.message || ''}`.toLowerCase().includes(query))
+    : requests, [requests, query]);
 
-    // Handlers
-    const handleAccept = async (request) => {
-        setLoadingActions(prev => ({ ...prev, [request.id]: 'accepting' }));
-        // Logic to mark notification as read and confirm assignment
-        try {
-            await new Promise(resolve => setTimeout(resolve, 800)); // Smooth transition
-            setPendingRequests(prev => prev.filter(r => r.id !== request.id));
-        } catch (err) {
-            console.error("Failed to accept request", err);
-        } finally {
-            setLoadingActions(prev => { const next = { ...prev }; delete next[request.id]; return next; });
-        }
-    };
+  const decline = async (request) => {
+    try {
+      await updateMentorshipRequestStatus(request.id, 'reject');
+      addToast('Request declined', `Declined ${request.teamName}'s request.`, 'info');
+      triggerRefresh();
+    } catch (requestError) {
+      addToast('Could not decline request', requestError.response?.data?.detail || 'Please try again.', 'error');
+    }
+  };
 
-    return (
-        <div className="h-[calc(100vh-140px)] flex flex-col animate-in fade-in duration-500">
-            {/* Header */}
-            <div className="mb-6 flex-none">
-                <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-200">
-                    Strategic Hub
-                </h1>
-                <p className="text-gray-400 mt-2">Manage your mentorship activities and team progress.</p>
-            </div>
+  const summary = data?.summary || {};
+  const stats = [
+    { title: 'Mentorship Requests', value: summary.mentorshipRequests ?? 0, icon: Inbox, color: 'text-violet-700' },
+    { title: 'Active Teams', value: summary.activeTeams ?? 0, icon: Users, color: 'text-violet-700' },
+    { title: 'Pending Feedback', value: summary.pendingFeedback ?? 0, icon: ClipboardCheck, color: 'text-rose-700' },
+    { title: 'Completed Mentorships', value: summary.completedMentorships ?? 0, icon: CheckCircle2, color: 'text-violet-700' },
+  ];
 
-            {/* Search */}
-            <div className="flex-none mb-6">
-                <div className="relative max-w-md">
-                    <input
-                        type="text"
-                        placeholder="Search teams..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-navy-900/50 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-purple-500/50 transition-colors"
-                    />
-                    <svg className="w-5 h-5 text-gray-400 absolute left-3 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
+  return (
+    <div className="mx-auto max-w-[1480px] space-y-7 pt-2 pb-10 text-slate-900 dark:text-white">
+      <div>
+        <h1 className="text-2xl font-bold sm:text-3xl">Welcome back, {data?.mentor?.name || 'Mentor'}</h1>
+        <p className="mt-1 text-sm text-slate-500">Here is what is happening with your teams.</p>
+      </div>
+
+      {error && <div role="alert" className="flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800"><span>{error}</span><button onClick={loadDashboard} className="font-semibold underline">Retry</button></div>}
+
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Mentor summary">
+        {stats.map(({ title, value, icon: Icon, color }) => (
+          <Link key={title} to={title === 'Mentorship Requests' ? '/mentor/requests' : title === 'Pending Feedback' ? '/mentor/feedback' : '/mentor/teams'} className="rounded-2xl border border-slate-300 bg-white p-6 transition hover:border-violet-400 hover:shadow-sm dark:border-white/10 dark:bg-[#111625]">
+            <div className="flex items-start justify-between gap-4"><span className="max-w-44 text-xs font-bold uppercase tracking-wide text-slate-600">{title}</span><Icon className={`h-5 w-5 ${color}`} /></div>
+            <p className="mt-3 text-4xl font-bold">{loading ? '—' : value}</p>
+          </Link>
+        ))}
+      </section>
+
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[1.35fr_1fr]">
+        <section className="overflow-hidden rounded-2xl border border-slate-300 bg-white dark:border-white/10 dark:bg-[#111625]">
+          <div className="flex items-center justify-between border-b border-slate-300 px-6 py-5 dark:border-white/10"><h2 className="text-xl font-bold">Mentorship Requests</h2><Link className="text-sm font-semibold text-violet-700 hover:underline" to="/mentor/requests">View all</Link></div>
+          {loading ? <p className="p-6 text-sm text-slate-500">Loading requests…</p> : visibleRequests.length ? (
+            <div className="divide-y divide-slate-200 dark:divide-white/10">
+              {visibleRequests.slice(0, 5).map((request) => (
+                <div key={request.id} className="grid gap-3 px-6 py-4 sm:grid-cols-[1fr_0.8fr_auto] sm:items-center">
+                  <div><p className="font-semibold">{request.teamName || 'Team'}</p><p className="mt-1 line-clamp-2 text-sm text-slate-500">{request.message || request.track || 'Mentorship request'}</p></div>
+                  <p className="text-sm text-slate-600">{request.track || '—'}{request.createdAt ? ` · ${dateOnly(request.createdAt)}` : ''}</p>
+                  <div className="flex gap-2"><button onClick={() => decline(request)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50 dark:border-white/20 dark:hover:bg-white/5">Decline</button><button onClick={() => navigate('/mentor/requests')} className="rounded-lg bg-violet-700 px-3 py-2 text-sm font-semibold text-white hover:bg-violet-800">View Request</button></div>
                 </div>
+              ))}
             </div>
+          ) : <p className="p-6 text-sm text-slate-500">No pending mentorship requests.</p>}
+        </section>
 
-            {/* Main Content Area - Scrollable */}
-            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-8 pb-10">
-                {/* Incoming Requests Section */}
-                <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                        <h2 className="text-2xl font-bold text-white">
-                            Incoming Requests
-                        </h2>
-                        <span className="px-3 py-1 bg-purple-500/10 text-purple-400 rounded-full text-sm border border-purple-500/20">
-                            {pendingRequests.length} pending
-                        </span>
-                    </div>
+        <section className="rounded-2xl border border-slate-300 bg-white p-6 dark:border-white/10 dark:bg-[#111625]">
+          <div className="flex items-center justify-between border-b border-slate-300 pb-4 dark:border-white/10"><h2 className="text-xl font-bold">Upcoming Activities</h2><Link to="/mentor/sessions" className="text-sm font-semibold text-violet-700 hover:underline">Calendar</Link></div>
+          {loading ? <p className="pt-5 text-sm text-slate-500">Loading activities…</p> : meetings.length ? <div className="mt-5 space-y-5">{meetings.slice(0, 4).map((meeting) => <div key={meeting.id} className="flex gap-3"><span className="mt-1.5 h-3 w-3 shrink-0 rounded-full bg-violet-600 ring-4 ring-violet-100"/><div><p className="text-sm font-semibold text-violet-700">{dateTime(meeting.startTime)}</p><p className="mt-1 font-semibold">{meeting.title || 'Mentoring session'} · {meeting.teamName || 'Team'}</p>{meeting.location && <p className="mt-1 text-sm text-slate-500">{meeting.location}</p>}</div></div>)}</div> : <p className="pt-5 text-sm text-slate-500">No upcoming activities scheduled.</p>}
+        </section>
+      </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {isLoading ? (
-                            [1, 2].map(i => (
-                                <div key={i} className="glass border border-white/10 rounded-xl p-6 animate-pulse bg-white/5">
-                                    <div className="flex items-center gap-4 mb-4">
-                                        <div className="w-12 h-12 bg-white/10 rounded-lg"></div>
-                                        <div className="flex-1">
-                                            <div className="h-4 w-2/3 bg-white/10 rounded mb-2"></div>
-                                            <div className="h-3 w-1/2 bg-white/5 rounded"></div>
-                                        </div>
-                                    </div>
-                                    <div className="h-3 w-full bg-white/5 rounded mb-3"></div>
-                                    <div className="flex gap-3">
-                                        <div className="h-8 w-20 bg-white/10 rounded-lg"></div>
-                                        <div className="h-8 w-16 bg-white/5 rounded-lg"></div>
-                                    </div>
-                                </div>
-                            ))
-                        ) : filteredRequests.length > 0 ? (
-                                filteredRequests.map((req) => (
-                            <div key={req.id} className="glass border border-white/10 rounded-xl p-6 hover:bg-white/5 transition-all duration-300 cursor-pointer group">
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-xl font-bold text-white shadow-lg shadow-purple-500/20">
-                                            {req.icon}
-                                        </div>
-                                        <div>
-                                            <h3 className="font-bold text-white group-hover:text-purple-400 transition-colors">{req.team}</h3>
-                                            <p className="text-sm text-gray-400">{req.domain}</p>
-                                        </div>
-                                    </div>
-                                    {req.priority && (
-                                        <span className="px-2 py-1 bg-red-500/10 text-red-400 rounded text-xs font-medium border border-red-500/20">
-                                            Priority
-                                        </span>
-                                    )}
-                                </div>
+      <section className="rounded-2xl border border-slate-300 bg-white p-6 dark:border-white/10 dark:bg-[#111625]">
+        <div className="flex items-center justify-between border-b border-slate-300 pb-4 dark:border-white/10"><h2 className="text-xl font-bold">Active Teams</h2><Link to="/mentor/teams" className="font-semibold text-violet-700 hover:underline">View All</Link></div>
+        {loading ? <p className="pt-5 text-sm text-slate-500">Loading teams…</p> : visibleTeams.length ? <div className="divide-y divide-slate-100 dark:divide-white/10">{visibleTeams.slice(0, 6).map((team) => <Link key={team.id} to={`/mentor/teams/${team.id}`} className="grid gap-3 py-4 transition hover:bg-violet-50/40 sm:grid-cols-[minmax(150px,0.8fr)_minmax(180px,2fr)_auto] sm:items-center dark:hover:bg-white/5"><div className="flex items-center gap-3"><span className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-100 text-violet-700"><Leaf className="h-5 w-5"/></span><span><strong className="block">{team.team || 'Team'}</strong><span className="text-xs text-slate-500">{team.stage || 'No milestone recorded'}</span></span></div><div><div className="mb-2 flex justify-between text-xs"><span className="text-slate-500">Progress</span><span>{team.progress ?? 0}%</span></div><div className="h-2 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full bg-violet-600" style={{ width: `${Math.min(100, Math.max(0, Number(team.progress) || 0))}%` }}/></div></div><span className="text-xs text-slate-500">{team.lastActivity ? `Updated ${dateTime(team.lastActivity)}` : 'No recent activity'}</span></Link>)}</div> : <p className="pt-5 text-sm text-slate-500">No active teams assigned yet.</p>}
+      </section>
 
-                                <p className="text-gray-300 text-sm leading-relaxed mb-4 line-clamp-2">
-                                    {req.desc}
-                                </p>
-
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                                        <span>{req.time}</span>
-                                        <span>•</span>
-                                        <span>{req.date}</span>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => handleAccept(req)}
-                                            disabled={loadingActions[req.id]}
-                                            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-medium rounded-lg shadow-lg shadow-blue-500/20 transition-all transform hover:-translate-y-0.5 disabled:opacity-50"
-                                        >
-                                            {loadingActions[req.id] ? 'Accepting...' : 'Accept'}
-                                        </button>
-                                        <button className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-gray-400 hover:text-white transition-colors">
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                                ))
-                        ) : (
-                            <div className="col-span-full py-16 text-center">
-                                <div className="bg-white/5 p-6 rounded-xl border border-dashed border-white/10 inline-block">
-                                    <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">📡</div>
-                                    <p className="text-gray-400 text-sm">No incoming requests found.</p>
-                                </div>
-                            </div>
-                        )}
-                        </div>
-                    </div>
-
-                {/* Active Teams Section */}
-                <div className="space-y-6">
-                    <div>
-                        <h2 className="text-2xl font-bold text-white">Active Teams</h2>
-                        <p className="text-gray-400 mt-1">Monitor your mentored teams' progress.</p>
-                    </div>
-
-                    <div className="glass border border-white/10 rounded-xl p-6 space-y-6">
-                        {isLoading ? (
-                            [1, 2, 3].map(i => (
-                                <div key={i} className="flex items-center gap-4 p-4 bg-white/5 rounded-lg animate-pulse">
-                                    <div className="w-10 h-10 bg-white/10 rounded-lg"></div>
-                                    <div className="flex-1">
-                                        <div className="h-4 w-2/3 bg-white/10 rounded mb-2"></div>
-                                        <div className="h-3 w-1/2 bg-white/5 rounded"></div>
-                                    </div>
-                                    <div className="h-6 w-12 bg-white/10 rounded"></div>
-                                </div>
-                            ))
-                        ) : activeTeams.map(team => (
-                            <div key={team.id} className="flex items-center gap-4 p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-all duration-300 cursor-pointer group">
-                                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-lg font-bold text-white shadow-lg shadow-purple-500/20">
-                                    {team.icon}
-                                </div>
-                                <div className="flex-1">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <h3 className="font-medium text-white group-hover:text-purple-400 transition-colors">{team.team}</h3>
-                                        <span className="text-sm font-bold text-white tabular-nums">{team.progress}%</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                            team.statusColor === 'emerald' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                                            team.statusColor === 'rose' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
-                                            team.statusColor === 'blue' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
-                                            'bg-purple-500/10 text-purple-400 border border-purple-500/20'
-                                        }`}>
-                                            {team.status}
-                                        </span>
-                                        <span className="text-xs text-gray-500">{team.nextSync}</span>
-                                    </div>
-                                    <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                                        <div className={`h-full bg-gradient-to-r from-purple-600 to-blue-600 rounded-full transition-all duration-1000`} style={{ width: `${team.progress}%` }}></div>
-                                    </div>
-                                </div>
-                            </div>
-                            ))}
-                    </div>
-
-                    {/* Feedback Section */}
-                    <div className="glass border border-white/10 rounded-xl p-6 hover:bg-white/5 transition-all duration-300 cursor-pointer group">
-                        <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-xl shrink-0 group-hover:scale-110 transition-transform">
-                                💬
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="font-semibold text-white mb-2 group-hover:text-purple-400 transition-colors">Pending Feedback</h3>
-                                <p className="text-gray-300 text-sm mb-4">You have feedback waiting to be reviewed from your mentored teams.</p>
-                                <button
-                                    onClick={() => navigate('/mentor/feedback')}
-                                    className="px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 hover:text-purple-300 border border-purple-500/20 rounded-lg text-sm font-medium transition-all"
-                                >
-                                    View Feedback
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-export default MentorDashboard;
+      <div className="flex flex-wrap gap-3 text-sm">{[[CalendarDays, 'Schedule a session', '/mentor/sessions'], [ClipboardCheck, 'Review feedback', '/mentor/feedback'], [Users, 'Open team workspace', '/mentor/teams']].map(([Icon, label, to]) => <Link key={to} to={to} className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 font-semibold hover:border-violet-400 dark:border-white/10 dark:bg-[#111625]"><Icon className="h-4 w-4 text-violet-700"/>{label}</Link>)}</div>
+    </div>
+  );
+}

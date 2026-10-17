@@ -2,16 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createTeam } from '../../services/mentor/createTeamApi';
 import { fetchAllHackathons } from '../../api/hackathonApi';
+import { getUIDataset, saveUIDataset } from '../../services/uiDataApi';
 
 const CreateTeam = () => {
     const navigate = useNavigate();
+    const effectiveRole = (
+        sessionStorage.getItem('userRole') ||
+        localStorage.getItem('userRole') ||
+        (() => {
+            try { return JSON.parse(sessionStorage.getItem('user') || localStorage.getItem('user') || '{}')?.role; }
+            catch { return null; }
+        })() || 'mentor'
+    ).toLowerCase();
+    const mentorBoundary = effectiveRole === 'mentor' || window.location.pathname.startsWith('/mentor');
     const [step, setStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [draftLoaded, setDraftLoaded] = useState(false);
 
     // Form State
-    const [formData, setFormData] = useState(() => {
-        const saved = sessionStorage.getItem('create_team_draft');
-        return saved ? JSON.parse(saved) : {
+    const [formData, setFormData] = useState({
             hackathon: '',
             teamName: '',
             problemDefinition: '',
@@ -21,7 +30,6 @@ const CreateTeam = () => {
             teamSize: 4,
             roles: [],
             visibility: 'Public'
-        };
     });
 
     const [errors, setErrors] = useState({});
@@ -31,6 +39,10 @@ const CreateTeam = () => {
     // Fetch real hackathons
     useEffect(() => {
         const loadHackathons = async () => {
+            if (mentorBoundary) {
+                setLoadingHackathons(false);
+                return;
+            }
             try {
                 setLoadingHackathons(true);
                 const data = await fetchAllHackathons();
@@ -44,10 +56,20 @@ const CreateTeam = () => {
         loadHackathons();
     }, []);
 
-    // Persistence
+    // Load and persist the draft in MongoDB so it survives a new session/device.
     useEffect(() => {
-        sessionStorage.setItem('create_team_draft', JSON.stringify(formData));
-    }, [formData]);
+        if (mentorBoundary) return;
+        getUIDataset('student-team-create-draft', formData).then((saved) => {
+            if (saved) setFormData(saved);
+            setDraftLoaded(true);
+        }).catch((error) => {
+            console.error('Could not load team draft:', error);
+            setDraftLoaded(true);
+        });
+    }, []);
+    useEffect(() => {
+        if (!mentorBoundary && draftLoaded) saveUIDataset('student-team-create-draft', formData).catch((error) => console.error('Could not save team draft:', error));
+    }, [formData, draftLoaded]);
 
     // Mock Options
     const domains = ['Artificial Intelligence', 'Sustainability', 'Cybersecurity', 'FinTech', 'Healthcare', 'EdTech'];
@@ -91,7 +113,7 @@ const CreateTeam = () => {
                 domain: formData.domain,
                 description: formData.description,
             });
-            sessionStorage.removeItem('create_team_draft');
+            await saveUIDataset('student-team-create-draft', null);
             navigate('/mentor/teams');
         } catch (error) {
             console.error("Failed to create team:", error);
@@ -108,6 +130,29 @@ const CreateTeam = () => {
                 : [...prev.requiredSkills, skill]
         }));
     };
+
+    // Team creation is deliberately a student workflow. The API enforces the
+    // same rule, so mentors are guided to teams that need mentorship instead
+    // of being shown a form that cannot be submitted successfully.
+    if (mentorBoundary) {
+        return (
+            <div className="mx-auto max-w-2xl rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#111625] p-10 text-center shadow-xl">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-50 dark:bg-purple-500/15 text-2xl text-[#5B45D9] dark:text-purple-400">👥</div>
+                <h1 className="mt-5 text-2xl font-bold text-slate-900 dark:text-white">Teams are created by students</h1>
+                <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-slate-600 dark:text-gray-400">
+                    A student first selects an open event and creates or joins a team. Once the team requests mentorship, it will appear in your mentor workspace.
+                </p>
+                <div className="mt-7 flex flex-wrap justify-center gap-3">
+                    <button onClick={() => navigate('/mentor/teams/join')} className="rounded-xl bg-[#5B45D9] hover:bg-[#4E3AC2] px-5 py-3 text-sm font-semibold text-white shadow-xs transition-all">
+                        Browse teams needing a mentor
+                    </button>
+                    <button onClick={() => navigate('/mentor/teams')} className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 px-5 py-3 text-sm font-semibold text-slate-700 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
+                        Back to assigned teams
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-4xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-20">
