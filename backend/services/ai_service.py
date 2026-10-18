@@ -103,8 +103,8 @@ class AICoMentorService:
                 )
                 if response and response.choices and len(response.choices) > 0:
                     content = response.choices[0].message.content
-                    if content:
-                        return content
+                    if isinstance(content, str) and content.strip():
+                        return content.strip()
             except Exception as e:
                 last_error = e
                 continue

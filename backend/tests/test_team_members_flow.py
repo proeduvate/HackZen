@@ -11,6 +11,7 @@ from fastapi import UploadFile
 from pydantic import ValidationError
 
 from routers import chat, team, team_files
+from schemas.chat import ChatMessageSend
 
 
 class FakeCursor:
@@ -376,23 +377,28 @@ class TeamMembersFlowTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_chat_write_is_rejected_for_nonmember(self):
         team_id = str(ObjectId())
-        db = FakeDatabase(teamMembers=FakeCollection(), chats=FakeCollection())
+        db = FakeDatabase(
+            teams=FakeCollection([{"_id": ObjectId(team_id)}]),
+            teamMembers=FakeCollection(),
+            chats=FakeCollection(),
+        )
         with patch("routers.chat.get_db", return_value=db):
             with self.assertRaises(HTTPException) as raised:
-                await chat.send_team_message(team_id, {"content": "hello"}, self.student)
+                await chat.send_team_message(team_id, ChatMessageSend(content="hello"), self.student)
         self.assertEqual(raised.exception.status_code, 403)
         self.assertEqual(db["chats"].documents, [])
 
     async def test_chat_write_persists_and_broadcasts_for_member(self):
         team_id = str(ObjectId())
         db = FakeDatabase(
+            teams=FakeCollection([{"_id": ObjectId(team_id)}]),
             teamMembers=FakeCollection([{"teamId": team_id, "userId": self.student["id"]}]),
             chats=FakeCollection(),
         )
         with patch("routers.chat.get_db", return_value=db), patch.object(
             chat.manager, "broadcast_to_team", new_callable=AsyncMock
         ) as broadcast:
-            result = await chat.send_team_message(team_id, {"content": "hello"}, self.student)
+            result = await chat.send_team_message(team_id, ChatMessageSend(content="hello"), self.student)
         self.assertEqual(result.content, "hello")
         self.assertEqual(len(db["chats"].documents), 1)
         broadcast.assert_awaited_once()

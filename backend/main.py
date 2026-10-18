@@ -10,6 +10,7 @@ from pathlib import Path
 from core.config import settings
 from database import MongoDB
 from routers import indexRoutes
+from startup_seed import seed_portal_data_if_enabled
 
 # Get absolute path for uploads directory
 BASE_DIR = Path(__file__).parent.resolve()
@@ -44,19 +45,7 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             print(f"[Mentor Worker] Initializer note: {e}")
 
-        try:
-            from seed_student_portal_data import seed_student_data_direct
-            await seed_student_data_direct(MongoDB.db)
-            print("[Auto-Seeder] Student portal workflow data verified/initialized on startup.")
-        except Exception as seeder_err:
-            print(f"[Auto-Seeder notice]: {seeder_err}")
-
-        try:
-            from seed_organizer_portal_data import seed_organizer_data_direct
-            await seed_organizer_data_direct(MongoDB.db)
-            print("[Auto-Seeder] Organizer portal workflow data verified/initialized on startup.")
-        except Exception as seeder_err:
-            print(f"[Auto-Seeder notice]: {seeder_err}")
+        await seed_portal_data_if_enabled(MongoDB.db)
     yield
     if reminder_task:
         reminder_task.cancel()

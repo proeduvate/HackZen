@@ -3,7 +3,8 @@ from datetime import datetime
 from unittest.mock import patch
 
 from bson import ObjectId
-from fastapi import HTTPException
+from fastapi import FastAPI, HTTPException
+from fastapi.testclient import TestClient
 
 from routers import progress
 from schemas.progress import MilestoneProgressCreate, MilestoneProgressUpdate
@@ -23,6 +24,12 @@ class Collection:
 
     async def find_one(self, query, *_args, **_kwargs):
         return next((row for row in self.rows if all(row.get(key) == value for key, value in query.items())), None)
+
+    async def count_documents(self, query):
+        return sum(
+            all(row.get(key) == value for key, value in query.items())
+            for row in self.rows
+        )
 
     def find(self, query):
         return Cursor([row for row in self.rows if all(row.get(key) == value for key, value in query.items())])
@@ -83,13 +90,19 @@ class TeamWorkspaceProgressTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(created.title, "Review the prototype")
             self.assertFalse(created.completed)
 
-            updated = await progress.update_milestone_progress(
-                created.id, MilestoneProgressUpdate(completed=True), self.student
-            )
+            app = FastAPI()
+            app.include_router(progress.router, prefix="/progress")
+            app.dependency_overrides[progress.with_auth] = lambda: self.student
+            with TestClient(app) as client:
+                response = client.put(
+                    f"/progress/milestone/{created.id}",
+                    json={"completed": True},
+                )
             tasks = await progress.get_milestones_progress(str(self.progress_id), self.student)
             activity = await progress.get_team_activity(str(self.team_id), self.student)
 
-        self.assertTrue(updated.completed)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["completed"])
         self.assertEqual(len(tasks), 1)
         self.assertEqual(tasks[0].title, "Review the prototype")
         self.assertEqual(len(activity), 2)
@@ -135,7 +148,9 @@ class TeamWorkspaceProgressTests(unittest.IsolatedAsyncioTestCase):
         nonmember = {"id": nonmember_id, "sub": nonmember_id, "role": "student"}
         with patch("routers.progress.get_db", return_value=self.db):
             with self.assertRaises(HTTPException) as raised:
-                await progress.update_milestone_progress(str(task_id), MilestoneProgressUpdate(completed=True), nonmember)
+                await progress.update_milestone_progress_by_id(
+                    str(task_id), MilestoneProgressUpdate(completed=True), nonmember
+                )
         self.assertEqual(raised.exception.status_code, 403)
         self.assertFalse(self.db["milestoneProgress"].rows[0]["completed"])
 
