@@ -6,7 +6,7 @@ from pathlib import Path
 import os
 import re
 from urllib.parse import urlparse
-from core.dependencies import with_auth
+from core.dependencies import RequireRole, with_auth
 from database import get_db
 from bson import ObjectId
 from schemas.mentor_dashboard import (
@@ -24,6 +24,7 @@ from schemas.mentor_dashboard import (
 )
 from services.mentor_dashboard_service import MentorDashboardService
 from services.file_upload import file_upload_service
+from routers.team import _decide_mentor_request
 
 router = APIRouter()
 
@@ -1629,49 +1630,8 @@ async def get_mentor_requests_dashboard(
 async def update_mentor_request_dashboard(
     request_id: str,
     payload: dict = Body(...),
-    current_user: dict = Depends(with_auth),
+    current_user: dict = Depends(RequireRole(["mentor", "admin"])),
 ):
     """Accept or decline a mentorship request."""
-    db = get_db()
-    user_id = current_user.get("id") or current_user.get("sub")
-    mentor_name = current_user.get("name") or "Mentor"
-
-    decision = str(payload.get("decision") or payload.get("status") or "").lower()
-    new_status = "approved" if decision in {"approved", "accept", "accepted"} else "rejected"
-
-    req = None
-    if ObjectId.is_valid(request_id):
-        req = await db["mentorRequests"].find_one({"_id": ObjectId(request_id)})
-
-    if not req:
-        if ObjectId.is_valid(request_id):
-            team_doc = await db["teams"].find_one({"_id": ObjectId(request_id)})
-            if team_doc:
-                req = {"teamId": str(team_doc["_id"]), "teamName": team_doc.get("teamName")}
-
-    if req and ObjectId.is_valid(request_id):
-        await db["mentorRequests"].update_one(
-            {"_id": ObjectId(request_id)},
-            {"$set": {"status": new_status, "updatedAt": datetime.utcnow()}},
-            upsert=True
-        )
-
-    if new_status == "approved" and req and req.get("teamId"):
-        team_id = req["teamId"]
-        if ObjectId.is_valid(team_id):
-            await db["teams"].update_one(
-                {"_id": ObjectId(team_id)},
-                {"$set": {
-                    "mentorId": user_id,
-                    "mentorName": mentor_name,
-                    "status": "Active",
-                    "updatedAt": datetime.utcnow(),
-                }}
-            )
-
-    return {
-        "success": True,
-        "message": f"Request has been successfully {new_status}.",
-        "status": new_status,
-    }
+    return await _decide_mentor_request(get_db(), request_id, payload, current_user)
 

@@ -21,6 +21,28 @@ class OrganizerBroadcastRequest(BaseModel):
     urgency: Optional[str] = "normal"
 
 
+def _notification_audience_query(user_role: str) -> Dict[str, Any]:
+    audience_targets = ["all"]
+    if user_role:
+        audience_targets.extend([user_role, f"{user_role}s"])
+    return {
+        "$and": [
+            {"$or": [{"userId": {"$exists": False}}, {"userId": None}, {"userId": ""}]},
+            {
+                "$or": [
+                    {"target_audience": {"$in": audience_targets}},
+                    {"audience": {"$in": audience_targets}},
+                    {"type": {"$in": ["global_announcement", "platform_announcement"]}},
+                ]
+            },
+        ]
+    }
+
+
+def _notification_recipient_query(user_id: str, user_role: str) -> Dict[str, Any]:
+    return {"$or": [{"userId": user_id}, _notification_audience_query(user_role)]}
+
+
 @router.get("/public-stats")
 async def get_public_stats():
     db = get_db()
@@ -1511,7 +1533,19 @@ async def send_organizer_broadcast(
 
     # 1. Determine target hackathons
     if payload.hackathonId and payload.hackathonId != "all":
-        h_ids = [payload.hackathonId]
+        if not ObjectId.is_valid(payload.hackathonId):
+            raise HTTPException(status_code=404, detail="Hackathon not found")
+        owner_filter = (
+            {"$or": [{"organizerId": user_id}, {"organizerId": ObjectId(user_id)}]}
+            if ObjectId.is_valid(user_id)
+            else {"organizerId": user_id}
+        )
+        hackathon = await db["hackathons"].find_one(
+            {"_id": ObjectId(payload.hackathonId), **owner_filter}
+        )
+        if not hackathon:
+            raise HTTPException(status_code=404, detail="Hackathon not found")
+        h_ids = [str(hackathon["_id"])]
     else:
         query = (
             {"$or": [{"organizerId": user_id}, {"organizerId": ObjectId(user_id)}]}
@@ -1645,66 +1679,35 @@ async def get_organizer_report(current_user: dict = Depends(with_auth)):
 
 
 # --- ORGANIZER APPROVAL STATUS ENDPOINT ---
+async def _authorized_approval_hackathon(db, hackathon_id: Optional[str], current_user: dict):
+    if not hackathon_id or not ObjectId.is_valid(hackathon_id):
+        raise HTTPException(status_code=404, detail="Hackathon not found")
+    hackathon = await db["hackathons"].find_one({"_id": ObjectId(hackathon_id)})
+    if not hackathon:
+        raise HTTPException(status_code=404, detail="Hackathon not found")
+    user_id = str(current_user.get("sub") or current_user.get("_id") or current_user.get("id") or "")
+    organizer_id = str(hackathon.get("organizerId") or "")
+    is_owner = bool(user_id and organizer_id and organizer_id == user_id)
+    if not is_owner and str(current_user.get("role", "")).lower() != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized to access this hackathon")
+    return str(hackathon["_id"])
+
+
 @router.get("/organizer-approval-status")
 async def get_organizer_approval_status(
     hackathonId: Optional[str] = None, current_user: dict = Depends(with_auth)
 ):
-    """
-    Fetch comprehensive review standing, stepper, admin feedback, required documents,
-    and reviewer team for a submitted hackathon.
-    """
     db = get_db()
-    query = {"hackathonId": hackathonId} if hackathonId else {}
-    doc = await db["hackathon_approvals"].find_one(query)
-
+    canonical_hackathon_id = await _authorized_approval_hackathon(db, hackathonId, current_user)
+    doc = await db["hackathon_approvals"].find_one({"hackathonId": canonical_hackathon_id})
     if not doc:
-        # Fallback to the first seeded record or default structure
-        doc = await db["hackathon_approvals"].find_one({})
-
-    if not doc:
-        doc = {
-            "eventTitle": "Global Fintech Hack 2024",
-            "organizerName": current_user.get("name") or "Alex Morgan",
-            "submittedAt": "Oct 12, 2024",
-            "status": "Under Review",
-            "statusBadge": "Under Review",
-            "stepper": [
-                {"id": "draft", "label": "Draft", "date": "Oct 10", "status": "completed"},
-                {"id": "submitted", "label": "Submitted", "date": "Oct 12", "status": "completed"},
-                {"id": "under_review", "label": "Under Review", "date": "Current", "status": "active"},
-                {"id": "decision", "label": "Decision", "date": "Pending", "status": "pending"}
-            ],
-            "adminFeedback": {
-                "quote": "The problem statement for the 'Banking Security' track needs more specific evaluation criteria. Please refine and resubmit.",
-                "urgency": "Action required before final approval.",
-                "reviewer": "Jane Smith"
-            },
-            "reviewHistory": [
-                {"id": "h_1", "title": "Changes requested by Admin", "date": "Oct 14, 2024 • 02:30 PM", "type": "action"},
-                {"id": "h_2", "title": "Submitted for review", "date": "Oct 12, 2024 • 10:15 AM", "type": "neutral"},
-                {"id": "h_3", "title": "Draft created", "date": "Oct 10, 2024 • 09:00 AM", "type": "neutral"}
-            ],
-            "requiredDocuments": [
-                {"id": "doc_1", "name": "Problem Statement", "status": "Verified"},
-                {"id": "doc_2", "name": "Prize Structure", "status": "Pending"},
-                {"id": "doc_3", "name": "Timeline & Rules", "status": "Verified"}
-            ],
-            "nextSteps": [
-                {"id": "step_1", "title": "Refine Evaluation Criteria", "description": "Address admin feedback on Banking Security track.", "completed": False},
-                {"id": "step_2", "title": "Update Prize Structure", "description": "Upload finalized prize distribution matrix.", "completed": False}
-            ],
-            "reviewerTeam": [
-                {"id": "rev_1", "name": "Jane Smith", "role": "Lead Hackathon Admin", "initials": "JS", "color": "purple"},
-                {"id": "rev_2", "name": "Michael Doe", "role": "Technical Reviewer", "initials": "MD", "color": "slate"}
-            ]
-        }
-    else:
-        doc["_id"] = str(doc["_id"])
-
+        raise HTTPException(status_code=404, detail="Approval status not found")
+    doc["_id"] = str(doc["_id"])
     return doc
 
 
 class StepToggleRequest(BaseModel):
+    hackathonId: str
     stepId: str
     completed: bool
 
@@ -1713,12 +1716,14 @@ class StepToggleRequest(BaseModel):
 async def toggle_approval_step(
     payload: StepToggleRequest, current_user: dict = Depends(with_auth)
 ):
-    """Toggle completion status of next step items for organizer."""
     db = get_db()
-    await db["hackathon_approvals"].update_many(
-        {"nextSteps.id": payload.stepId},
-        {"$set": {"nextSteps.$.completed": payload.completed}}
+    canonical_hackathon_id = await _authorized_approval_hackathon(db, payload.hackathonId, current_user)
+    result = await db["hackathon_approvals"].update_one(
+        {"hackathonId": canonical_hackathon_id, "nextSteps.id": payload.stepId},
+        {"$set": {"nextSteps.$.completed": payload.completed}},
     )
+    if not result.matched_count:
+        raise HTTPException(status_code=404, detail="Approval step not found")
     return {"success": True, "stepId": payload.stepId, "completed": payload.completed}
 
 
@@ -1980,30 +1985,7 @@ async def get_my_notifications(current_user: dict = Depends(with_auth)):
     )
     user_role = str(current_user.get("role", "")).lower()
 
-    audience_targets = ["all"]
-    if user_role:
-        audience_targets.extend([user_role, f"{user_role}s"])
-
-    # Strictly scoped query:
-    # 1. Personal notifications explicitly sent to this user
-    # 2. OR platform broadcasts without a specific userId that target this user's audience
-    query = {
-        "$or": [
-            {"userId": user_id},
-            {
-                "$and": [
-                    {"$or": [{"userId": {"$exists": False}}, {"userId": None}, {"userId": ""}]},
-                    {
-                        "$or": [
-                            {"target_audience": {"$in": audience_targets}},
-                            {"audience": {"$in": audience_targets}},
-                            {"type": {"$in": ["global_announcement", "platform_announcement"]}},
-                        ]
-                    },
-                ]
-            },
-        ]
-    }
+    query = _notification_recipient_query(user_id, user_role)
 
     raw_notifs = (
         await db["notifications"]
@@ -2062,8 +2044,11 @@ async def mark_all_notifications_read(current_user: dict = Depends(with_auth)):
         current_user.get("_id") or current_user.get("sub") or current_user.get("id")
     )
 
+    user_role = str(current_user.get("role", "")).lower()
     await db["notifications"].update_many({"userId": user_id}, {"$set": {"read": True}})
-    await db["notifications"].update_many({}, {"$addToSet": {"readBy": user_id}})
+    await db["notifications"].update_many(
+        _notification_audience_query(user_role), {"$addToSet": {"readBy": user_id}}
+    )
     return {"success": True}
 
 

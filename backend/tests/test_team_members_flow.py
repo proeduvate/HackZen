@@ -123,6 +123,20 @@ class TeamMembersFlowTests(unittest.IsolatedAsyncioTestCase):
             result = await team.get_my_teams(self.student)
         self.assertEqual(result, [])
 
+    async def test_discoverable_teams_excludes_teams_already_assigned_to_a_mentor(self):
+        db = FakeDatabase(teams=FakeCollection([{
+            "_id": ObjectId(),
+            "teamName": "Already assigned",
+            "mentorId": "another-mentor",
+            "status": "Looking for Mentor",
+        }]))
+        mentor = {"id": "mentor-1", "sub": "mentor-1", "role": "mentor"}
+
+        with patch("routers.team.get_db", return_value=db):
+            result = await team.get_discoverable_teams(mentor)
+
+        self.assertEqual(result, [])
+
     async def test_team_code_is_visible_only_to_the_team_lead(self):
         team_id = ObjectId()
         hackathon_id = ObjectId()

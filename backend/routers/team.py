@@ -43,6 +43,82 @@ def _require_student(current_user: dict) -> str:
     return user_id
 
 
+async def _decide_mentor_request(db, request_id: str, payload: dict, current_user: dict):
+    """Apply a mentor decision only to a pending request visible to this caller."""
+    if not ObjectId.is_valid(request_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Mentor request not found")
+
+    request_object_id = ObjectId(request_id)
+    user_id = _authenticated_user_id(current_user)
+    mentor_name = current_user.get("name") or "Mentor"
+    decision = str(payload.get("decision") or payload.get("status") or "").lower()
+    new_status = "approved" if decision in {"approved", "accept", "accepted"} else "rejected"
+
+    requests = db["mentorRequests"]
+    req = await requests.find_one({"_id": request_object_id})
+    if not req:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Mentor request not found")
+
+    assigned_mentor = req.get("mentorId")
+    is_unassigned = assigned_mentor is None or assigned_mentor == ""
+    if not is_unassigned and str(assigned_mentor) != user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This request is assigned to another mentor")
+
+    previous_status = req.get("status")
+    if previous_status is not None and str(previous_status).lower() != "pending":
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Mentor request has already been decided")
+
+    team = None
+    team_object_id = None
+    if new_status == "approved":
+        team_id = str(req.get("teamId") or "")
+        if not ObjectId.is_valid(team_id):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request team not found")
+        team_object_id = ObjectId(team_id)
+        team = await db["teams"].find_one({"_id": team_object_id})
+        if not team:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request team not found")
+        existing_team_mentor = team.get("mentorId")
+        if existing_team_mentor not in (None, "") and str(existing_team_mentor) != user_id:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Team already has another mentor")
+
+    # Include status and assignment in the write filter so concurrent decisions
+    # cannot overwrite a completed request or claim it for another mentor.
+    pending_filter = {"$or": [{"status": {"$regex": "^pending$", "$options": "i"}}, {"status": {"$exists": False}}]}
+    assignment_filter = {"$or": [{"mentorId": user_id}, {"mentorId": None}, {"mentorId": ""}, {"mentorId": {"$exists": False}}]}
+    if ObjectId.is_valid(user_id):
+        assignment_filter["$or"].append({"mentorId": ObjectId(user_id)})
+    decided_at = datetime.utcnow()
+    update_result = await requests.update_one(
+        {"_id": request_object_id, "$and": [pending_filter, assignment_filter]},
+        {"$set": {"status": new_status, "updatedAt": decided_at}},
+    )
+    if not getattr(update_result, "matched_count", 0):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Mentor request is no longer available")
+
+    if new_status == "approved":
+        team_assignment_filter = {"_id": team_object_id, "$or": [{"mentorId": None}, {"mentorId": ""}, {"mentorId": {"$exists": False}}, {"mentorId": user_id}]}
+        if ObjectId.is_valid(user_id):
+            team_assignment_filter["$or"].append({"mentorId": ObjectId(user_id)})
+        team_update = await db["teams"].update_one(
+            team_assignment_filter,
+            {"$set": {"mentorId": user_id, "mentorName": mentor_name, "status": "Active", "updatedAt": decided_at}},
+        )
+        if not getattr(team_update, "matched_count", 0):
+            rollback = {"$set": {"updatedAt": req.get("updatedAt")}} if req.get("updatedAt") is not None else {"$unset": {"updatedAt": ""}}
+            if previous_status is None:
+                rollback["$unset"] = {**rollback.get("$unset", {}), "status": ""}
+            else:
+                rollback["$set"]["status"] = previous_status
+            await requests.update_one(
+                {"_id": request_object_id, "status": new_status, "updatedAt": decided_at},
+                rollback,
+            )
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Team already has another mentor")
+
+    return {"success": True, "message": f"Request has been successfully {new_status}.", "status": new_status}
+
+
 def _team_size_limit(hackathon: Optional[dict]) -> int:
     try:
         return max(1, int((hackathon or {}).get("maxTeamSize", 4)))
@@ -357,7 +433,6 @@ async def get_discoverable_teams(
 ):
     """Get all teams available for mentorship."""
     db = get_db()
-    user_id = _authenticated_user_id(current_user)
     teams_collection = db["teams"]
 
     cursor = teams_collection.find({
@@ -365,14 +440,9 @@ async def get_discoverable_teams(
             {"mentorId": None},
             {"mentorId": ""},
             {"mentorId": {"$exists": False}},
-            {"status": "Looking for Mentor"},
         ]
     }).limit(50)
     teams = await cursor.to_list(50)
-
-    if not teams:
-        # Fallback to general teams not already assigned to this mentor
-        teams = await teams_collection.find({"mentorId": {"$ne": user_id}}).limit(20).to_list(20)
 
     results = []
     for team in teams:
@@ -421,8 +491,15 @@ async def request_mentor_team(
     if not team:
         raise HTTPException(status_code=404, detail="Team not found")
 
-    await db["teams"].update_one(
-        {"_id": ObjectId(team_id)},
+    assignment_result = await db["teams"].update_one(
+        {
+            "_id": ObjectId(team_id),
+            "$or": [
+                {"mentorId": {"$exists": False}},
+                {"mentorId": None},
+                {"mentorId": ""},
+            ],
+        },
         {"$set": {
             "mentorId": user_id,
             "mentorName": mentor_name,
@@ -430,6 +507,8 @@ async def request_mentor_team(
             "updatedAt": datetime.utcnow()
         }}
     )
+    if not getattr(assignment_result, "matched_count", 0):
+        raise HTTPException(status_code=409, detail="Team already has a mentor assigned")
 
     await db["inbox"].insert_one({
         "teamId": team_id,
@@ -471,24 +550,6 @@ async def get_mentor_requests(
     cursor = db["mentorRequests"].find(filter_query).sort("createdAt", -1).limit(limit)
     requests = await cursor.to_list(limit)
 
-    # If no requests exist yet, generate from unassigned/active teams
-    if not requests:
-        teams = await db["teams"].find({"status": "Active"}).limit(4).to_list(4)
-        for t in teams:
-            t_id = str(t["_id"])
-            requests.append({
-                "_id": ObjectId(),
-                "teamId": t_id,
-                "teamName": t.get("teamName", "Team"),
-                "domain": t.get("domain") or t.get("track") or "General",
-                "description": t.get("project") or "Seeking mentor guidance on architecture and system design.",
-                "message": t.get("project") or "We would appreciate your mentorship on our project.",
-                "status": "pending",
-                "memberCount": 3,
-                "requiredSkills": t.get("requiredSkills", ["React", "Python"]),
-                "createdAt": datetime.utcnow() - timedelta(days=1),
-            })
-
     output = []
     for req in requests:
         req_id = str(req.get("_id", ""))
@@ -525,48 +586,7 @@ async def update_mentor_request(
     current_user: dict = Depends(RequireRole(["mentor", "admin"]))
 ):
     """Accept or decline a mentorship request."""
-    db = get_db()
-    user_id = _authenticated_user_id(current_user)
-    mentor_name = current_user.get("name") or "Mentor"
-
-    decision = str(payload.get("decision") or payload.get("status") or "").lower()
-    new_status = "approved" if decision in {"approved", "accept", "accepted"} else "rejected"
-
-    req = None
-    if ObjectId.is_valid(request_id):
-        req = await db["mentorRequests"].find_one({"_id": ObjectId(request_id)})
-
-    if not req:
-        if ObjectId.is_valid(request_id):
-            team_doc = await db["teams"].find_one({"_id": ObjectId(request_id)})
-            if team_doc:
-                req = {"teamId": str(team_doc["_id"]), "teamName": team_doc.get("teamName")}
-
-    if req and ObjectId.is_valid(request_id):
-        await db["mentorRequests"].update_one(
-            {"_id": ObjectId(request_id)},
-            {"$set": {"status": new_status, "updatedAt": datetime.utcnow()}},
-            upsert=True
-        )
-
-    if new_status == "approved" and req and req.get("teamId"):
-        team_id = req["teamId"]
-        if ObjectId.is_valid(team_id):
-            await db["teams"].update_one(
-                {"_id": ObjectId(team_id)},
-                {"$set": {
-                    "mentorId": user_id,
-                    "mentorName": mentor_name,
-                    "status": "Active",
-                    "updatedAt": datetime.utcnow(),
-                }}
-            )
-
-    return {
-        "success": True,
-        "message": f"Request has been successfully {new_status}.",
-        "status": new_status,
-    }
+    return await _decide_mentor_request(get_db(), request_id, payload, current_user)
 
 
 @router.get("/{team_id}", response_model=TeamResponse)

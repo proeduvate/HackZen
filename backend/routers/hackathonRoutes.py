@@ -562,24 +562,22 @@ async def update_hackathon_timeline(
 ):
     """Update hackathon timeline phases"""
     user_role = str(current_user.get("role", "")).lower()
-    if user_role not in ["organizer", "admin", "superadmin"]:
-        raise HTTPException(
-            status_code=403, detail="Only organizers or admins can update the timeline"
-        )
-
+    if user_role not in ["organizer", "admin"]:
+        raise HTTPException(status_code=403, detail="Only organizers or admins can update the timeline")
     db = get_db()
-    from bson import ObjectId as BsonId
-
-    query = {"_id": BsonId(id)} if BsonId.is_valid(id) else {"_id": id}
     phases = payload.get("phases", payload.get("timeline", []))
-
-    result = await db["hackathons"].update_one(
-        query, {"$set": {"timeline": phases, "updatedAt": datetime.utcnow()}}
-    )
-    if result.matched_count == 0:
-        result = await db["hackathons"].update_one(
-            {"id": id}, {"$set": {"timeline": phases, "updatedAt": datetime.utcnow()}}
+    try:
+        updated = await HackathonService.update_hackathon(
+            id,
+            str(current_user.get("sub") or current_user.get("_id") or current_user.get("id") or ""),
+            str(current_user.get("role", "")).lower(),
+            HackathonUpdate.model_validate({"timeline": phases}),
+            db,
         )
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    if not updated:
+        raise HTTPException(status_code=404, detail="Hackathon not found")
 
     return {
         "success": True,
