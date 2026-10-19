@@ -47,6 +47,8 @@ export const fetchSubmissionsForEvaluation = async () => {
             score: sub.score ?? null,
             shortlisted: sub.status === 'Shortlisted',
             members: [],
+            repoUrl: sub.repoUrl || sub.githubUrl || '',
+            demoUrl: sub.demoUrl || '',
             existingScores: null,
             comment: ''
         }));

@@ -14,8 +14,9 @@ export const fetchHackathonApprovalStatus = async (hackathonId) => {
     return data;
 };
 
-export const toggleApprovalStep = async (stepId, completed) => {
+export const toggleApprovalStep = async (hackathonId, stepId, completed) => {
     const { data } = await apiClient.post('/dashboard/organizer-approval-status/toggle-step', {
+        hackathonId,
         stepId,
         completed
     });

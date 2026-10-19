@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, useParams, Link } from 'react-router-dom';
 import { 
     Check, 
     Eye, 
@@ -19,7 +19,8 @@ import { fetchHackathonApprovalStatus, toggleApprovalStep } from '../../services
 export default function HackathonApprovalStatus() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const hackathonId = searchParams.get('id');
+    const { hackathonId: routeHackathonId } = useParams();
+    const hackathonId = searchParams.get('id') || routeHackathonId;
 
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState(null);
@@ -48,6 +49,10 @@ export default function HackathonApprovalStatus() {
     }, [hackathonId]);
 
     const handleToggleStep = async (stepId, currentStatus) => {
+        if (!hackathonId) {
+            showToast("Select a hackathon before updating approval steps.", "error");
+            return;
+        }
         const nextStatus = !currentStatus;
         setData(prev => ({
             ...prev,
@@ -55,7 +60,7 @@ export default function HackathonApprovalStatus() {
         }));
 
         try {
-            await toggleApprovalStep(stepId, nextStatus);
+            await toggleApprovalStep(hackathonId, stepId, nextStatus);
             showToast(nextStatus ? "Marked next step as completed." : "Item marked pending.");
         } catch (error) {
             console.error("Error updating step status:", error);
