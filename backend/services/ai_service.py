@@ -14,7 +14,6 @@ load_dotenv()
 class AICoMentorService:
     def __init__(self):
         self.nvidia_api_key = getattr(settings, "NVIDIA_API_KEY", None) or os.getenv("NVIDIA_API_KEY")
-        self.openai_api_key = getattr(settings, "OPENAI_API_KEY", None) or os.getenv("OPENAI_API_KEY")
         self.client = None
         self.primary_model = "meta/llama-3.2-11b-vision-instruct"
         self.fallback_models = [
@@ -35,17 +34,7 @@ class AICoMentorService:
                     max_retries=1
                 )
             except Exception as e:
-                print(f"[AI Service] Error configuring NVIDIA AI client: {e}")
-        elif self.openai_api_key or os.getenv("OPENAI_API_KEY"):
-            try:
-                self.client = OpenAI(
-                    api_key=self.openai_api_key or os.getenv("OPENAI_API_KEY"),
-                    timeout=25.0
-                )
-                self.primary_model = "gpt-4o-mini"
-                self.fallback_models = ["gpt-4o-mini", "gpt-3.5-turbo"]
-            except Exception as e:
-                print(f"[AI Service] Error configuring OpenAI client: {e}")
+                print(f"[AI Service] Error configuring NVIDIA AI client ({type(e).__name__}).")
 
     def _get_active_client(self):
         if not self.client:
@@ -110,7 +99,7 @@ class AICoMentorService:
                 continue
 
         if last_error:
-            print(f"[AI Service] LLM generation notice: {last_error}")
+            print(f"[AI Service] LLM generation failed ({type(last_error).__name__}).")
         return None
 
     async def review_hackathon_proposal(self, hackathon: Dict[str, Any]) -> Dict[str, Any]:

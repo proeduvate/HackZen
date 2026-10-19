@@ -37,6 +37,15 @@ class AIServiceProviderBoundaryTests(unittest.IsolatedAsyncioTestCase):
             )
         )
 
+    def test_missing_nvidia_key_does_not_fall_back_to_openai(self):
+        with patch.dict("os.environ", {"NVIDIA_API_KEY": "", "OPENAI_API_KEY": "test-only"}):
+            with patch.object(ai_service_module.settings, "NVIDIA_API_KEY", None):
+                with patch.object(ai_service_module, "OpenAI") as provider_factory:
+                    service = ai_service_module.AICoMentorService()
+
+        self.assertIsNone(service.client)
+        provider_factory.assert_not_called()
+
     def test_provider_valid_response_is_returned(self):
         client = self.make_client(provider_response("  Useful answer  "))
         service = self.make_service(client)
