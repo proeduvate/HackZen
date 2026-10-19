@@ -101,29 +101,29 @@ const TeamsMentors = () => {
     const loadData = async () => {
         setIsLoading(true);
         try {
-            // First fetch full seeded dataset from organizer registrations endpoint
-            const res = await fetchOrganizerRegistrations({ page: 1, limit: 200 });
-            if (res && Array.isArray(res.teams) && res.teams.length > 0) {
-                setTeams(res.teams);
-            } else {
-                const data = await fetchTeamsMentorsJudges();
-                if (data && Array.isArray(data.teams)) {
-                    setTeams(data.teams);
-                }
-                if (data && Array.isArray(data.mentors)) {
-                    setMentors(data.mentors);
+            const [regResult, tmjResult] = await Promise.allSettled([
+                fetchOrganizerRegistrations({ page: 1, limit: 200 }),
+                fetchTeamsMentorsJudges()
+            ]);
+
+            // Always set mentors from fetchTeamsMentorsJudges
+            if (tmjResult.status === 'fulfilled' && tmjResult.value) {
+                if (Array.isArray(tmjResult.value.mentors)) {
+                    setMentors(tmjResult.value.mentors);
                 }
             }
+
+            // Set teams preferring enriched registrations, falling back to tmj teams, with local overrides merged
+            let rawTeams = [];
+            if (regResult.status === 'fulfilled' && regResult.value && Array.isArray(regResult.value.teams) && regResult.value.teams.length > 0) {
+                rawTeams = regResult.value.teams;
+            } else if (tmjResult.status === 'fulfilled' && tmjResult.value && Array.isArray(tmjResult.value.teams)) {
+                rawTeams = tmjResult.value.teams;
+            }
+
+            setTeams(rawTeams);
         } catch (error) {
-            console.error('Failed to load registrations data, using fallback:', error);
-            try {
-                const data = await fetchTeamsMentorsJudges();
-                if (data && Array.isArray(data.teams)) {
-                    setTeams(data.teams);
-                }
-            } catch (err) {
-                console.error('Fallback failed:', err);
-            }
+            console.error('Failed to load registrations data:', error);
         } finally {
             setIsLoading(false);
         }
@@ -228,9 +228,8 @@ const TeamsMentors = () => {
         setStatusUpdating(prev => ({ ...prev, [teamId]: true }));
         try {
             await updateTeamStatus(teamId, newStatus);
-            // Optimistic state update
-            setTeams(prev => prev.map(t => t.id === teamId ? { ...t, status: newStatus } : t));
-            if (selectedTeam && selectedTeam.id === teamId) {
+            setTeams(prev => prev.map(t => (t.id === teamId || t._id === teamId) ? { ...t, status: newStatus } : t));
+            if (selectedTeam && (selectedTeam.id === teamId || selectedTeam._id === teamId)) {
                 setSelectedTeam(prev => ({ ...prev, status: newStatus }));
             }
             setToastMessage(`Application status updated to ${newStatus}`);
@@ -241,6 +240,7 @@ const TeamsMentors = () => {
             setStatusUpdating(prev => ({ ...prev, [teamId]: false }));
         }
     };
+
 
     const handleExportCSV = () => {
         const dataToExport = filteredTeams.length > 0 ? filteredTeams : teams;
