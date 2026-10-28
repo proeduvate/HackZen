@@ -1,259 +1,254 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { fetchAssignedTeams, fetchMentorshipRequests } from '../../services/mentor/assignedTeamsApi';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { CalendarDays, CheckCircle2, ClipboardCheck, Inbox, Users } from 'lucide-react';
+import { fetchMentorDashboard } from '../../services/mentor/dashboardApi';
+import { updateMentorshipRequestStatus } from '../../services/mentor/mentorshipRequestsApi';
+import { useMentor } from '../../context/MentorContext';
 
-const MentorDashboard = () => {
+const dateTime = (value) => value ? new Date(value).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+const dateOnly = (value) => value ? new Date(value).toLocaleDateString([], { month: 'short', day: 'numeric' }) : '';
+
+export default function MentorDashboard() {
     const navigate = useNavigate();
+    const { globalSearch, refreshKey, triggerRefresh, addToast } = useMentor();
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
-    const [searchTerm, setSearchTerm] = useState(() => sessionStorage.getItem('mentor_search') || '');
-    const [sortBy, setSortBy] = useState(() => sessionStorage.getItem('mentor_sort') || 'Date');
-    const [pendingRequests, setPendingRequests] = useState([]);
-    const [activeTeams, setActiveTeams] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [loadingActions, setLoadingActions] = useState({});
-
-    // Initial Data Fetch
-    useEffect(() => {
-        const fetchData = async () => {
-            setIsLoading(true);
-            try {
-                const [teamsResult, requestsResult] = await Promise.all([
-                    fetchAssignedTeams(),
-                    fetchMentorshipRequests()
-                ]);
-                
-                // Map teams data to UI format
-                const mappedTeams = teamsResult.activeTeams.map(team => ({
-                    id: team.id,
-                    team: team.name,
-                    category: team.domain,
-                    progress: team.progress || 0,
-                    nextSync: team.nextActionTime || 'Pending',
-                    members: team.members || 0,
-                    status: team.status,
-                    statusColor: team.status === 'Active' ? 'emerald' : 'purple',
-                    icon: team.icon || '🚀'
-                }));
-                
-                setActiveTeams(mappedTeams);
-                setPendingRequests(requestsResult);
-
-            } catch (error) {
-                console.error("Failed to fetch mentor dashboard data", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchData();
+    const loadDashboard = useCallback(async () => {
+        setLoading(true);
+        setError('');
+        try {
+            setData(await fetchMentorDashboard());
+        } catch (requestError) {
+            setError(requestError.response?.data?.detail || 'Could not load mentor dashboard. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
-    // Filtered Requests
-    const filteredRequests = useMemo(() => {
-        return pendingRequests.filter(req =>
-            req.team.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            req.desc.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-    }, [pendingRequests, searchTerm]);
+    useEffect(() => { loadDashboard(); }, [loadDashboard, refreshKey]);
 
-    // Handlers
-    const handleAccept = async (request) => {
-        setLoadingActions(prev => ({ ...prev, [request.id]: 'accepting' }));
-        // Logic to mark notification as read and confirm assignment
+    const teams = data?.teams || [];
+    const requests = (data?.requests || []).filter((request) => request.status === 'pending');
+    const meetings = data?.upcomingMeetings || [];
+    const query = globalSearch.trim().toLowerCase();
+    const visibleTeams = useMemo(() => query
+        ? teams.filter((team) => `${team.team || ''} ${team.project || ''} ${team.stage || ''}`.toLowerCase().includes(query))
+        : teams, [teams, query]);
+    const visibleRequests = useMemo(() => query
+        ? requests.filter((request) => `${request.teamName || ''} ${request.track || ''} ${request.message || ''}`.toLowerCase().includes(query))
+        : requests, [requests, query]);
+
+    const decline = async (request) => {
         try {
-            await new Promise(resolve => setTimeout(resolve, 800)); // Smooth transition
-            setPendingRequests(prev => prev.filter(r => r.id !== request.id));
-        } catch (err) {
-            console.error("Failed to accept request", err);
-        } finally {
-            setLoadingActions(prev => { const next = { ...prev }; delete next[request.id]; return next; });
+            await updateMentorshipRequestStatus(request.id, 'reject');
+            addToast('Request declined', `Declined ${request.teamName}'s request.`, 'info');
+            triggerRefresh();
+        } catch (requestError) {
+            addToast('Could not decline request', requestError.response?.data?.detail || 'Please try again.', 'error');
         }
     };
 
+    const summary = data?.summary || {};
+    const stats = [
+        { title: 'Mentorship Requests', value: summary.mentorshipRequests ?? 0, icon: Inbox, link: '/mentor/requests' },
+        { title: 'Active Teams', value: summary.activeTeams ?? 0, icon: Users, link: '/mentor/teams' },
+        { title: 'Pending Feedback', value: summary.pendingFeedback ?? 0, icon: ClipboardCheck, link: '/mentor/feedback' },
+        { title: 'Completed Sessions', value: summary.completedMentorships ?? 0, icon: CheckCircle2, link: '/mentor/sessions' },
+    ];
+
     return (
-        <div className="h-[calc(100vh-140px)] flex flex-col animate-in fade-in duration-500">
-            {/* Header */}
-            <div className="mb-6 flex-none">
-                <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-200">
-                    Strategic Hub
-                </h1>
-                <p className="text-gray-400 mt-2">Manage your mentorship activities and team progress.</p>
-            </div>
-
-            {/* Search */}
-            <div className="flex-none mb-6">
-                <div className="relative max-w-md">
-                    <input
-                        type="text"
-                        placeholder="Search teams..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-navy-900/50 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-purple-500/50 transition-colors"
-                    />
-                    <svg className="w-5 h-5 text-gray-400 absolute left-3 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
+        <div className="mx-auto max-w-7xl space-y-6 pt-2 pb-12 text-slate-900 dark:text-white transition-colors duration-200">
+            {/* 1. Header (Admin Benchmark) */}
+            <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
+                        Welcome back, <span className="text-[#2563eb] dark:text-blue-400">{data?.mentor?.name || 'Mentor'}</span>!
+                    </h1>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        Review incoming mentorship inquiries, assess milestone progress, and coordinate active teams.
+                    </p>
                 </div>
-            </div>
+            </header>
 
-            {/* Main Content Area - Scrollable */}
-            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-8 pb-10">
-                {/* Incoming Requests Section */}
-                <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                        <h2 className="text-2xl font-bold text-white">
-                            Incoming Requests
-                        </h2>
-                        <span className="px-3 py-1 bg-purple-500/10 text-purple-400 rounded-full text-sm border border-purple-500/20">
-                            {pendingRequests.length} pending
-                        </span>
+            {error && (
+                <div role="alert" className="flex items-center justify-between rounded-xl border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-950/20 p-4 text-xs sm:text-sm text-rose-700 dark:text-rose-400 shadow-xs">
+                    <span>{error}</span>
+                    <button onClick={loadDashboard} className="font-bold underline cursor-pointer">Retry</button>
+                </div>
+            )}
+
+            {/* 2. KPI Stat Cards (Admin Benchmark) */}
+            <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Mentor summary">
+                {stats.map(({ title, value, icon: Icon, link }) => (
+                    <Link
+                        key={title}
+                        to={link}
+                        className="p-5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 shadow-xs flex flex-col justify-between transition-all hover:shadow-md hover:border-blue-300 dark:hover:border-blue-700/50 group"
+                    >
+                        <div className="flex items-center justify-between gap-3">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">{title}</span>
+                            <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-[#2563eb] dark:text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                <Icon className="h-4 w-4" />
+                            </div>
+                        </div>
+                        <div className="mt-3">
+                            <p className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-none">
+                                {loading ? '—' : value}
+                            </p>
+                        </div>
+                    </Link>
+                ))}
+            </section>
+
+            {/* 3. Main Split: Mentorship Requests & Activities */}
+            <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[1.35fr_1fr]">
+                {/* Requests Container */}
+                <section className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 p-5 sm:p-6 shadow-xs">
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-3.5 mb-4">
+                        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Mentorship Requests</h2>
+                        <Link className="text-xs font-bold text-[#2563eb] dark:text-blue-400 hover:underline" to="/mentor/requests">
+                            View all
+                        </Link>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {isLoading ? (
-                            [1, 2].map(i => (
-                                <div key={i} className="glass border border-white/10 rounded-xl p-6 animate-pulse bg-white/5">
-                                    <div className="flex items-center gap-4 mb-4">
-                                        <div className="w-12 h-12 bg-white/10 rounded-lg"></div>
-                                        <div className="flex-1">
-                                            <div className="h-4 w-2/3 bg-white/10 rounded mb-2"></div>
-                                            <div className="h-3 w-1/2 bg-white/5 rounded"></div>
-                                        </div>
+                    {loading ? (
+                        <p className="py-8 text-center text-xs text-slate-500 dark:text-slate-400">Loading requests…</p>
+                    ) : visibleRequests.length ? (
+                        <div className="divide-y divide-slate-100 dark:divide-white/5">
+                            {visibleRequests.slice(0, 5).map((request) => (
+                                <div key={request.id} className="grid gap-3 py-3.5 sm:grid-cols-[1fr_0.8fr_auto] sm:items-center">
+                                    <div className="min-w-0">
+                                        <p className="font-bold text-sm text-slate-900 dark:text-white truncate">{request.teamName || 'Team'}</p>
+                                        <p className="mt-0.5 line-clamp-1 text-xs text-slate-500 dark:text-slate-400">{request.message || request.track || 'Mentorship inquiry'}</p>
                                     </div>
-                                    <div className="h-3 w-full bg-white/5 rounded mb-3"></div>
-                                    <div className="flex gap-3">
-                                        <div className="h-8 w-20 bg-white/10 rounded-lg"></div>
-                                        <div className="h-8 w-16 bg-white/5 rounded-lg"></div>
-                                    </div>
-                                </div>
-                            ))
-                        ) : filteredRequests.length > 0 ? (
-                                filteredRequests.map((req) => (
-                            <div key={req.id} className="glass border border-white/10 rounded-xl p-6 hover:bg-white/5 transition-all duration-300 cursor-pointer group">
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-xl font-bold text-white shadow-lg shadow-purple-500/20">
-                                            {req.icon}
-                                        </div>
-                                        <div>
-                                            <h3 className="font-bold text-white group-hover:text-purple-400 transition-colors">{req.team}</h3>
-                                            <p className="text-sm text-gray-400">{req.domain}</p>
-                                        </div>
-                                    </div>
-                                    {req.priority && (
-                                        <span className="px-2 py-1 bg-red-500/10 text-red-400 rounded text-xs font-medium border border-red-500/20">
-                                            Priority
-                                        </span>
-                                    )}
-                                </div>
-
-                                <p className="text-gray-300 text-sm leading-relaxed mb-4 line-clamp-2">
-                                    {req.desc}
-                                </p>
-
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                                        <span>{req.time}</span>
-                                        <span>•</span>
-                                        <span>{req.date}</span>
-                                    </div>
-                                    <div className="flex gap-2">
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                                        {request.track || 'General'}{request.createdAt ? ` · ${dateOnly(request.createdAt)}` : ''}
+                                    </p>
+                                    <div className="flex items-center gap-2">
                                         <button
-                                            onClick={() => handleAccept(req)}
-                                            disabled={loadingActions[req.id]}
-                                            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-medium rounded-lg shadow-lg shadow-blue-500/20 transition-all transform hover:-translate-y-0.5 disabled:opacity-50"
+                                            onClick={() => decline(request)}
+                                            className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700 transition active:scale-95 cursor-pointer"
                                         >
-                                            {loadingActions[req.id] ? 'Accepting...' : 'Accept'}
+                                            Decline
                                         </button>
-                                        <button className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-gray-400 hover:text-white transition-colors">
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            </svg>
+                                        <button
+                                            onClick={() => navigate('/mentor/requests')}
+                                            className="rounded-xl bg-[#2563eb] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#1d4ed8] transition active:scale-95 cursor-pointer"
+                                        >
+                                            Review
                                         </button>
                                     </div>
                                 </div>
-                            </div>
-                                ))
-                        ) : (
-                            <div className="col-span-full py-16 text-center">
-                                <div className="bg-white/5 p-6 rounded-xl border border-dashed border-white/10 inline-block">
-                                    <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">📡</div>
-                                    <p className="text-gray-400 text-sm">No incoming requests found.</p>
-                                </div>
-                            </div>
-                        )}
-                        </div>
-                    </div>
-
-                {/* Active Teams Section */}
-                <div className="space-y-6">
-                    <div>
-                        <h2 className="text-2xl font-bold text-white">Active Teams</h2>
-                        <p className="text-gray-400 mt-1">Monitor your mentored teams' progress.</p>
-                    </div>
-
-                    <div className="glass border border-white/10 rounded-xl p-6 space-y-6">
-                        {isLoading ? (
-                            [1, 2, 3].map(i => (
-                                <div key={i} className="flex items-center gap-4 p-4 bg-white/5 rounded-lg animate-pulse">
-                                    <div className="w-10 h-10 bg-white/10 rounded-lg"></div>
-                                    <div className="flex-1">
-                                        <div className="h-4 w-2/3 bg-white/10 rounded mb-2"></div>
-                                        <div className="h-3 w-1/2 bg-white/5 rounded"></div>
-                                    </div>
-                                    <div className="h-6 w-12 bg-white/10 rounded"></div>
-                                </div>
-                            ))
-                        ) : activeTeams.map(team => (
-                            <div key={team.id} className="flex items-center gap-4 p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-all duration-300 cursor-pointer group">
-                                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-lg font-bold text-white shadow-lg shadow-purple-500/20">
-                                    {team.icon}
-                                </div>
-                                <div className="flex-1">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <h3 className="font-medium text-white group-hover:text-purple-400 transition-colors">{team.team}</h3>
-                                        <span className="text-sm font-bold text-white tabular-nums">{team.progress}%</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                            team.statusColor === 'emerald' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                                            team.statusColor === 'rose' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
-                                            team.statusColor === 'blue' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
-                                            'bg-purple-500/10 text-purple-400 border border-purple-500/20'
-                                        }`}>
-                                            {team.status}
-                                        </span>
-                                        <span className="text-xs text-gray-500">{team.nextSync}</span>
-                                    </div>
-                                    <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                                        <div className={`h-full bg-gradient-to-r from-purple-600 to-blue-600 rounded-full transition-all duration-1000`} style={{ width: `${team.progress}%` }}></div>
-                                    </div>
-                                </div>
-                            </div>
                             ))}
+                        </div>
+                    ) : (
+                        <div className="rounded-xl border border-dashed border-slate-200 dark:border-white/10 p-8 text-center">
+                            <p className="text-xs text-slate-500 dark:text-slate-400">No pending mentorship requests at this time.</p>
+                        </div>
+                    )}
+                </section>
+
+                {/* Upcoming Activities */}
+                <section className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 p-5 sm:p-6 shadow-xs">
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-3.5 mb-4">
+                        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Upcoming Sessions</h2>
+                        <Link to="/mentor/sessions" className="text-xs font-bold text-[#2563eb] dark:text-blue-400 hover:underline">
+                            Calendar
+                        </Link>
                     </div>
 
-                    {/* Feedback Section */}
-                    <div className="glass border border-white/10 rounded-xl p-6 hover:bg-white/5 transition-all duration-300 cursor-pointer group">
-                        <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-xl shrink-0 group-hover:scale-110 transition-transform">
-                                💬
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="font-semibold text-white mb-2 group-hover:text-purple-400 transition-colors">Pending Feedback</h3>
-                                <p className="text-gray-300 text-sm mb-4">You have feedback waiting to be reviewed from your mentored teams.</p>
-                                <button
-                                    onClick={() => navigate('/mentor/feedback')}
-                                    className="px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 hover:text-purple-300 border border-purple-500/20 rounded-lg text-sm font-medium transition-all"
-                                >
-                                    View Feedback
-                                </button>
-                            </div>
+                    {loading ? (
+                        <p className="py-8 text-center text-xs text-slate-500 dark:text-slate-400">Loading activities…</p>
+                    ) : meetings.length ? (
+                        <div className="space-y-4">
+                            {meetings.slice(0, 4).map((meeting) => (
+                                <div key={meeting.id} className="flex items-start gap-3 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-navy-950/60 p-3 transition hover:border-blue-300 dark:hover:border-blue-700/50">
+                                    <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#2563eb] ring-4 ring-blue-100 dark:ring-blue-950/50" />
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-xs font-bold text-[#2563eb] dark:text-blue-400">{dateTime(meeting.startTime)}</p>
+                                        <p className="mt-0.5 text-xs font-bold text-slate-900 dark:text-white truncate">
+                                            {meeting.title || 'Mentoring session'} · {meeting.teamName || 'Team'}
+                                        </p>
+                                        {meeting.location && <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">{meeting.location}</p>}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                    </div>
+                    ) : (
+                        <div className="rounded-xl border border-dashed border-slate-200 dark:border-white/10 p-8 text-center">
+                            <p className="text-xs text-slate-500 dark:text-slate-400">No upcoming mentoring sessions scheduled.</p>
+                        </div>
+                    )}
+                </section>
+            </div>
+
+            {/* 4. Active Teams Section */}
+            <section className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 p-5 sm:p-6 shadow-xs">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-3.5 mb-4">
+                    <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Assigned Teams</h2>
+                    <Link to="/mentor/teams" className="text-xs font-bold text-[#2563eb] dark:text-blue-400 hover:underline">
+                        View All
+                    </Link>
                 </div>
+
+                {loading ? (
+                    <p className="py-8 text-center text-xs text-slate-500 dark:text-slate-400">Loading teams…</p>
+                ) : visibleTeams.length ? (
+                    <div className="divide-y divide-slate-100 dark:divide-white/5">
+                        {visibleTeams.slice(0, 6).map((team) => (
+                            <Link
+                                key={team.id}
+                                to={`/mentor/teams/${team.id}`}
+                                className="grid gap-3 py-3.5 transition hover:bg-slate-50/60 dark:hover:bg-navy-800/40 rounded-xl px-2 sm:grid-cols-[minmax(180px,1fr)_minmax(180px,2fr)_auto] sm:items-center"
+                            >
+                                <div className="min-w-0">
+                                    <strong className="block text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">{team.team || 'Team'}</strong>
+                                    <span className="text-[11px] text-slate-500 dark:text-slate-400">{team.stage || 'Milestone active'}</span>
+                                </div>
+                                <div>
+                                    <div className="mb-1.5 flex justify-between text-xs text-slate-500 dark:text-slate-400">
+                                        <span>Progress</span>
+                                        <span className="font-bold text-slate-900 dark:text-white">{team.progress ?? 0}%</span>
+                                    </div>
+                                    <div className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-navy-800">
+                                        <div
+                                            className="h-full rounded-full bg-[#2563eb]"
+                                            style={{ width: `${Math.min(100, Math.max(0, Number(team.progress) || 0))}%` }}
+                                        />
+                                    </div>
+                                </div>
+                                <span className="text-[11px] text-slate-400 truncate">
+                                    {team.lastActivity ? `Active ${dateTime(team.lastActivity)}` : 'Recently active'}
+                                </span>
+                            </Link>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="rounded-xl border border-dashed border-slate-200 dark:border-white/10 p-8 text-center">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">No active teams currently assigned to your roster.</p>
+                    </div>
+                )}
+            </section>
+
+            {/* 5. Quick Actions Row */}
+            <div className="flex flex-wrap gap-3">
+                {[
+                    [CalendarDays, 'Schedule a session', '/mentor/sessions'],
+                    [ClipboardCheck, 'Review pending feedback', '/mentor/feedback'],
+                    [Users, 'Open team workspace', '/mentor/teams']
+                ].map(([Icon, label, to]) => (
+                    <Link
+                        key={to}
+                        to={to}
+                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-navy-900 px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 shadow-xs transition active:scale-95"
+                    >
+                        <Icon className="h-4 w-4 text-[#2563eb] dark:text-blue-400" />
+                        {label}
+                    </Link>
+                ))}
             </div>
         </div>
     );
-};
-
-export default MentorDashboard;
+}
