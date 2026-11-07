@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import apiClient from '../../api/api';
 import { getMyTeams } from '../../api/teamApi';
 
 const StudentWorkspace = () => {
+    const navigate = useNavigate();
     // State management
     const [teams, setTeams] = useState([]);
     const [selectedTeam, setSelectedTeam] = useState(null);
@@ -14,9 +16,15 @@ const StudentWorkspace = () => {
     const socketRef = useRef(null);
 
     // User data from session/local storage
-    const currentUser = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{"_id": "guest_id", "name": "Hari"}');
-    const userId = currentUser._id || currentUser.id || 'guest_id';
-    const userName = currentUser.name || 'Hari';
+    const currentUser = (() => {
+        try {
+            return JSON.parse(sessionStorage.getItem('user') || localStorage.getItem('user') || '{}');
+        } catch {
+            return {};
+        }
+    })();
+    const userId = currentUser._id || currentUser.id || '';
+    const userName = currentUser.name || '';
 
     // 1. Fetch Real Teams
     useEffect(() => {
@@ -26,10 +34,8 @@ const StudentWorkspace = () => {
                 const data = await getMyTeams();
                 const mappedTeams = data.map((team, idx) => ({
                     id: team.id || team._id,
-                    name: team.teamName,
-                    avatarColor: idx % 2 === 0 ? 'from-blue-500 to-indigo-600' : 'from-purple-500 to-pink-600',
-                    isOnline: true, // System status
-                    status: 'Active Workspace'
+                    name: team.teamName || 'Team name unavailable',
+                    avatarColor: idx % 2 === 0 ? 'from-blue-500 to-blue-600' : 'from-blue-600 to-cyan-600',
                 }));
                 setTeams(mappedTeams);
                 if (mappedTeams.length > 0) {
@@ -46,7 +52,7 @@ const StudentWorkspace = () => {
 
     // 2. WebSocket Connection Logic
     useEffect(() => {
-        if (activeTab !== 'Chat' || !selectedTeam) return;
+        if (activeTab !== 'Chat' || !selectedTeam || !userId) return;
 
         const connectWS = () => {
             const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
@@ -64,11 +70,13 @@ const StudentWorkspace = () => {
                 const data = JSON.parse(event.data);
                 if (data.type === 'new_message') {
                     const msg = data.message;
+                    const messageId = msg._id || msg.id;
+                    if (!messageId) return;
                     const newMessage = {
-                        id: msg._id || Date.now(),
+                        id: messageId,
                         text: msg.content,
                         sender: msg.senderId === userId ? 'me' : 'them',
-                        user: msg.senderName || (msg.senderId === userId ? userName : 'Teammate'),
+                        user: msg.senderName || (msg.senderId === userId ? (userName || 'You') : 'Team member'),
                         time: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                         type: msg.messageType || 'text'
                     };
@@ -103,7 +111,7 @@ const StudentWorkspace = () => {
 
     // 3. Fetch History on team change
     useEffect(() => {
-        if (!selectedTeam || activeTab !== 'Chat') return;
+        if (!selectedTeam || activeTab !== 'Chat' || !userId) return;
 
         const fetchHistory = async () => {
             try {
@@ -113,7 +121,7 @@ const StudentWorkspace = () => {
                         id: m._id,
                         text: m.content,
                         sender: m.senderId === userId ? 'me' : 'them',
-                        user: m.senderName || (m.senderId === userId ? userName : 'Teammate'),
+                        user: m.senderName || (m.senderId === userId ? (userName || 'You') : 'Team member'),
                         time: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                         type: m.messageType
                     }));
@@ -137,9 +145,9 @@ const StudentWorkspace = () => {
                 const { data: milestones } = await apiClient.get(`/progress/milestones/${data._id}`);
                 setTasks(milestones.map(m => ({
                     id: m._id,
-                    title: m.milestoneId,
+                    title: m.title || 'Task title unavailable',
                     status: m.completed ? 'Done' : 'In Progress',
-                    assignee: 'Team Member'
+                    assignee: m.assigneeName || 'Assignee unavailable'
                 })));
             } catch (err) {
                 console.error("Tasks fetch failed:", err);
@@ -157,35 +165,43 @@ const StudentWorkspace = () => {
         scrollToBottom();
     }, [teamMessages, selectedTeam, activeTab]);
 
-    const handleSendMessage = (e) => {
+    const handleSendMessage = async (e) => {
         e.preventDefault();
-        if (!messageInput.trim()) return;
+        const trimmedMessage = messageInput.trim();
+        if (!trimmedMessage || !selectedTeam || !userId) return;
 
-        // Send via WebSocket if connected
-        if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-            const messageData = {
-                content: messageInput,
+        try {
+            const { data } = await apiClient.post(`/chat/${selectedTeam}/send`, {
+                content: trimmedMessage,
                 type: 'text'
+            });
+
+            const messageId = data?._id || data?.id;
+            if (!messageId) throw new Error('The server did not return a persisted message record.');
+
+            const newMessage = {
+                id: messageId,
+                text: data?.content || trimmedMessage,
+                sender: data?.senderId === userId ? 'me' : 'them',
+                user: data?.senderName || userName || 'You',
+                time: data?.createdAt ? new Date(data.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Time unavailable',
+                type: data?.messageType || 'text'
             };
-            socketRef.current.send(JSON.stringify(messageData));
+
+            setTeamMessages(prev => ({
+                ...prev,
+                [selectedTeam]: [...(prev[selectedTeam] || []), newMessage]
+            }));
+
+            setMessageInput('');
+        } catch (error) {
+            console.error('Failed to send workspace message:', error);
+            const backendDetail = error?.response?.data?.detail;
+            const message = typeof backendDetail === 'string'
+                ? backendDetail
+                : backendDetail?.message || 'The message could not be saved. Please try again.';
+            alert(message);
         }
-
-        // Optimistically update UI
-        const newMessage = {
-            id: Date.now(),
-            text: messageInput,
-            sender: 'me',
-            user: userName,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            type: 'text'
-        };
-
-        setTeamMessages(prev => ({
-            ...prev,
-            [selectedTeam]: [...(prev[selectedTeam] || []), newMessage]
-        }));
-        
-        setMessageInput('');
     };
 
     if (isLoading) return (
@@ -205,7 +221,7 @@ const StudentWorkspace = () => {
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-2xl font-bold text-white">Your Teams</h2>
                         <span className="bg-blue-600/20 text-blue-400 text-xs font-semibold px-2.5 py-1 rounded-md border border-blue-500/20">
-                            {teams.length} Active
+                            {teams.length} teams
                         </span>
                     </div>
                 </div>
@@ -216,15 +232,12 @@ const StudentWorkspace = () => {
                             key={team.id}
                             onClick={() => setSelectedTeam(team.id)}
                             className={`w-full group relative p-3 rounded-2xl flex items-center gap-4 transition-all duration-300 ${selectedTeam === team.id
-                                    ? 'bg-gradient-to-r from-blue-600/20 to-indigo-600/10 border border-blue-500/30'
+                                    ? 'bg-gradient-to-r from-blue-600/20 to-blue-600/10 border border-blue-500/30'
                                     : 'hover:bg-white/5 border border-transparent grayscale hover:grayscale-0'
                                 }`}
                         >
                             <div className={`relative shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br ${team.avatarColor} flex items-center justify-center text-white font-bold text-lg shadow-md transform group-hover:scale-105 transition-transform`}>
                                 {team.name.charAt(0)}
-                                {team.isOnline && (
-                                    <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-green-500 border-2 border-black rounded-full shadow-[0_0_8px_rgba(34,197,94,0.4)]"></span>
-                                )}
                             </div>
 
                             <div className="flex-1 min-w-0 text-left">
@@ -258,9 +271,9 @@ const StudentWorkspace = () => {
                                 <div>
                                     <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight">{currentTeam?.name} Workspace</h2>
                                     <div className="flex items-center gap-2 mt-1">
-                                        <span className={`w-2 h-2 rounded-full ${currentTeam?.isOnline ? 'bg-green-500' : 'bg-gray-500'}`}></span>
+                                        <span className="w-2 h-2 rounded-full bg-gray-500"></span>
                                         <span className="text-sm text-gray-400 font-medium">
-                                            {currentTeam?.isOnline ? `Online • ${currentTeam?.status}` : 'Offline'}
+                                            Team workspace
                                         </span>
                                     </div>
                                 </div>
@@ -272,7 +285,7 @@ const StudentWorkspace = () => {
                                         key={tab}
                                         onClick={() => setActiveTab(tab)}
                                         className={`px-5 py-2 text-sm font-semibold rounded-lg transition-all ${activeTab === tab
-                                                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md ring-1 ring-white/10'
+                                                ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-md ring-1 ring-white/10'
                                                 : 'text-gray-400 hover:text-white hover:bg-white/5'
                                             }`}
                                     >
@@ -292,7 +305,7 @@ const StudentWorkspace = () => {
                                                 <div className={`flex gap-4 max-w-[75%] ${msg.sender === 'me' ? 'flex-row-reverse' : ''}`}>
                                                     <div className="mt-auto">
                                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 shadow-md border border-white/10 ${msg.sender === 'me'
-                                                                ? 'bg-gradient-to-br from-blue-700 to-indigo-800 text-white'
+                                                                ? 'bg-gradient-to-br from-blue-700 to-blue-800 text-white'
                                                                 : 'bg-gradient-to-br from-gray-800 to-gray-900 text-gray-400'
                                                             }`}>
                                                             {msg.user.charAt(0)}
@@ -307,7 +320,7 @@ const StudentWorkspace = () => {
                                                         <div className={`
                                                             relative p-3.5 rounded-2xl text-sm leading-relaxed shadow-sm break-words
                                                             ${msg.sender === 'me'
-                                                                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-tr-none border border-white/10'
+                                                                ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-tr-none border border-white/10'
                                                                 : 'glass bg-white/5 text-gray-200 rounded-tl-none border border-white/5 hover:bg-white/10 transition-colors'}
                                                         `}>
                                                             {msg.text}
@@ -334,7 +347,7 @@ const StudentWorkspace = () => {
                                                     <button
                                                         type="submit"
                                                         disabled={!messageInput.trim()}
-                                                        className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-xl shadow-lg transition-all transform hover:scale-110 active:scale-95 flex items-center justify-center"
+                                                        className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-xl shadow-lg transition-all transform hover:scale-110 active:scale-95 flex items-center justify-center"
                                                     >
                                                         <svg className="w-5 h-5 translate-x-0.5 -translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -352,8 +365,8 @@ const StudentWorkspace = () => {
                                     <div className="max-w-4xl mx-auto space-y-6">
                                         <div className="flex items-center justify-between">
                                             <h3 className="text-xl font-bold text-white">Project Milestones</h3>
-                                            <button className="px-4 py-2 bg-blue-600/20 text-blue-400 text-sm font-semibold rounded-xl border border-blue-500/20 hover:bg-blue-600/30 transition-colors">
-                                                + New Task
+                                            <button onClick={() => navigate(`/student/teams/${selectedTeam}/workspace`)} className="px-4 py-2 bg-blue-600/20 text-blue-400 text-sm font-semibold rounded-xl border border-blue-500/20 hover:bg-blue-600/30 transition-colors">
+                                                Open team tasks
                                             </button>
                                         </div>
                                         
@@ -393,8 +406,8 @@ const StudentWorkspace = () => {
                                 <div className="flex-1 flex flex-col items-center justify-center text-gray-500 space-y-4">
                                     <div className="text-6xl">📁</div>
                                     <p className="text-xl font-medium">Team files will appear here</p>
-                                    <button className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl border border-white/10 transition-colors">
-                                        Upload Document
+                                    <button onClick={() => navigate(`/student/files?teamId=${encodeURIComponent(selectedTeam)}`)} className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl border border-white/10 transition-colors">
+                                        Open File Sharing to upload
                                     </button>
                                 </div>
                             )}

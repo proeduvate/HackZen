@@ -7,7 +7,9 @@ from fastapi import (
     UploadFile,
     Form,
     Request,
+    Body,
 )
+from bson import ObjectId as BsonId
 from typing import List, Optional, Dict, Any
 from database import get_db
 from core.dependencies import with_auth
@@ -15,9 +17,15 @@ from core.security import get_current_user_optional
 from schemas.hackathonSchema import HackathonCreate, HackathonUpdate, HackathonResponse
 from services.hackathonService import HackathonService
 from models.hackathonModel import HackathonStatus, HackathonTheme
+from pydantic import ValidationError
 import json
+from datetime import datetime
+import re
+import urllib.parse
+
 
 router = APIRouter()
+
 
 
 @router.post(
@@ -41,14 +49,22 @@ async def create_hackathon(
     2. application/json with all data (no files)
     """
 
-    # Check authorization
-    if current_user["role"] not in ["organizer", "admin"]:
+    # Check authorization (case-insensitive)
+    user_role = str(current_user.get("role", "")).lower()
+    requested_role = str(current_user.get("requested_role", "")).lower()
+    if user_role not in ["organizer", "admin", "superadmin"] and requested_role not in ["organizer"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only organizers can create hackathons",
         )
 
     db = get_db()
+    organizer_id = str(
+        current_user.get("_id")
+        or current_user.get("sub")
+        or current_user.get("id")
+        or "org_default"
+    )
 
     try:
         content_type = request.headers.get("content-type", "")
@@ -91,7 +107,7 @@ async def create_hackathon(
 
         # CREATE HACKATHON (common logic for both cases)
         hackathon = await HackathonService.create_hackathon(
-            organizer_id=current_user["sub"],
+            organizer_id=organizer_id,
             data=validated_data,
             db=db,
             poster=poster_file,
@@ -102,6 +118,15 @@ async def create_hackathon(
 
     except HTTPException:
         raise
+    except ValidationError as val_err:
+        err_msg = val_err.errors()[0]["msg"] if val_err.errors() else str(val_err)
+        err_field = ".".join(str(loc) for loc in val_err.errors()[0].get("loc", [])) if val_err.errors() else ""
+        detail_str = f"Validation failed for {err_field}: {err_msg}" if err_field else f"Validation failed: {err_msg}"
+        print(f"VALIDATION ERROR: {detail_str}")
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=detail_str,
+        )
     except Exception as e:
         print(f"ERROR: {str(e)}")
         raise HTTPException(
@@ -168,6 +193,16 @@ async def update_hackathon(
 
 
 @router.get(
+    "",
+    response_model=List[HackathonResponse],
+    response_model_by_alias=False,
+)
+@router.get(
+    "/",
+    response_model=List[HackathonResponse],
+    response_model_by_alias=False,
+)
+@router.get(
     "/allHackathons",
     response_model=List[HackathonResponse],
     response_model_by_alias=False,
@@ -202,6 +237,16 @@ async def get_all_hackathons(
     response_model=List[HackathonResponse],
     response_model_by_alias=False,
 )
+@router.get(
+    "/organizer/my",
+    response_model=List[HackathonResponse],
+    response_model_by_alias=False,
+)
+@router.get(
+    "/my",
+    response_model=List[HackathonResponse],
+    response_model_by_alias=False,
+)
 async def get_my_hackathons(current_user: Dict[str, Any] = Depends(with_auth)):
     """Get hackathons created by the current organizer"""
     if current_user["role"] not in ["organizer"]:
@@ -215,13 +260,29 @@ async def get_my_hackathons(current_user: Dict[str, Any] = Depends(with_auth)):
 
 
 @router.get("/{id}", response_model=HackathonResponse, response_model_by_alias=False)
-async def get_hackathon(id: str, current_user: Dict[str, Any] = Depends(with_auth)):
+async def get_hackathon(
+    id: str, current_user: Optional[Dict[str, Any]] = Depends(get_current_user_optional)
+):
     """Get a specific hackathon by ID or hackathonId"""
     id = id.strip("{}'\"")
     db = get_db()
     hackathon = await HackathonService.get_hackathon_by_id(id, db)
     if not hackathon:
         raise HTTPException(status_code=404, detail="Hackathon not found")
+
+    if current_user.get("role") == "student" and (
+        not hackathon.get("isPublic", True)
+        or str(hackathon.get("status", "")).lower() == HackathonStatus.DRAFT.value.lower()
+    ):
+        raise HTTPException(status_code=404, detail="Hackathon not found")
+
+    organizer_id = hackathon.get("organizerId")
+    if organizer_id and BsonId.is_valid(str(organizer_id)):
+        organizer = await db["users"].find_one(
+            {"_id": BsonId(str(organizer_id))}, {"name": 1}
+        )
+        if organizer and organizer.get("name"):
+            hackathon["organizerName"] = organizer["name"]
 
     return hackathon
 
@@ -385,3 +446,189 @@ async def message_organizer(
         }
     )
     return {"success": True, "message": "Message sent to organizer successfully."}
+
+
+@router.post("/{hackathon_id}/contact-admin")
+async def contact_admin(
+    hackathon_id: str,
+    body: Dict[str, Any],
+    current_user: Dict[str, Any] = Depends(with_auth),
+):
+    """Allow an organizer to contact platform admins about a hackathon."""
+    if current_user["role"] not in ["organizer", "admin"]:
+        raise HTTPException(status_code=403, detail="Organizer access required")
+
+    subject = body.get("subject", "").strip() or "Organizer Support Request"
+    message = body.get("message", "").strip()
+    if not message:
+        raise HTTPException(status_code=400, detail="Message cannot be empty")
+
+    db = get_db()
+    from bson import ObjectId as BsonId
+
+    if not BsonId.is_valid(hackathon_id):
+        raise HTTPException(status_code=400, detail="Invalid hackathon id")
+
+    hackathon = await db["hackathons"].find_one({"_id": BsonId(hackathon_id)})
+    if not hackathon:
+        raise HTTPException(status_code=404, detail="Hackathon not found")
+
+    if (
+        current_user["role"] != "admin"
+        and hackathon.get("organizerId") != current_user["sub"]
+    ):
+        raise HTTPException(status_code=403, detail="Not authorized for this hackathon")
+
+    admins = (
+        await db["users"].find({"role": {"$in": ["admin", "superadmin"]}}).to_list(100)
+    )
+    if not admins:
+        await db["supportRequests"].insert_one(
+            {
+                "hackathonId": hackathon_id,
+                "organizerId": current_user["sub"],
+                "subject": subject,
+                "message": message,
+                "status": "open",
+                "createdAt": datetime.utcnow(),
+            }
+        )
+        return {"success": True, "message": "Support request saved for admin review."}
+
+    notifications = [
+        {
+            "userId": str(admin["_id"]),
+            "hackathonId": hackathon_id,
+            "type": "system_alert",
+            "message": f"{subject} - {hackathon.get('title', 'Hackathon')}: {message}",
+            "read": False,
+            "createdAt": datetime.utcnow(),
+        }
+        for admin in admins
+    ]
+    await db["notifications"].insert_many(notifications)
+
+    return {"success": True, "message": "Message sent to platform admins."}
+
+
+@router.get("/{id}/timeline")
+async def get_hackathon_timeline(
+    id: str, current_user: Optional[Dict[str, Any]] = Depends(get_current_user_optional)
+):
+    """Get hackathon timeline phases"""
+    db = get_db()
+    from bson import ObjectId as BsonId
+
+    clean_id = str(id).strip("{}'\" ")
+    unquoted = urllib.parse.unquote(clean_id).strip()
+
+    hackathon = None
+    if BsonId.is_valid(clean_id):
+        hackathon = await db["hackathons"].find_one({"_id": BsonId(clean_id)})
+
+    if not hackathon:
+        hackathon = await db["hackathons"].find_one({
+            "$or": [
+                {"_id": clean_id},
+                {"id": clean_id},
+                {"title": clean_id},
+                {"title": unquoted},
+                {"title": {"$regex": f"^{re.escape(clean_id)}$", "$options": "i"}},
+                {"title": {"$regex": f"^{re.escape(unquoted)}$", "$options": "i"}}
+            ]
+        })
+
+    if not hackathon:
+        raise HTTPException(status_code=404, detail="Hackathon not found")
+
+    timeline_data = hackathon.get("timeline")
+    if isinstance(timeline_data, dict):
+        phases = timeline_data.get("phases", [])
+    elif isinstance(timeline_data, list):
+        phases = timeline_data
+    else:
+        phases = [
+            {
+                "id": "p1",
+                "name": "Registration",
+                "status": "In Progress",
+                "date": "Active Phase",
+                "description": "Team registration and participant onboarding.",
+            },
+            {
+                "id": "p2",
+                "name": "Hacking & Development",
+                "status": "Upcoming",
+                "date": "Sprint Phase",
+                "description": "Core development and project builds.",
+            },
+            {
+                "id": "p3",
+                "name": "Submission Deadline",
+                "status": "Upcoming",
+                "date": "Deliverable Intake",
+                "description": "Final project repositories and demos.",
+            },
+            {
+                "id": "p4",
+                "name": "Evaluation & Judging",
+                "status": "Upcoming",
+                "date": "Review Stage",
+                "description": "Panel evaluations and scorecards.",
+            },
+            {
+                "id": "p5",
+                "name": "Results & Awards",
+                "status": "Upcoming",
+                "date": "Ceremony",
+                "description": "Final leaderboard and credential issuance.",
+            },
+        ]
+
+    return {"id": str(hackathon.get("_id", clean_id)), "phases": phases}
+
+
+@router.put("/{id}/timeline")
+async def update_hackathon_timeline(
+    id: str,
+    payload: Dict[str, Any] = Body(...),
+    current_user: Optional[Dict[str, Any]] = Depends(get_current_user_optional),
+):
+    """Update hackathon timeline phases"""
+    db = get_db()
+    from bson import ObjectId as BsonId
+
+    clean_id = str(id).strip("{}'\" ")
+    unquoted = urllib.parse.unquote(clean_id).strip()
+
+    existing = None
+    if BsonId.is_valid(clean_id):
+        existing = await db["hackathons"].find_one({"_id": BsonId(clean_id)})
+
+    if not existing:
+        existing = await db["hackathons"].find_one({
+            "$or": [
+                {"_id": clean_id},
+                {"id": clean_id},
+                {"title": clean_id},
+                {"title": unquoted},
+                {"title": {"$regex": f"^{re.escape(clean_id)}$", "$options": "i"}},
+                {"title": {"$regex": f"^{re.escape(unquoted)}$", "$options": "i"}}
+            ]
+        })
+
+    if not existing:
+        raise HTTPException(status_code=404, detail="Hackathon not found")
+
+    phases = payload.get("phases", payload.get("timeline", []))
+
+    await db["hackathons"].update_one(
+        {"_id": existing["_id"]},
+        {"$set": {"timeline": phases, "updatedAt": datetime.utcnow()}}
+    )
+
+    return {
+        "success": True,
+        "message": "Timeline updated successfully",
+        "phases": phases,
+    }

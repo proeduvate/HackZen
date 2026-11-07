@@ -1,24 +1,13 @@
 import apiClient from '../../api/api';
+import { getUIDataset, saveUIDataset } from '../uiDataApi';
 
-const STORAGE_KEY = 'student_hackathon_registration_drafts';
-
-const readDrafts = () => {
-    try {
-        return JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '{}');
-    } catch (error) {
-        return {};
-    }
-};
-
-const writeDrafts = (drafts) => {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(drafts));
-};
+const STORAGE_KEY = 'student-registration-drafts';
 
 export const createInitialRegistrationDraft = (hackathon, user) => ({
     hackathonId: hackathon.id || hackathon._id,
     teamName: '',
-    teamSize: Math.min(2, hackathon.teamSizeLimit || 2),
-    leaderName: user?.name || 'Student',
+    teamSize: Math.max(1, Number(hackathon.minTeamSize ?? 1)),
+    leaderName: user?.name || '',
     leaderEmail: user?.email || '',
     memberEmails: [''],
     notes: '',
@@ -26,7 +15,7 @@ export const createInitialRegistrationDraft = (hackathon, user) => ({
 });
 
 export const getRegistrationDraft = async (hackathon, user) => {
-    const drafts = readDrafts();
+    const drafts = await getUIDataset(STORAGE_KEY, {});
     const hId = hackathon.id || hackathon._id;
     const existing = drafts[hId];
 
@@ -36,51 +25,49 @@ export const getRegistrationDraft = async (hackathon, user) => {
 
     const draft = createInitialRegistrationDraft(hackathon, user);
     drafts[hId] = draft;
-    writeDrafts(drafts);
+    await saveUIDataset(STORAGE_KEY, drafts);
     return draft;
 };
 
 export const saveRegistrationDraft = async (hackathonId, nextDraft) => {
-    const drafts = readDrafts();
+    const drafts = await getUIDataset(STORAGE_KEY, {});
     drafts[hackathonId] = nextDraft;
-    writeDrafts(drafts);
+    await saveUIDataset(STORAGE_KEY, drafts);
     return nextDraft;
 };
 
 export const submitHackathonRegistration = async (hackathonId, draft) => {
     try {
-        console.log('Mocking Registration submission for:', hackathonId, draft);
-        
-        // Simulating network delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        const storedUser = JSON.parse(
+            sessionStorage.getItem('user') || localStorage.getItem('user') || '{}'
+        );
+        const userId = storedUser?._id || storedUser?.id || storedUser?.userId;
 
-        /* REAL API CALL - Commented out for mock flow
+        if (!userId) {
+            throw new Error('Authenticated student user information is missing.');
+        }
+
         const payload = {
-            hackathonId: hackathonId,
-            teamName: draft.teamName,
-            teamSize: parseInt(draft.teamSize),
-            members: draft.memberEmails.filter(email => email.trim() !== ''),
-            notes: draft.notes
+            hackathonId,
+            userId,
+            teamName: draft?.teamName || '',
+            notes: draft?.notes || '',
+            leaderName: draft?.leaderName || storedUser?.name || '',
+            leaderEmail: draft?.leaderEmail || storedUser?.email || '',
+            teamSize: draft?.teamSize,
         };
 
         const { data } = await apiClient.post('/applications/', payload);
-        */
-
-        // Mock response data
-        const mockData = {
-            _id: 'mock_reg_' + Math.random().toString(36).substr(2, 9),
-            appliedAt: new Date().toISOString(),
-        };
-        
         // Clean up local draft on success
-        const drafts = readDrafts();
+        const drafts = await getUIDataset(STORAGE_KEY, {});
         delete drafts[hackathonId];
-        writeDrafts(drafts);
+        await saveUIDataset(STORAGE_KEY, drafts);
 
         return {
             success: true,
-            registrationId: mockData._id,
-            timestamp: mockData.appliedAt,
+            registrationId: data.id || data._id,
+            timestamp: data.appliedAt,
+            status: data.status,
             draft,
         };
     } catch (error) {
